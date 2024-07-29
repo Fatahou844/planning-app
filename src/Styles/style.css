@@ -1,0 +1,180 @@
+.App {
+    font-family: Arial, sans-serif;
+}
+
+.App-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+}
+
+.date-picker input {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.container {
+    display: flex;
+}
+
+.sidebar {
+    width: 200px;
+    background-color: #f4f4f4;
+    padding: 20px;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+}
+
+.calendar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.calendar {
+    height: 600px;
+}
+
+.operation-group {
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #f4f4f4;
+}
+
+.operation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.operation-events {
+    margin-top: 10px;
+}
+
+.event {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+}
+
+.dashboard-container {
+  background-color: #f4f6f8;
+  padding: 20px;
+}
+
+.dashboard-title {
+  font-family: 'Roboto', sans-serif;
+  font-weight: bold;
+  color: #333;
+}
+
+.dashboard-paper {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.dashboard-paper:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-heading {
+  font-family: 'Roboto', sans-serif;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.MuiTableCell-root {
+  font-family: 'Roboto', sans-serif;
+  color: #666;
+}
+
+.MuiTableCell-head {
+  font-weight: bold;
+  background-color: #e0e0e0;
+}
+
+.MuiTableCell-body {
+  background-color: #fff;
+}
+
+.MuiTableRow-root:nth-of-type(even) {
+  background-color: #f7f7f7;
+}
+
+.dashboard-container {
+    background-color: #f4f6f8;
+    padding: 20px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.dashboard-title {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.dashboard-paper {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.3s ease;
+}
+
+.dashboard-paper:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-heading {
+    color: #555;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.MuiTableCell-root {
+    color: #666;
+    font-size: 14px;
+}
+
+.MuiTableCell-head {
+    font-weight: bold;
+    background-color: #e0e0e0;
+    color: #444;
+}
+
+.MuiTableCell-body {
+    background-color: #fff;
+}
+
+.MuiTableRow-root:nth-of-type(even) {
+    background-color: #f7f7f7;
+}
+
+.MuiTableRow-root:hover {
+    background-color: #e9ecef;
+}
+
+.chartjs-render-monitor {
+    max-height: 400px;
+    max-width: 100%;
+}
+
+.green {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.red {
+    color: #f44336;
+    font-weight: bold;
+}
