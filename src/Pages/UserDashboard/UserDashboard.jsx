@@ -1,16 +1,16 @@
 // src/App.js
 import React from "react";
-import Calendar from "../../Components/Calendar/Calendar";
+import CalendarUser from "../../Components/CalendarUser/CalendarUser";
 import "../../Styles/style.css";
 import "./Dashboard.css";
-function Dashboard() {
+function UserDashboard() {
   return (
     <div className="app-container">
       <div className="main-content">
-        <Calendar />
+        <CalendarUser />
       </div>
     </div>
   );
 }
 
-export default Dashboard;
+export default UserDashboard;

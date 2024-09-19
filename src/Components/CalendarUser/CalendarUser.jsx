@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import EventModal from "../EventModal";
+import CustomerEvent from "../CustumerEvent";
 
 const Timeline = () => (
   <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
@@ -42,96 +42,174 @@ const CurrentTimeLine = ({ currentHour }) => (
   />
 );
 
-const Calendar = () => {
-  const [events, setEvents] = useState([
+const CalendarUser = () => {
+  const [eventsByClient, setEventsByClient] = useState([
     {
-      category: "Entretien / Révision",
-      summary: "3 events",
+      client: "John Doe",
+      summary: "2 events",
       date: "Jan 31 - Feb 4",
       items: [
         {
           id: "event-1", // Identifiant unique pour chaque événement
           title: "Entretiens",
-          person: "John Doe",
+          category: "Entretien / Révision",
           operationType: "Maintenance",
           startHour: 8,
           endHour: 10,
         },
+        {
+          id: "event-8", // Identifiant unique pour chaque événement
+          title: "Révision Complète",
+          category: "Entretien / Révision",
+          operationType: "Full Maintenance",
+          startHour: 11,
+          endHour: 13,
+        },
       ],
     },
     {
-      category: "Rapide",
-      summary: "3 events",
+      client: "Jane Smith",
+      summary: "2 events",
       date: "Jan 31 - Feb 4",
       items: [
         {
           id: "event-2", // Identifiant unique pour chaque événement
           title: "Opération A",
-          person: "Jane Smith",
+          category: "Rapide",
           operationType: "Quick Service",
           startHour: 8,
           endHour: 10,
         },
         {
+          id: "event-9", // Identifiant unique pour chaque événement
+          title: "Opération D",
+          category: "Rapide",
+          operationType: "Quick Review",
+          startHour: 14,
+          endHour: 16,
+        },
+      ],
+    },
+    {
+      client: "Paul Brown",
+      summary: "2 events",
+      date: "Jan 31 - Feb 4",
+      items: [
+        {
           id: "event-3", // Identifiant unique pour chaque événement
           title: "Opération B",
-          person: "Paul Brown",
+          category: "Rapide",
           operationType: "Quick Check",
           startHour: 9,
           endHour: 12,
         },
         {
-          id: "event-4", // Identifiant unique pour chaque événement
-          title: "Opération C",
-          person: "Emily White",
-          operationType: "Quick Fix",
-          startHour: 14,
-          endHour: 17,
-        },
-      ],
-    },
-    {
-      category: "Mécanique",
-      summary: "4 events",
-      date: "Jan 31 - Feb 4",
-      items: [
-        {
-          id: "event-5", // Identifiant unique pour chaque événement
-          title: "Ateliers",
-          person: "Michael Green",
-          operationType: "Workshop",
+          id: "event-10", // Identifiant unique pour chaque événement
+          title: "Opération E",
+          category: "Rapide",
+          operationType: "Speedy Inspection",
           startHour: 13,
           endHour: 15,
         },
       ],
     },
     {
-      category: "Électricité",
-      summary: "3 events",
+      client: "Emily White",
+      summary: "2 events",
+      date: "Jan 31 - Feb 4",
+      items: [
+        {
+          id: "event-4", // Identifiant unique pour chaque événement
+          title: "Opération C",
+          category: "Rapide",
+          operationType: "Quick Fix",
+          startHour: 14,
+          endHour: 17,
+        },
+        {
+          id: "event-11", // Identifiant unique pour chaque événement
+          title: "Opération F",
+          category: "Rapide",
+          operationType: "Fast Repair",
+          startHour: 18,
+          endHour: 20,
+        },
+      ],
+    },
+    {
+      client: "Michael Green",
+      summary: "2 events",
+      date: "Jan 31 - Feb 4",
+      items: [
+        {
+          id: "event-5", // Identifiant unique pour chaque événement
+          title: "Ateliers",
+          category: "Mécanique",
+          operationType: "Workshop",
+          startHour: 13,
+          endHour: 15,
+        },
+        {
+          id: "event-12", // Identifiant unique pour chaque événement
+          title: "Maintenance Mécanique",
+          category: "Mécanique",
+          operationType: "Mechanical Maintenance",
+          startHour: 15,
+          endHour: 17,
+        },
+      ],
+    },
+    {
+      client: "Laura Blue",
+      summary: "2 events",
       date: "Jan 31 - Feb 4",
       items: [
         {
           id: "event-6", // Identifiant unique pour chaque événement
           title: "Électricité",
-          person: "Laura Blue",
+          category: "Électricité",
           operationType: "Electrical Check",
           startHour: 15,
           endHour: 18,
         },
+        {
+          id: "event-13", // Identifiant unique pour chaque événement
+          title: "Réparation Électrique",
+          category: "Électricité",
+          operationType: "Electrical Repair",
+          startHour: 18,
+          endHour: 20,
+        },
       ],
     },
     {
-      category: "Climatisation",
-      summary: "4 events",
+      client: "Daniel Gray",
+      summary: "3 events",
       date: "Jan 31 - Feb 4",
       items: [
         {
           id: "event-7", // Identifiant unique pour chaque événement
           title: "Climatisation",
-          person: "Daniel Gray",
+          category: "Climatisation",
           operationType: "AC Service",
           startHour: 16,
           endHour: 18,
+        },
+        {
+          id: "event-14", // Identifiant unique pour chaque événement
+          title: "Contrôle AC",
+          category: "Climatisation",
+          operationType: "AC Check",
+          startHour: 18,
+          endHour: 20,
+        },
+        {
+          id: "event-15", // Identifiant unique pour chaque événement
+          title: "Installation AC",
+          category: "Climatisation",
+          operationType: "AC Installation",
+          startHour: 20,
+          endHour: 22,
         },
       ],
     },
@@ -149,11 +227,13 @@ const Calendar = () => {
   const [contextMenu, setContextMenu] = useState(null);
   const [filterDate, setFilterDate] = useState("");
   const [expanded, setExpanded] = useState([
-    "Entretien / Révision",
-    "Rapide",
-    "Mécanique",
-    "Électricité",
-    "Climatisation",
+    "John Doe",
+    "Jane Smith",
+    "Paul Brown",
+    "Emily White",
+    "Michael Green",
+    "Laura Blue",
+    "Daniel Gray",
   ]);
 
   const currentHour = new Date().getHours();
@@ -167,11 +247,11 @@ const Calendar = () => {
     });
   };
 
-  const handleChange = (category) => {
+  const handleChange = (client) => {
     setExpanded((prev) =>
-      prev.includes(category)
-        ? prev.filter((item) => item !== category)
-        : [...prev, category]
+      prev.includes(client)
+        ? prev.filter((item) => item !== client)
+        : [...prev, client]
     );
   };
 
@@ -182,20 +262,16 @@ const Calendar = () => {
   const onDragEnd = (result) => {
     const { source, destination, draggableId } = result;
 
-    // Si l'utilisateur n'a pas relâché l'élément dans une zone valide
     if (!destination) return;
 
-    // Si l'événement est déplacé dans une autre catégorie, on annule
     if (source.droppableId !== destination.droppableId) return;
 
-    // Trouver la catégorie de l'événement déplacé
-    const categoryIndex = events.findIndex(
-      (cat) => cat.category === source.droppableId
+    const clientIndex = eventsByClient.findIndex(
+      (client) => client.client === source.droppableId
     );
-    const category = events[categoryIndex];
+    const client = eventsByClient[clientIndex];
 
-    // Extraire l'événement déplacé
-    const [movedEvent] = category.items.splice(source.index, 1);
+    const [movedEvent] = client.items.splice(source.index, 1);
 
     setSelectedEvent(movedEvent);
     setModalOpen(true);
@@ -204,23 +280,15 @@ const Calendar = () => {
   const onDragUpdate = (update) => {
     if (!update.destination || !update.source) return;
 
-    // Récupérer la position horizontale (offset) de l'élément en cours de déplacement
     const draggedElement = document.querySelector(
       `[data-rbd-drag-handle-draggable-id="${update.draggableId}"]`
     );
 
     if (draggedElement) {
-      // Obtenir la position X de l'élément pendant le déplacement
       const draggedX = draggedElement.getBoundingClientRect().left;
-
-      // Définir une largeur en pixels pour une heure
-      const pixelsPerHour = 100; // Ajuste cette valeur selon ta timeline
-
-      // Calculer l'heure à partir de la position X
-      const startHour = 7; // Par exemple, la timeline commence à 7h
+      const pixelsPerHour = 100;
+      const startHour = 7;
       const draggedHour = startHour + Math.floor(draggedX / pixelsPerHour);
-
-      // Afficher l'heure en temps réel dans la console pendant le drag
       console.log(`Heure actuelle pendant le déplacement: ${draggedHour}:00`);
     }
   };
@@ -236,17 +304,26 @@ const Calendar = () => {
   };
 
   const handleEventSave = (updatedEvent) => {
-    const updatedEvents = events.map((category) => ({
-      ...category,
-      items: category.items.map((event) =>
+    const updatedEvents = eventsByClient.map((client) => ({
+      ...client,
+      items: client.items.map((event) =>
         event.id === updatedEvent.id ? updatedEvent : event
       ),
     }));
-    setEvents(updatedEvents);
+    setEventsByClient(updatedEvents);
   };
+
   // Fonctions pour assigner les couleurs
-  const getCategoryColor = (index) => {
-    const colors = ["#FFB74D", "#64B5F6", "#81C784", "#9575CD", "#FF8A65"];
+  const getClientColor = (index) => {
+    const colors = [
+      "#FFB74D",
+      "#64B5F6",
+      "#81C784",
+      "#9575CD",
+      "#FF8A65",
+      "#FFCC80",
+      "#90CAF9",
+    ];
     return colors[index % colors.length];
   };
 
@@ -254,27 +331,6 @@ const Calendar = () => {
     const colors = ["#FFCC80", "#90CAF9", "#A5D6A7", "#B39DDB", "#FFAB91"];
     return colors[index % colors.length];
   };
-
-  const handleCloseContextMenu = () => {
-    setContextMenu(null);
-  };
-
-  const contextMenuItems = [
-    {
-      label: "Edit Event",
-      onClick: () => {
-        console.log("Edit", selectedEvent);
-        handleCloseContextMenu(); // Fermer le menu après action
-      },
-    },
-    {
-      label: "Delete Event",
-      onClick: () => {
-        console.log("Delete", selectedEvent);
-        handleCloseContextMenu(); // Fermer le menu après action
-      },
-    },
-  ];
 
   return (
     <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate}>
@@ -297,14 +353,14 @@ const Calendar = () => {
             value={filterDate}
             onChange={handleDateChange}
           />
-          {/* Events Accordion */}
-          {events.map((eventCategory, index) => (
+          {/* Clients Accordion */}
+          {eventsByClient.map((client, index) => (
             <Accordion
-              key={eventCategory.category}
-              expanded={expanded.includes(eventCategory.category)}
-              onChange={() => handleChange(eventCategory.category)}
+              key={client.client}
+              expanded={expanded.includes(client.client)}
+              onChange={() => handleChange(client.client)}
               sx={{
-                backgroundColor: getCategoryColor(index), // Appliquer la couleur de la catégorie
+                backgroundColor: getClientColor(index), // Appliquer la couleur du client
                 borderRadius: "8px",
                 marginBottom: "8px",
                 boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
@@ -314,14 +370,14 @@ const Calendar = () => {
               }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">{eventCategory.category}</Typography>
+                <Typography variant="h6">{client.client}</Typography>
                 <Typography variant="caption" sx={{ ml: 1 }}>
-                  {eventCategory.summary}
+                  {client.summary}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Typography variant="body2" color="textSecondary">
-                  {eventCategory.date}
+                  {client.date}
                 </Typography>
               </AccordionDetails>
             </Accordion>
@@ -358,33 +414,30 @@ const Calendar = () => {
           />
 
           {/* Droppable Event Zones */}
-          {events.map((eventCategory, categoryIndex) => (
-            <Droppable
-              droppableId={eventCategory.category}
-              key={eventCategory.category}
-            >
+          {eventsByClient.map((client, clientIndex) => (
+            <Droppable droppableId={client.client} key={client.client}>
               {(provided) => (
                 <Box
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   sx={{
                     position: "relative",
-                    minHeight: "50px", // Augmenter la hauteur pour correspondre à la catégorie
+                    minHeight: "50px",
                     paddingBottom: "16px",
                     borderRadius: "10px",
                     marginBottom: "16px",
                     display: "flex",
-                    flexDirection: "column", // Assurer une bonne organisation verticale
-                    justifyContent: "center", // Alignement vertical des événements
+                    flexDirection: "column",
+                    justifyContent: "center",
                   }}
                 >
                   {/* Draggable Event Items */}
-                  {expanded.includes(eventCategory.category) &&
-                  eventCategory.items.length > 0 ? (
-                    eventCategory.items.map((event, eventIndex) => (
+                  {expanded.includes(client.client) &&
+                  client.items.length > 0 ? (
+                    client.items.map((event, eventIndex) => (
                       <Draggable
-                        key={`${event.title}-${categoryIndex}-${eventIndex}`}
-                        draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
+                        key={`${event.title}-${clientIndex}-${eventIndex}`}
+                        draggableId={`${event.title}-${clientIndex}-${eventIndex}`}
                         index={eventIndex}
                       >
                         {(provided, snapshot) => (
@@ -402,7 +455,7 @@ const Calendar = () => {
                                 ((event.endHour - event.startHour) / 12) * 100
                               }%`,
                               height: "40px",
-                              backgroundColor: getEventColor(categoryIndex),
+                              backgroundColor: getEventColor(clientIndex),
                               border: snapshot.isDragging
                                 ? "2px solid #90caf9"
                                 : "1px solid #90caf9",
@@ -416,7 +469,7 @@ const Calendar = () => {
                               transition: "all 0.3s ease-in-out",
                               zIndex: snapshot.isDragging ? 2 : 1,
                               "&:hover": {
-                                backgroundColor: "#e1f5fe", // Light hover effect
+                                backgroundColor: "#e1f5fe",
                               },
                             }}
                             tabIndex={0}
@@ -458,11 +511,11 @@ const Calendar = () => {
         </Box>
 
         {/* Event Modal */}
-        <EventModal
+        <CustomerEvent
           open={modalOpen}
           onClose={handleModalClose}
           event={selectedEvent}
-          categories={expanded}
+          clients={expanded}
           onSave={handleEventSave}
         />
       </Box>
@@ -470,4 +523,4 @@ const Calendar = () => {
   );
 };
 
-export default Calendar;
+export default CalendarUser;

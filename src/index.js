@@ -1,19 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import CashflowUI from "./Pages/CashflowUI/CashflowUI";
 import Dashboard from "./Pages/Dashboard/Dashboard";
+import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 
 const App = () => {
   return (
-    <React.StrictMode>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<CashflowUI />} />
-        </Routes>
-      </Router>
-    </React.StrictMode>
+    <Router>
+      <Routes>
+        <Route path="/planning/categories" element={<Dashboard />} />
+        <Route path="/planning/customers" element={<UserDashboard />} />
+      </Routes>
+    </Router>
   );
 };
 const root = ReactDOM.createRoot(document.getElementById("root"));
