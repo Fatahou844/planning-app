@@ -1,18 +1,32 @@
+import AddIcon from "@mui/icons-material/Add"; // Icone de plus pour le bouton flottant
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
-  AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Fab,
+  MenuItem,
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import eventsData from "../../data/eventsData.json";
 import EventModal from "../EventModal";
 
 const Timeline = () => (
-  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: "1.8rem",
+    }}
+  >
     {[...Array(12).keys()].map((hour) => (
       <Box
         key={hour}
@@ -43,99 +57,9 @@ const CurrentTimeLine = ({ currentHour }) => (
 );
 
 const Calendar = () => {
-  const [events, setEvents] = useState([
-    {
-      category: "Entretien / Révision",
-      summary: "3 events",
-      date: "Jan 31 - Feb 4",
-      items: [
-        {
-          id: "event-1", // Identifiant unique pour chaque événement
-          title: "Entretiens",
-          person: "John Doe",
-          operationType: "Maintenance",
-          startHour: 8,
-          endHour: 10,
-        },
-      ],
-    },
-    {
-      category: "Rapide",
-      summary: "3 events",
-      date: "Jan 31 - Feb 4",
-      items: [
-        {
-          id: "event-2", // Identifiant unique pour chaque événement
-          title: "Opération A",
-          person: "Jane Smith",
-          operationType: "Quick Service",
-          startHour: 8,
-          endHour: 10,
-        },
-        {
-          id: "event-3", // Identifiant unique pour chaque événement
-          title: "Opération B",
-          person: "Paul Brown",
-          operationType: "Quick Check",
-          startHour: 9,
-          endHour: 12,
-        },
-        {
-          id: "event-4", // Identifiant unique pour chaque événement
-          title: "Opération C",
-          person: "Emily White",
-          operationType: "Quick Fix",
-          startHour: 14,
-          endHour: 17,
-        },
-      ],
-    },
-    {
-      category: "Mécanique",
-      summary: "4 events",
-      date: "Jan 31 - Feb 4",
-      items: [
-        {
-          id: "event-5", // Identifiant unique pour chaque événement
-          title: "Ateliers",
-          person: "Michael Green",
-          operationType: "Workshop",
-          startHour: 13,
-          endHour: 15,
-        },
-      ],
-    },
-    {
-      category: "Électricité",
-      summary: "3 events",
-      date: "Jan 31 - Feb 4",
-      items: [
-        {
-          id: "event-6", // Identifiant unique pour chaque événement
-          title: "Électricité",
-          person: "Laura Blue",
-          operationType: "Electrical Check",
-          startHour: 15,
-          endHour: 18,
-        },
-      ],
-    },
-    {
-      category: "Climatisation",
-      summary: "4 events",
-      date: "Jan 31 - Feb 4",
-      items: [
-        {
-          id: "event-7", // Identifiant unique pour chaque événement
-          title: "Climatisation",
-          person: "Daniel Gray",
-          operationType: "AC Service",
-          startHour: 16,
-          endHour: 18,
-        },
-      ],
-    },
-  ]);
+  const [events, setEvents] = useState(eventsData);
+  const [eventsCopied, setEventsCopied] = useState(eventsData);
+
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
     title: "Entretiens",
@@ -145,8 +69,6 @@ const Calendar = () => {
     endHour: 10,
   });
   const [modalOpen, setModalOpen] = useState(false);
-
-  const [contextMenu, setContextMenu] = useState(null);
   const [filterDate, setFilterDate] = useState("");
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
@@ -158,15 +80,6 @@ const Calendar = () => {
 
   const currentHour = new Date().getHours();
 
-  const handleContextMenu = (event, calendarEvent) => {
-    event.preventDefault();
-    setSelectedEvent(calendarEvent);
-    setContextMenu({
-      mouseX: event.clientX - 2,
-      mouseY: event.clientY - 4,
-    });
-  };
-
   const handleChange = (category) => {
     setExpanded((prev) =>
       prev.includes(category)
@@ -175,62 +88,11 @@ const Calendar = () => {
     );
   };
 
-  const handleDateChange = (event) => {
-    setFilterDate(event.target.value);
-  };
-
-  const onDragEnd = (result) => {
-    const { source, destination, draggableId } = result;
-
-    // Si l'utilisateur n'a pas relâché l'élément dans une zone valide
-    if (!destination) return;
-
-    // Si l'événement est déplacé dans une autre catégorie, on annule
-    if (source.droppableId !== destination.droppableId) return;
-
-    // Trouver la catégorie de l'événement déplacé
-    const categoryIndex = events.findIndex(
-      (cat) => cat.category === source.droppableId
-    );
-    const category = events[categoryIndex];
-
-    // Extraire l'événement déplacé
-    const [movedEvent] = category.items.splice(source.index, 1);
-
-    setSelectedEvent(movedEvent);
-    setModalOpen(true);
-  };
-
-  const onDragUpdate = (update) => {
-    if (!update.destination || !update.source) return;
-
-    // Récupérer la position horizontale (offset) de l'élément en cours de déplacement
-    const draggedElement = document.querySelector(
-      `[data-rbd-drag-handle-draggable-id="${update.draggableId}"]`
-    );
-
-    if (draggedElement) {
-      // Obtenir la position X de l'élément pendant le déplacement
-      const draggedX = draggedElement.getBoundingClientRect().left;
-
-      // Définir une largeur en pixels pour une heure
-      const pixelsPerHour = 100; // Ajuste cette valeur selon ta timeline
-
-      // Calculer l'heure à partir de la position X
-      const startHour = 7; // Par exemple, la timeline commence à 7h
-      const draggedHour = startHour + Math.floor(draggedX / pixelsPerHour);
-
-      // Afficher l'heure en temps réel dans la console pendant le drag
-      console.log(`Heure actuelle pendant le déplacement: ${draggedHour}:00`);
-    }
-  };
-
   const handleEventClick = (event) => {
     console.log("EVENT CURRENT", event);
     setSelectedEvent(event);
     setModalOpen(true);
   };
-
   const handleModalClose = () => {
     setModalOpen(false);
   };
@@ -244,6 +106,7 @@ const Calendar = () => {
     }));
     setEvents(updatedEvents);
   };
+
   // Fonctions pour assigner les couleurs
   const getCategoryColor = (index) => {
     const colors = ["#FFB74D", "#64B5F6", "#81C784", "#9575CD", "#FF8A65"];
@@ -255,29 +118,171 @@ const Calendar = () => {
     return colors[index % colors.length];
   };
 
-  const handleCloseContextMenu = () => {
-    setContextMenu(null);
+  const calculateEventLines = (items) => {
+    // Trier les événements par heure de début
+    items.sort((a, b) => a.startHour - b.startHour);
+
+    // Tableaux pour stocker les lignes
+    const lines = [];
+
+    items.forEach((event) => {
+      let placed = false;
+      for (let line of lines) {
+        // Vérifier si l'événement chevauche un autre événement de la ligne
+        if (!line.some((e) => e.endHour > event.startHour)) {
+          line.push(event);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        lines.push([event]);
+      }
+    });
+
+    return lines;
   };
 
-  const contextMenuItems = [
-    {
-      label: "Edit Event",
-      onClick: () => {
-        console.log("Edit", selectedEvent);
-        handleCloseContextMenu(); // Fermer le menu après action
-      },
-    },
-    {
-      label: "Delete Event",
-      onClick: () => {
-        console.log("Delete", selectedEvent);
-        handleCloseContextMenu(); // Fermer le menu après action
-      },
-    },
-  ];
+  const calculateCategoryHeight = (items) => {
+    const lines = calculateEventLines(items);
+    return lines.length * 60; // Ajustez la hauteur par ligne ici
+  };
+
+  const [selectedDate, setSelectedDate] = useState("");
+
+  useEffect(() => {
+    const today = new Date();
+    // Formatage de la date en YYYY-MM-DD
+    const formattedDate = today.toISOString().split("T")[0];
+    setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
+  }, []); // État pour stocker la date sélectionnée
+
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
+  };
+
+  const filterByDate = (events, date) => {
+    return events
+      .map((category) => ({
+        ...category,
+        items: category.items.filter((item) => item.date === date),
+      }))
+      .filter((category) => category.items.length > 0);
+  };
+
+  useEffect(() => {
+    const filteredEvents = selectedDate
+      ? filterByDate(eventsCopied, selectedDate)
+      : events;
+
+    setEvents(filteredEvents);
+  }, [selectedDate]);
+
+  // État pour afficher/masquer le modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // État pour stocker les nouvelles données du formulaire
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    person: "",
+    operationType: "",
+    startHour: "",
+    endHour: "",
+    date: "",
+    category: "Entretien / Révision", // Catégorie par défaut
+  });
+
+  // Ajouter un événement dans la catégorie correspondante
+  const addEvent = () => {
+    // const updatedEvents = events.map((categoryGroup) => {
+    //   if (categoryGroup.category === newEvent.category) {
+    //     return {
+    //       ...categoryGroup,
+    //       items: [
+    //         ...categoryGroup.items,
+    //         {
+    //           id: `event-${Date.now()}`, // Générer un ID unique
+    //           title: newEvent.title,
+    //           person: newEvent.person,
+    //           operationType: newEvent.operationType,
+    //           startHour: parseInt(newEvent.startHour),
+    //           endHour: parseInt(newEvent.endHour),
+    //           date: newEvent.date,
+    //         },
+    //       ],
+    //     };
+    //   }
+    //   return categoryGroup;
+    // });
+    const updatedEvents = [...events]; // Crée une copie de l'array events
+
+    const categoryExists = updatedEvents.some(
+      (categoryGroup) => categoryGroup.category === newEvent.category
+    );
+
+    if (categoryExists) {
+      // Si la catégorie existe déjà, on ajoute l'événement à cette catégorie
+      updatedEvents.forEach((categoryGroup) => {
+        if (categoryGroup.category === newEvent.category) {
+          categoryGroup.items.push({
+            id: `event-${Date.now()}`, // Générer un ID unique
+            title: newEvent.title,
+            person: newEvent.person,
+            operationType: newEvent.operationType,
+            startHour: parseInt(newEvent.startHour),
+            endHour: parseInt(newEvent.endHour),
+            date: newEvent.date,
+          });
+        }
+      });
+    } else {
+      // Si la catégorie n'existe pas, on en crée une nouvelle
+      updatedEvents.push({
+        category: newEvent.category,
+        summary: "1 event", // Tu peux ajuster ce texte en fonction de la logique souhaitée
+        date: newEvent.date, // Ou définir une autre logique pour la date
+        items: [
+          {
+            id: `event-${Date.now()}`, // Générer un ID unique
+            title: newEvent.title,
+            person: newEvent.person,
+            operationType: newEvent.operationType,
+            startHour: parseInt(newEvent.startHour),
+            endHour: parseInt(newEvent.endHour),
+            date: newEvent.date,
+          },
+        ],
+      });
+    }
+
+    // Mettre à jour le state avec le nouvel événement ajouté
+    setEvents(updatedEvents);
+
+    console.log("UPDATED EVENTS", updatedEvents);
+
+    // Réinitialiser le formulaire et fermer le modal
+    setNewEvent({
+      title: "",
+      person: "",
+      operationType: "",
+      startHour: "",
+      endHour: "",
+      date: "",
+      category: "Entretien / Révision",
+    });
+    setIsModalOpen(false); // Fermer le modal
+  };
+
+  // Gérer la saisie dans le formulaire
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewEvent({ ...newEvent, [name]: value });
+  };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate}>
+    <DragDropContext>
+      {/* Modal pour ajouter un événement */}
+
       <Box
         sx={{
           padding: 3,
@@ -290,42 +295,159 @@ const Calendar = () => {
         <Box sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}>
           {/* Date Filter Input */}
           <TextField
-            label="Filter by Date"
+            label="Filtrer par date"
             variant="outlined"
             fullWidth
-            sx={{ mb: 2 }}
-            value={filterDate}
+            sx={{ mb: 0.1 }}
+            value={selectedDate}
+            type="date"
             onChange={handleDateChange}
           />
           {/* Events Accordion */}
-          {events.map((eventCategory, index) => (
-            <Accordion
-              key={eventCategory.category}
-              expanded={expanded.includes(eventCategory.category)}
-              onChange={() => handleChange(eventCategory.category)}
-              sx={{
-                backgroundColor: getCategoryColor(index), // Appliquer la couleur de la catégorie
-                borderRadius: "8px",
-                marginBottom: "8px",
-                boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                "&:before": {
-                  display: "none", // Retirer la ligne avant l'Accordion pour un aspect plus propre
-                },
-              }}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">{eventCategory.category}</Typography>
-                <Typography variant="caption" sx={{ ml: 1 }}>
-                  {eventCategory.summary}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body2" color="textSecondary">
-                  {eventCategory.date}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+          {events.map((eventCategory, index) => {
+            const categoryHeight = calculateCategoryHeight(eventCategory.items);
+
+            return (
+              <Accordion
+                key={eventCategory.category}
+                expanded={expanded.includes(eventCategory.category)}
+                onChange={() => handleChange(eventCategory.category)}
+                sx={{
+                  backgroundColor: getCategoryColor(index),
+                  borderRadius: "8px",
+                  marginBottom: "8px",
+                  boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                  height: `${categoryHeight}px`, // Hauteur dynamique
+                  "&:before": {
+                    display: "none",
+                  },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography variant="body2">
+                    {eventCategory.category}
+                  </Typography>
+                  {/* <Typography variant="caption" sx={{ ml: 1 }}>
+                    {eventCategory.summary}
+                  </Typography> */}
+                </AccordionSummary>
+                {/* <AccordionDetails>
+                  <Typography variant="body2" color="textSecondary">
+                    {eventCategory.date}
+                  </Typography>
+                </AccordionDetails> */}
+              </Accordion>
+            );
+          })}
+          {/* Floating Action Button */}
+          <Fab
+            color="primary"
+            aria-label="add"
+            sx={{
+              position: "fixed",
+              bottom: 16,
+              right: 16,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              width: 170, // Ajuste la largeur pour s'assurer que le texte est visible
+              padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+              borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+            }}
+            onClick={() => setIsModalOpen(true)}
+          >
+            <AddIcon />
+            <Typography sx={{ ml: 1 }}>Ajouter un événement</Typography>
+          </Fab>
+
+          {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
+          <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+            <DialogTitle>Ajouter un événement</DialogTitle>
+            <DialogContent>
+              <form>
+                <TextField
+                  label="Titre"
+                  name="title"
+                  value={newEvent.title}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  label="Personne"
+                  name="person"
+                  value={newEvent.person}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  label="Type d'opération"
+                  name="operationType"
+                  value={newEvent.operationType}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  label="Heure de début"
+                  name="startHour"
+                  type="number"
+                  value={newEvent.startHour}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  label="Heure de fin"
+                  name="endHour"
+                  type="number"
+                  value={newEvent.endHour}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  name="date"
+                  type="date"
+                  value={newEvent.date}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  select
+                  label="Catégorie"
+                  name="category"
+                  value={newEvent.category}
+                  onChange={handleInputChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                >
+                  {eventsCopied.map((categoryGroup, index) => (
+                    <MenuItem key={index} value={categoryGroup.category}>
+                      {categoryGroup.category}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </form>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={addEvent} color="primary">
+                Ajouter l'événement
+              </Button>
+              <Button onClick={() => setIsModalOpen(false)} color="secondary">
+                Annuler
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
 
         {/* Main Content Section */}
@@ -344,128 +466,104 @@ const Calendar = () => {
           {/* Current Time Indicator */}
           <CurrentTimeLine currentHour={currentHour} />
 
-          {/* Time Zone Marking */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: `${((12 - 7) / 12) * 100}%`,
-              width: `${((14 - 12) / 12) * 100}%`,
-              height: "100%",
-              backgroundColor: "rgba(200, 200, 200, 0.3)", // Light gray zone
-              zIndex: 0,
-            }}
-          />
-
           {/* Droppable Event Zones */}
-          {events.map((eventCategory, categoryIndex) => (
-            <Droppable
-              droppableId={eventCategory.category}
-              key={eventCategory.category}
-            >
-              {(provided) => (
-                <Box
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  sx={{
-                    position: "relative",
-                    minHeight: "50px", // Augmenter la hauteur pour correspondre à la catégorie
-                    paddingBottom: "16px",
-                    borderRadius: "10px",
-                    marginBottom: "16px",
-                    display: "flex",
-                    flexDirection: "column", // Assurer une bonne organisation verticale
-                    justifyContent: "center", // Alignement vertical des événements
-                  }}
-                >
-                  {/* Draggable Event Items */}
-                  {expanded.includes(eventCategory.category) &&
-                  eventCategory.items.length > 0 ? (
-                    eventCategory.items.map((event, eventIndex) => (
-                      <Draggable
-                        key={`${event.title}-${categoryIndex}-${eventIndex}`}
-                        draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
-                        index={eventIndex}
-                      >
-                        {(provided, snapshot) => (
-                          <Box
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onContextMenu={(e) => handleContextMenu(e, event)}
-                            onClick={() => handleEventClick(event)}
-                            sx={{
-                              position: "absolute",
-                              top: `${(event.startHour - 7) * 40}px`,
-                              left: `${((event.startHour - 7) / 12) * 100}%`,
-                              width: `${
-                                ((event.endHour - event.startHour) / 12) * 100
-                              }%`,
-                              height: "40px",
-                              backgroundColor: getEventColor(categoryIndex),
-                              border: snapshot.isDragging
-                                ? "2px solid #90caf9"
-                                : "1px solid #90caf9",
-                              borderRadius: "10px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              boxShadow: snapshot.isDragging
-                                ? "0 3px 6px rgba(0,0,0,0.2)"
-                                : "0 1px 3px rgba(0,0,0,0.12)",
-                              transition: "all 0.3s ease-in-out",
-                              zIndex: snapshot.isDragging ? 2 : 1,
-                              "&:hover": {
-                                backgroundColor: "#e1f5fe", // Light hover effect
-                              },
-                            }}
-                            tabIndex={0}
-                          >
-                            {/* Event Details */}
-                            <Typography variant="body2" sx={{ p: 1 }}>
-                              {event.person}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: "bold", p: 1 }}
-                            >
-                              {event.title}
-                            </Typography>
-                            <Typography variant="caption">
-                              {event.startHour}:00 - {event.endHour}:00
-                            </Typography>
-                            {provided.placeholder}
-                          </Box>
-                        )}
-                      </Draggable>
-                    ))
-                  ) : (
-                    <Typography
-                      sx={{
-                        textAlign: "center",
-                        color: "textSecondary",
-                        padding: "8px",
-                      }}
-                    >
-                      Aucun événement à afficher
-                    </Typography>
-                  )}
-                  {provided.placeholder}
-                </Box>
-              )}
-            </Droppable>
-          ))}
-        </Box>
+          {events.map((eventCategory, categoryIndex) => {
+            const lines = calculateEventLines(eventCategory.items);
+            const categoryHeight = lines.length * 60; // Hauteur pour chaque ligne
 
-        {/* Event Modal */}
-        <EventModal
-          open={modalOpen}
-          onClose={handleModalClose}
-          event={selectedEvent}
-          categories={expanded}
-          onSave={handleEventSave}
-        />
+            return (
+              <Droppable
+                droppableId={eventCategory.category}
+                key={eventCategory.category}
+              >
+                {(provided) => (
+                  <Box
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    sx={{
+                      position: "relative",
+                      // height: `${categoryHeight}px`, // Hauteur dynamique
+                      borderRadius: "10px",
+                      marginBottom: "16px",
+                      // backgroundColor: "white",
+                      padding: 1,
+                      // boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {lines.map((line, lineIndex) => (
+                      <Box
+                        key={`line-${lineIndex}`}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          position: "relative",
+                          height: "50px", // Hauteur de chaque ligne
+                          marginTop: lineIndex > 0 ? "8px" : 0,
+                        }}
+                      >
+                        {line.map((event, eventIndex) => (
+                          <Draggable
+                            key={`${event.title}-${categoryIndex}-${eventIndex}`}
+                            draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
+                            index={eventIndex}
+                          >
+                            {(provided, snapshot) => (
+                              <Box
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                onClick={() => handleEventClick(event)}
+                                sx={{
+                                  position: "absolute",
+                                  left: `${
+                                    ((event.startHour - 7) / 12) * 100
+                                  }%`,
+                                  width: `${
+                                    ((event.endHour - event.startHour) / 12) *
+                                    100
+                                  }%`,
+                                  height: "40px",
+                                  backgroundColor: getEventColor(categoryIndex),
+                                  border: snapshot.isDragging
+                                    ? "2px solid #90caf9"
+                                    : "1px solid #90caf9",
+                                  borderRadius: "10px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  transition: "background-color 0.3s ease",
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  color="textSecondary"
+                                >
+                                  {event.title}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Draggable>
+                        ))}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Droppable>
+            );
+          })}
+        </Box>
       </Box>
+      {/* Event Modal */}
+
+      <EventModal
+        open={modalOpen}
+        onClose={handleModalClose}
+        event={selectedEvent}
+        categories={expanded}
+        onSave={handleEventSave}
+      />
     </DragDropContext>
   );
 };

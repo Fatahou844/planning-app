@@ -1,0 +1,217 @@
+[
+  {
+    "category": "Entretien / Révision",
+    "summary": "4 events",
+    "date": "Sept 30 - Oct 5",
+    "items": [
+      {
+        "id": "event-30",
+        "title": "Révision générale",
+        "person": "John Doe",
+        "operationType": "Maintenance",
+        "startHour": 8,
+        "endHour": 10,
+        "date": "2024-09-30"
+      },
+       {
+        "id": "event-301",
+        "title": "Révision générale",
+        "person": "John Doe II",
+        "operationType": "Maintenance",
+        "startHour": 8,
+        "endHour": 11,
+        "date": "2024-09-30"
+      },
+      {
+        "id": "event-31",
+        "title": "Inspection préventive",
+        "person": "John Doe",
+        "operationType": "Inspection",
+        "startHour": 10,
+        "endHour": 12,
+        "date": "2024-10-01"
+      },
+      {
+        "id": "event-32",
+        "title": "Vérification des équipements",
+        "person": "John Doe",
+        "operationType": "Equipment Check",
+        "startHour": 9,
+        "endHour": 11,
+        "date": "2024-10-03"
+      },
+      {
+        "id": "event-33",
+        "title": "Réparation urgente",
+        "person": "John Doe",
+        "operationType": "Emergency Fix",
+        "startHour": 14,
+        "endHour": 16,
+        "date": "2024-10-05"
+      }
+    ]
+  },
+  {
+    "category": "Rapide",
+    "summary": "4 events",
+    "date": "Sept 30 - Oct 5",
+    "items": [
+      {
+        "id": "event-34",
+        "title": "Changement rapide d'huile",
+        "person": "Jane Smith",
+        "operationType": "Quick Service",
+        "startHour": 8,
+        "endHour": 9,
+        "date": "2024-09-30"
+      },
+      {
+        "id": "event-35",
+        "title": "Réglage rapide des freins",
+        "person": "Jane Smith",
+        "operationType": "Quick Fix",
+        "startHour": 9,
+        "endHour": 11,
+        "date": "2024-10-02"
+      },
+      {
+        "id": "event-36",
+        "title": "Contrôle rapide",
+        "person": "Paul Brown",
+        "operationType": "Quick Check",
+        "startHour": 10,
+        "endHour": 12,
+        "date": "2024-10-03"
+      },
+      {
+        "id": "event-37",
+        "title": "Petite réparation",
+        "person": "Paul Brown",
+        "operationType": "Quick Fix",
+        "startHour": 14,
+        "endHour": 15,
+        "date": "2024-10-05"
+      }
+    ]
+  },
+  {
+    "category": "Mécanique",
+    "summary": "4 events",
+    "date": "Sept 30 - Oct 5",
+    "items": [
+      {
+        "id": "event-38",
+        "title": "Révision moteur",
+        "person": "Michael Green",
+        "operationType": "Engine Check",
+        "startHour": 13,
+        "endHour": 16,
+        "date": "2024-09-30"
+      },
+      {
+        "id": "event-39",
+        "title": "Réparation de la boîte de vitesses",
+        "person": "Michael Green",
+        "operationType": "Transmission Repair",
+        "startHour": 10,
+        "endHour": 13,
+        "date": "2024-10-01"
+      },
+      {
+        "id": "event-40",
+        "title": "Remplacement des suspensions",
+        "person": "Michael Green",
+        "operationType": "Suspension Replacement",
+        "startHour": 10,
+        "endHour": 14,
+        "date": "2024-10-03"
+      },
+      {
+        "id": "event-41",
+        "title": "Révision complète",
+        "person": "Michael Green",
+        "operationType": "Full Check",
+        "startHour": 14,
+        "endHour": 17,
+        "date": "2024-10-05"
+      }
+    ]
+  },
+  {
+    "category": "Électricité",
+    "summary": "4 events",
+    "date": "Sept 30 - Oct 5",
+    "items": [
+      {
+        "id": "event-42",
+        "title": "Vérification électrique",
+        "person": "Laura Blue",
+        "operationType": "Electrical Check",
+        "startHour": 15,
+        "endHour": 18,
+        "date": "2024-09-30"
+      },
+      {
+        "id": "event-43",
+        "title": "Réparation des circuits",
+        "person": "Laura Blue",
+        "operationType": "Circuit Repair",
+        "startHour": 14,
+        "endHour": 17,
+        "date": "2024-10-01"
+      },
+      {
+        "id": "event-44",
+        "title": "Installation des nouveaux câbles",
+        "person": "Laura Blue",
+        "operationType": "Cable Installation",
+        "startHour": 13,
+        "endHour": 16,
+        "date": "2024-10-03"
+      },
+      {
+        "id": "event-45",
+        "title": "Vérification finale",
+        "person": "Laura Blue",
+        "operationType": "Final Check",
+        "startHour": 16,
+        "endHour": 18,
+        "date": "2024-10-05"
+      }
+    ]
+  },
+  {
+    "category": "Climatisation",
+    "summary": "3 events",
+    "date": "Sept 30 - Oct 5",
+    "items": [
+      {
+        "id": "event-46",
+        "title": "Service AC rapide",
+        "person": "Daniel Gray",
+        "operationType": "AC Quick Service",
+        "startHour": 9,
+        "endHour": 11,
+        "date": "2024-09-30"
+      },
+      {
+        "id": "event-47",
+        "title": "Installation AC",
+        "person": "Daniel Gray",
+        "operationType": "AC Installation",
+        "startHour": 10,
+        "endHour": 12,
+        "date": "2024-10-01"
+      },
+      {
+        "id": "event-48",
+        "title": "Révision système AC",
+        "person": "Daniel Gray",
+        "operationType": "AC System Check",
+        "startHour": 14,
+        "endHour": 16,
+        "date": "2024-10-03"
+      }
+    ]
+  }
+]

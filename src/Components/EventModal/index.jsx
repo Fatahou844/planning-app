@@ -16,6 +16,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
   const [editedEvent, setEditedEvent] = useState(event);
   useEffect(() => {
     setEditedEvent(event); // Met à jour l'événement édité lorsque l'événement sélectionné change
+    console.log("EVENT", event);
   }, [event]);
   if (!event) return null; // Ne pas afficher le modal si l'événement est null
 
@@ -29,16 +30,14 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
     onClose();
   };
 
-  console.log("Open modal");
-
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Edit Event</DialogTitle>
+      <DialogTitle>Modifier l'evenement</DialogTitle>
       <DialogContent>
         <TextField
           margin="dense"
           name="title"
-          label="Title"
+          label="Titre"
           type="text"
           fullWidth
           value={editedEvent.title}
@@ -54,7 +53,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
           onChange={handleChange}
         />
         <FormControl fullWidth margin="dense">
-          <InputLabel>Category</InputLabel>
+          <InputLabel>Catégorie</InputLabel>
           <Select
             name="category"
             value={editedEvent.category}
@@ -71,7 +70,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
         <TextField
           margin="dense"
           name="startHour"
-          label="Start Hour"
+          label="Heure de début"
           type="number"
           fullWidth
           value={editedEvent.startHour}
@@ -80,7 +79,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
         <TextField
           margin="dense"
           name="endHour"
-          label="End Hour"
+          label="Heure de fin"
           type="number"
           fullWidth
           value={editedEvent.endHour}
@@ -88,8 +87,8 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave}>Save</Button>
+        <Button onClick={onClose}>Annuler</Button>
+        <Button onClick={handleSave}>Enregistrer</Button>
       </DialogActions>
     </Dialog>
   );
