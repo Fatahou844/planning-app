@@ -69,7 +69,6 @@ const Calendar = () => {
     endHour: 10,
   });
   const [modalOpen, setModalOpen] = useState(false);
-  const [filterDate, setFilterDate] = useState("");
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
     "Rapide",
@@ -194,26 +193,6 @@ const Calendar = () => {
 
   // Ajouter un événement dans la catégorie correspondante
   const addEvent = () => {
-    // const updatedEvents = events.map((categoryGroup) => {
-    //   if (categoryGroup.category === newEvent.category) {
-    //     return {
-    //       ...categoryGroup,
-    //       items: [
-    //         ...categoryGroup.items,
-    //         {
-    //           id: `event-${Date.now()}`, // Générer un ID unique
-    //           title: newEvent.title,
-    //           person: newEvent.person,
-    //           operationType: newEvent.operationType,
-    //           startHour: parseInt(newEvent.startHour),
-    //           endHour: parseInt(newEvent.endHour),
-    //           date: newEvent.date,
-    //         },
-    //       ],
-    //     };
-    //   }
-    //   return categoryGroup;
-    // });
     const updatedEvents = [...events]; // Crée une copie de l'array events
 
     const categoryExists = updatedEvents.some(
@@ -327,15 +306,7 @@ const Calendar = () => {
                   <Typography variant="body2">
                     {eventCategory.category}
                   </Typography>
-                  {/* <Typography variant="caption" sx={{ ml: 1 }}>
-                    {eventCategory.summary}
-                  </Typography> */}
                 </AccordionSummary>
-                {/* <AccordionDetails>
-                  <Typography variant="body2" color="textSecondary">
-                    {eventCategory.date}
-                  </Typography>
-                </AccordionDetails> */}
               </Accordion>
             );
           })}

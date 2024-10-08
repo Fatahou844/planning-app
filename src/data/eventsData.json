@@ -10,17 +10,45 @@
         "person": "John Doe",
         "operationType": "Maintenance",
         "startHour": 8,
+        "startMinute": 0,
         "endHour": 10,
-        "date": "2024-09-30"
+        "endMinute": 0,
+        "date": "2024-09-30",
+        "orNumber": "OR-001",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "1234567890",
+        "email": "john.doe@example.com",
+        "registration": "AB-123-CD",
+        "vin": "1HGBH41JXMN109186",
+        "model": "Toyota Corolla",
+        "color": "Gris",
+        "works": "Révision complète",
+        "price": "150€",
+        "operator": "Technicien A"
       },
-       {
+      {
         "id": "event-301",
         "title": "Révision générale",
         "person": "John Doe II",
         "operationType": "Maintenance",
         "startHour": 8,
+        "startMinute": 0,
         "endHour": 11,
-        "date": "2024-09-30"
+        "endMinute": 0,
+        "date": "2024-09-30",
+        "orNumber": "OR-002",
+        "firstName": "John",
+        "lastName": "Doe II",
+        "phone": "1234567891",
+        "email": "john.doe2@example.com",
+        "registration": "AB-456-CD",
+        "vin": "2HGBH41JXMN109187",
+        "model": "Honda Civic",
+        "color": "Noir",
+        "works": "Révision intermédiaire",
+        "price": "100€",
+        "operator": "Technicien B"
       },
       {
         "id": "event-31",
@@ -28,8 +56,22 @@
         "person": "John Doe",
         "operationType": "Inspection",
         "startHour": 10,
+        "startMinute": 0,
         "endHour": 12,
-        "date": "2024-10-01"
+        "endMinute": 0,
+        "date": "2024-10-01",
+        "orNumber": "OR-003",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "1234567890",
+        "email": "john.doe@example.com",
+        "registration": "AB-123-CD",
+        "vin": "1HGBH41JXMN109186",
+        "model": "Toyota Corolla",
+        "color": "Gris",
+        "works": "Inspection de routine",
+        "price": "50€",
+        "operator": "Technicien A"
       },
       {
         "id": "event-32",
@@ -37,8 +79,22 @@
         "person": "John Doe",
         "operationType": "Equipment Check",
         "startHour": 9,
+        "startMinute": 0,
         "endHour": 11,
-        "date": "2024-10-03"
+        "endMinute": 0,
+        "date": "2024-10-03",
+        "orNumber": "OR-004",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "1234567890",
+        "email": "john.doe@example.com",
+        "registration": "AB-123-CD",
+        "vin": "1HGBH41JXMN109186",
+        "model": "Toyota Corolla",
+        "color": "Gris",
+        "works": "Vérification complète",
+        "price": "80€",
+        "operator": "Technicien C"
       },
       {
         "id": "event-33",
@@ -46,8 +102,22 @@
         "person": "John Doe",
         "operationType": "Emergency Fix",
         "startHour": 14,
+        "startMinute": 0,
         "endHour": 16,
-        "date": "2024-10-05"
+        "endMinute": 0,
+        "date": "2024-10-05",
+        "orNumber": "OR-005",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "1234567890",
+        "email": "john.doe@example.com",
+        "registration": "AB-123-CD",
+        "vin": "1HGBH41JXMN109186",
+        "model": "Toyota Corolla",
+        "color": "Gris",
+        "works": "Réparation moteur",
+        "price": "300€",
+        "operator": "Technicien D"
       }
     ]
   },
@@ -62,8 +132,22 @@
         "person": "Jane Smith",
         "operationType": "Quick Service",
         "startHour": 8,
+        "startMinute": 0,
         "endHour": 9,
-        "date": "2024-09-30"
+        "endMinute": 0,
+        "date": "2024-09-30",
+        "orNumber": "OR-006",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "phone": "1234567892",
+        "email": "jane.smith@example.com",
+        "registration": "XY-789-CD",
+        "vin": "3HGBH41JXMN109188",
+        "model": "Peugeot 208",
+        "color": "Rouge",
+        "works": "Vidange rapide",
+        "price": "40€",
+        "operator": "Technicien E"
       },
       {
         "id": "event-35",
@@ -71,8 +155,22 @@
         "person": "Jane Smith",
         "operationType": "Quick Fix",
         "startHour": 9,
+        "startMinute": 0,
         "endHour": 11,
-        "date": "2024-10-02"
+        "endMinute": 0,
+        "date": "2024-10-02",
+        "orNumber": "OR-007",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "phone": "1234567892",
+        "email": "jane.smith@example.com",
+        "registration": "XY-789-CD",
+        "vin": "3HGBH41JXMN109188",
+        "model": "Peugeot 208",
+        "color": "Rouge",
+        "works": "Réglage rapide des freins",
+        "price": "60€",
+        "operator": "Technicien F"
       },
       {
         "id": "event-36",
@@ -80,8 +178,22 @@
         "person": "Paul Brown",
         "operationType": "Quick Check",
         "startHour": 10,
+        "startMinute": 0,
         "endHour": 12,
-        "date": "2024-10-03"
+        "endMinute": 0,
+        "date": "2024-10-03",
+        "orNumber": "OR-008",
+        "firstName": "Paul",
+        "lastName": "Brown",
+        "phone": "1234567893",
+        "email": "paul.brown@example.com",
+        "registration": "YZ-456-EF",
+        "vin": "4HGBH41JXMN109189",
+        "model": "Renault Clio",
+        "color": "Bleu",
+        "works": "Contrôle rapide",
+        "price": "50€",
+        "operator": "Technicien G"
       },
       {
         "id": "event-37",
@@ -89,129 +201,79 @@
         "person": "Paul Brown",
         "operationType": "Quick Fix",
         "startHour": 14,
+        "startMinute": 0,
         "endHour": 15,
-        "date": "2024-10-05"
+        "endMinute": 0,
+        "date": "2024-10-05",
+        "orNumber": "OR-009",
+        "firstName": "Paul",
+        "lastName": "Brown",
+        "phone": "1234567893",
+        "email": "paul.brown@example.com",
+        "registration": "YZ-456-EF",
+        "vin": "4HGBH41JXMN109189",
+        "model": "Renault Clio",
+        "color": "Bleu",
+        "works": "Réparation rapide",
+        "price": "70€",
+        "operator": "Technicien H"
       }
     ]
   },
-  {
+    {
     "category": "Mécanique",
-    "summary": "4 events",
+    "summary": "1 events",
     "date": "Sept 30 - Oct 5",
-    "items": [
-      {
-        "id": "event-38",
-        "title": "Révision moteur",
-        "person": "Michael Green",
-        "operationType": "Engine Check",
-        "startHour": 13,
-        "endHour": 16,
-        "date": "2024-09-30"
-      },
-      {
-        "id": "event-39",
-        "title": "Réparation de la boîte de vitesses",
-        "person": "Michael Green",
-        "operationType": "Transmission Repair",
-        "startHour": 10,
-        "endHour": 13,
-        "date": "2024-10-01"
-      },
-      {
-        "id": "event-40",
-        "title": "Remplacement des suspensions",
-        "person": "Michael Green",
-        "operationType": "Suspension Replacement",
-        "startHour": 10,
-        "endHour": 14,
-        "date": "2024-10-03"
-      },
-      {
-        "id": "event-41",
-        "title": "Révision complète",
-        "person": "Michael Green",
-        "operationType": "Full Check",
-        "startHour": 14,
-        "endHour": 17,
-        "date": "2024-10-05"
-      }
-    ]
+    "items": [{
+        "id": "event-034",
+        "title": "Changement rapide d'huile",
+        "person": "Jane Smith",
+        "operationType": "Quick Service",
+        "startHour": 8,
+        "startMinute": 0,
+        "endHour": 9,
+        "endMinute": 0,
+        "date": "2024-09-30",
+        "orNumber": "OR-006",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "phone": "1234567892",
+        "email": "jane.smith@example.com",
+        "registration": "XY-789-CD",
+        "vin": "3HGBH41JXMN109188",
+        "model": "Peugeot 208",
+        "color": "Rouge",
+        "works": "Vidange rapide",
+        "price": "40€",
+        "operator": "Technicien E"
+      }]
   },
-  {
+    {
     "category": "Électricité",
-    "summary": "4 events",
+    "summary": "1 events",
     "date": "Sept 30 - Oct 5",
-    "items": [
-      {
-        "id": "event-42",
-        "title": "Vérification électrique",
-        "person": "Laura Blue",
-        "operationType": "Electrical Check",
-        "startHour": 15,
-        "endHour": 18,
-        "date": "2024-09-30"
-      },
-      {
-        "id": "event-43",
-        "title": "Réparation des circuits",
-        "person": "Laura Blue",
-        "operationType": "Circuit Repair",
-        "startHour": 14,
-        "endHour": 17,
-        "date": "2024-10-01"
-      },
-      {
-        "id": "event-44",
-        "title": "Installation des nouveaux câbles",
-        "person": "Laura Blue",
-        "operationType": "Cable Installation",
-        "startHour": 13,
-        "endHour": 16,
-        "date": "2024-10-03"
-      },
-      {
-        "id": "event-45",
-        "title": "Vérification finale",
-        "person": "Laura Blue",
-        "operationType": "Final Check",
-        "startHour": 16,
-        "endHour": 18,
-        "date": "2024-10-05"
-      }
-    ]
-  },
-  {
-    "category": "Climatisation",
-    "summary": "3 events",
-    "date": "Sept 30 - Oct 5",
-    "items": [
-      {
-        "id": "event-46",
-        "title": "Service AC rapide",
-        "person": "Daniel Gray",
-        "operationType": "AC Quick Service",
-        "startHour": 9,
-        "endHour": 11,
-        "date": "2024-09-30"
-      },
-      {
-        "id": "event-47",
-        "title": "Installation AC",
-        "person": "Daniel Gray",
-        "operationType": "AC Installation",
-        "startHour": 10,
-        "endHour": 12,
-        "date": "2024-10-01"
-      },
-      {
-        "id": "event-48",
-        "title": "Révision système AC",
-        "person": "Daniel Gray",
-        "operationType": "AC System Check",
-        "startHour": 14,
-        "endHour": 16,
-        "date": "2024-10-03"
-      }
-    ]
+    "items": [{
+        "id": "event-0034",
+        "title": "Changement rapide d'huile",
+        "person": "Jane Smith",
+        "operationType": "Quick Service",
+        "startHour": 8,
+        "startMinute": 0,
+        "endHour": 9,
+        "endMinute": 0,
+        "date": "2024-09-30",
+        "orNumber": "OR-006",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "phone": "1234567892",
+        "email": "jane.smith@example.com",
+        "registration": "XY-789-CD",
+        "vin": "3HGBH41JXMN109188",
+        "model": "Peugeot 208",
+        "color": "Rouge",
+        "works": "Vidange rapide",
+        "price": "40€",
+        "operator": "Technicien E"
+      }]
   }
 ]
