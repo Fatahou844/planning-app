@@ -275,5 +275,33 @@
         "price": "40€",
         "operator": "Technicien E"
       }]
+  },
+    {
+    "category": "Climatisation",
+    "summary": "1 events",
+    "date": "Sept 30 - Oct 5",
+    "items": [{
+        "id": "event-00034",
+        "title": "Changement et reglage climatisation",
+        "person": "Jane Smith",
+        "operationType": "Quick Service",
+        "startHour": 8,
+        "startMinute": 0,
+        "endHour": 11,
+        "endMinute": 30,
+        "date": "2024-10-08",
+        "orNumber": "OR-006",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "phone": "1234567892",
+        "email": "jane.smith@example.com",
+        "registration": "XY-789-CD",
+        "vin": "3HGBH41JXMN109188",
+        "model": "Peugeot 208",
+        "color": "Rouge",
+        "works": "Vidange rapide",
+        "price": "40€",
+        "operator": "Technicien E"
+      }]
   }
 ]

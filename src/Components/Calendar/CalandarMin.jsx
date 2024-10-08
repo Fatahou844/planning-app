@@ -301,8 +301,20 @@ const CalendarMin = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
     // Ajoutez ici la logique de filtrage des événements si nécessaire
+    const keyword = e.target.value.toLowerCase();
+    setSearchQuery(keyword);
+
+    // Filtrage des données
+    const filtered = events.map((category) => {
+      const filteredItems = category.items.filter((item) =>
+        Object.values(item).some((val) =>
+          val.toString().toLowerCase().includes(keyword)
+        )
+      );
+      return { ...category, items: filteredItems };
+    });
+    setEvents(filtered);
   };
 
   return (
@@ -346,6 +358,7 @@ const CalendarMin = () => {
               mx: 2, // Marge horizontale
             }}
             onChange={handleSearchChange} // Remplacez par votre gestionnaire d'événements
+            value={searchQuery}
           />
 
           <Button variant="contained" color="secondary">
