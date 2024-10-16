@@ -1,13 +1,13 @@
 // src/App.js
 import React from "react";
-import CalendarMin from "../../Components/Calendar/CalandarMin";
+import Planning from "../../Components/Calendar/Planning";
 import "../../Styles/style.css";
 import "./Dashboard.css";
 function Dashboard() {
   return (
     <div className="app-container">
       <div className="main-content">
-        <CalendarMin />
+        <Planning />
       </div>
     </div>
   );

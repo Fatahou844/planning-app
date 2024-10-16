@@ -21,6 +21,7 @@ import {
   getDocs,
   query,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
@@ -28,7 +29,6 @@ import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
-import EventModal from "../EventModal";
 
 const Timeline = () => (
   <Box
@@ -74,7 +74,7 @@ const CurrentTimeLine = ({ currentHour }) => {
   );
 };
 
-const CalendarMin = () => {
+const Planning = () => {
   const [events, setEvents] = useState(eventsData);
   const [eventsCopied, setEventsCopied] = useState(eventsData);
   const [dataEvents, setDataEvents] = useState([]);
@@ -99,6 +99,19 @@ const CalendarMin = () => {
   ]);
   const [categories, setCategories] = useState([]);
   const [user] = useAuthState(auth);
+
+  const [selectedDate, setSelectedDate] = useState("");
+
+  useEffect(() => {
+    const today = new Date();
+    // Formatage de la date en YYYY-MM-DD
+    const formattedDate = today.toISOString().split("T")[0];
+    setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
+  }, []); // État pour stocker la date sélectionnée
+
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
+  };
   // Utilisation de useEffect pour récupérer les catégories depuis Firestore
   useEffect(() => {
     const fetchCategories = async () => {
@@ -130,7 +143,7 @@ const CalendarMin = () => {
     };
 
     fetchCategories(); // Appeler la fonction au montage du composant
-  }, []); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+  }, [, modalOpen]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -139,7 +152,11 @@ const CalendarMin = () => {
         const eventsRef = collection(db, "events");
 
         // Créer la requête avec la condition where pour filtrer par userId
-        const q = query(eventsRef, where("userId", "==", user.uid));
+        const q = query(
+          eventsRef,
+          where("userId", "==", user.uid),
+          where("date", "==", selectedDate)
+        );
 
         // Récupérer les documents correspondants
         const querySnapshot = await getDocs(q);
@@ -153,6 +170,7 @@ const CalendarMin = () => {
         // Mettre à jour l'état avec les données récupérées
 
         console.log("eventsData", eventsData); // Pour vérifier les données dans la console
+        setDataEvents(eventsData);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des événements : ",
@@ -162,7 +180,7 @@ const CalendarMin = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant
-  }, []); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+  }, [, selectedDate, modalOpen]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
 
   const currentHour = new Date().getHours();
 
@@ -203,88 +221,6 @@ const CalendarMin = () => {
     const colors = ["#FFCC80", "#90CAF9", "#A5D6A7", "#B39DDB", "#FFAB91"];
     return colors[index % colors.length];
   };
-
-  const calculateEventLines = (items) => {
-    // Fonction pour convertir heure et minute en minutes totales
-    //const convertToMinutes = (hour, minute) => hour * 60 + minute;
-    const convertToMinutes = (hour, minute) => {
-      return (parseInt(hour) || 0) * 60 + (parseInt(minute) || 0);
-    };
-
-    // Trier les événements par début en utilisant heure et minute
-    items.sort((a, b) => {
-      const startA = convertToMinutes(a.startHour, a.startMinute || 0);
-      const startB = convertToMinutes(b.startHour, b.startMinute || 0);
-      return startA - startB;
-    });
-
-    // Tableaux pour stocker les lignes
-    const lines = [];
-
-    items.forEach((event) => {
-      const eventStart = convertToMinutes(
-        event.startHour,
-        event.startMinute || 0
-      );
-      const eventEnd = convertToMinutes(event.endHour, event.endMinute || 0);
-
-      let placed = false;
-
-      for (let line of lines) {
-        // Vérifier si l'événement chevauche un autre événement de la ligne
-        if (
-          !line.some((e) => {
-            const existingEnd = convertToMinutes(e.endHour, e.endMinute || 0);
-            return existingEnd > eventStart;
-          })
-        ) {
-          line.push(event);
-          placed = true;
-          break;
-        }
-      }
-
-      if (!placed) {
-        lines.push([event]);
-      }
-    });
-
-    return lines;
-  };
-
-  const calculateCategoryHeight = (items) => {
-    const lines = calculateEventLines(items);
-    return lines.length * 60; // Ajustez la hauteur par ligne ici
-  };
-  const [selectedDate, setSelectedDate] = useState("");
-
-  useEffect(() => {
-    const today = new Date();
-    // Formatage de la date en YYYY-MM-DD
-    const formattedDate = today.toISOString().split("T")[0];
-    setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
-  }, []); // État pour stocker la date sélectionnée
-
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
-  };
-
-  const filterByDate = (events, date) => {
-    return events
-      .map((category) => ({
-        ...category,
-        items: category.items.filter((item) => item.date === date),
-      }))
-      .filter((category) => category.items.length > 0);
-  };
-
-  useEffect(() => {
-    const filteredEvents = selectedDate
-      ? filterByDate(eventsCopied, selectedDate)
-      : events;
-
-    setEvents(filteredEvents);
-  }, [selectedDate]);
 
   // État pour afficher/masquer le modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -479,6 +415,81 @@ const CalendarMin = () => {
     setEvents(filtered);
   };
 
+  const uniqueCategories = dataEvents.reduce((accumulator, event) => {
+    const category = event.category;
+    if (!accumulator.some((cat) => cat.id === category.id)) {
+      accumulator.push(category);
+    }
+    return accumulator;
+  }, []);
+
+  const calculateEventLines = (events) => {
+    const lines = [];
+
+    events.forEach((event) => {
+      let placed = false;
+
+      // Essayer de placer l'événement sur une ligne existante
+      for (let line of lines) {
+        const lastEventInLine = line[line.length - 1];
+        if (
+          lastEventInLine.endHour < event.startHour || // Vérifie qu'il n'y a pas de chevauchement
+          (lastEventInLine.endHour === event.startHour &&
+            lastEventInLine.endMinute <= event.startMinute)
+        ) {
+          line.push(event); // Place l'événement dans cette ligne
+          placed = true;
+          break;
+        }
+      }
+
+      // Si l'événement ne peut pas être placé sur une ligne existante, créer une nouvelle ligne
+      if (!placed) {
+        lines.push([event]);
+      }
+    });
+
+    return lines;
+  };
+
+  const calculateCategoryHeight = (eventCategory) => {
+    const lines = calculateEventLines(eventCategory.events); // Utiliser la fonction pour obtenir les lignes d'événements
+    const lineHeight = 60; // Par exemple, 60px par ligne d'événements
+    return lines.length * lineHeight;
+  };
+
+  const handleSaveEvent = async (updatedEvent) => {
+    if (!updatedEvent || !updatedEvent.id) return; // Assurez-vous que l'événement a un ID
+
+    try {
+      // Référence au document à mettre à jour
+      const eventDocRef = doc(db, "events", updatedEvent.id);
+
+      // Mise à jour du document dans Firestore
+      await updateDoc(eventDocRef, {
+        title: updatedEvent.title,
+        person: updatedEvent.person,
+        tel: updatedEvent.tel,
+        email: updatedEvent.email,
+        immatriculation: updatedEvent.immatriculation,
+        vin: updatedEvent.vin,
+        modele: updatedEvent.modele,
+        couleur: updatedEvent.couleur,
+        category: updatedEvent.category,
+        startHour: updatedEvent.startHour,
+        startMinute: updatedEvent.startMinute,
+        endHour: updatedEvent.endHour,
+        endMinute: updatedEvent.endMinute,
+      });
+
+      console.log("Événement mis à jour avec succès:", updatedEvent);
+      // Fermez le modal après la mise à jour
+      handleModalClose(); // Ferme le modal après la sauvegarde
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'événement :", error);
+    }
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -544,16 +555,24 @@ const CalendarMin = () => {
               onChange={handleDateChange}
             />
             {/* Events Accordion */}
-            {events.map((eventCategory, index) => {
-              const categoryHeight = calculateCategoryHeight(
-                eventCategory.items
+            {uniqueCategories.map((category, index) => {
+              const categoryEvents = dataEvents.filter(
+                (event) => event.category.id === category.id
+              ); // Filtrer les événements par catégorie
+              const categoryHeight = calculateCategoryHeight({
+                events: categoryEvents,
+              }); // Calculer la hauteur de la catégorie
+
+              console.log(
+                "uniqueCategories uniqueCategories",
+                uniqueCategories
               );
 
               return (
                 <Accordion
-                  key={eventCategory.category}
-                  expanded={expanded.includes(eventCategory.category)}
-                  onChange={() => handleChange(eventCategory.category)}
+                  key={category.id}
+                  expanded={expanded.includes(category.name)}
+                  onChange={() => handleChange(category.name)}
                   sx={{
                     backgroundColor: getCategoryColor(index),
                     borderRadius: "8px",
@@ -566,13 +585,12 @@ const CalendarMin = () => {
                   }}
                 >
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="body2">
-                      {eventCategory.category}
-                    </Typography>
+                    <Typography variant="body2">{category.name}</Typography>
                   </AccordionSummary>
                 </Accordion>
               );
             })}
+
             {/* Floating Action Button */}
             <Fab
               color="primary"
@@ -866,27 +884,23 @@ const CalendarMin = () => {
             <CurrentTimeLine currentHour={currentHour} />
 
             {/* Droppable Event Zones */}
-            {events.map((eventCategory, categoryIndex) => {
-              const lines = calculateEventLines(eventCategory.items);
-              const categoryHeight = lines.length * 60; // Hauteur pour chaque ligne
+            {uniqueCategories.map((category, categoryIndex) => {
+              const categoryEvents = dataEvents.filter(
+                (event) => event.category.id === category.id
+              ); // Récupérer les événements de la catégorie
+              const lines = calculateEventLines(categoryEvents); // Calculer les lignes
 
               return (
-                <Droppable
-                  droppableId={eventCategory.category}
-                  key={eventCategory.category}
-                >
+                <Droppable droppableId={category.id} key={category.id}>
                   {(provided) => (
                     <Box
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       sx={{
                         position: "relative",
-                        // height: `${categoryHeight}px`, // Hauteur dynamique
                         borderRadius: "10px",
                         marginBottom: "16px",
-                        // backgroundColor: "white",
                         padding: 1,
-                        // boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
                         overflow: "hidden",
                       }}
                     >
@@ -966,15 +980,15 @@ const CalendarMin = () => {
       </Box>
       {/* Event Modal */}
 
-      <EventModal
+      {/* <EventModal
         open={modalOpen}
         onClose={handleModalClose}
         event={selectedEvent}
-        categories={expanded}
-        onSave={handleEventSave}
-      />
+        categories={categories}
+        onSave={handleSaveEvent} // Passez la fonction pour enregistrer
+      /> */}
     </DragDropContext>
   );
 };
 
-export default CalendarMin;
+export default Planning;
