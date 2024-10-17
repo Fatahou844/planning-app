@@ -12,8 +12,16 @@ import {
   Fab,
   Grid,
   MenuItem,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
+  makeStyles,
 } from "@mui/material";
 import {
   collection,
@@ -74,12 +82,35 @@ const CurrentTimeLine = ({ currentHour }) => {
     />
   );
 };
+const useStyles = makeStyles((theme) => ({
+  tableContainer: {
+    marginTop: theme.spacing(2),
+    borderRadius: "8px",
+    overflow: "hidden",
+  },
+  tableHead: {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+  },
+  tableRow: {
+    "&:nth-of-type(odd)": {
+      backgroundColor: theme.palette.grey[100],
+    },
+    "&:hover": {
+      backgroundColor: theme.palette.grey[300],
+    },
+  },
+  dialogTitle: {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+  },
+}));
 
 const Planning = () => {
   const [events, setEvents] = useState(eventsData);
   const [eventsCopied, setEventsCopied] = useState(eventsData);
   const [dataEvents, setDataEvents] = useState([]);
-
+  const classes = useStyles();
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
     title: "Entretiens",
@@ -421,23 +452,76 @@ const Planning = () => {
   };
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [dataEventsAll, setDataEventsAll] = useState([]);
 
   const handleSearchChange = (e) => {
-    // Ajoutez ici la logique de filtrage des événements si nécessaire
-    const keyword = e.target.value.toLowerCase();
-    setSearchQuery(keyword);
-
-    // Filtrage des données
-    const filtered = events.map((category) => {
-      const filteredItems = category.items.filter((item) =>
-        Object.values(item).some((val) =>
-          val.toString().toLowerCase().includes(keyword)
-        )
-      );
-      return { ...category, items: filteredItems };
-    });
-    setEvents(filtered);
+    setSearchQuery(e.target.value);
   };
+
+  function handleSearchClick() {
+    const keyword = searchQuery;
+    // Ajoutez ici la logique de filtrage des événements si nécessaire
+    const searchEvents = async () => {
+      try {
+        // Normaliser le mot-clé pour la recherche (mettre en minuscule)
+        const lowerCaseKeyword = keyword.toLowerCase();
+
+        // Collection des événements dans Firestore
+        const eventsRef = collection(db, "events");
+
+        // Requêtes pour chaque champ à rechercher
+        const queries = [
+          query(
+            eventsRef,
+            where("person.firstName", ">=", lowerCaseKeyword),
+            where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+          query(
+            eventsRef,
+            where("person.lastName", ">=", lowerCaseKeyword),
+            where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+          query(
+            eventsRef,
+            where("person.email", ">=", lowerCaseKeyword),
+            where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+          query(
+            eventsRef,
+            where("title", ">=", lowerCaseKeyword),
+            where("title", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+        ];
+
+        // Stockage des résultats combinés
+        let allResults = [];
+
+        // Exécute chaque requête
+        for (const q of queries) {
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach((doc) => {
+            // Ajout des documents aux résultats
+            allResults.push({ id: doc.id, ...doc.data() });
+          });
+        }
+
+        // Suppression des doublons
+        const uniqueResults = allResults.filter(
+          (value, index, self) =>
+            index === self.findIndex((t) => t.id === value.id)
+        );
+
+        console.log("Résultats de la recherche :", uniqueResults);
+        setDataEventsAll(uniqueResults);
+
+        return uniqueResults;
+      } catch (error) {
+        console.error("Erreur lors de la recherche des événements :", error);
+      }
+    };
+    searchEvents();
+    setOpen(true); // Ouvre le dialogue après la recherche
+  }
 
   const uniqueCategories = dataEvents.reduce((accumulator, event) => {
     const category = event.category;
@@ -562,6 +646,13 @@ const Planning = () => {
     }
   };
 
+  const [open, setOpen] = useState(false);
+
+  const handleClose = () => {
+    setOpen(false);
+    setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -606,7 +697,11 @@ const Planning = () => {
             value={searchQuery}
           />
 
-          <Button variant="contained" color="secondary">
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleSearchClick}
+          >
             Rechercher
           </Button>
         </Box>
@@ -1061,6 +1156,76 @@ const Planning = () => {
           onSave={handleSaveEvent} // Passez la fonction pour enregistrer
         />
       )}
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle className={classes.dialogTitle}>
+          Résultats de la recherche
+        </DialogTitle>
+        <DialogContent>
+          {dataEventsAll.length === 0 ? (
+            <Typography>Aucun événement trouvé.</Typography>
+          ) : (
+            <TableContainer
+              component={Paper}
+              className={classes.tableContainer}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow className={classes.tableHead}>
+                    <TableCell>Titre</TableCell>
+                    <TableCell>Prénom</TableCell>
+                    <TableCell>Nom</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Téléphone</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Heure de début</TableCell>
+                    <TableCell>Heure de fin</TableCell>
+                    <TableCell>Véhicule</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {dataEventsAll.map((event) => (
+                    <TableRow key={event.id} className={classes.tableRow}>
+                      <TableCell>{event.title}</TableCell>
+                      <TableCell>{event.person.firstName}</TableCell>
+                      <TableCell>{event.person.lastName}</TableCell>
+                      <TableCell>{event.person.email}</TableCell>
+                      <TableCell>
+                        {event.person.phone || "Non renseigné"}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(event.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {`${event.startHour}:${
+                          event.startMinute < 10
+                            ? `0${event.startMinute}`
+                            : event.startMinute
+                        }`}
+                      </TableCell>
+                      <TableCell>
+                        {`${event.endHour}:${
+                          event.endMinute < 10
+                            ? `0${event.endMinute}`
+                            : event.endMinute
+                        }`}
+                      </TableCell>
+                      <TableCell>
+                        {event.vehicule.model || "Non renseigné"} -{" "}
+                        {event.vehicule.licensePlate || "Non renseignée"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DragDropContext>
   );
 };
