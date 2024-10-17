@@ -29,6 +29,7 @@ import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import EventModal from "../EventModal";
 
 const Timeline = () => (
   <Box
@@ -143,7 +144,7 @@ const Planning = () => {
     };
 
     fetchCategories(); // Appeler la fonction au montage du composant
-  }, [, modalOpen]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+  }, []); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -180,7 +181,7 @@ const Planning = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant
-  }, [, selectedDate, modalOpen]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+  }, [, selectedDate]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
 
   const currentHour = new Date().getHours();
 
@@ -199,16 +200,6 @@ const Planning = () => {
   };
   const handleModalClose = () => {
     setModalOpen(false);
-  };
-
-  const handleEventSave = (updatedEvent) => {
-    const updatedEvents = events.map((category) => ({
-      ...category,
-      items: category.items.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      ),
-    }));
-    setEvents(updatedEvents);
   };
 
   // Fonctions pour assigner les couleurs
@@ -307,7 +298,40 @@ const Planning = () => {
 
     // Mettre à jour le state avec les événements ajoutés
     setEvents(updatedEvents);
-    console.log("UPDATED EVENTS", updatedEvents);
+    const fetchEvents = async () => {
+      try {
+        // Référence à la collection "events"
+        const eventsRef = collection(db, "events");
+
+        // Créer la requête avec la condition where pour filtrer par userId
+        const q = query(
+          eventsRef,
+          where("userId", "==", user.uid),
+          where("date", "==", selectedDate)
+        );
+
+        // Récupérer les documents correspondants
+        const querySnapshot = await getDocs(q);
+
+        // Récupérer les objets de la collection (id et data)
+        const eventsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Mettre à jour l'état avec les données récupérées
+
+        console.log("eventsData", eventsData); // Pour vérifier les données dans la console
+        setDataEvents(eventsData);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des événements : ",
+          error
+        );
+      }
+    };
+
+    fetchEvents(); // Appeler la fonction au montage du composant
 
     // Réinitialiser le formulaire et fermer le modal
     resetForm();
@@ -459,31 +483,79 @@ const Planning = () => {
   };
 
   const handleSaveEvent = async (updatedEvent) => {
-    if (!updatedEvent || !updatedEvent.id) return; // Assurez-vous que l'événement a un ID
+    if (!updatedEvent || !updatedEvent.id) return; // Vérifiez que l'événement a un ID
 
     try {
       // Référence au document à mettre à jour
       const eventDocRef = doc(db, "events", updatedEvent.id);
 
+      // Préparez l'objet de mise à jour sans valeurs undefined
+      const updatedData = {
+        title: updatedEvent.title || "", // Valeur par défaut si undefined
+        person: {
+          firstName: updatedEvent.person.firstName || "", // Assurez-vous qu'il y a une valeur par défaut
+          lastName: updatedEvent.person.lastName || "",
+          email: updatedEvent.person.email || "",
+          phone: updatedEvent.person.phone || "",
+        },
+        vehicule: {
+          licensePlate: updatedEvent.vehicule.licensePlate || "",
+          vin: updatedEvent.vehicule.vin || "",
+          color: updatedEvent.vehicule.color || "",
+        },
+        details: {
+          workDescription: updatedEvent.details.workDescription || "",
+          price: updatedEvent.details.price || 0, // Assurez-vous que le prix est un nombre valide
+        },
+        category: {
+          id: updatedEvent.category?.id || "",
+          name: updatedEvent.category?.name || "",
+        },
+        startHour: updatedEvent.startHour || 0, // Valeur par défaut si undefined
+        startMinute: updatedEvent.startMinute || 0,
+        endHour: updatedEvent.endHour || 0,
+        endMinute: updatedEvent.endMinute || 0,
+      };
+
       // Mise à jour du document dans Firestore
-      await updateDoc(eventDocRef, {
-        title: updatedEvent.title,
-        person: updatedEvent.person,
-        tel: updatedEvent.tel,
-        email: updatedEvent.email,
-        immatriculation: updatedEvent.immatriculation,
-        vin: updatedEvent.vin,
-        modele: updatedEvent.modele,
-        couleur: updatedEvent.couleur,
-        category: updatedEvent.category,
-        startHour: updatedEvent.startHour,
-        startMinute: updatedEvent.startMinute,
-        endHour: updatedEvent.endHour,
-        endMinute: updatedEvent.endMinute,
-      });
+      await updateDoc(eventDocRef, updatedData);
 
       console.log("Événement mis à jour avec succès:", updatedEvent);
       // Fermez le modal après la mise à jour
+      const fetchEvents = async () => {
+        try {
+          // Référence à la collection "events"
+          const eventsRef = collection(db, "events");
+
+          // Créer la requête avec la condition where pour filtrer par userId
+          const q = query(
+            eventsRef,
+            where("userId", "==", user.uid),
+            where("date", "==", selectedDate)
+          );
+
+          // Récupérer les documents correspondants
+          const querySnapshot = await getDocs(q);
+
+          // Récupérer les objets de la collection (id et data)
+          const eventsData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          // Mettre à jour l'état avec les données récupérées
+
+          console.log("eventsData", eventsData); // Pour vérifier les données dans la console
+          setDataEvents(eventsData);
+        } catch (error) {
+          console.error(
+            "Erreur lors de la récupération des événements : ",
+            error
+          );
+        }
+      };
+
+      fetchEvents(); // Appeler la fonction au montage du composant
       handleModalClose(); // Ferme le modal après la sauvegarde
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'événement :", error);
@@ -980,13 +1052,15 @@ const Planning = () => {
       </Box>
       {/* Event Modal */}
 
-      {/* <EventModal
-        open={modalOpen}
-        onClose={handleModalClose}
-        event={selectedEvent}
-        categories={categories}
-        onSave={handleSaveEvent} // Passez la fonction pour enregistrer
-      /> */}
+      {selectedEvent && (
+        <EventModal
+          open={modalOpen}
+          onClose={handleModalClose}
+          event={selectedEvent}
+          categories={categories}
+          onSave={handleSaveEvent} // Passez la fonction pour enregistrer
+        />
+      )}
     </DragDropContext>
   );
 };
