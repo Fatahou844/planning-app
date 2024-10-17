@@ -21,8 +21,9 @@ import {
   TableRow,
   TextField,
   Typography,
-  makeStyles,
 } from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { makeStyles } from "@mui/styles";
 import {
   collection,
   doc,
@@ -82,7 +83,10 @@ const CurrentTimeLine = ({ currentHour }) => {
     />
   );
 };
-const useStyles = makeStyles((theme) => ({
+
+const theme = createTheme();
+
+const useStyles = makeStyles(() => ({
   tableContainer: {
     marginTop: theme.spacing(2),
     borderRadius: "8px",
@@ -658,579 +662,586 @@ const Planning = () => {
   };
 
   return (
-    <DragDropContext>
-      {/* Modal pour ajouter un événement */}
-      {/* Header avec Barre de Recherche */}
+    <ThemeProvider theme={theme}>
+      <DragDropContext>
+        {/* Modal pour ajouter un événement */}
+        {/* Header avec Barre de Recherche */}
 
-      <Box
-        sx={{
-          padding: 3,
-          display: "flex",
-          position: "relative",
-          flexDirection: "column", // Changer la direction en colonne
-          width: "100%",
-        }}
-      >
-        {/* Header Section */}
         <Box
           sx={{
-            display: "flex", // Utiliser flex pour centrer les éléments
-            alignItems: "center",
-            justifyContent: "space-between", // Espacer les éléments
-            backgroundColor: "#007A87",
-            color: "white",
-            borderRadius: "8px",
-            padding: "10px",
-            mb: 2,
+            padding: 3,
+            display: "flex",
+            position: "relative",
+            flexDirection: "column", // Changer la direction en colonne
+            width: "100%",
           }}
         >
-          <Typography variant="h5">SaaS Garage</Typography>
-
-          {/* Search Bar */}
-          <TextField
-            variant="outlined"
-            placeholder="Rechercher un rendez-vous"
-            size="small"
-            sx={{
-              backgroundColor: "white", // Couleur de fond de la barre de recherche
-              borderRadius: "4px",
-              flexGrow: 1,
-              mx: 2, // Marge horizontale
-            }}
-            onChange={handleSearchChange} // Remplacez par votre gestionnaire d'événements
-            value={searchQuery}
-          />
-
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleSearchClick}
-          >
-            Rechercher
-          </Button>
-        </Box>
-        {/* Flex container for Sidebar and Main Content */}
-        <Box sx={{ display: "flex", flexGrow: 1 }}>
-          {/* Sidebar Section */}
-          <Box
-            sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
-          >
-            {/* Date Filter Input */}
-            <TextField
-              label="Filtrer par date"
-              variant="outlined"
-              fullWidth
-              sx={{ mb: 0.1 }}
-              value={selectedDate}
-              type="date"
-              onChange={handleDateChange}
-            />
-            {/* Events Accordion */}
-            {uniqueCategories.map((category, index) => {
-              const categoryEvents = dataEvents.filter(
-                (event) => event.category.id === category.id
-              ); // Filtrer les événements par catégorie
-              const categoryHeight = calculateCategoryHeight({
-                events: categoryEvents,
-              }); // Calculer la hauteur de la catégorie
-
-              console.log(
-                "uniqueCategories uniqueCategories",
-                uniqueCategories
-              );
-
-              return (
-                <Accordion
-                  key={category.id}
-                  expanded={expanded.includes(category.name)}
-                  onChange={() => handleChange(category.name)}
-                  sx={{
-                    backgroundColor: getCategoryColor(index),
-                    borderRadius: "8px",
-                    marginBottom: "8px",
-                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                    height: `${categoryHeight}px`, // Hauteur dynamique
-                    "&:before": {
-                      display: "none",
-                    },
-                  }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="body2">{category.name}</Typography>
-                  </AccordionSummary>
-                </Accordion>
-              );
-            })}
-
-            {/* Floating Action Button */}
-            <Fab
-              color="primary"
-              aria-label="add"
-              sx={{
-                position: "fixed",
-                bottom: 16,
-                right: 16,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                width: 170, // Ajuste la largeur pour s'assurer que le texte est visible
-                padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-                borderRadius: "8px", // Optionnel : ajoute un bord arrondi
-              }}
-              onClick={() => setIsModalOpen(true)}
-            >
-              <AddIcon />
-              <Typography sx={{ ml: 1 }}>Ajouter un événement</Typography>
-            </Fab>
-
-            {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
-
-            <Dialog
-              open={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              PaperProps={{
-                style: {
-                  width: "900px", // Remplacez par la largeur souhaitée
-                  maxWidth: "none", // Supprimez la largeur maximale par défaut
-                },
-              }}
-            >
-              <DialogTitle>Ajouter un événement</DialogTitle>
-              <DialogContent>
-                <form>
-                  <Grid container spacing={2}>
-                    {/* Colonne 1: Infos client */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="h6">Informations Client</Typography>
-                      <TextField
-                        label="N° OR"
-                        name="orderNumber"
-                        value={newEvent.orderNumber}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <TextField
-                        label="Nom"
-                        name="lastName"
-                        value={newEvent.lastName}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <TextField
-                        label="Prénom"
-                        name="firstName"
-                        value={newEvent.firstName}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <TextField
-                        label="Téléphone"
-                        name="phone"
-                        value={newEvent.phone}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <TextField
-                        label="Email"
-                        name="email"
-                        value={newEvent.email}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                    </Grid>
-
-                    {/* Colonne 2: Infos véhicule et événement */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="h6">
-                        Informations Véhicule
-                      </Typography>
-                      <TextField
-                        label="Immatriculation"
-                        name="licensePlate"
-                        value={newEvent.licensePlate}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <TextField
-                        label="VIN"
-                        name="vin"
-                        value={newEvent.vin}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                      />
-                      <TextField
-                        label="Modèle"
-                        name="model"
-                        value={newEvent.model}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <TextField
-                        label="Couleur"
-                        name="color"
-                        value={newEvent.color}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                    </Grid>
-
-                    {/* Colonne 1: Infos sur les travaux */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="h6">
-                        Informations Événement
-                      </Typography>
-                      <TextField
-                        label="Travaux"
-                        name="workDescription"
-                        value={newEvent.workDescription}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        multiline
-                        rows={4} // Nombre de lignes visibles
-                      />
-                      <TextField
-                        label="Prix"
-                        name="price"
-                        type="number"
-                        value={newEvent.price}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                    </Grid>
-
-                    {/* Colonne 2: Infos sur l'événement */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="h6">
-                        Détails de l'événement
-                      </Typography>
-
-                      <TextField
-                        label="Opérateur"
-                        name="operator"
-                        value={newEvent.operator}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-
-                      <Typography variant="p">Date de l'événement</Typography>
-                      <TextField
-                        // label="Date"
-                        name="date"
-                        type="date"
-                        value={newEvent.date}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <Typography variant="p">Date de fin</Typography>
-                      <TextField
-                        // label="Date"
-                        name="date"
-                        type="date"
-                        value={finDate}
-                        onChange={handleInputChangeFinDate}
-                        fullWidth
-                        margin="normal"
-                        required
-                      />
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Heure de début"
-                            name="startHour"
-                            type="number"
-                            value={newEvent.startHour}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Minutes de début"
-                            name="startMinute"
-                            type="number"
-                            value={newEvent.startMinute}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Heure de fin"
-                            name="endHour"
-                            type="number"
-                            value={newEvent.endHour}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Minutes de fin"
-                            name="endMinute"
-                            type="number"
-                            value={newEvent.endMinute}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                          />
-                        </Grid>
-                      </Grid>
-                      <TextField
-                        select
-                        label="Catégorie"
-                        name="category"
-                        value={newEvent.category}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                      >
-                        {categories.map((categoryGroup, index) => (
-                          <MenuItem key={index} value={categoryGroup.id}>
-                            {categoryGroup.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-                  </Grid>
-                </form>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={addEvent} color="primary">
-                  Ajouter l'événement
-                </Button>
-                <Button onClick={() => setIsModalOpen(false)} color="secondary">
-                  Annuler
-                </Button>
-              </DialogActions>
-            </Dialog>
-          </Box>
-
-          {/* Main Content Section */}
+          {/* Header Section */}
           <Box
             sx={{
-              flexGrow: 1,
-              position: "relative",
-              pl: 3,
-              backgroundColor: "#f9f9f9",
-              padding: 2,
+              display: "flex", // Utiliser flex pour centrer les éléments
+              alignItems: "center",
+              justifyContent: "space-between", // Espacer les éléments
+              backgroundColor: "#007A87",
+              color: "white",
               borderRadius: "8px",
+              padding: "10px",
+              mb: 2,
             }}
           >
-            {/* Timeline Component */}
-            <Timeline />
-            {/* Current Time Indicator */}
-            <CurrentTimeLine currentHour={currentHour} />
+            <Typography variant="h5">SaaS Garage</Typography>
 
-            {/* Droppable Event Zones */}
-            {uniqueCategories.map((category, categoryIndex) => {
-              const categoryEvents = dataEvents.filter(
-                (event) => event.category.id === category.id
-              ); // Récupérer les événements de la catégorie
-              const lines = calculateEventLines(categoryEvents); // Calculer les lignes
+            {/* Search Bar */}
+            <TextField
+              variant="outlined"
+              placeholder="Rechercher un rendez-vous"
+              size="small"
+              sx={{
+                backgroundColor: "white", // Couleur de fond de la barre de recherche
+                borderRadius: "4px",
+                flexGrow: 1,
+                mx: 2, // Marge horizontale
+              }}
+              onChange={handleSearchChange} // Remplacez par votre gestionnaire d'événements
+              value={searchQuery}
+            />
 
-              return (
-                <Droppable droppableId={category.id} key={category.id}>
-                  {(provided) => (
-                    <Box
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      sx={{
-                        position: "relative",
-                        borderRadius: "10px",
-                        marginBottom: "16px",
-                        padding: 1,
-                        overflow: "hidden",
-                      }}
-                    >
-                      {lines.map((line, lineIndex) => (
-                        <Box
-                          key={`line-${lineIndex}`}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            position: "relative",
-                            height: "50px", // Hauteur de chaque ligne
-                            marginTop: lineIndex > 0 ? "8px" : 0,
-                          }}
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSearchClick}
+            >
+              Rechercher
+            </Button>
+          </Box>
+          {/* Flex container for Sidebar and Main Content */}
+          <Box sx={{ display: "flex", flexGrow: 1 }}>
+            {/* Sidebar Section */}
+            <Box
+              sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
+            >
+              {/* Date Filter Input */}
+              <TextField
+                label="Filtrer par date"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 0.1 }}
+                value={selectedDate}
+                type="date"
+                onChange={handleDateChange}
+              />
+              {/* Events Accordion */}
+              {uniqueCategories.map((category, index) => {
+                const categoryEvents = dataEvents.filter(
+                  (event) => event.category.id === category.id
+                ); // Filtrer les événements par catégorie
+                const categoryHeight = calculateCategoryHeight({
+                  events: categoryEvents,
+                }); // Calculer la hauteur de la catégorie
+
+                console.log(
+                  "uniqueCategories uniqueCategories",
+                  uniqueCategories
+                );
+
+                return (
+                  <Accordion
+                    key={category.id}
+                    expanded={expanded.includes(category.name)}
+                    onChange={() => handleChange(category.name)}
+                    sx={{
+                      backgroundColor: getCategoryColor(index),
+                      borderRadius: "8px",
+                      marginBottom: "8px",
+                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                      height: `${categoryHeight}px`, // Hauteur dynamique
+                      "&:before": {
+                        display: "none",
+                      },
+                    }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="body2">{category.name}</Typography>
+                    </AccordionSummary>
+                  </Accordion>
+                );
+              })}
+
+              {/* Floating Action Button */}
+              <Fab
+                color="primary"
+                aria-label="add"
+                sx={{
+                  position: "fixed",
+                  bottom: 16,
+                  right: 16,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  width: 170, // Ajuste la largeur pour s'assurer que le texte est visible
+                  padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+                  borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+                }}
+                onClick={() => setIsModalOpen(true)}
+              >
+                <AddIcon />
+                <Typography sx={{ ml: 1 }}>Ajouter un événement</Typography>
+              </Fab>
+
+              {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
+
+              <Dialog
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                PaperProps={{
+                  style: {
+                    width: "900px", // Remplacez par la largeur souhaitée
+                    maxWidth: "none", // Supprimez la largeur maximale par défaut
+                  },
+                }}
+              >
+                <DialogTitle>Ajouter un événement</DialogTitle>
+                <DialogContent>
+                  <form>
+                    <Grid container spacing={2}>
+                      {/* Colonne 1: Infos client */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6">
+                          Informations Client
+                        </Typography>
+                        <TextField
+                          label="N° OR"
+                          name="orderNumber"
+                          value={newEvent.orderNumber}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <TextField
+                          label="Nom"
+                          name="lastName"
+                          value={newEvent.lastName}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <TextField
+                          label="Prénom"
+                          name="firstName"
+                          value={newEvent.firstName}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <TextField
+                          label="Téléphone"
+                          name="phone"
+                          value={newEvent.phone}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <TextField
+                          label="Email"
+                          name="email"
+                          value={newEvent.email}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                      </Grid>
+
+                      {/* Colonne 2: Infos véhicule et événement */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6">
+                          Informations Véhicule
+                        </Typography>
+                        <TextField
+                          label="Immatriculation"
+                          name="licensePlate"
+                          value={newEvent.licensePlate}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <TextField
+                          label="VIN"
+                          name="vin"
+                          value={newEvent.vin}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                        />
+                        <TextField
+                          label="Modèle"
+                          name="model"
+                          value={newEvent.model}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <TextField
+                          label="Couleur"
+                          name="color"
+                          value={newEvent.color}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                      </Grid>
+
+                      {/* Colonne 1: Infos sur les travaux */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6">
+                          Informations Événement
+                        </Typography>
+                        <TextField
+                          label="Travaux"
+                          name="workDescription"
+                          value={newEvent.workDescription}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          multiline
+                          rows={4} // Nombre de lignes visibles
+                        />
+                        <TextField
+                          label="Prix"
+                          name="price"
+                          type="number"
+                          value={newEvent.price}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                      </Grid>
+
+                      {/* Colonne 2: Infos sur l'événement */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6">
+                          Détails de l'événement
+                        </Typography>
+
+                        <TextField
+                          label="Opérateur"
+                          name="operator"
+                          value={newEvent.operator}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+
+                        <Typography variant="p">Date de l'événement</Typography>
+                        <TextField
+                          // label="Date"
+                          name="date"
+                          type="date"
+                          value={newEvent.date}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <Typography variant="p">Date de fin</Typography>
+                        <TextField
+                          // label="Date"
+                          name="date"
+                          type="date"
+                          value={finDate}
+                          onChange={handleInputChangeFinDate}
+                          fullWidth
+                          margin="normal"
+                          required
+                        />
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Heure de début"
+                              name="startHour"
+                              type="number"
+                              value={newEvent.startHour}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Minutes de début"
+                              name="startMinute"
+                              type="number"
+                              value={newEvent.startMinute}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Heure de fin"
+                              name="endHour"
+                              type="number"
+                              value={newEvent.endHour}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Minutes de fin"
+                              name="endMinute"
+                              type="number"
+                              value={newEvent.endMinute}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                            />
+                          </Grid>
+                        </Grid>
+                        <TextField
+                          select
+                          label="Catégorie"
+                          name="category"
+                          value={newEvent.category}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
                         >
-                          {line.map((event, eventIndex) => (
-                            <Draggable
-                              key={`${event.title}-${categoryIndex}-${eventIndex}`}
-                              draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
-                              index={eventIndex}
-                            >
-                              {(provided, snapshot) => (
-                                <Box
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  onClick={() => handleEventClick(event)}
-                                  sx={{
-                                    position: "absolute",
-                                    left: `${
-                                      ((event.startHour +
-                                        event.startMinute / 60 -
-                                        7) /
-                                        12) *
-                                      100
-                                    }%`,
-                                    width: `${
-                                      ((event.endHour +
-                                        event.endMinute / 60 -
-                                        (event.startHour +
-                                          event.startMinute / 60)) /
-                                        12) *
-                                      100
-                                    }%`,
-                                    height: "40px",
-                                    backgroundColor:
-                                      getEventColor(categoryIndex),
-                                    border: snapshot.isDragging
-                                      ? "2px solid #90caf9"
-                                      : "1px solid #90caf9",
-                                    borderRadius: "10px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    cursor: "pointer",
-                                    transition: "background-color 0.3s ease",
-                                  }}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    color="textSecondary"
-                                  >
-                                    {event.title}
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Draggable>
+                          {categories.map((categoryGroup, index) => (
+                            <MenuItem key={index} value={categoryGroup.id}>
+                              {categoryGroup.name}
+                            </MenuItem>
                           ))}
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
-                </Droppable>
-              );
-            })}
+                        </TextField>
+                      </Grid>
+                    </Grid>
+                  </form>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={addEvent} color="primary">
+                    Ajouter l'événement
+                  </Button>
+                  <Button
+                    onClick={() => setIsModalOpen(false)}
+                    color="secondary"
+                  >
+                    Annuler
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </Box>
+
+            {/* Main Content Section */}
+            <Box
+              sx={{
+                flexGrow: 1,
+                position: "relative",
+                pl: 3,
+                backgroundColor: "#f9f9f9",
+                padding: 2,
+                borderRadius: "8px",
+              }}
+            >
+              {/* Timeline Component */}
+              <Timeline />
+              {/* Current Time Indicator */}
+              <CurrentTimeLine currentHour={currentHour} />
+
+              {/* Droppable Event Zones */}
+              {uniqueCategories.map((category, categoryIndex) => {
+                const categoryEvents = dataEvents.filter(
+                  (event) => event.category.id === category.id
+                ); // Récupérer les événements de la catégorie
+                const lines = calculateEventLines(categoryEvents); // Calculer les lignes
+
+                return (
+                  <Droppable droppableId={category.id} key={category.id}>
+                    {(provided) => (
+                      <Box
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        sx={{
+                          position: "relative",
+                          borderRadius: "10px",
+                          marginBottom: "16px",
+                          padding: 1,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {lines.map((line, lineIndex) => (
+                          <Box
+                            key={`line-${lineIndex}`}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              position: "relative",
+                              height: "50px", // Hauteur de chaque ligne
+                              marginTop: lineIndex > 0 ? "8px" : 0,
+                            }}
+                          >
+                            {line.map((event, eventIndex) => (
+                              <Draggable
+                                key={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                index={eventIndex}
+                              >
+                                {(provided, snapshot) => (
+                                  <Box
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    onClick={() => handleEventClick(event)}
+                                    sx={{
+                                      position: "absolute",
+                                      left: `${
+                                        ((event.startHour +
+                                          event.startMinute / 60 -
+                                          7) /
+                                          12) *
+                                        100
+                                      }%`,
+                                      width: `${
+                                        ((event.endHour +
+                                          event.endMinute / 60 -
+                                          (event.startHour +
+                                            event.startMinute / 60)) /
+                                          12) *
+                                        100
+                                      }%`,
+                                      height: "40px",
+                                      backgroundColor:
+                                        getEventColor(categoryIndex),
+                                      border: snapshot.isDragging
+                                        ? "2px solid #90caf9"
+                                        : "1px solid #90caf9",
+                                      borderRadius: "10px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: "pointer",
+                                      transition: "background-color 0.3s ease",
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      color="textSecondary"
+                                    >
+                                      {event.title}
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </Draggable>
+                            ))}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Droppable>
+                );
+              })}
+            </Box>
           </Box>
         </Box>
-      </Box>
-      {/* Event Modal */}
+        {/* Event Modal */}
 
-      {selectedEvent && (
-        <EventModal
-          open={modalOpen}
-          onClose={handleModalClose}
-          event={selectedEvent}
-          categories={categories}
-          onSave={handleSaveEvent} // Passez la fonction pour enregistrer
-        />
-      )}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle className={classes.dialogTitle}>
-          Résultats de la recherche
-        </DialogTitle>
-        <DialogContent>
-          {dataEventsAll.length === 0 ? (
-            <Typography>Aucun événement trouvé.</Typography>
-          ) : (
-            <TableContainer
-              component={Paper}
-              className={classes.tableContainer}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow className={classes.tableHead}>
-                    <TableCell>Titre</TableCell>
-                    <TableCell>Prénom</TableCell>
-                    <TableCell>Nom</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Téléphone</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Heure de début</TableCell>
-                    <TableCell>Heure de fin</TableCell>
-                    <TableCell>Véhicule</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {dataEventsAll.map((event) => (
-                    <TableRow key={event.id} className={classes.tableRow}>
-                      <TableCell>{event.title}</TableCell>
-                      <TableCell>{event.person.firstName}</TableCell>
-                      <TableCell>{event.person.lastName}</TableCell>
-                      <TableCell>{event.person.email}</TableCell>
-                      <TableCell>
-                        {event.person.phone || "Non renseigné"}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(event.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {`${event.startHour}:${
-                          event.startMinute < 10
-                            ? `0${event.startMinute}`
-                            : event.startMinute
-                        }`}
-                      </TableCell>
-                      <TableCell>
-                        {`${event.endHour}:${
-                          event.endMinute < 10
-                            ? `0${event.endMinute}`
-                            : event.endMinute
-                        }`}
-                      </TableCell>
-                      <TableCell>
-                        {event.vehicule.model || "Non renseigné"} -{" "}
-                        {event.vehicule.licensePlate || "Non renseignée"}
-                      </TableCell>
+        {selectedEvent && (
+          <EventModal
+            open={modalOpen}
+            onClose={handleModalClose}
+            event={selectedEvent}
+            categories={categories}
+            onSave={handleSaveEvent} // Passez la fonction pour enregistrer
+          />
+        )}
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+          <DialogTitle className={classes.dialogTitle}>
+            Résultats de la recherche
+          </DialogTitle>
+          <DialogContent>
+            {dataEventsAll.length === 0 ? (
+              <Typography>Aucun événement trouvé.</Typography>
+            ) : (
+              <TableContainer
+                component={Paper}
+                className={classes.tableContainer}
+              >
+                <Table>
+                  <TableHead>
+                    <TableRow className={classes.tableHead}>
+                      <TableCell>Titre</TableCell>
+                      <TableCell>Prénom</TableCell>
+                      <TableCell>Nom</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Téléphone</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Heure de début</TableCell>
+                      <TableCell>Heure de fin</TableCell>
+                      <TableCell>Véhicule</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            Fermer
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </DragDropContext>
+                  </TableHead>
+                  <TableBody>
+                    {dataEventsAll.map((event) => (
+                      <TableRow key={event.id} className={classes.tableRow}>
+                        <TableCell>{event.title}</TableCell>
+                        <TableCell>{event.person.firstName}</TableCell>
+                        <TableCell>{event.person.lastName}</TableCell>
+                        <TableCell>{event.person.email}</TableCell>
+                        <TableCell>
+                          {event.person.phone || "Non renseigné"}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(event.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {`${event.startHour}:${
+                            event.startMinute < 10
+                              ? `0${event.startMinute}`
+                              : event.startMinute
+                          }`}
+                        </TableCell>
+                        <TableCell>
+                          {`${event.endHour}:${
+                            event.endMinute < 10
+                              ? `0${event.endMinute}`
+                              : event.endMinute
+                          }`}
+                        </TableCell>
+                        <TableCell>
+                          {event.vehicule.model || "Non renseigné"} -{" "}
+                          {event.vehicule.licensePlate || "Non renseignée"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="primary">
+              Fermer
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </DragDropContext>
+    </ThemeProvider>
   );
 };
 
