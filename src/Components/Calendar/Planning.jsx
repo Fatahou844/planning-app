@@ -473,21 +473,25 @@ const Planning = () => {
         const queries = [
           query(
             eventsRef,
+            where("userId", "==", user.uid), // Limite aux événements de l'utilisateur
             where("person.firstName", ">=", lowerCaseKeyword),
             where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
             eventsRef,
+            where("userId", "==", user.uid),
             where("person.lastName", ">=", lowerCaseKeyword),
             where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
             eventsRef,
+            where("userId", "==", user.uid),
             where("person.email", ">=", lowerCaseKeyword),
             where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
             eventsRef,
+            where("userId", "==", user.uid),
             where("title", ">=", lowerCaseKeyword),
             where("title", "<=", lowerCaseKeyword + "\uf8ff")
           ),
