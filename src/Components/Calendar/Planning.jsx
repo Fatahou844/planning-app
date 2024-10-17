@@ -86,7 +86,6 @@ const Planning = () => {
   const [events, setEvents] = useState(eventsData);
   const [eventsCopied, setEventsCopied] = useState(eventsData);
   const [dataEvents, setDataEvents] = useState([]);
-  const classes = useStyles();
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
     title: "Entretiens",
