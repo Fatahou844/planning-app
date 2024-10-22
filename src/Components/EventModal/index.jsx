@@ -67,6 +67,17 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
         };
       }
 
+      if (name.startsWith("details.")) {
+        const detailsKey = name.split(".")[1]; // Extrait la clé de la propriété de "vehicule"
+        return {
+          ...prev,
+          details: {
+            ...prev.details,
+            [detailsKey]: newValue,
+          },
+        };
+      }
+
       // Cas par défaut : mise à jour des propriétés au premier niveau
       return {
         ...prev,
@@ -99,7 +110,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
         },
       }}
     >
-      <DialogTitle>Modifier l'événement</DialogTitle>
+      <DialogTitle>Modifier l'Ordre de RDV</DialogTitle>
       {editedEvent && (
         <DialogContent>
           <Grid container spacing={2}>
@@ -108,11 +119,13 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
               <TextField
                 margin="dense"
                 name="title"
-                label="Titre"
+                label="O.R"
                 type="text"
                 fullWidth
                 value={editedEvent.title}
                 onChange={handleChange}
+                size="small" // Réduire la taille
+                disabled
               />
 
               <TextField
@@ -122,6 +135,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
+                size="small" // Réduire la taille
                 required
               />
               <TextField
@@ -131,6 +145,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
+                size="small" // Réduire la taille
                 required
               />
               <TextField
@@ -140,6 +155,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 type="text"
                 fullWidth
                 value={editedEvent.person.phone || ""}
+                size="small" // Réduire la taille
                 onChange={handleChange}
               />
               <TextField
@@ -150,6 +166,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.person.email || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
             </Grid>
 
@@ -163,6 +180,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent?.vehicule?.licensePlate || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
               <TextField
                 margin="dense"
@@ -172,6 +190,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent?.vehicule?.vin || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
               <TextField
                 margin="dense"
@@ -181,6 +200,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.modele || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
               <TextField
                 margin="dense"
@@ -190,6 +210,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.vehicule?.color || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
             </Grid>
           </Grid>
@@ -204,6 +225,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                   value={editedEvent.category?.id || ""} // Utilise l'ID de la catégorie si nécessaire
                   onChange={handleChange}
                   fullWidth
+                  size="small" // Réduire la taille
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.id} value={cat.id}>
@@ -214,6 +236,27 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                   ))}
                 </Select>
               </FormControl>
+              <TextField
+                margin="dense"
+                name="details.workDescription"
+                type="text"
+                label="Travaux"
+                fullWidth
+                value={editedEvent.details?.workDescription || ""}
+                onChange={handleChange}
+                multiline
+                rows={4} // Nombre de lignes visibles
+              />
+              <TextField
+                margin="dense"
+                label="Prix"
+                name="details.price"
+                type="text"
+                fullWidth
+                value={editedEvent.details?.price || ""}
+                onChange={handleChange}
+                size="small" // Réduire la taille
+              />
             </Grid>
 
             <Grid item xs={12} md={6}>
@@ -225,6 +268,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.startHour || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
               <TextField
                 margin="dense"
@@ -234,6 +278,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.startMinute || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
               <TextField
                 margin="dense"
@@ -243,6 +288,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.endHour || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
               <TextField
                 margin="dense"
@@ -252,6 +298,7 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.endMinute || ""}
                 onChange={handleChange}
+                size="small" // Réduire la taille
               />
             </Grid>
           </Grid>

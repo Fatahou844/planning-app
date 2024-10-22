@@ -25,6 +25,7 @@ import {
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   setDoc,
@@ -237,33 +238,157 @@ const Planning = () => {
 
   const [finDate, setFinDate] = useState("");
 
-  const addEvent = async () => {
+  // Fonction pour récupérer le dernier numéro de commande pour un userId
+
+  // const addEvent = async () => {
+  //   if (!user) {
+  //     console.error("User not authenticated");
+  //     return; // Sortir si l'utilisateur n'est pas connecté
+  //   }
+
+  //   const updatedEvents = [...events]; // Crée une copie de l'array events
+
+  //   const startDate = new Date(newEvent.date); // Date de début
+  //   const endDate = new Date(finDate); // Date de fin
+  //   const userId = user.uid; // UID de l'utilisateur connecté
+
+  //   // Générer le numéro de commande une seule fois pour l'événement
+  //   const lastOrderNumber = await getLastOrderNumberForUser(userId);
+  //   const newOrderNumber = generateOrderNumber(lastOrderNumber);
+
+  //   // Vérifie si la date de fin est différente de la date de début
+  //   if (startDate.getTime() !== endDate.getTime()) {
+  //     // Cas où les événements couvrent plusieurs jours
+
+  //     // Ajout du premier événement pour la date de début
+  //     const firstEventEndHour = 18; // Heure de fin de la journée
+  //     const firstEventEndMinute = 0; // Fin de la journée à 18:00
+
+  //     const firstEvent = {
+  //       ...newEvent,
+  //       endHour: firstEventEndHour,
+  //       endMinute: firstEventEndMinute,
+  //       userId: userId, // Ajoutez l'UID de l'utilisateur
+  //       title: newOrderNumber, // Utiliser le même numéro de commande
+  //     };
+  //     await addSingleEvent(firstEvent); // Ajout à Firestore
+
+  //     // Ajout des événements pour les jours intermédiaires (si applicable)
+  //     let currentDate = new Date(startDate);
+  //     currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
+  //     while (currentDate < endDate) {
+  //       const dailyEvent = {
+  //         ...newEvent,
+  //         date: formatDate(currentDate),
+  //         startHour: 8,
+  //         startMinute: 0,
+  //         endHour: 18,
+  //         endMinute: 0,
+  //         userId: userId, // Ajoutez l'UID de l'utilisateur
+  //         title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
+  //       };
+  //       await addSingleEvent(dailyEvent); // Ajout à Firestore
+  //       currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
+  //     }
+
+  //     // Ajout du dernier événement pour la date de fin
+  //     const lastEvent = {
+  //       ...newEvent,
+  //       date: finDate,
+  //       startHour: 8, // Début de la journée
+  //       startMinute: 0,
+  //       endHour: parseInt(newEvent.endHour), // Heure réelle de fin
+  //       endMinute: parseInt(newEvent.endMinute),
+  //       userId: userId, // Ajoutez l'UID de l'utilisateur
+  //       title: newOrderNumber, // Utiliser le même numéro de commande
+  //     };
+  //     await addSingleEvent(lastEvent); // Ajout à Firestore
+  //   } else {
+  //     // Si l'événement ne couvre qu'une seule journée, on l'ajoute normalement
+  //     const singleEvent = {
+  //       ...newEvent,
+  //       userId: userId, // Ajoutez l'UID de l'utilisateur
+  //       title: newOrderNumber, // Utiliser le numéro de commande
+  //     };
+  //     await addSingleEvent(singleEvent); // Ajout à Firestore
+  //   }
+
+  //   // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+  //   await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+
+  //   // Mettre à jour le state avec les événements ajoutés
+  //   setEvents(updatedEvents);
+
+  //   const fetchEvents = async () => {
+  //     try {
+  //       // Référence à la collection "events"
+  //       const eventsRef = collection(db, "events");
+
+  //       // Créer la requête avec la condition where pour filtrer par userId
+  //       const q = query(
+  //         eventsRef,
+  //         where("userId", "==", user.uid),
+  //         where("date", "==", selectedDate)
+  //       );
+
+  //       // Récupérer les documents correspondants
+  //       const querySnapshot = await getDocs(q);
+
+  //       // Récupérer les objets de la collection (id et data)
+  //       const eventsData = querySnapshot.docs.map((doc) => ({
+  //         id: doc.id,
+  //         ...doc.data(),
+  //       }));
+
+  //       // Mettre à jour l'état avec les données récupérées
+
+  //       console.log("eventsData", eventsData); // Pour vérifier les données dans la console
+  //       setDataEvents(eventsData);
+  //     } catch (error) {
+  //       console.error(
+  //         "Erreur lors de la récupération des événements : ",
+  //         error
+  //       );
+  //     }
+  //   };
+
+  //   fetchEvents(); // Appeler la fonction au montage du composant
+
+  //   // Réinitialiser le formulaire et fermer le modal
+  //   resetForm();
+  //   setIsModalOpen(false); // Fermer le modal
+  // };
+
+  const addEvent = async (isMultiDay = false) => {
+    // Ajout du paramètre isMultiDay
     if (!user) {
       console.error("User not authenticated");
       return; // Sortir si l'utilisateur n'est pas connecté
     }
 
     const updatedEvents = [...events]; // Crée une copie de l'array events
-
     const startDate = new Date(newEvent.date); // Date de début
     const endDate = new Date(finDate); // Date de fin
     const userId = user.uid; // UID de l'utilisateur connecté
 
-    // Vérifie si la date de fin est différente de la date de début
-    if (startDate.getTime() !== endDate.getTime()) {
+    // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
+    const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+
+    if (isMultiDay && startDate.getTime() !== endDate.getTime()) {
       // Cas où les événements couvrent plusieurs jours
 
       // Ajout du premier événement pour la date de début
       const firstEventEndHour = 18; // Heure de fin de la journée
       const firstEventEndMinute = 0; // Fin de la journée à 18:00
-
       const firstEvent = {
         ...newEvent,
         endHour: firstEventEndHour,
         endMinute: firstEventEndMinute,
-        userId: userId, // Ajoutez l'UID de l'utilisateur
+        userId: userId,
+        title: newOrderNumber, // Utiliser le même numéro de commande
       };
-      await addSingleEvent(firstEvent); // Ajout à Firestore
+      await addSingleEvent(firstEvent, newOrderNumber); // Ajout à Firestore
 
       // Ajout des événements pour les jours intermédiaires (si applicable)
       let currentDate = new Date(startDate);
@@ -276,9 +401,10 @@ const Planning = () => {
           startMinute: 0,
           endHour: 18,
           endMinute: 0,
-          userId: userId, // Ajoutez l'UID de l'utilisateur
+          userId: userId,
+          title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
         };
-        await addSingleEvent(dailyEvent); // Ajout à Firestore
+        await addSingleEvent(dailyEvent, newOrderNumber); // Ajout à Firestore
         currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
       }
 
@@ -286,27 +412,32 @@ const Planning = () => {
       const lastEvent = {
         ...newEvent,
         date: finDate,
-        startHour: 8, // Début de la journée
+        startHour: 8,
         startMinute: 0,
         endHour: parseInt(newEvent.endHour), // Heure réelle de fin
         endMinute: parseInt(newEvent.endMinute),
-        userId: userId, // Ajoutez l'UID de l'utilisateur
+        userId: userId,
+        title: newOrderNumber, // Utiliser le même numéro de commande
       };
-      await addSingleEvent(lastEvent); // Ajout à Firestore
+      await addSingleEvent(lastEvent, newOrderNumber); // Ajout à Firestore
     } else {
-      // Si l'événement ne couvre qu'une seule journée, on l'ajoute normalement
+      // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
         ...newEvent,
-        userId: userId, // Ajoutez l'UID de l'utilisateur
+        userId: userId,
+        title: newOrderNumber, // Utiliser le numéro de commande
       };
-      await addSingleEvent(singleEvent); // Ajout à Firestore
+      await addSingleEvent(singleEvent, newOrderNumber); // Ajout à Firestore
     }
+
+    // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
 
     // Mettre à jour le state avec les événements ajoutés
     setEvents(updatedEvents);
+
     const fetchEvents = async () => {
       try {
-        // Référence à la collection "events"
         const eventsRef = collection(db, "events");
 
         // Créer la requête avec la condition where pour filtrer par userId
@@ -316,18 +447,13 @@ const Planning = () => {
           where("date", "==", selectedDate)
         );
 
-        // Récupérer les documents correspondants
         const querySnapshot = await getDocs(q);
 
-        // Récupérer les objets de la collection (id et data)
         const eventsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
-        // Mettre à jour l'état avec les données récupérées
-
-        console.log("eventsData", eventsData); // Pour vérifier les données dans la console
         setDataEvents(eventsData);
       } catch (error) {
         console.error(
@@ -339,19 +465,89 @@ const Planning = () => {
 
     fetchEvents(); // Appeler la fonction au montage du composant
 
-    // Réinitialiser le formulaire et fermer le modal
     resetForm();
     setIsModalOpen(false); // Fermer le modal
   };
 
+  const getLastOrderNumberForUser = async (userId) => {
+    const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return docSnap.data().lastOrderNumber; // Récupère le dernier numéro
+    } else {
+      // Si le document n'existe pas encore, on commence à 00000 pour cet utilisateur
+      return 0;
+    }
+  };
+
+  // Fonction pour mettre à jour le dernier numéro de commande pour un userId
+  const updateLastOrderNumberForUser = async (userId, newOrderNumber) => {
+    const docRef = doc(db, "userOrderNumbers", userId); // Document unique par userId
+    await setDoc(docRef, { lastOrderNumber: newOrderNumber, userId: userId }); // Met à jour ou crée le document
+  };
+
+  // Fonction pour générer un numéro de commande formaté à 5 chiffres
+  const generateOrderNumber = (lastOrderNumber) => {
+    const newOrderNumber = lastOrderNumber + 1;
+    return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
+  };
+
   // Fonction pour ajouter un événement à Firestore
-  const addSingleEvent = async (event) => {
+  // const addSingleEvent = async (event) => {
+  //   try {
+  //     const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document dans la collection "events"
+  //     console.log("category: event.categoryId", event.categoryId);
+  //     // Récupérer le dernier numéro de commande pour l'utilisateur
+  //     const lastOrderNumber = await getLastOrderNumberForUser(event.userId);
+  //     const newOrderNumber = generateOrderNumber(lastOrderNumber); // Générer le nouveau
+  //     await setDoc(eventRef, {
+  //       eventId: eventRef.id, // ID du document généré
+  //       title: newOrderNumber,
+  //       date: event.date,
+  //       startHour: parseInt(event.startHour),
+  //       startMinute: parseInt(event.startMinute),
+  //       endHour: parseInt(event.endHour),
+  //       endMinute: parseInt(event.endMinute),
+  //       category: { id: event.category.id, name: event.category.name },
+  //       person: {
+  //         // personId: event.personId, // Assurez-vous d'ajouter un ID de personne si disponible
+  //         firstName: event.firstName, // Nom de la personne
+  //         lastName: event.lastName,
+  //         email: event.email, // Email de la personne
+  //         phone: event.phone,
+  //       },
+  //       vehicule: {
+  //         licensePlate: event.licensePlate,
+  //         vin: event.vin,
+  //         color: event.color,
+  //       },
+  //       details: {
+  //         workDescription: event.workDescription,
+  //         price: event.price,
+  //       },
+  //       operator: event.operator,
+  //       userId: event.userId, // UID de l'utilisateur
+  //     });
+  //     console.log("eventRef", event);
+  //     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+  //     await updateLastOrderNumberForUser(
+  //       event.userId,
+  //       parseInt(newOrderNumber)
+  //     );
+  //   } catch (error) {
+  //     console.error("Error adding event: ", error);
+  //   }
+  // };
+
+  const addSingleEvent = async (event, newOrderNumber) => {
     try {
-      const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document dans la collection "events"
+      const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document
       console.log("category: event.categoryId", event.categoryId);
+
       await setDoc(eventRef, {
-        eventId: eventRef.id, // ID du document généré
-        title: event.orderNumber,
+        eventId: eventRef.id,
+        title: newOrderNumber, // Utilise le numéro de commande fourni
         date: event.date,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
@@ -359,10 +555,9 @@ const Planning = () => {
         endMinute: parseInt(event.endMinute),
         category: { id: event.category.id, name: event.category.name },
         person: {
-          // personId: event.personId, // Assurez-vous d'ajouter un ID de personne si disponible
-          firstName: event.firstName, // Nom de la personne
+          firstName: event.firstName,
           lastName: event.lastName,
-          email: event.email, // Email de la personne
+          email: event.email,
           phone: event.phone,
         },
         vehicule: {
@@ -377,7 +572,14 @@ const Planning = () => {
         operator: event.operator,
         userId: event.userId, // UID de l'utilisateur
       });
+
       console.log("eventRef", event);
+
+      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+      await updateLastOrderNumberForUser(
+        event.userId,
+        parseInt(newOrderNumber)
+      );
     } catch (error) {
       console.error("Error adding event: ", error);
     }
@@ -773,7 +975,7 @@ const Planning = () => {
                     {/* Colonne 1: Infos client */}
                     <Grid item xs={12} md={6}>
                       <Typography variant="h6">Informations Client</Typography>
-                      <TextField
+                      {/* <TextField
                         label="N° OR"
                         name="orderNumber"
                         value={newEvent.orderNumber}
@@ -781,7 +983,8 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                      />
+                        size="small" // Réduire la taille
+                      /> */}
                       <TextField
                         label="Nom"
                         name="lastName"
@@ -790,6 +993,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <TextField
                         label="Prénom"
@@ -799,6 +1003,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <TextField
                         label="Téléphone"
@@ -808,6 +1013,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <TextField
                         label="Email"
@@ -817,6 +1023,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                     </Grid>
 
@@ -833,6 +1040,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <TextField
                         label="VIN"
@@ -841,6 +1049,7 @@ const Planning = () => {
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
+                        size="small" // Réduire la taille
                       />
                       <TextField
                         label="Modèle"
@@ -850,6 +1059,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <TextField
                         label="Couleur"
@@ -859,6 +1069,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                     </Grid>
 
@@ -887,6 +1098,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                     </Grid>
 
@@ -904,6 +1116,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
 
                       <Typography variant="p">Date de l'événement</Typography>
@@ -916,6 +1129,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <Typography variant="p">Date de fin</Typography>
                       <TextField
@@ -927,6 +1141,7 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       />
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
@@ -939,6 +1154,7 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
+                            size="small" // Réduire la taille
                           />
                         </Grid>
                         <Grid item xs={6}>
@@ -951,6 +1167,7 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
+                            size="small" // Réduire la taille
                           />
                         </Grid>
                         <Grid item xs={6}>
@@ -963,6 +1180,7 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
+                            size="small" // Réduire la taille
                           />
                         </Grid>
                         <Grid item xs={6}>
@@ -975,6 +1193,7 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
+                            size="small" // Réduire la taille
                           />
                         </Grid>
                       </Grid>
@@ -982,11 +1201,12 @@ const Planning = () => {
                         select
                         label="Catégorie"
                         name="category"
-                        value={newEvent.category}
+                        value={newEvent.category.id}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
                         required
+                        size="small" // Réduire la taille
                       >
                         {categories.map((categoryGroup, index) => (
                           <MenuItem key={index} value={categoryGroup.id}>
@@ -1100,11 +1320,25 @@ const Planning = () => {
                                     transition: "background-color 0.3s ease",
                                   }}
                                 >
-                                  <Typography
-                                    variant="body2"
-                                    color="textSecondary"
-                                  >
-                                    {event.title}
+                                  <Typography variant="body2">
+                                    <span
+                                      style={{
+                                        fontWeight: "bold",
+                                        fontSize: "1rem",
+                                        color: "#000",
+                                      }}
+                                    >
+                                      {event.title}
+                                    </span>
+                                    {" • "}
+                                    <span style={{ color: "gray" }}>
+                                      {event.person.firstName}{" "}
+                                      {event.person.lastName}
+                                    </span>
+                                    {" • "}
+                                    <span style={{ color: "textSecondary" }}>
+                                      {event.vehicule.licensePlate}
+                                    </span>
                                   </Typography>
                                 </Box>
                               )}
