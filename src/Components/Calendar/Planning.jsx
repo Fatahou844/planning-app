@@ -12,7 +12,6 @@ import {
   DialogTitle,
   Fab,
   Grid,
-  IconButton,
   MenuItem,
   Paper,
   Table,
@@ -40,9 +39,6 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import EventModal from "../EventModal";
-
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { addDays, format } from "date-fns";
 
 const Timeline = () => (
   <Box
@@ -122,9 +118,9 @@ const Planning = () => {
     setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
   }, []); // État pour stocker la date sélectionnée
 
-  // const handleDateChange = (e) => {
-  //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
-  // };
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
+  };
   // Utilisation de useEffect pour récupérer les catégories depuis Firestore
   useEffect(() => {
     const fetchCategories = async () => {
@@ -717,12 +713,6 @@ const Planning = () => {
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
   };
 
-  // Fonction de changement de jour
-  const handleDateChange = (days) => {
-    const newDate = addDays(new Date(selectedDate), days); // Ajoute ou soustrait des jours
-    setSelectedDate(format(newDate, "yyyy-MM-dd")); // Formate en yyyy-MM-dd pour le champ date
-  };
-
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -782,7 +772,7 @@ const Planning = () => {
             sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
           >
             {/* Date Filter Input */}
-            {/* <TextField
+            <TextField
               label="Filtrer par date"
               variant="outlined"
               fullWidth
@@ -790,56 +780,7 @@ const Planning = () => {
               value={selectedDate}
               type="date"
               onChange={handleDateChange}
-            /> */}
-            <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
-              {/* Conteneur pour le TextField et les boutons */}
-
-              <IconButton
-                onClick={() => handleDateChange(-1)}
-                aria-label="Jour précédent"
-                sx={{
-                  bgcolor: "primary.main", // Couleur de fond
-                  color: "white", // Couleur de l'icône
-                  "&:hover": {
-                    bgcolor: "primary.dark", // Couleur de fond au survol
-                    transform: "scale(1.05)", // Légère augmentation de la taille au survol
-                  },
-                  transition: "background-color 0.3s, transform 0.3s", // Transition pour les effets
-                  padding: "8px", // Padding pour un bouton plus accessible
-                  borderRadius: "8px", // Coins arrondis
-                }}
-              >
-                <ArrowBackIcon fontSize="small" />
-              </IconButton>
-
-              <TextField
-                label="Filtrer par date"
-                variant="outlined"
-                fullWidth
-                sx={{ mb: 0.1 }}
-                value={selectedDate}
-                type="date"
-                onChange={(e) => setSelectedDate(e.target.value)}
-              />
-
-              <IconButton
-                onClick={() => handleDateChange(1)}
-                aria-label="Jour suivant"
-                sx={{
-                  bgcolor: "primary.main", // Couleur de fon
-                  color: "white", // Couleur de l'icône
-                  "&:hover": {
-                    bgcolor: "primary.dark", // Couleur de fond au survol
-                    transform: "scale(1.05)", // Légère augmentation de la taille au survol
-                  },
-                  transition: "background-color 0.3s, transform 0.3s", // Transition pour les effets
-                  padding: "8px", // Padding pour un bouton plus accessible
-                  borderRadius: "8px", // Coins arrondis
-                }}
-              >
-                <ArrowForwardIcon fontSize="small" />
-              </IconButton>
-            </Box>
+            />
             {/* Events Accordion */}
             {uniqueCategories.map((category, index) => {
               const categoryEvents = dataEvents.filter(
