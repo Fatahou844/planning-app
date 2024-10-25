@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add"; // Icone de plus pour le bouton flottant
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   Fab,
   Grid,
+  IconButton,
   MenuItem,
   Paper,
   Table,
@@ -23,6 +25,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dayjs from "dayjs"; // ou luxon selon ta préférence
 import {
   collection,
   doc,
@@ -118,9 +121,9 @@ const Planning = () => {
     setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
   }, []); // État pour stocker la date sélectionnée
 
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
-  };
+  // const handleDateChange = (e) => {
+  //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
+  // };
   // Utilisation de useEffect pour récupérer les catégories depuis Firestore
   useEffect(() => {
     const fetchCategories = async () => {
@@ -713,6 +716,11 @@ const Planning = () => {
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
   };
 
+  const handleDateChange = (days) => {
+    const newDate = dayjs(selectedDate).add(days, "day");
+    setSelectedDate(newDate.format("YYYY-MM-DD"));
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -772,7 +780,7 @@ const Planning = () => {
             sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
           >
             {/* Date Filter Input */}
-            <TextField
+            {/* <TextField
               label="Filtrer par date"
               variant="outlined"
               fullWidth
@@ -780,7 +788,34 @@ const Planning = () => {
               value={selectedDate}
               type="date"
               onChange={handleDateChange}
-            />
+            /> */}
+            <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+              <IconButton
+                onClick={() => handleDateChange(-1)}
+                aria-label="Jour précédent"
+                sx={{ color: "primary.main" }} // Ajuste le style selon tes besoins
+              >
+                <ArrowBackIcon />
+              </IconButton>
+
+              <TextField
+                label="Filtrer par date"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 0.1 }}
+                value={selectedDate}
+                type="date"
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+
+              <IconButton
+                onClick={() => handleDateChange(1)}
+                aria-label="Jour suivant"
+                sx={{ color: "primary.main" }} // Ajuste le style selon tes besoins
+              >
+                <ArrowForwardIcon />
+              </IconButton>
+            </Box>
             {/* Events Accordion */}
             {uniqueCategories.map((category, index) => {
               const categoryEvents = dataEvents.filter(
