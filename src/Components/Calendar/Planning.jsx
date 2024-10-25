@@ -826,7 +826,7 @@ const Planning = () => {
                 onClick={() => handleDateChange(1)}
                 aria-label="Jour suivant"
                 sx={{
-                  bgcolor: "primary.main", // Couleur de fond
+                  bgcolor: "primary.main", // Couleur de fon
                   color: "white", // Couleur de l'icône
                   "&:hover": {
                     bgcolor: "primary.dark", // Couleur de fond au survol
