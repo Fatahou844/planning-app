@@ -124,7 +124,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.title}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
                 disabled
               />
 
@@ -135,7 +140,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
                 required
               />
               <TextField
@@ -145,7 +155,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
                 required
               />
               <TextField
@@ -155,7 +170,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 type="text"
                 fullWidth
                 value={editedEvent.person.phone || ""}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
                 onChange={handleChange}
               />
               <TextField
@@ -166,7 +186,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.person.email || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
             </Grid>
 
@@ -180,7 +205,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent?.vehicule?.licensePlate || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -190,7 +220,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent?.vehicule?.vin || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -200,7 +235,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.modele || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -210,7 +250,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.vehicule?.color || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
             </Grid>
           </Grid>
@@ -225,10 +270,24 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                   value={editedEvent.category?.id || ""} // Utilise l'ID de la catégorie si nécessaire
                   onChange={handleChange}
                   fullWidth
-                  size="small" // Réduire la taille
+                  size="small" // Conserve la taille "small" pour l'espacement interne
+                  sx={{
+                    "& .MuiSelect-select": {
+                      fontSize: "0.8rem",
+                      padding: "4px 8px",
+                    }, // Réduit la taille de police et le padding interne
+                    "& .MuiOutlinedInput-root": { height: "30px" }, // Ajuste la hauteur du champ
+                  }}
                 >
                   {categories.map((cat) => (
-                    <MenuItem key={cat.id} value={cat.id}>
+                    <MenuItem
+                      key={cat.id}
+                      value={cat.id}
+                      sx={{
+                        fontSize: "0.8rem", // Réduit la taille de police dans chaque MenuItem
+                        minHeight: "30px", // Réduit la hauteur de chaque option
+                      }}
+                    >
                       {" "}
                       {/* Assurez-vous d'utiliser la bonne clé ici */}
                       {cat.name} {/* Affiche le nom de la catégorie */}
@@ -246,6 +305,10 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 onChange={handleChange}
                 multiline
                 rows={4} // Nombre de lignes visibles
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -255,7 +318,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.details?.price || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
             </Grid>
 
@@ -268,7 +336,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.startHour || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -278,7 +351,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.startMinute || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -288,7 +366,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.endHour || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
               <TextField
                 margin="dense"
@@ -298,7 +381,12 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 fullWidth
                 value={editedEvent.endMinute || ""}
                 onChange={handleChange}
-                size="small" // Réduire la taille
+                size="small" // Conserve la taille "small" pour l'espacement interne
+                sx={{
+                  height: "30px", // Ajuste la hauteur selon le besoin
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                }}
               />
             </Grid>
           </Grid>

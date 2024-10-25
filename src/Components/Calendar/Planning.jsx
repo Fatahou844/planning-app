@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add"; // Icone de plus pour le bouton flottant
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
@@ -11,6 +12,7 @@ import {
   DialogTitle,
   Fab,
   Grid,
+  IconButton,
   MenuItem,
   Paper,
   Table,
@@ -38,6 +40,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import EventModal from "../EventModal";
+
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { addDays, format } from "date-fns";
 
 const Timeline = () => (
   <Box
@@ -117,9 +122,9 @@ const Planning = () => {
     setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
   }, []); // État pour stocker la date sélectionnée
 
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
-  };
+  // const handleDateChange = (e) => {
+  //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
+  // };
   // Utilisation de useEffect pour récupérer les catégories depuis Firestore
   useEffect(() => {
     const fetchCategories = async () => {
@@ -238,127 +243,6 @@ const Planning = () => {
 
   const [finDate, setFinDate] = useState("");
 
-  // Fonction pour récupérer le dernier numéro de commande pour un userId
-
-  // const addEvent = async () => {
-  //   if (!user) {
-  //     console.error("User not authenticated");
-  //     return; // Sortir si l'utilisateur n'est pas connecté
-  //   }
-
-  //   const updatedEvents = [...events]; // Crée une copie de l'array events
-
-  //   const startDate = new Date(newEvent.date); // Date de début
-  //   const endDate = new Date(finDate); // Date de fin
-  //   const userId = user.uid; // UID de l'utilisateur connecté
-
-  //   // Générer le numéro de commande une seule fois pour l'événement
-  //   const lastOrderNumber = await getLastOrderNumberForUser(userId);
-  //   const newOrderNumber = generateOrderNumber(lastOrderNumber);
-
-  //   // Vérifie si la date de fin est différente de la date de début
-  //   if (startDate.getTime() !== endDate.getTime()) {
-  //     // Cas où les événements couvrent plusieurs jours
-
-  //     // Ajout du premier événement pour la date de début
-  //     const firstEventEndHour = 18; // Heure de fin de la journée
-  //     const firstEventEndMinute = 0; // Fin de la journée à 18:00
-
-  //     const firstEvent = {
-  //       ...newEvent,
-  //       endHour: firstEventEndHour,
-  //       endMinute: firstEventEndMinute,
-  //       userId: userId, // Ajoutez l'UID de l'utilisateur
-  //       title: newOrderNumber, // Utiliser le même numéro de commande
-  //     };
-  //     await addSingleEvent(firstEvent); // Ajout à Firestore
-
-  //     // Ajout des événements pour les jours intermédiaires (si applicable)
-  //     let currentDate = new Date(startDate);
-  //     currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
-  //     while (currentDate < endDate) {
-  //       const dailyEvent = {
-  //         ...newEvent,
-  //         date: formatDate(currentDate),
-  //         startHour: 8,
-  //         startMinute: 0,
-  //         endHour: 18,
-  //         endMinute: 0,
-  //         userId: userId, // Ajoutez l'UID de l'utilisateur
-  //         title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
-  //       };
-  //       await addSingleEvent(dailyEvent); // Ajout à Firestore
-  //       currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
-  //     }
-
-  //     // Ajout du dernier événement pour la date de fin
-  //     const lastEvent = {
-  //       ...newEvent,
-  //       date: finDate,
-  //       startHour: 8, // Début de la journée
-  //       startMinute: 0,
-  //       endHour: parseInt(newEvent.endHour), // Heure réelle de fin
-  //       endMinute: parseInt(newEvent.endMinute),
-  //       userId: userId, // Ajoutez l'UID de l'utilisateur
-  //       title: newOrderNumber, // Utiliser le même numéro de commande
-  //     };
-  //     await addSingleEvent(lastEvent); // Ajout à Firestore
-  //   } else {
-  //     // Si l'événement ne couvre qu'une seule journée, on l'ajoute normalement
-  //     const singleEvent = {
-  //       ...newEvent,
-  //       userId: userId, // Ajoutez l'UID de l'utilisateur
-  //       title: newOrderNumber, // Utiliser le numéro de commande
-  //     };
-  //     await addSingleEvent(singleEvent); // Ajout à Firestore
-  //   }
-
-  //   // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-  //   await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
-
-  //   // Mettre à jour le state avec les événements ajoutés
-  //   setEvents(updatedEvents);
-
-  //   const fetchEvents = async () => {
-  //     try {
-  //       // Référence à la collection "events"
-  //       const eventsRef = collection(db, "events");
-
-  //       // Créer la requête avec la condition where pour filtrer par userId
-  //       const q = query(
-  //         eventsRef,
-  //         where("userId", "==", user.uid),
-  //         where("date", "==", selectedDate)
-  //       );
-
-  //       // Récupérer les documents correspondants
-  //       const querySnapshot = await getDocs(q);
-
-  //       // Récupérer les objets de la collection (id et data)
-  //       const eventsData = querySnapshot.docs.map((doc) => ({
-  //         id: doc.id,
-  //         ...doc.data(),
-  //       }));
-
-  //       // Mettre à jour l'état avec les données récupérées
-
-  //       console.log("eventsData", eventsData); // Pour vérifier les données dans la console
-  //       setDataEvents(eventsData);
-  //     } catch (error) {
-  //       console.error(
-  //         "Erreur lors de la récupération des événements : ",
-  //         error
-  //       );
-  //     }
-  //   };
-
-  //   fetchEvents(); // Appeler la fonction au montage du composant
-
-  //   // Réinitialiser le formulaire et fermer le modal
-  //   resetForm();
-  //   setIsModalOpen(false); // Fermer le modal
-  // };
-
   const addEvent = async (isMultiDay = false) => {
     // Ajout du paramètre isMultiDay
     if (!user) {
@@ -388,7 +272,7 @@ const Planning = () => {
         userId: userId,
         title: newOrderNumber, // Utiliser le même numéro de commande
       };
-      await addSingleEvent(firstEvent, newOrderNumber); // Ajout à Firestore
+      await addSingleEvent(firstEvent, newOrderNumber, true); // Ajout à Firestore
 
       // Ajout des événements pour les jours intermédiaires (si applicable)
       let currentDate = new Date(startDate);
@@ -404,7 +288,7 @@ const Planning = () => {
           userId: userId,
           title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
         };
-        await addSingleEvent(dailyEvent, newOrderNumber); // Ajout à Firestore
+        await addSingleEvent(dailyEvent, newOrderNumber, true); // Ajout à Firestore
         currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
       }
 
@@ -418,16 +302,18 @@ const Planning = () => {
         endMinute: parseInt(newEvent.endMinute),
         userId: userId,
         title: newOrderNumber, // Utiliser le même numéro de commande
+        nextDay: false,
       };
-      await addSingleEvent(lastEvent, newOrderNumber); // Ajout à Firestore
+      await addSingleEvent(lastEvent, newOrderNumber, false); // Ajout à Firestore
     } else {
       // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
         ...newEvent,
         userId: userId,
         title: newOrderNumber, // Utiliser le numéro de commande
+        nextDay: false,
       };
-      await addSingleEvent(singleEvent, newOrderNumber); // Ajout à Firestore
+      await addSingleEvent(singleEvent, newOrderNumber, false); // Ajout à Firestore
     }
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
@@ -540,7 +426,7 @@ const Planning = () => {
   //   }
   // };
 
-  const addSingleEvent = async (event, newOrderNumber) => {
+  const addSingleEvent = async (event, newOrderNumber, nextDay) => {
     try {
       const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document
       console.log("category: event.categoryId", event.categoryId);
@@ -571,6 +457,7 @@ const Planning = () => {
         },
         operator: event.operator,
         userId: event.userId, // UID de l'utilisateur
+        nextDay: nextDay,
       });
 
       console.log("eventRef", event);
@@ -830,6 +717,12 @@ const Planning = () => {
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
   };
 
+  // Fonction de changement de jour
+  const handleDateChange = (days) => {
+    const newDate = addDays(new Date(selectedDate), days); // Ajoute ou soustrait des jours
+    setSelectedDate(format(newDate, "yyyy-MM-dd")); // Formate en yyyy-MM-dd pour le champ date
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -889,7 +782,7 @@ const Planning = () => {
             sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
           >
             {/* Date Filter Input */}
-            <TextField
+            {/* <TextField
               label="Filtrer par date"
               variant="outlined"
               fullWidth
@@ -897,7 +790,56 @@ const Planning = () => {
               value={selectedDate}
               type="date"
               onChange={handleDateChange}
-            />
+            /> */}
+            <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+              {/* Conteneur pour le TextField et les boutons */}
+
+              <IconButton
+                onClick={() => handleDateChange(-1)}
+                aria-label="Jour précédent"
+                sx={{
+                  bgcolor: "primary.main", // Couleur de fond
+                  color: "white", // Couleur de l'icône
+                  "&:hover": {
+                    bgcolor: "primary.dark", // Couleur de fond au survol
+                    transform: "scale(1.05)", // Légère augmentation de la taille au survol
+                  },
+                  transition: "background-color 0.3s, transform 0.3s", // Transition pour les effets
+                  padding: "8px", // Padding pour un bouton plus accessible
+                  borderRadius: "8px", // Coins arrondis
+                }}
+              >
+                <ArrowBackIcon fontSize="small" />
+              </IconButton>
+
+              <TextField
+                label="Filtrer par date"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 0.1 }}
+                value={selectedDate}
+                type="date"
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+
+              <IconButton
+                onClick={() => handleDateChange(1)}
+                aria-label="Jour suivant"
+                sx={{
+                  bgcolor: "primary.main", // Couleur de fond
+                  color: "white", // Couleur de l'icône
+                  "&:hover": {
+                    bgcolor: "primary.dark", // Couleur de fond au survol
+                    transform: "scale(1.05)", // Légère augmentation de la taille au survol
+                  },
+                  transition: "background-color 0.3s, transform 0.3s", // Transition pour les effets
+                  padding: "8px", // Padding pour un bouton plus accessible
+                  borderRadius: "8px", // Coins arrondis
+                }}
+              >
+                <ArrowForwardIcon fontSize="small" />
+              </IconButton>
+            </Box>
             {/* Events Accordion */}
             {uniqueCategories.map((category, index) => {
               const categoryEvents = dataEvents.filter(
@@ -974,7 +916,15 @@ const Planning = () => {
                   <Grid container spacing={2}>
                     {/* Colonne 1: Infos client */}
                     <Grid item xs={12} md={6}>
-                      <Typography variant="h6">Informations Client</Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          "& .MuiInputBase-root": { fontSize: "1.1rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "1.1rem" }, // Réduit la taille de police du label
+                        }}
+                      >
+                        Informations Client
+                      </Typography>
                       {/* <TextField
                         label="N° OR"
                         name="orderNumber"
@@ -983,7 +933,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       /> */}
                       <TextField
                         label="Nom"
@@ -993,7 +948,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="Prénom"
@@ -1003,7 +963,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="Téléphone"
@@ -1013,7 +978,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="Email"
@@ -1023,7 +993,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                     </Grid>
 
@@ -1040,7 +1015,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="VIN"
@@ -1049,7 +1029,12 @@ const Planning = () => {
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="Modèle"
@@ -1059,7 +1044,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="Couleur"
@@ -1069,7 +1059,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                     </Grid>
 
@@ -1088,6 +1083,10 @@ const Planning = () => {
                         required
                         multiline
                         rows={4} // Nombre de lignes visibles
+                        sx={{
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <TextField
                         label="Prix"
@@ -1098,7 +1097,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                     </Grid>
 
@@ -1116,7 +1120,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
 
                       <Typography variant="p">Date de l'événement</Typography>
@@ -1129,7 +1138,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <Typography variant="p">Date de fin</Typography>
                       <TextField
@@ -1141,7 +1155,12 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       />
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
@@ -1154,7 +1173,12 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
-                            size="small" // Réduire la taille
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
                           />
                         </Grid>
                         <Grid item xs={6}>
@@ -1167,7 +1191,12 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
-                            size="small" // Réduire la taille
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
                           />
                         </Grid>
                         <Grid item xs={6}>
@@ -1180,7 +1209,12 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
-                            size="small" // Réduire la taille
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
                           />
                         </Grid>
                         <Grid item xs={6}>
@@ -1193,7 +1227,12 @@ const Planning = () => {
                             fullWidth
                             margin="normal"
                             required
-                            size="small" // Réduire la taille
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
                           />
                         </Grid>
                       </Grid>
@@ -1206,10 +1245,22 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Réduire la taille
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
                       >
                         {categories.map((categoryGroup, index) => (
-                          <MenuItem key={index} value={categoryGroup.id}>
+                          <MenuItem
+                            key={index}
+                            value={categoryGroup.id}
+                            sx={{
+                              fontSize: "0.8rem", // Réduit la taille de police dans chaque MenuItem
+                              minHeight: "30px", // Réduit la hauteur de chaque option
+                            }}
+                          >
                             {categoryGroup.name}
                           </MenuItem>
                         ))}
@@ -1320,26 +1371,53 @@ const Planning = () => {
                                     transition: "background-color 0.3s ease",
                                   }}
                                 >
-                                  <Typography variant="body2">
-                                    <span
-                                      style={{
-                                        fontWeight: "bold",
-                                        fontSize: "1rem",
-                                        color: "#000",
-                                      }}
-                                    >
-                                      {event.title}
-                                    </span>
-                                    {" • "}
-                                    <span style={{ color: "gray" }}>
-                                      {event.person.firstName}{" "}
-                                      {event.person.lastName}
-                                    </span>
-                                    {" • "}
-                                    <span style={{ color: "textSecondary" }}>
-                                      {event.vehicule.licensePlate}
-                                    </span>
-                                  </Typography>
+                                  <Box
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
+                                    sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
+                                  >
+                                    <Typography variant="body2">
+                                      <span
+                                        style={{
+                                          fontWeight: "bold",
+                                          fontSize: "1rem",
+                                          color: "#000",
+                                        }}
+                                      >
+                                        {event.title}
+                                      </span>
+                                      {" • "}
+                                      <span style={{ color: "gray" }}>
+                                        {event.person.firstName}{" "}
+                                        {event.person.lastName}
+                                      </span>
+                                      {" • "}
+                                      <span style={{ color: "textSecondary" }}>
+                                        {event.vehicule.licensePlate}
+                                      </span>
+                                    </Typography>
+                                    {event.nextDay && (
+                                      <ArrowForwardIcon
+                                        fontSize="medium"
+                                        sx={{
+                                          color: "white",
+                                          transition:
+                                            "transform 0.3s ease, color 0.3s ease",
+                                          "&:hover": {
+                                            color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
+                                            transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
+                                          },
+                                          boxShadow:
+                                            "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
+                                          borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
+                                          padding: "4px", // Ajoute un léger padding pour accentuer l'effet
+                                          backgroundColor:
+                                            "rgba(0, 0, 0, 0.05)", // Fond gris très léger
+                                        }}
+                                      />
+                                    )}
+                                  </Box>
                                 </Box>
                               )}
                             </Draggable>
