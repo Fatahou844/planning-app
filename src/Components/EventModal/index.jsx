@@ -12,9 +12,11 @@ import {
   TextField,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import DetailsModal from "../DetailsModal";
 
 const EventModal = ({ open, onClose, event, categories, onSave }) => {
   const [editedEvent, setEditedEvent] = useState(event);
+  const [modalOpen2, setModalOpen2] = useState(false);
 
   useEffect(() => {
     setEditedEvent(event); // Met à jour l'événement édité lorsque l'événement sélectionné change
@@ -97,6 +99,13 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
 
     onSave(updatedEvent); // Appelle la fonction pour enregistrer l'événement modifié
     onClose(); // Ferme le modal
+  };
+
+  const handleEventDetailClick = (event) => {
+    setModalOpen2(true);
+  };
+  const handleModalClose2 = () => {
+    setModalOpen2(false);
   };
 
   return (
@@ -390,9 +399,18 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
               />
             </Grid>
           </Grid>
+          {editedEvent && editedEvent && (
+            <DetailsModal
+              open={modalOpen2}
+              onClose={handleModalClose2}
+              event={editedEvent}
+            />
+          )}
         </DialogContent>
       )}
       <DialogActions>
+        <Button onClick={handleEventDetailClick}>Créer un Devis</Button>
+
         <Button onClick={onClose}>Annuler</Button>
         <Button onClick={handleSave}>Enregistrer</Button>
       </DialogActions>

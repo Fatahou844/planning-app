@@ -102,6 +102,7 @@ const Planning = () => {
     endMinute: 0,
   });
   const [modalOpen, setModalOpen] = useState(false);
+
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
     "Rapide",
@@ -1419,6 +1420,7 @@ const Planning = () => {
           onSave={handleSaveEvent} // Passez la fonction pour enregistrer
         />
       )}
+
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>Résultats de la recherche</DialogTitle>
         <DialogContent>
