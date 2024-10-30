@@ -85,6 +85,9 @@ const DetailsModal = ({ open, onClose, event }) => {
         "Détails enregistrés avec succès pour l'événement:",
         event.id
       );
+      // Calculer le total et mettre à jour l'événement principal
+      const total = calculateTotal();
+      await updateEventTotalPrice(total);
       onClose(); // Ferme le modal après l'enregistrement
     } catch (error) {
       console.error("Erreur lors de l'enregistrement des détails:", error);
@@ -106,6 +109,20 @@ const DetailsModal = ({ open, onClose, event }) => {
       console.log("Ligne mise à jour:", line);
     } catch (error) {
       console.error("Erreur lors de la mise à jour de la ligne:", error);
+    }
+  };
+
+  // Met à jour le prix total dans le document principal de l'événement
+  const updateEventTotalPrice = async (totalPrice) => {
+    try {
+      const eventDocRef = doc(db, "events", event.id);
+      await updateDoc(eventDocRef, { "details.price": totalPrice });
+      console.log("Total mis à jour avec succès dans l'événement principal");
+    } catch (error) {
+      console.error(
+        "Erreur lors de la mise à jour du total de l'événement:",
+        error
+      );
     }
   };
 
