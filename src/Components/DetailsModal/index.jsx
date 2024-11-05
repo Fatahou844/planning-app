@@ -188,12 +188,12 @@ const DetailsModal = ({ open, onClose, event }) => {
               alignItems="center"
               sx={{ marginBottom: "5px" }}
             >
-              <Grid item xs={4}>
+              <Grid item xs={3}>
                 <TextField
                   label="Nom de l'opération"
-                  value={line.comment}
-                  onChange={(e) =>
-                    handleLineChange(index, "comment", e.target.value)
+                  value={line.label} // Changement ici pour correspondre à la propriété label
+                  onChange={
+                    (e) => handleLineChange(index, "label", e.target.value) // Ajustement ici pour le label
                   }
                   fullWidth
                   size="small"
@@ -205,11 +205,11 @@ const DetailsModal = ({ open, onClose, event }) => {
               </Grid>
               <Grid item xs={3}>
                 <TextField
-                  label="Prix"
+                  label="Quantité" // Changement du label pour correspondre à la quantité
                   type="number"
-                  value={line.price}
-                  onChange={(e) =>
-                    handleLineChange(index, "price", e.target.value)
+                  value={line.quantity} // Changement ici pour correspondre à la propriété quantity
+                  onChange={
+                    (e) => handleLineChange(index, "quantity", e.target.value) // Ajustement ici pour la quantité
                   }
                   fullWidth
                   size="small"
@@ -219,7 +219,23 @@ const DetailsModal = ({ open, onClose, event }) => {
                   }}
                 />
               </Grid>
-              <Grid item xs={2}>
+              <Grid item xs={3}>
+                <TextField
+                  label="Prix unitaire" // Changement du label pour correspondre au prix unitaire
+                  type="number"
+                  value={line.unitPrice} // Changement ici pour correspondre à la propriété unitPrice
+                  onChange={
+                    (e) => handleLineChange(index, "unitPrice", e.target.value) // Ajustement ici pour le prix unitaire
+                  }
+                  fullWidth
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={3}>
                 <Button
                   variant="outlined"
                   color="primary"
@@ -229,8 +245,6 @@ const DetailsModal = ({ open, onClose, event }) => {
                 >
                   Modifier
                 </Button>
-              </Grid>
-              <Grid item xs={2}>
                 <Button
                   variant="outlined"
                   color="secondary"
@@ -247,13 +261,8 @@ const DetailsModal = ({ open, onClose, event }) => {
             </Grid>
           ))}
 
-          <Grid item xs={6}>
-            <Button
-              variant="outlined"
-              onClick={addNewLine}
-              fullWidth
-              align="right"
-            >
+          <Grid item xs={12} sx={{ mt: 2 }}>
+            <Button variant="outlined" onClick={addNewLine} fullWidth>
               Ajouter une nouvelle ligne
             </Button>
           </Grid>

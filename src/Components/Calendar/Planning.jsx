@@ -35,6 +35,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
@@ -272,7 +273,12 @@ const Planning = () => {
         userId: userId,
         title: newOrderNumber, // Utiliser le même numéro de commande
       };
-      await addSingleEvent(firstEvent, newOrderNumber, true); // Ajout à Firestore
+      const singleEventDocRef = await addSingleEvent(
+        firstEvent,
+        newOrderNumber,
+        true
+      ); // Ajout à Firestore
+      await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
 
       // Ajout des événements pour les jours intermédiaires (si applicable)
       let currentDate = new Date(startDate);
@@ -288,7 +294,12 @@ const Planning = () => {
           userId: userId,
           title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
         };
-        await addSingleEvent(dailyEvent, newOrderNumber, true); // Ajout à Firestore
+        const singleEventDocRef = await addSingleEvent(
+          dailyEvent,
+          newOrderNumber,
+          true
+        ); // Ajout à Firestore
+        await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
         currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
       }
 
@@ -304,7 +315,12 @@ const Planning = () => {
         title: newOrderNumber, // Utiliser le même numéro de commande
         nextDay: false,
       };
-      await addSingleEvent(lastEvent, newOrderNumber, false); // Ajout à Firestore
+      const lastEventDocRef = await addSingleEvent(
+        lastEvent,
+        newOrderNumber,
+        false
+      ); // Ajout à Firestore
+      await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
     } else {
       // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
@@ -313,7 +329,12 @@ const Planning = () => {
         title: newOrderNumber, // Utiliser le numéro de commande
         nextDay: false,
       };
-      await addSingleEvent(singleEvent, newOrderNumber, false); // Ajout à Firestore
+      const singleEventDocRef = await addSingleEvent(
+        singleEvent,
+        newOrderNumber,
+        false
+      ); // Ajout à Firestore
+      await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
     }
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
@@ -355,6 +376,38 @@ const Planning = () => {
     setIsModalOpen(false); // Fermer le modal
   };
 
+  // Fonction pour ajouter les détails de l'événement
+  const addEventDetails = async (eventId, details) => {
+    try {
+      const batch = writeBatch(db); // Crée un batch pour les opérations
+
+      // Référence directe au document de l'événement avec l'ID existant
+      const eventRef = doc(db, "events", eventId);
+
+      // Boucle sur chaque détail et ajout à la sous-collection "details" de cet événement
+      for (const detail of details) {
+        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
+        batch.set(detailRef, {
+          label: detail.label,
+          quantity: detail.quantity,
+          unitPrice: detail.unitPrice,
+          discountPercent: detail.discountPercent,
+          discountAmount: detail.discountAmount,
+        });
+      }
+
+      // Engager toutes les écritures dans le batch
+      await batch.commit();
+
+      console.log("Détails ajoutés avec succès à l'événement");
+    } catch (error) {
+      console.error(
+        "Erreur lors de l'ajout des détails à l'événement : ",
+        error
+      );
+    }
+  };
+
   const getLastOrderNumberForUser = async (userId) => {
     const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
     const docSnap = await getDoc(docRef);
@@ -378,53 +431,6 @@ const Planning = () => {
     const newOrderNumber = lastOrderNumber + 1;
     return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
   };
-
-  // Fonction pour ajouter un événement à Firestore
-  // const addSingleEvent = async (event) => {
-  //   try {
-  //     const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document dans la collection "events"
-  //     console.log("category: event.categoryId", event.categoryId);
-  //     // Récupérer le dernier numéro de commande pour l'utilisateur
-  //     const lastOrderNumber = await getLastOrderNumberForUser(event.userId);
-  //     const newOrderNumber = generateOrderNumber(lastOrderNumber); // Générer le nouveau
-  //     await setDoc(eventRef, {
-  //       eventId: eventRef.id, // ID du document généré
-  //       title: newOrderNumber,
-  //       date: event.date,
-  //       startHour: parseInt(event.startHour),
-  //       startMinute: parseInt(event.startMinute),
-  //       endHour: parseInt(event.endHour),
-  //       endMinute: parseInt(event.endMinute),
-  //       category: { id: event.category.id, name: event.category.name },
-  //       person: {
-  //         // personId: event.personId, // Assurez-vous d'ajouter un ID de personne si disponible
-  //         firstName: event.firstName, // Nom de la personne
-  //         lastName: event.lastName,
-  //         email: event.email, // Email de la personne
-  //         phone: event.phone,
-  //       },
-  //       vehicule: {
-  //         licensePlate: event.licensePlate,
-  //         vin: event.vin,
-  //         color: event.color,
-  //       },
-  //       details: {
-  //         workDescription: event.workDescription,
-  //         price: event.price,
-  //       },
-  //       operator: event.operator,
-  //       userId: event.userId, // UID de l'utilisateur
-  //     });
-  //     console.log("eventRef", event);
-  //     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-  //     await updateLastOrderNumberForUser(
-  //       event.userId,
-  //       parseInt(newOrderNumber)
-  //     );
-  //   } catch (error) {
-  //     console.error("Error adding event: ", error);
-  //   }
-  // };
 
   const addSingleEvent = async (event, newOrderNumber, nextDay) => {
     try {
@@ -467,6 +473,7 @@ const Planning = () => {
         event.userId,
         parseInt(newOrderNumber)
       );
+      return eventRef; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
     }
@@ -586,6 +593,14 @@ const Planning = () => {
     searchEvents();
     setOpen(true); // Ouvre le dialogue après la recherche
   }
+
+  // Gestionnaire d'événements pour la touche "Entrée"
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault(); // Éviter le comportement par défaut
+      handleSearchClick(); // Appeler la fonction de recherche
+    }
+  };
 
   const uniqueCategories = dataEvents.reduce((accumulator, event) => {
     const category = event.category;
@@ -722,6 +737,72 @@ const Planning = () => {
     setSelectedDate(newDate.format("YYYY-MM-DD"));
   };
 
+  const [details, setDetails] = useState([
+    {
+      label: "",
+      quantity: 1,
+      unitPrice: 0,
+      discountPercent: 0,
+      discountAmount: 0,
+    },
+  ]);
+  const [deposit, setDeposit] = useState(0);
+
+  // Fonction pour gérer les changements dans les détails
+  const handleDetailChange = (event, index) => {
+    const { name, value } = event.target;
+    const updatedDetails = [...details];
+    if (name == "label") updatedDetails[index][name] = value || "";
+    else updatedDetails[index][name] = parseFloat(value) || 0;
+
+    setNewEvent({ ...newEvent, price: totalTTC });
+    setDetails(updatedDetails);
+  };
+
+  // Calcul des totaux de la ligne en fonction de la quantité, du prix unitaire et des remises
+  const calculateLineTotal = (detail) => {
+    const discount =
+      detail.unitPrice * detail.quantity * (detail.discountPercent / 100) +
+      detail.discountAmount;
+    return detail.quantity * detail.unitPrice - discount;
+  };
+
+  // Fonction pour ajouter une nouvelle ligne de détails
+  const addDetailRow = () => {
+    setDetails((prevDetails) => [
+      ...prevDetails,
+      {
+        label: "",
+        quantity: 1,
+        unitPrice: 0,
+        discountPercent: 0,
+        discountAmount: 0,
+      },
+    ]);
+  };
+
+  // Fonction pour supprimer une ligne de détails
+  const removeDetailRow = (index) => {
+    setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
+  };
+
+  // Calcul des totaux HT et TTC
+  const totalHT = details.reduce(
+    (sum, detail) => sum + calculateLineTotal(detail),
+    0
+  );
+  const totalTTC = totalHT * 1.2; // Ajouter 20% de TVA
+
+  // Fonction pour mettre à jour l'événement dans l'état local
+  const handleEditedEventChange = (updatedEvent) => {
+    setSelectedEvent(updatedEvent);
+  };
+
+  const handleEventDetailClick = (event) => {
+    setSelectedEvent(event);
+    setModalOpen(true);
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -764,6 +845,7 @@ const Planning = () => {
             }}
             onChange={handleSearchChange} // Remplacez par votre gestionnaire d'événements
             value={searchQuery}
+            onKeyDown={handleKeyDown}
           />
 
           <Button
@@ -865,14 +947,14 @@ const Planning = () => {
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
-                width: 170, // Ajuste la largeur pour s'assurer que le texte est visible
+                width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
                 padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
                 borderRadius: "8px", // Optionnel : ajoute un bord arrondi
               }}
               onClick={() => setIsModalOpen(true)}
             >
               <AddIcon />
-              <Typography sx={{ ml: 1 }}>Ajouter un événement</Typography>
+              <Typography sx={{ ml: 1 }}></Typography>
             </Fab>
 
             {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
@@ -882,7 +964,7 @@ const Planning = () => {
               onClose={() => setIsModalOpen(false)}
               PaperProps={{
                 style: {
-                  width: "900px", // Remplacez par la largeur souhaitée
+                  width: "1200px", // Remplacez par la largeur souhaitée
                   maxWidth: "none", // Supprimez la largeur maximale par défaut
                 },
               }}
@@ -893,30 +975,9 @@ const Planning = () => {
                   <Grid container spacing={2}>
                     {/* Colonne 1: Infos client */}
                     <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          "& .MuiInputBase-root": { fontSize: "1.1rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "1.1rem" }, // Réduit la taille de police du label
-                        }}
-                      >
+                      <Typography variant="body1">
                         Informations Client
                       </Typography>
-                      {/* <TextField
-                        label="N° OR"
-                        name="orderNumber"
-                        value={newEvent.orderNumber}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
-                        sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      /> */}
                       <TextField
                         label="Nom"
                         name="lastName"
@@ -925,11 +986,11 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                       <TextField
@@ -940,11 +1001,11 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                       <TextField
@@ -955,11 +1016,11 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                       <TextField
@@ -970,18 +1031,18 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                     </Grid>
 
-                    {/* Colonne 2: Infos véhicule et événement */}
+                    {/* Colonne 2: Infos véhicule */}
                     <Grid item xs={12} md={6}>
-                      <Typography variant="h6">
+                      <Typography variant="body1">
                         Informations Véhicule
                       </Typography>
                       <TextField
@@ -992,11 +1053,11 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                       <TextField
@@ -1006,11 +1067,11 @@ const Planning = () => {
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                       <TextField
@@ -1021,11 +1082,11 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                       <TextField
@@ -1036,224 +1097,376 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        size="small"
                         sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
                     </Grid>
 
-                    {/* Colonne 1: Infos sur les travaux */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="h6">
-                        Informations Événement
-                      </Typography>
-                      <TextField
-                        label="Travaux"
-                        name="workDescription"
-                        value={newEvent.workDescription}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        multiline
-                        rows={4} // Nombre de lignes visibles
-                        sx={{
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      />
-                      <TextField
-                        label="Prix"
-                        name="price"
-                        type="number"
-                        value={newEvent.price}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
-                        sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      />
-                    </Grid>
-
-                    {/* Colonne 2: Infos sur l'événement */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="h6">
+                    {/* Table: Détails de l'événement */}
+                    <Grid item xs={12}>
+                      {/* <Typography variant="h6">
                         Détails de l'événement
-                      </Typography>
+                      </Typography> */}
+                      <TableContainer component={Paper}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>
+                                Libellé / travaux / articles
+                              </TableCell>
+                              <TableCell>Quantité</TableCell>
+                              <TableCell>Prix Unitaire</TableCell>
+                              <TableCell>Remise %</TableCell>
+                              <TableCell>Remise €</TableCell>
+                              <TableCell>Total</TableCell>
+                              <TableCell>Action</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {details.map((detail, index) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <TextField
+                                    name="label"
+                                    value={detail.label}
+                                    onChange={(e) =>
+                                      handleDetailChange(e, index)
+                                    }
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    name="quantity"
+                                    type="number"
+                                    value={detail.quantity}
+                                    onChange={(e) =>
+                                      handleDetailChange(e, index)
+                                    }
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    name="unitPrice"
+                                    type="number"
+                                    value={detail.unitPrice}
+                                    onChange={(e) =>
+                                      handleDetailChange(e, index)
+                                    }
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    name="discountPercent"
+                                    type="number"
+                                    value={detail.discountPercent}
+                                    onChange={(e) =>
+                                      handleDetailChange(e, index)
+                                    }
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    name="discountAmount"
+                                    type="number"
+                                    value={detail.discountAmount}
+                                    onChange={(e) =>
+                                      handleDetailChange(e, index)
+                                    }
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  {calculateLineTotal(detail).toFixed(2)}
+                                </TableCell>
+                                <TableCell>
+                                  {/* <Button
+                                    color="primary"
+                                    onClick={() =>
+                                      console.log("Modifier ligne", index)
+                                    }
+                                  >
+                                    Modifier
+                                  </Button> */}
+                                  <Button
+                                    color="secondary"
+                                    onClick={() => removeDetailRow(index)}
+                                  >
+                                    Supprimer
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            <TableRow>
+                              <TableCell colSpan={7}>
+                                <Button
+                                  variant="outlined"
+                                  onClick={addDetailRow}
+                                  fullWidth
+                                >
+                                  Ajouter une ligne
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell colSpan={4}></TableCell>
+                              <TableCell>Total HT :</TableCell>
+                              <TableCell>{totalHT.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell colSpan={4}></TableCell>
+                              <TableCell>Total TTC :</TableCell>
+                              <TableCell>{totalTTC.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell colSpan={4}></TableCell>
+                              <TableCell>Acompte :</TableCell>
+                              <TableCell>
+                                <TextField
+                                  type="number"
+                                  value={deposit}
+                                  onChange={(e) =>
+                                    setDeposit(parseFloat(e.target.value) || 0)
+                                  }
+                                  size="small"
+                                />
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Grid>
+                    <Grid container spacing={2} item xs={12} md={12}>
+                      {/* Colonne 1: Infos  sur les travaux */}
+                      <Grid item xs={12} md={6}>
+                        {/* <Typography variant="h6">
+                          Informations Événement
+                        </Typography> */}
 
-                      <TextField
-                        label="Opérateur"
-                        name="operator"
-                        value={newEvent.operator}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
-                        sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      />
-
-                      <Typography variant="p">Date de l'événement</Typography>
-                      <TextField
-                        // label="Date"
-                        name="date"
-                        type="date"
-                        value={newEvent.date}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
-                        sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      />
-                      <Typography variant="p">Date de fin</Typography>
-                      <TextField
-                        // label="Date"
-                        name="date"
-                        type="date"
-                        value={finDate}
-                        onChange={handleInputChangeFinDate}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
-                        sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      />
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Heure de début"
-                            name="startHour"
-                            type="number"
-                            value={newEvent.startHour}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            size="small" // Conserve la taille "small" pour l'espacement interne
-                            sx={{
-                              height: "30px", // Ajuste la hauteur selon le besoin
-                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Minutes de début"
-                            name="startMinute"
-                            type="number"
-                            value={newEvent.startMinute}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            size="small" // Conserve la taille "small" pour l'espacement interne
-                            sx={{
-                              height: "30px", // Ajuste la hauteur selon le besoin
-                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Heure de fin"
-                            name="endHour"
-                            type="number"
-                            value={newEvent.endHour}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            size="small" // Conserve la taille "small" pour l'espacement interne
-                            sx={{
-                              height: "30px", // Ajuste la hauteur selon le besoin
-                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Minutes de fin"
-                            name="endMinute"
-                            type="number"
-                            value={newEvent.endMinute}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            size="small" // Conserve la taille "small" pour l'espacement interne
-                            sx={{
-                              height: "30px", // Ajuste la hauteur selon le besoin
-                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                            }}
-                          />
-                        </Grid>
+                        <TextField
+                          label="Travaux"
+                          name="workDescription"
+                          value={newEvent.workDescription}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          multiline
+                          rows={4}
+                          sx={{
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <TextField
+                          name="price"
+                          type="number"
+                          value={newEvent.price}
+                          placeholder="Prix"
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
                       </Grid>
-                      <TextField
-                        select
-                        label="Catégorie"
-                        name="category"
-                        value={newEvent.category.id}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small" // Conserve la taille "small" pour l'espacement interne
-                        sx={{
-                          height: "30px", // Ajuste la hauteur selon le besoin
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                        }}
-                      >
-                        {categories.map((categoryGroup, index) => (
-                          <MenuItem
-                            key={index}
-                            value={categoryGroup.id}
-                            sx={{
-                              fontSize: "0.8rem", // Réduit la taille de police dans chaque MenuItem
-                              minHeight: "30px", // Réduit la hauteur de chaque option
-                            }}
-                          >
-                            {categoryGroup.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+
+                      {/* Colonne 2: Infos sur l'événement */}
+                      <Grid item xs={12} md={6}>
+                        {/* <Typography variant="h6">
+                          Détails de l'événement
+                        </Typography> */}
+                        <TextField
+                          label="Opérateur"
+                          name="operator"
+                          value={newEvent.operator}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <Typography variant="body1">
+                          Date de l'événement
+                        </Typography>
+                        <TextField
+                          name="date"
+                          type="date"
+                          value={newEvent.date}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <Typography variant="body1">Date de fin</Typography>
+                        <TextField
+                          name="finDate"
+                          type="date"
+                          value={finDate}
+                          onChange={handleInputChangeFinDate}
+                          fullWidth
+                          margin="normal"
+                          required
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Heure de début"
+                              name="startHour"
+                              type="number"
+                              value={newEvent.startHour}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                              size="small"
+                              sx={{
+                                height: "30px",
+                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Minutes de début"
+                              name="startMinute"
+                              type="number"
+                              value={newEvent.startMinute}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                              size="small"
+                              sx={{
+                                height: "30px",
+                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Heure de fin"
+                              name="endHour"
+                              type="number"
+                              value={newEvent.endHour}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                              size="small"
+                              sx={{
+                                height: "30px",
+                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Minutes de fin"
+                              name="endMinute"
+                              type="number"
+                              value={newEvent.endMinute}
+                              onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                              size="small"
+                              sx={{
+                                height: "30px",
+                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                              }}
+                            />
+                          </Grid>
+                        </Grid>
+                        <TextField
+                          select
+                          label="Catégorie"
+                          name="category"
+                          value={newEvent.category.id}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        >
+                          {categories.map((categoryGroup, index) => (
+                            <MenuItem
+                              key={index}
+                              value={categoryGroup.id}
+                              sx={{
+                                fontSize: "0.8rem",
+                                minHeight: "30px",
+                              }}
+                            >
+                              {categoryGroup.name}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </Grid>
+
+                    {/* Boutons CTA en bas */}
+                    <Grid container spacing={2} justifyContent="flex-end">
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={addEvent}
+                        >
+                          Enregistrer
+                        </Button>
+                      </Grid>
+                      <Grid item>
+                        <Button
+                          variant="outlined"
+                          color="secondary"
+                          onClick={() => setIsModalOpen(false)}
+                        >
+                          Annuler
+                        </Button>
+                      </Grid>
                     </Grid>
                   </Grid>
                 </form>
               </DialogContent>
-              <DialogActions>
-                <Button onClick={addEvent} color="primary">
-                  Ajouter l'événement
-                </Button>
-                <Button onClick={() => setIsModalOpen(false)} color="secondary">
-                  Annuler
-                </Button>
-              </DialogActions>
             </Dialog>
           </Box>
 
@@ -1415,9 +1628,11 @@ const Planning = () => {
         <EventModal
           open={modalOpen}
           onClose={handleModalClose}
-          event={selectedEvent}
+          editedEvent={selectedEvent}
+          setEditedEvent={handleEditedEventChange}
           categories={categories}
-          onSave={handleSaveEvent} // Passez la fonction pour enregistrer
+          handleSave={handleSaveEvent}
+          handleEventDetailClick={handleEventDetailClick}
         />
       )}
 

@@ -1,0 +1,378 @@
+ <Dialog
+              open={false}
+              onClose={() => setIsModalOpen(false)}
+              PaperProps={{
+                style: {
+                  width: "900px", // Remplacez par la largeur souhaitée
+                  maxWidth: "none", // Supprimez la largeur maximale par défaut
+                },
+              }}
+            >
+              <DialogTitle>Ajouter un événement</DialogTitle>
+              <DialogContent>
+                <form>
+                  <Grid container spacing={2}>
+                    {/* Colonne 1: Infos client */}
+                    <Grid item xs={12} md={6}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          "& .MuiInputBase-root": { fontSize: "1.1rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "1.1rem" }, // Réduit la taille de police du label
+                        }}
+                      >
+                        Informations Client
+                      </Typography>
+                      {/* <TextField
+                        label="N° OR"
+                        name="orderNumber"
+                        value={newEvent.orderNumber}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      /> */}
+                      <TextField
+                        label="Nom"
+                        name="lastName"
+                        value={newEvent.lastName}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="Prénom"
+                        name="firstName"
+                        value={newEvent.firstName}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="Téléphone"
+                        name="phone"
+                        value={newEvent.phone}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="Email"
+                        name="email"
+                        value={newEvent.email}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                    </Grid>
+
+                    {/* Colonne 2: Infos véhicule et événement */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="h6">
+                        Informations Véhicule
+                      </Typography>
+                      <TextField
+                        label="Immatriculation"
+                        name="licensePlate"
+                        value={newEvent.licensePlate}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="VIN"
+                        name="vin"
+                        value={newEvent.vin}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="Modèle"
+                        name="model"
+                        value={newEvent.model}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="Couleur"
+                        name="color"
+                        value={newEvent.color}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                    </Grid>
+
+                    {/* Colonne 1: Infos sur les travaux */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="h6">
+                        Informations Événement
+                      </Typography>
+                      <TextField
+                        label="Travaux"
+                        name="workDescription"
+                        value={newEvent.workDescription}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        multiline
+                        rows={4} // Nombre de lignes visibles
+                        sx={{
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <TextField
+                        label="Prix"
+                        name="price"
+                        type="number"
+                        value={newEvent.price}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                    </Grid>
+
+                    {/* Colonne 2: Infos sur l'événement */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="h6">
+                        Détails de l'événement
+                      </Typography>
+
+                      <TextField
+                        label="Opérateur"
+                        name="operator"
+                        value={newEvent.operator}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+
+                      <Typography variant="p">Date de l'événement</Typography>
+                      <TextField
+                        // label="Date"
+                        name="date"
+                        type="date"
+                        value={newEvent.date}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <Typography variant="p">Date de fin</Typography>
+                      <TextField
+                        // label="Date"
+                        name="date"
+                        type="date"
+                        value={finDate}
+                        onChange={handleInputChangeFinDate}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      />
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <TextField
+                            label="Heure de début"
+                            name="startHour"
+                            type="number"
+                            value={newEvent.startHour}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            required
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            label="Minutes de début"
+                            name="startMinute"
+                            type="number"
+                            value={newEvent.startMinute}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            required
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            label="Heure de fin"
+                            name="endHour"
+                            type="number"
+                            value={newEvent.endHour}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            required
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            label="Minutes de fin"
+                            name="endMinute"
+                            type="number"
+                            value={newEvent.endMinute}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            required
+                            size="small" // Conserve la taille "small" pour l'espacement interne
+                            sx={{
+                              height: "30px", // Ajuste la hauteur selon le besoin
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                      <TextField
+                        select
+                        label="Catégorie"
+                        name="category"
+                        value={newEvent.category.id}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small" // Conserve la taille "small" pour l'espacement interne
+                        sx={{
+                          height: "30px", // Ajuste la hauteur selon le besoin
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                        }}
+                      >
+                        {categories.map((categoryGroup, index) => (
+                          <MenuItem
+                            key={index}
+                            value={categoryGroup.id}
+                            sx={{
+                              fontSize: "0.8rem", // Réduit la taille de police dans chaque MenuItem
+                              minHeight: "30px", // Réduit la hauteur de chaque option
+                            }}
+                          >
+                            {categoryGroup.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                  </Grid>
+                </form>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={addEvent} color="primary">
+                  Ajouter l'événement
+                </Button>
+                <Button onClick={() => setIsModalOpen(false)} color="secondary">
+                  Annuler
+                </Button>
+              </DialogActions>
+            </Dialog>

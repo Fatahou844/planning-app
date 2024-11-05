@@ -4,118 +4,181 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   Grid,
-  InputLabel,
   MenuItem,
-  Select,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
+  Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import DetailsModal from "../DetailsModal";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 
-const EventModal = ({ open, onClose, event, categories, onSave }) => {
-  const [editedEvent, setEditedEvent] = useState(event);
-  const [modalOpen2, setModalOpen2] = useState(false);
+function EventDialog({
+  open,
+  onClose,
+  editedEvent,
+  setEditedEvent,
+  handleEventDetailClick,
+  categories,
+}) {
+  const [details, setDetails] = useState([]);
+  const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
 
   useEffect(() => {
-    setEditedEvent(event); // Met à jour l'événement édité lorsque l'événement sélectionné change
-    console.log("EVENT", event);
-  }, [event]);
+    if (editedEvent) {
+      const fetchDetails = async () => {
+        try {
+          const detailsCollectionRef = collection(
+            doc(db, "events", editedEvent.id),
+            "details"
+          );
+          const detailsSnapshot = await getDocs(detailsCollectionRef);
+          const detailsData = detailsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setDetails(detailsData);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
+        }
+      };
 
-  if (!event) return null; // Ne pas afficher le modal si l'événement est null
+      fetchDetails();
+    }
+  }, [editedEvent]);
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
+  // Handle input change for end date
+  const handleChangeFinDate = (e) => {
+    const value = e.target.value;
+    setFinDate(value);
+    setEditedEvent((prev) => ({ ...prev, finDate: value }));
+  };
 
-  //   setEditedEvent((prev) => ({
-  //     ...prev,
-  //     [name]:
-  //       name.includes("Hour") || name.includes("Minute")
-  //         ? parseInt(value)
-  //         : value, // Conversion des heures et minutes en entier
-  //   }));
-  // };
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setEditedEvent((prevEvent) => {
+      const keys = name.split(".");
+      let updatedEvent = { ...prevEvent };
 
-    // Vérifie si le champ fait partie des propriétés imbriquées
-    setEditedEvent((prev) => {
-      const newValue =
-        name.includes("Hour") || name.includes("Minute")
-          ? parseInt(value)
-          : value;
+      // Assurez-vous que la structure de l'objet est bien initialisée
+      keys.reduce((acc, key, idx) => {
+        // Si c'est le dernier élément, définissez la valeur
+        if (idx === keys.length - 1) {
+          // Convertir en entier si nécessaire
+          if (
+            key === "startHour" ||
+            key === "endHour" ||
+            key === "startMinute" ||
+            key === "endMinute"
+          ) {
+            acc[key] = parseInt(value, 10); // Convertit en entier
+          } else {
+            acc[key] = value; // Assigne simplement la valeur
+          }
+        } else {
+          // Si la clé n'existe pas, initialisez-la comme un objet vide
+          if (!acc[key]) {
+            acc[key] = {};
+          }
+        }
+        return acc[key];
+      }, updatedEvent);
 
-      // Gestion des champs pour les propriétés imbriquées comme "person" ou "vehicule"
-      if (name.startsWith("person.")) {
-        const personKey = name.split(".")[1]; // Extrait la clé de la propriété de "person"
-        return {
-          ...prev,
-          person: {
-            ...prev.person,
-            [personKey]: newValue,
-          },
-        };
-      }
-
-      if (name.startsWith("vehicule.")) {
-        const vehiculeKey = name.split(".")[1]; // Extrait la clé de la propriété de "vehicule"
-        return {
-          ...prev,
-          vehicule: {
-            ...prev.vehicule,
-            [vehiculeKey]: newValue,
-          },
-        };
-      }
-
-      if (name.startsWith("details.")) {
-        const detailsKey = name.split(".")[1]; // Extrait la clé de la propriété de "vehicule"
-        return {
-          ...prev,
-          details: {
-            ...prev.details,
-            [detailsKey]: newValue,
-          },
-        };
-      }
-
-      // Cas par défaut : mise à jour des propriétés au premier niveau
-      return {
-        ...prev,
-        [name]: newValue,
-      };
+      return updatedEvent;
     });
   };
 
-  const handleSave = () => {
-    const updatedEvent = {
-      ...editedEvent,
-      startHour: parseInt(editedEvent.startHour),
-      endHour: parseInt(editedEvent.endHour),
-      startMinute: parseInt(editedEvent.startMinute),
-      endMinute: parseInt(editedEvent.endMinute),
-    };
+  // // Save the updated event to Firestore
+  // const handleSave = async () => {
+  //   if (editedEvent?.id) {
+  //     try {
+  //       const eventDocRef = doc(db, "events", editedEvent.id);
+  //       await updateDoc(eventDocRef, editedEvent);
+  //       onClose();
+  //     } catch (error) {
+  //       console.error("Erreur lors de la sauvegarde de l'événement :", error);
+  //     }
+  //   }
+  // };
+  // Save the updated event to Firestore
+  const handleSave = async () => {
+    if (editedEvent?.id) {
+      try {
+        const eventDocRef = doc(db, "events", editedEvent.id);
+        await updateDoc(eventDocRef, editedEvent);
 
-    onSave(updatedEvent); // Appelle la fonction pour enregistrer l'événement modifié
-    onClose(); // Ferme le modal
+        const detailsCollectionRef = collection(eventDocRef, "details");
+
+        for (const detail of details) {
+          const detailDocRef = doc(detailsCollectionRef, detail.id);
+
+          if (detail.isDeleted) {
+            await deleteDoc(detailDocRef);
+          } else {
+            await updateDoc(detailDocRef, detail);
+          }
+        }
+
+        onClose();
+      } catch (error) {
+        console.error("Erreur lors de la sauvegarde de l'événement :", error);
+      }
+    }
   };
 
-  const handleEventDetailClick = (event) => {
-    setModalOpen2(true);
-  };
-  const handleModalClose2 = () => {
-    setModalOpen2(false);
+  const handleDetailChange = (index, field, value) => {
+    const updatedDetails = [...details];
+    updatedDetails[index][field] = value;
+    setDetails(updatedDetails);
   };
 
+  const handleAddDetail = () => {
+    setDetails([
+      ...details,
+      {
+        id: Date.now(),
+        label: "",
+        quantity: 0,
+        unitPrice: 0,
+        discountAmount: 0,
+        discountPercent: 0,
+      },
+    ]);
+  };
+  const calculateTotalHT = () => {
+    return details.reduce((total, detail) => {
+      const { quantity, unitPrice, discountAmount } = detail;
+      return total + (quantity * unitPrice - discountAmount);
+    }, 0);
+  };
+
+  const calculateTotalTTC = (totalHT) => {
+    return totalHT * 1.2; // 20% VAT
+  };
+
+  const totalHT = calculateTotalHT();
+  const totalTTC = calculateTotalTTC(totalHT);
   return (
     <Dialog
       open={open}
       onClose={onClose}
       PaperProps={{
         style: {
-          width: "900px", // Ajuster la largeur du modal
-          maxWidth: "none", // Supprimer la limite de largeur maximale par défaut
+          width: "1200px",
+          maxWidth: "none",
         },
       }}
     >
@@ -131,75 +194,70 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 label="O.R"
                 type="text"
                 fullWidth
-                value={editedEvent.title}
+                value={editedEvent.title || ""}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
                 disabled
               />
-
+              {/* Autres champs d'informations client */}
               <TextField
                 label="Nom"
                 name="person.lastName"
-                value={editedEvent.person.lastName}
+                value={editedEvent.person?.lastName || ""}
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                size="small" // Conserve la taille "small" pour l'espacement interne
-                sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                }}
                 required
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
               />
               <TextField
                 label="Prénom"
                 name="person.firstName"
-                value={editedEvent.person.firstName}
+                value={editedEvent.person?.firstName || ""}
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                size="small" // Conserve la taille "small" pour l'espacement interne
-                sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
-                }}
                 required
-              />
-              <TextField
-                margin="dense"
-                name="person.phone"
-                label="Téléphone"
-                type="text"
-                fullWidth
-                value={editedEvent.person.phone || ""}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
-                onChange={handleChange}
               />
               <TextField
-                margin="dense"
-                name="person.email"
-                label="Email"
-                type="email"
-                fullWidth
-                value={editedEvent.person.email || ""}
+                label="Téléphone"
+                name="person.phone"
+                value={editedEvent.person?.phone || ""}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
+              <TextField
+                label="Email"
+                name="person.email"
+                value={editedEvent.person?.email || ""}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
             </Grid>
@@ -212,210 +270,389 @@ const EventModal = ({ open, onClose, event, categories, onSave }) => {
                 label="Immatriculation"
                 type="text"
                 fullWidth
-                value={editedEvent?.vehicule?.licensePlate || ""}
+                value={editedEvent.vehicule?.licensePlate || ""}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
               <TextField
-                margin="dense"
-                name="vehicule.vin"
                 label="VIN"
-                type="text"
-                fullWidth
-                value={editedEvent?.vehicule?.vin || ""}
+                name="vehicule.vin"
+                value={editedEvent.vehicule?.vin || ""}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
               <TextField
-                margin="dense"
-                name="vehicule.modele"
                 label="Modèle"
-                type="text"
-                fullWidth
-                value={editedEvent.modele || ""}
+                name="vehicule.model"
+                value={editedEvent.vehicule?.model || ""}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
               <TextField
-                margin="dense"
-                name="vehicule.color"
                 label="Couleur"
-                type="text"
-                fullWidth
+                name="vehicule.color"
                 value={editedEvent.vehicule?.color || ""}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
             </Grid>
           </Grid>
 
-          {/* Informations d'opération */}
-          <Grid container spacing={2} marginTop={2}>
+          {/* Table pour afficher les détails */}
+          <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+            <Table size="small" aria-label="Event Details Table">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>Label</TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>Quantité</TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>
+                    Prix Unitaire
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>
+                    Montant Réduction
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>
+                    Pourcentage Réduction
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {details.map((detail, index) => (
+                  <TableRow key={detail.id}>
+                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <TextField
+                        value={detail.label}
+                        onChange={(e) =>
+                          handleDetailChange(index, "label", e.target.value)
+                        }
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <TextField
+                        type="number"
+                        value={detail.quantity}
+                        onChange={(e) =>
+                          handleDetailChange(
+                            index,
+                            "quantity",
+                            parseInt(e.target.value, 10) || 0
+                          )
+                        }
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <TextField
+                        type="number"
+                        value={detail.unitPrice}
+                        onChange={(e) =>
+                          handleDetailChange(
+                            index,
+                            "unitPrice",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <TextField
+                        type="number"
+                        value={detail.discountAmount}
+                        onChange={(e) =>
+                          handleDetailChange(
+                            index,
+                            "discountAmount",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <TextField
+                        type="number"
+                        value={detail.discountPercent}
+                        onChange={(e) =>
+                          handleDetailChange(
+                            index,
+                            "discountPercent",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <Button
+                        onClick={() =>
+                          handleDetailChange(index, "isDeleted", true)
+                        }
+                      >
+                        Supprimer
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Button
+            onClick={handleAddDetail}
+            color="primary"
+            variant="contained"
+            sx={{ marginTop: 2 }}
+          >
+            Ajouter un Détail
+          </Button>
+
+          {/* Display totals */}
+          <Typography variant="h6" sx={{ marginTop: 2 }}>
+            Total HT: {totalHT.toFixed(2)} €
+          </Typography>
+          <Typography variant="h6">
+            Total TTC: {totalTTC.toFixed(2)} €
+          </Typography>
+          <Grid container spacing={2} item xs={12} md={12}>
+            {/* Colonne 1: Infos  sur les travaux */}
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Catégorie</InputLabel>
-                <Select
-                  name="category.id"
-                  value={editedEvent.category?.id || ""} // Utilise l'ID de la catégorie si nécessaire
-                  onChange={handleChange}
-                  fullWidth
-                  size="small" // Conserve la taille "small" pour l'espacement interne
-                  sx={{
-                    "& .MuiSelect-select": {
-                      fontSize: "0.8rem",
-                      padding: "4px 8px",
-                    }, // Réduit la taille de police et le padding interne
-                    "& .MuiOutlinedInput-root": { height: "30px" }, // Ajuste la hauteur du champ
-                  }}
-                >
-                  {categories.map((cat) => (
-                    <MenuItem
-                      key={cat.id}
-                      value={cat.id}
-                      sx={{
-                        fontSize: "0.8rem", // Réduit la taille de police dans chaque MenuItem
-                        minHeight: "30px", // Réduit la hauteur de chaque option
-                      }}
-                    >
-                      {" "}
-                      {/* Assurez-vous d'utiliser la bonne clé ici */}
-                      {cat.name} {/* Affiche le nom de la catégorie */}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              {/* <Typography variant="h6">
+                          Informations Événement
+                        </Typography> */}
+
               <TextField
-                margin="dense"
-                name="details.workDescription"
-                type="text"
                 label="Travaux"
-                fullWidth
-                value={editedEvent.details?.workDescription || ""}
+                name="details.workDescription"
+                value={editedEvent.details?.workDescription}
                 onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
                 multiline
-                rows={4} // Nombre de lignes visibles
+                rows={4}
                 sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
               <TextField
-                margin="dense"
-                label="Prix"
                 name="details.price"
-                type="text"
-                fullWidth
-                value={editedEvent.details?.price || ""}
+                type="number"
+                value={editedEvent.details?.price}
+                placeholder="Prix"
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  height: "30px",
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
             </Grid>
 
+            {/* Colonne 2: Infos sur l'événement */}
             <Grid item xs={12} md={6}>
+              {/* <Typography variant="h6">
+                          Détails de l'événement
+                        </Typography> */}
               <TextField
-                margin="dense"
-                name="startHour"
-                label="Heure de début"
-                type="number"
-                fullWidth
-                value={editedEvent.startHour || ""}
+                label="Opérateur"
+                name="operator"
+                value={editedEvent.operator}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  height: "30px",
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
+              <Typography variant="body1">Date de l'événement</Typography>
               <TextField
-                margin="dense"
-                name="startMinute"
-                label="Minutes de début"
-                type="number"
-                fullWidth
-                value={editedEvent.startMinute || ""}
+                name="date"
+                type="date"
+                value={editedEvent.date}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  height: "30px",
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
+              <Typography variant="body1">Date de fin</Typography>
               <TextField
-                margin="dense"
-                name="endHour"
-                label="Heure de fin"
-                type="number"
+                name="finDate"
+                type="date"
+                value={finDate}
+                onChange={handleChangeFinDate}
                 fullWidth
-                value={editedEvent.endHour || ""}
-                onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  height: "30px",
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Heure de début"
+                    name="startHour"
+                    type="number"
+                    value={editedEvent.startHour}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    size="small"
+                    sx={{
+                      height: "30px",
+                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Minutes de début"
+                    name="startMinute"
+                    type="number"
+                    value={editedEvent.startMinute}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    size="small"
+                    sx={{
+                      height: "30px",
+                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Heure de fin"
+                    name="endHour"
+                    type="number"
+                    value={editedEvent.endHour}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    size="small"
+                    sx={{
+                      height: "30px",
+                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Minutes de fin"
+                    name="endMinute"
+                    type="number"
+                    value={editedEvent.endMinute}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    size="small"
+                    sx={{
+                      height: "30px",
+                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    }}
+                  />
+                </Grid>
+              </Grid>
               <TextField
-                margin="dense"
-                name="endMinute"
-                label="Minutes de fin"
-                type="number"
-                fullWidth
-                value={editedEvent.endMinute || ""}
+                select
+                label="Catégorie"
+                name="category"
+                value={editedEvent?.category?.id}
                 onChange={handleChange}
-                size="small" // Conserve la taille "small" pour l'espacement interne
+                fullWidth
+                margin="normal"
+                required
+                size="small"
                 sx={{
-                  height: "30px", // Ajuste la hauteur selon le besoin
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" }, // Réduit la taille de police
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" }, // Réduit la taille de police du label
+                  height: "30px",
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
-              />
+              >
+                {categories.map((categoryGroup, index) => (
+                  <MenuItem
+                    key={index}
+                    value={categoryGroup.id}
+                    sx={{
+                      fontSize: "0.8rem",
+                      minHeight: "30px",
+                    }}
+                  >
+                    {categoryGroup.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
           </Grid>
-          {editedEvent && editedEvent && (
-            <DetailsModal
-              open={modalOpen2}
-              onClose={handleModalClose2}
-              event={editedEvent}
-            />
-          )}
         </DialogContent>
       )}
       <DialogActions>
-        <Button onClick={handleEventDetailClick}>Créer un Devis</Button>
-
-        <Button onClick={onClose}>Annuler</Button>
-        <Button onClick={handleSave}>Enregistrer</Button>
+        <Button onClick={onClose} color="primary">
+          Annuler
+        </Button>
+        <Button onClick={handleSave} color="primary" variant="contained">
+          Modifier
+        </Button>
       </DialogActions>
     </Dialog>
   );
-};
+}
 
-export default EventModal;
+export default EventDialog;
