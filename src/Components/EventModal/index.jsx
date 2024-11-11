@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -117,18 +118,27 @@ function EventDialog({
   const handleSave = async () => {
     if (editedEvent?.id) {
       try {
+        // Référence du document de l'événement principal
         const eventDocRef = doc(db, "events", editedEvent.id);
         await updateDoc(eventDocRef, editedEvent);
 
+        // Référence de la collection "details" sous l'événement
         const detailsCollectionRef = collection(eventDocRef, "details");
 
         for (const detail of details) {
-          const detailDocRef = doc(detailsCollectionRef, detail.id);
-
           if (detail.isDeleted) {
-            await deleteDoc(detailDocRef);
-          } else {
+            // Supprimer les détails marqués comme supprimés
+            if (detail.id) {
+              const detailDocRef = doc(detailsCollectionRef, detail.id);
+              await deleteDoc(detailDocRef);
+            }
+          } else if (detail.id) {
+            // Mettre à jour les détails existants
+            const detailDocRef = doc(detailsCollectionRef, detail.id);
             await updateDoc(detailDocRef, detail);
+          } else {
+            // Ajouter les nouveaux détails
+            await addDoc(detailsCollectionRef, detail);
           }
         }
 
@@ -149,7 +159,7 @@ function EventDialog({
     setDetails([
       ...details,
       {
-        id: Date.now(),
+        // On ne définit pas d’ID pour indiquer qu’il s’agit d’un nouvel élément
         label: "",
         quantity: 0,
         unitPrice: 0,
@@ -158,6 +168,7 @@ function EventDialog({
       },
     ]);
   };
+
   const calculateTotalHT = () => {
     return details.reduce((total, detail) => {
       const { quantity, unitPrice, discountAmount } = detail;
@@ -327,18 +338,24 @@ function EventDialog({
             <Table size="small" aria-label="Event Details Table">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontSize: "0.8rem" }}>Label</TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem" }}>Quantité</TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem" }}>
+                  <TableCell sx={{ fontSize: "0.8rem", width: "40%" }}>
+                    Label
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    Quantité
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
                     Prix Unitaire
                   </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem" }}>
-                    Montant Réduction
+                  <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
+                    Remise en €
                   </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem" }}>
-                    Pourcentage Réduction
+                  <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    Remise en %
                   </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem" }}>Actions</TableCell>
+                  <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -367,6 +384,19 @@ function EventDialog({
                         }
                         size="small"
                         fullWidth
+                        sx={{
+                          "& input[type=number]": {
+                            MozAppearance: "textfield",
+                          },
+                          "& input[type=number]::-webkit-outer-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                          "& input[type=number]::-webkit-inner-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -382,6 +412,19 @@ function EventDialog({
                         }
                         size="small"
                         fullWidth
+                        sx={{
+                          "& input[type=number]": {
+                            MozAppearance: "textfield",
+                          },
+                          "& input[type=number]::-webkit-outer-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                          "& input[type=number]::-webkit-inner-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -397,6 +440,19 @@ function EventDialog({
                         }
                         size="small"
                         fullWidth
+                        sx={{
+                          "& input[type=number]": {
+                            MozAppearance: "textfield",
+                          },
+                          "& input[type=number]::-webkit-outer-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                          "& input[type=number]::-webkit-inner-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -412,6 +468,19 @@ function EventDialog({
                         }
                         size="small"
                         fullWidth
+                        sx={{
+                          "& input[type=number]": {
+                            MozAppearance: "textfield",
+                          },
+                          "& input[type=number]::-webkit-outer-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                          "& input[type=number]::-webkit-inner-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                        }}
                       />
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -480,6 +549,17 @@ function EventDialog({
                   height: "30px",
                   "& .MuiInputBase-root": { fontSize: "0.8rem" },
                   "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  "& input[type=number]": {
+                    MozAppearance: "textfield",
+                  },
+                  "& input[type=number]::-webkit-outer-spin-button": {
+                    WebkitAppearance: "none",
+                    margin: 0,
+                  },
+                  "& input[type=number]::-webkit-inner-spin-button": {
+                    WebkitAppearance: "none",
+                    margin: 0,
+                  },
                 }}
               />
             </Grid>
@@ -552,6 +632,17 @@ function EventDialog({
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                      "& input[type=number]": {
+                        MozAppearance: "textfield",
+                      },
+                      "& input[type=number]::-webkit-outer-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
+                      "& input[type=number]::-webkit-inner-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
                     }}
                   />
                 </Grid>
@@ -570,6 +661,17 @@ function EventDialog({
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                      "& input[type=number]": {
+                        MozAppearance: "textfield",
+                      },
+                      "& input[type=number]::-webkit-outer-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
+                      "& input[type=number]::-webkit-inner-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
                     }}
                   />
                 </Grid>
@@ -588,6 +690,17 @@ function EventDialog({
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                      "& input[type=number]": {
+                        MozAppearance: "textfield",
+                      },
+                      "& input[type=number]::-webkit-outer-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
+                      "& input[type=number]::-webkit-inner-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
                     }}
                   />
                 </Grid>
@@ -606,6 +719,17 @@ function EventDialog({
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                      "& input[type=number]": {
+                        MozAppearance: "textfield",
+                      },
+                      "& input[type=number]::-webkit-outer-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
+                      "& input[type=number]::-webkit-inner-spin-button": {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
                     }}
                   />
                 </Grid>

@@ -216,14 +216,16 @@ const Planning = () => {
   };
 
   // Fonctions pour assigner les couleurs
-  const getCategoryColor = (index) => {
+  const getCategoryColor = (category) => {
     const colors = ["#FFB74D", "#64B5F6", "#81C784", "#9575CD", "#FF8A65"];
-    return colors[index % colors.length];
+    // return colors[index % colors.length];
+    return category.color;
   };
 
-  const getEventColor = (index) => {
+  const getEventColor = (catgory) => {
     const colors = ["#FFCC80", "#90CAF9", "#A5D6A7", "#B39DDB", "#FFAB91"];
-    return colors[index % colors.length];
+    // return colors[index % colors.length];
+    return catgory.color;
   };
 
   // État pour afficher/masquer le modal
@@ -445,7 +447,11 @@ const Planning = () => {
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
         endMinute: parseInt(event.endMinute),
-        category: { id: event.category.id, name: event.category.name },
+        category: {
+          id: event.category.id,
+          name: event.category.name,
+          color: event.category.color,
+        },
         person: {
           firstName: event.firstName,
           lastName: event.lastName,
@@ -515,6 +521,7 @@ const Planning = () => {
         category: {
           id: selectedCat.id,
           name: selectedCat.name,
+          color: selectedCat.color,
         },
       }));
     } else {
@@ -919,7 +926,7 @@ const Planning = () => {
                   expanded={expanded.includes(category.name)}
                   onChange={() => handleChange(category.name)}
                   sx={{
-                    backgroundColor: getCategoryColor(index),
+                    backgroundColor: getCategoryColor(category),
                     borderRadius: "8px",
                     marginBottom: "8px",
                     boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
@@ -1115,15 +1122,39 @@ const Planning = () => {
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell>
+                              <TableCell style={{ width: "40%" }}>
                                 Libellé / travaux / articles
                               </TableCell>
-                              <TableCell>Quantité</TableCell>
-                              <TableCell>Prix Unitaire</TableCell>
-                              <TableCell>Remise %</TableCell>
-                              <TableCell>Remise €</TableCell>
-                              <TableCell>Total</TableCell>
-                              <TableCell>Action</TableCell>
+                              <TableCell
+                                style={{ width: "10%", textAlign: "center" }}
+                              >
+                                Quantité
+                              </TableCell>
+                              <TableCell
+                                style={{ width: "10%", textAlign: "center" }}
+                              >
+                                Prix Unitaire
+                              </TableCell>
+                              <TableCell
+                                style={{ width: "10%", textAlign: "center" }}
+                              >
+                                Remise %
+                              </TableCell>
+                              <TableCell
+                                style={{ width: "10%", textAlign: "center" }}
+                              >
+                                Remise €
+                              </TableCell>
+                              <TableCell
+                                style={{ width: "10%", textAlign: "center" }}
+                              >
+                                Total
+                              </TableCell>
+                              <TableCell
+                                style={{ width: "10%", textAlign: "center" }}
+                              >
+                                Action
+                              </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -1137,6 +1168,7 @@ const Planning = () => {
                                       handleDetailChange(e, index)
                                     }
                                     size="small"
+                                    fullWidth
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -1148,6 +1180,22 @@ const Planning = () => {
                                       handleDetailChange(e, index)
                                     }
                                     size="small"
+                                    style={{ maxWidth: 80 }}
+                                    sx={{
+                                      "& input[type=number]": {
+                                        MozAppearance: "textfield", // Pour Firefox
+                                      },
+                                      "& input[type=number]::-webkit-outer-spin-button":
+                                        {
+                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                          margin: 0,
+                                        },
+                                      "& input[type=number]::-webkit-inner-spin-button":
+                                        {
+                                          WebkitAppearance: "none",
+                                          margin: 0,
+                                        },
+                                    }}
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -1159,6 +1207,22 @@ const Planning = () => {
                                       handleDetailChange(e, index)
                                     }
                                     size="small"
+                                    style={{ maxWidth: 80 }}
+                                    sx={{
+                                      "& input[type=number]": {
+                                        MozAppearance: "textfield", // Pour Firefox
+                                      },
+                                      "& input[type=number]::-webkit-outer-spin-button":
+                                        {
+                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                          margin: 0,
+                                        },
+                                      "& input[type=number]::-webkit-inner-spin-button":
+                                        {
+                                          WebkitAppearance: "none",
+                                          margin: 0,
+                                        },
+                                    }}
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -1170,6 +1234,22 @@ const Planning = () => {
                                       handleDetailChange(e, index)
                                     }
                                     size="small"
+                                    style={{ maxWidth: 80 }}
+                                    sx={{
+                                      "& input[type=number]": {
+                                        MozAppearance: "textfield", // Pour Firefox
+                                      },
+                                      "& input[type=number]::-webkit-outer-spin-button":
+                                        {
+                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                          margin: 0,
+                                        },
+                                      "& input[type=number]::-webkit-inner-spin-button":
+                                        {
+                                          WebkitAppearance: "none",
+                                          margin: 0,
+                                        },
+                                    }}
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -1181,20 +1261,28 @@ const Planning = () => {
                                       handleDetailChange(e, index)
                                     }
                                     size="small"
+                                    style={{ maxWidth: 80 }}
+                                    sx={{
+                                      "& input[type=number]": {
+                                        MozAppearance: "textfield", // Pour Firefox
+                                      },
+                                      "& input[type=number]::-webkit-outer-spin-button":
+                                        {
+                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                          margin: 0,
+                                        },
+                                      "& input[type=number]::-webkit-inner-spin-button":
+                                        {
+                                          WebkitAppearance: "none",
+                                          margin: 0,
+                                        },
+                                    }}
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell style={{ textAlign: "center" }}>
                                   {calculateLineTotal(detail).toFixed(2)}
                                 </TableCell>
-                                <TableCell>
-                                  {/* <Button
-                                    color="primary"
-                                    onClick={() =>
-                                      console.log("Modifier ligne", index)
-                                    }
-                                  >
-                                    Modifier
-                                  </Button> */}
+                                <TableCell style={{ textAlign: "center" }}>
                                   <Button
                                     color="secondary"
                                     onClick={() => removeDetailRow(index)}
@@ -1236,6 +1324,22 @@ const Planning = () => {
                                     setDeposit(parseFloat(e.target.value) || 0)
                                   }
                                   size="small"
+                                  style={{ maxWidth: 100 }}
+                                  sx={{
+                                    "& input[type=number]": {
+                                      MozAppearance: "textfield", // Pour Firefox
+                                    },
+                                    "& input[type=number]::-webkit-outer-spin-button":
+                                      {
+                                        WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                        margin: 0,
+                                      },
+                                    "& input[type=number]::-webkit-inner-spin-button":
+                                      {
+                                        WebkitAppearance: "none",
+                                        margin: 0,
+                                      },
+                                  }}
                                 />
                               </TableCell>
                             </TableRow>
@@ -1251,7 +1355,7 @@ const Planning = () => {
                         </Typography> */}
 
                         <TextField
-                          label="Travaux"
+                          label="Notes"
                           name="workDescription"
                           value={newEvent.workDescription}
                           onChange={handleInputChange}
@@ -1279,6 +1383,17 @@ const Planning = () => {
                             height: "30px",
                             "& .MuiInputBase-root": { fontSize: "0.8rem" },
                             "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            "& input[type=number]": {
+                              MozAppearance: "textfield", // Pour Firefox
+                            },
+                            "& input[type=number]::-webkit-outer-spin-button": {
+                              WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                              margin: 0,
+                            },
+                            "& input[type=number]::-webkit-inner-spin-button": {
+                              WebkitAppearance: "none",
+                              margin: 0,
+                            },
                           }}
                         />
                       </Grid>
@@ -1353,6 +1468,19 @@ const Planning = () => {
                                 height: "30px",
                                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                                "& input[type=number]": {
+                                  MozAppearance: "textfield", // Pour Firefox
+                                },
+                                "& input[type=number]::-webkit-outer-spin-button":
+                                  {
+                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                    margin: 0,
+                                  },
+                                "& input[type=number]::-webkit-inner-spin-button":
+                                  {
+                                    WebkitAppearance: "none",
+                                    margin: 0,
+                                  },
                               }}
                             />
                           </Grid>
@@ -1371,6 +1499,19 @@ const Planning = () => {
                                 height: "30px",
                                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                                "& input[type=number]": {
+                                  MozAppearance: "textfield", // Pour Firefox
+                                },
+                                "& input[type=number]::-webkit-outer-spin-button":
+                                  {
+                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                    margin: 0,
+                                  },
+                                "& input[type=number]::-webkit-inner-spin-button":
+                                  {
+                                    WebkitAppearance: "none",
+                                    margin: 0,
+                                  },
                               }}
                             />
                           </Grid>
@@ -1389,6 +1530,19 @@ const Planning = () => {
                                 height: "30px",
                                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                                "& input[type=number]": {
+                                  MozAppearance: "textfield", // Pour Firefox
+                                },
+                                "& input[type=number]::-webkit-outer-spin-button":
+                                  {
+                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                    margin: 0,
+                                  },
+                                "& input[type=number]::-webkit-inner-spin-button":
+                                  {
+                                    WebkitAppearance: "none",
+                                    margin: 0,
+                                  },
                               }}
                             />
                           </Grid>
@@ -1407,6 +1561,19 @@ const Planning = () => {
                                 height: "30px",
                                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                                "& input[type=number]": {
+                                  MozAppearance: "textfield", // Pour Firefox
+                                },
+                                "& input[type=number]::-webkit-outer-spin-button":
+                                  {
+                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                    margin: 0,
+                                  },
+                                "& input[type=number]::-webkit-inner-spin-button":
+                                  {
+                                    WebkitAppearance: "none",
+                                    margin: 0,
+                                  },
                               }}
                             />
                           </Grid>
@@ -1549,7 +1716,7 @@ const Planning = () => {
                                     }%`,
                                     height: "40px",
                                     backgroundColor:
-                                      getEventColor(categoryIndex),
+                                      event.category?.color || "#05AFC1",
                                     border: snapshot.isDragging
                                       ? "2px solid #90caf9"
                                       : "1px solid #90caf9",
