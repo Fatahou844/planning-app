@@ -50,6 +50,12 @@ const Timeline = () => (
       display: "flex",
       justifyContent: "space-between",
       marginBottom: "1.8rem",
+      height: "100%", // S'assurer que la timeline remplit tout l'espace disponible
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1, // Bas pour laisser les éléments s'afficher au-dessus
     }}
   >
     {[...Array(24).keys()].map((halfHour) => (
@@ -57,13 +63,34 @@ const Timeline = () => (
         key={halfHour}
         sx={{
           flexGrow: 1,
-          textAlign: "center",
+          textAlign: "left", // Aligner les horaires à gauche du bloc
           borderRight: "1px solid lightgray",
+          backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
+          position: "relative",
+          height: "100%", // Étendre le fond de chaque élément sur toute la hauteur
         }}
       >
-        <Typography variant="caption">
+        <Typography
+          variant="caption"
+          sx={{
+            paddingLeft: "0.5rem", // Ajouter un petit espace pour le texte
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           {7 + Math.floor(halfHour / 2)}:{halfHour % 2 === 0 ? "00" : "30"}
         </Typography>
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
+            zIndex: 0,
+          }}
+        />
       </Box>
     ))}
   </Box>
@@ -1646,6 +1673,7 @@ const Planning = () => {
               backgroundColor: "#f9f9f9",
               padding: 2,
               borderRadius: "8px",
+              height: "100%",
             }}
           >
             {/* Timeline Component */}
@@ -1654,138 +1682,145 @@ const Planning = () => {
             <CurrentTimeLine currentHour={currentHour} />
 
             {/* Droppable Event Zones */}
-            {uniqueCategories.map((category, categoryIndex) => {
-              const categoryEvents = dataEvents.filter(
-                (event) => event.category.id === category.id
-              ); // Récupérer les événements de la catégorie
-              const lines = calculateEventLines(categoryEvents); // Calculer les lignes
+            <Box sx={{ position: "relative", zIndex: 3 }}>
+              {" "}
+              {/* Z-index élevé */}
+              {uniqueCategories.map((category, categoryIndex) => {
+                const categoryEvents = dataEvents.filter(
+                  (event) => event.category.id === category.id
+                ); // Récupérer les événements de la catégorie
+                const lines = calculateEventLines(categoryEvents); // Calculer les lignes
 
-              return (
-                <Droppable droppableId={category.id} key={category.id}>
-                  {(provided) => (
-                    <Box
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      sx={{
-                        position: "relative",
-                        borderRadius: "10px",
-                        marginBottom: "16px",
-                        padding: 1,
-                        overflow: "hidden",
-                      }}
-                    >
-                      {lines.map((line, lineIndex) => (
-                        <Box
-                          key={`line-${lineIndex}`}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            position: "relative",
-                            height: "50px", // Hauteur de chaque ligne
-                            marginTop: lineIndex > 0 ? "8px" : 0,
-                          }}
-                        >
-                          {line.map((event, eventIndex) => (
-                            <Draggable
-                              key={`${event.title}-${categoryIndex}-${eventIndex}`}
-                              draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
-                              index={eventIndex}
-                            >
-                              {(provided, snapshot) => (
-                                <Box
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  onClick={() => handleEventClick(event)}
-                                  sx={{
-                                    position: "absolute",
-                                    left: `${
-                                      ((event.startHour +
-                                        event.startMinute / 60 -
-                                        7) /
-                                        12) *
-                                      100
-                                    }%`,
-                                    width: `${
-                                      ((event.endHour +
-                                        event.endMinute / 60 -
-                                        (event.startHour +
-                                          event.startMinute / 60)) /
-                                        12) *
-                                      100
-                                    }%`,
-                                    height: "40px",
-                                    backgroundColor:
-                                      event.category?.color || "#05AFC1",
-                                    border: snapshot.isDragging
-                                      ? "2px solid #90caf9"
-                                      : "1px solid #90caf9",
-                                    borderRadius: "10px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    cursor: "pointer",
-                                    transition: "background-color 0.3s ease",
-                                  }}
-                                >
+                return (
+                  <Droppable droppableId={category.id} key={category.id}>
+                    {(provided) => (
+                      <Box
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        sx={{
+                          position: "relative",
+                          borderRadius: "10px",
+                          marginBottom: "16px",
+                          padding: 1,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {lines.map((line, lineIndex) => (
+                          <Box
+                            key={`line-${lineIndex}`}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              position: "relative",
+                              height: "50px", // Hauteur de chaque ligne
+                              marginTop: lineIndex > 0 ? "8px" : 0,
+                            }}
+                          >
+                            {line.map((event, eventIndex) => (
+                              <Draggable
+                                key={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                index={eventIndex}
+                              >
+                                {(provided, snapshot) => (
                                   <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
-                                    sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    onClick={() => handleEventClick(event)}
+                                    sx={{
+                                      position: "absolute",
+                                      left: `${
+                                        ((event.startHour * 60 +
+                                          event.startMinute -
+                                          420) /
+                                          690) *
+                                        100
+                                      }%`, // 420 minutes correspond à 7:00
+                                      width: `${
+                                        ((event.endHour * 60 +
+                                          event.endMinute -
+                                          (event.startHour * 60 +
+                                            event.startMinute)) /
+                                          690) *
+                                        100
+                                      }%`, // 690 minutes couvre de 7:00 à 18:30
+
+                                      height: "40px",
+                                      backgroundColor:
+                                        event.category?.color || "#05AFC1",
+                                      border: snapshot.isDragging
+                                        ? "2px solid #90caf9"
+                                        : "1px solid #90caf9",
+                                      borderRadius: "10px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: "pointer",
+                                      transition: "background-color 0.3s ease",
+                                    }}
                                   >
-                                    <Typography variant="body2">
-                                      <span
-                                        style={{
-                                          fontWeight: "bold",
-                                          fontSize: "1rem",
-                                          color: "#000",
-                                        }}
-                                      >
-                                        {event.title}
-                                      </span>
-                                      {" • "}
-                                      <span style={{ color: "gray" }}>
-                                        {event.person.firstName}{" "}
-                                        {event.person.lastName}
-                                      </span>
-                                      {" • "}
-                                      <span style={{ color: "textSecondary" }}>
-                                        {event.vehicule.licensePlate}
-                                      </span>
-                                    </Typography>
-                                    {event.nextDay && (
-                                      <ArrowForwardIcon
-                                        fontSize="medium"
-                                        sx={{
-                                          color: "white",
-                                          transition:
-                                            "transform 0.3s ease, color 0.3s ease",
-                                          "&:hover": {
-                                            color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
-                                            transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
-                                          },
-                                          boxShadow:
-                                            "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
-                                          borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
-                                          padding: "4px", // Ajoute un léger padding pour accentuer l'effet
-                                          backgroundColor:
-                                            "rgba(0, 0, 0, 0.05)", // Fond gris très léger
-                                        }}
-                                      />
-                                    )}
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
+                                      sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
+                                    >
+                                      <Typography variant="body2">
+                                        <span
+                                          style={{
+                                            fontWeight: "bold",
+                                            fontSize: "1rem",
+                                            color: "#000",
+                                          }}
+                                        >
+                                          {event.title}
+                                        </span>
+                                        {" • "}
+                                        <span style={{ color: "gray" }}>
+                                          {event.person.firstName}{" "}
+                                          {event.person.lastName}
+                                        </span>
+                                        {" • "}
+                                        <span
+                                          style={{ color: "textSecondary" }}
+                                        >
+                                          {event.vehicule.licensePlate}
+                                        </span>
+                                      </Typography>
+                                      {event.nextDay && (
+                                        <ArrowForwardIcon
+                                          fontSize="medium"
+                                          sx={{
+                                            color: "white",
+                                            transition:
+                                              "transform 0.3s ease, color 0.3s ease",
+                                            "&:hover": {
+                                              color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
+                                              transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
+                                            },
+                                            boxShadow:
+                                              "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
+                                            borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
+                                            padding: "4px", // Ajoute un léger padding pour accentuer l'effet
+                                            backgroundColor:
+                                              "rgba(0, 0, 0, 0.05)", // Fond gris très léger
+                                          }}
+                                        />
+                                      )}
+                                    </Box>
                                   </Box>
-                                </Box>
-                              )}
-                            </Draggable>
-                          ))}
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
-                </Droppable>
-              );
-            })}
+                                )}
+                              </Draggable>
+                            ))}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Droppable>
+                );
+              })}
+            </Box>
           </Box>
         </Box>
       </Box>
