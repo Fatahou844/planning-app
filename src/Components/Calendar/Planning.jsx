@@ -47,8 +47,8 @@ import EventModal from "../EventModal";
 const Timeline = () => (
   <Box
     sx={{
-      display: "flex",
-      justifyContent: "space-between",
+      display: "grid",
+      //   justifyContent: "space-between",
       marginBottom: "1.8rem",
       height: "100%", // S'assurer que la timeline remplit tout l'espace disponible
       position: "absolute",
@@ -56,6 +56,8 @@ const Timeline = () => (
       left: 0,
       right: 0,
       zIndex: 1, // Bas pour laisser les éléments s'afficher au-dessus
+      //  marginLeft: "1.5rem",
+      gridTemplateColumns: "repeat(24,minmax(50px,1fr))",
     }}
   >
     {[...Array(24).keys()].map((halfHour) => (
@@ -774,10 +776,10 @@ const Planning = () => {
   const [details, setDetails] = useState([
     {
       label: "",
-      quantity: 1,
-      unitPrice: 0,
-      discountPercent: 0,
-      discountAmount: 0,
+      quantity: "",
+      unitPrice: "",
+      discountPercent: "",
+      discountAmount: "",
     },
   ]);
   const [deposit, setDeposit] = useState(0);
@@ -787,7 +789,7 @@ const Planning = () => {
     const { name, value } = event.target;
     const updatedDetails = [...details];
     if (name == "label") updatedDetails[index][name] = value || "";
-    else updatedDetails[index][name] = parseFloat(value) || 0;
+    else updatedDetails[index][name] = parseFloat(value);
 
     setNewEvent({ ...newEvent, price: totalTTC });
     setDetails(updatedDetails);
@@ -807,10 +809,10 @@ const Planning = () => {
       ...prevDetails,
       {
         label: "",
-        quantity: 1,
-        unitPrice: 0,
-        discountPercent: 0,
-        discountAmount: 0,
+        quantity: "",
+        unitPrice: "",
+        discountPercent: "",
+        discountAmount: "",
       },
     ]);
   };
@@ -836,7 +838,9 @@ const Planning = () => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
-
+function calculateTimeValue(hour, minute) {
+  return 2 * (hour - 7) + Math.floor(minute / 30) + 1;
+}
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1670,8 +1674,8 @@ const Planning = () => {
               flexGrow: 1,
               position: "relative",
               pl: 3,
-              backgroundColor: "#f9f9f9",
-              padding: 2,
+              backgroundColor: "#007a87",
+              padding: "16px 0",
               borderRadius: "8px",
               height: "100%",
             }}
@@ -1682,7 +1686,7 @@ const Planning = () => {
             <CurrentTimeLine currentHour={currentHour} />
 
             {/* Droppable Event Zones */}
-            <Box sx={{ position: "relative", zIndex: 3 }}>
+            <Box sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}>
               {" "}
               {/* Z-index élevé */}
               {uniqueCategories.map((category, categoryIndex) => {
@@ -1701,15 +1705,18 @@ const Planning = () => {
                           position: "relative",
                           borderRadius: "10px",
                           marginBottom: "16px",
-                          padding: 1,
+                          padding: "8px 0",
                           overflow: "hidden",
+                          width: "100%",
                         }}
                       >
                         {lines.map((line, lineIndex) => (
                           <Box
                             key={`line-${lineIndex}`}
                             sx={{
-                              display: "flex",
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(24,minmax(50px,1fr))",
                               alignItems: "center",
                               position: "relative",
                               height: "50px", // Hauteur de chaque ligne
@@ -1729,22 +1736,31 @@ const Planning = () => {
                                     {...provided.dragHandleProps}
                                     onClick={() => handleEventClick(event)}
                                     sx={{
-                                      position: "absolute",
-                                      left: `${
-                                        ((event.startHour * 60 +
-                                          event.startMinute -
-                                          420) /
-                                          690) *
-                                        100
-                                      }%`, // 420 minutes correspond à 7:00
-                                      width: `${
-                                        ((event.endHour * 60 +
-                                          event.endMinute -
-                                          (event.startHour * 60 +
-                                            event.startMinute)) /
-                                          690) *
-                                        100
-                                      }%`, // 690 minutes couvre de 7:00 à 18:30
+                                      // position: "absolute",
+                                      // left: `${
+                                      //   ((event.startHour * 60 +
+                                      //     event.startMinute -
+                                      //     420) /
+                                      //     30) *
+                                      //   3.62708125
+                                      // }rem`,
+                                      // width: `${
+                                      //   ((event.endHour * 60 +
+                                      //     event.endMinute -
+                                      //     (event.startHour * 60 +
+                                      //       event.startMinute)) /
+                                      //     30) *
+                                      //   3.62708125
+                                      // }rem`, // Largeur calculée en fonction de la durée
+
+                                      gridColumnStart: calculateTimeValue(
+                                        event.startHour,
+                                        event.startMinute
+                                      ),
+                                      gridColumnEnd: calculateTimeValue(
+                                        event.endHour,
+                                        event.endMinute
+                                      ),
 
                                       height: "40px",
                                       backgroundColor:
