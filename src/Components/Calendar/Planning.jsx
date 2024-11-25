@@ -491,6 +491,7 @@ const Planning = () => {
           licensePlate: event.licensePlate,
           vin: event.vin,
           color: event.color,
+          model: event.model,
         },
         details: {
           workDescription: event.workDescription,
@@ -796,10 +797,24 @@ const Planning = () => {
   };
 
   // Calcul des totaux de la ligne en fonction de la quantité, du prix unitaire et des remises
+  // const calculateLineTotal = (detail) => {
+  //   const discount =
+  //     detail.unitPrice * detail.quantity * (detail.discountPercent / 100) +
+  //     detail.discountAmount;
+  //   return detail.quantity * detail.unitPrice - discount;
+  // };
+
   const calculateLineTotal = (detail) => {
-    const discount =
-      detail.unitPrice * detail.quantity * (detail.discountPercent / 100) +
-      detail.discountAmount;
+    const discountPercent =
+      detail.discountPercent > 0
+        ? detail.unitPrice * detail.quantity * (detail.discountPercent / 100)
+        : 0;
+
+    const discountAmount =
+      detail.discountAmount > 0 ? detail.discountAmount : 0;
+
+    const discount = discountPercent + discountAmount;
+
     return detail.quantity * detail.unitPrice - discount;
   };
 
@@ -823,11 +838,11 @@ const Planning = () => {
   };
 
   // Calcul des totaux HT et TTC
-  const totalHT = details.reduce(
+  const totalTTC = details.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
     0
   );
-  const totalTTC = totalHT * 1.2; // Ajouter 20% de TVA
+  const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
 
   // Fonction pour mettre à jour l'événement dans l'état local
   const handleEditedEventChange = (updatedEvent) => {
@@ -838,9 +853,9 @@ const Planning = () => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
-function calculateTimeValue(hour, minute) {
-  return 2 * (hour - 7) + Math.floor(minute / 30) + 1;
-}
+  function calculateTimeValue(hour, minute) {
+    return 2 * (hour - 7) + Math.floor(minute / 30) + 1;
+  }
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1162,19 +1177,19 @@ function calculateTimeValue(hour, minute) {
                                 Quantité
                               </TableCell>
                               <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
+                                style={{ width: "15%", textAlign: "center" }}
                               >
                                 Prix Unitaire
                               </TableCell>
-                              <TableCell
+                              {/* <TableCell
                                 style={{ width: "10%", textAlign: "center" }}
                               >
                                 Remise %
-                              </TableCell>
+                              </TableCell> */}
                               <TableCell
                                 style={{ width: "10%", textAlign: "center" }}
                               >
-                                Remise €
+                                Remise(€ ou %)
                               </TableCell>
                               <TableCell
                                 style={{ width: "10%", textAlign: "center" }}
@@ -1237,8 +1252,12 @@ function calculateTimeValue(hour, minute) {
                                     onChange={(e) =>
                                       handleDetailChange(e, index)
                                     }
+                                    // onInput={(e) => {
+                                    //   const input = e.target.value;
+                                    //   e.target.value = input.replace(",", ".");
+                                    // }}
                                     size="small"
-                                    style={{ maxWidth: 80 }}
+                                    fullWidth
                                     sx={{
                                       "& input[type=number]": {
                                         MozAppearance: "textfield", // Pour Firefox
@@ -1256,7 +1275,7 @@ function calculateTimeValue(hour, minute) {
                                     }}
                                   />
                                 </TableCell>
-                                <TableCell>
+                                {/* <TableCell>
                                   <TextField
                                     name="discountPercent"
                                     type="number"
@@ -1282,15 +1301,34 @@ function calculateTimeValue(hour, minute) {
                                         },
                                     }}
                                   />
-                                </TableCell>
-                                <TableCell>
+                                </TableCell> */}
+                                {/* <TableCell>
                                   <TextField
                                     name="discountAmount"
                                     type="number"
                                     value={detail.discountAmount}
-                                    onChange={(e) =>
-                                      handleDetailChange(e, index)
-                                    }
+                                    onChange={(e) => {
+                                      let value = e.target.value;
+
+                                      // Vérifie si l'utilisateur a entré un '%'
+                                      if (value.includes("%")) {
+                                        const percentage = parseFloat(
+                                          value.replace("%", "")
+                                        );
+                                        if (!isNaN(percentage)) {
+                                          detail.discountPercent = percentage; // Met à jour discountPercent
+                                          detail.discountAmount = ""; // Réinitialise discountAmount
+                                        }
+                                      } else {
+                                        const amount = parseFloat(value);
+                                        if (!isNaN(amount)) {
+                                          detail.discountAmount = amount; // Met à jour discountAmount
+                                          detail.discountPercent = ""; // Réinitialise discountPercent
+                                        }
+                                      }
+
+                                      handleDetailChange(e, index); // Appelle la fonction pour refléter les changements
+                                    }}
                                     size="small"
                                     style={{ maxWidth: 80 }}
                                     sx={{
@@ -1309,7 +1347,66 @@ function calculateTimeValue(hour, minute) {
                                         },
                                     }}
                                   />
+                                </TableCell> */}
+                                <TableCell>
+                                  <TextField
+                                    name="discountAmount"
+                                    type="text" // Permet la saisie de caractères comme '%'
+                                    value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
+                                    onChange={(e) => {
+                                      let value = e.target.value.trim(); // Supprime les espaces inutiles
+                                      let formattedValue = value; // Conserve la saisie brute pour affichage
+
+                                      // Réinitialisation des champs de montant et pourcentage
+                                      detail.discountAmount = "";
+                                      detail.discountPercent = "";
+
+                                      if (value.includes("%")) {
+                                        // Cas où l'utilisateur entre un pourcentage
+                                        const percentage = parseFloat(
+                                          value.replace("%", "")
+                                        );
+                                        if (!isNaN(percentage)) {
+                                          detail.discountPercent = percentage; // Met à jour le pourcentage
+                                        }
+                                      } else if (value !== "") {
+                                        // Cas où l'utilisateur entre un montant
+                                        const amount = parseFloat(value);
+                                        if (!isNaN(amount)) {
+                                          detail.discountAmount = amount; // Met à jour le montant
+                                        }
+                                      }
+
+                                      // Si la valeur est vide, réinitialiser tout
+                                      if (value === "") {
+                                        detail.discountAmount = "";
+                                        detail.discountPercent = "";
+                                      }
+
+                                      // Met à jour l'état de l'inputValue avec la saisie brute
+                                      detail.inputValue = formattedValue;
+
+                                      // Appelle la fonction de gestion des changements
+                                      handleDetailChange(e, index);
+                                    }}
+                                    size="small"
+                                    // Optionnel : Pour interdire l'affichage du spinner pour les nombres
+                                    sx={{
+                                      "& input": {
+                                        MozAppearance: "textfield", // Pour Firefox
+                                      },
+                                      "& input::-webkit-outer-spin-button": {
+                                        WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                        margin: 0,
+                                      },
+                                      "& input::-webkit-inner-spin-button": {
+                                        WebkitAppearance: "none",
+                                        margin: 0,
+                                      },
+                                    }}
+                                  />
                                 </TableCell>
+
                                 <TableCell style={{ textAlign: "center" }}>
                                   {calculateLineTotal(detail).toFixed(2)}
                                 </TableCell>
@@ -1334,15 +1431,16 @@ function calculateTimeValue(hour, minute) {
                                 </Button>
                               </TableCell>
                             </TableRow>
-                            <TableRow>
-                              <TableCell colSpan={4}></TableCell>
-                              <TableCell>Total HT :</TableCell>
-                              <TableCell>{totalHT.toFixed(2)}</TableCell>
-                            </TableRow>
+
                             <TableRow>
                               <TableCell colSpan={4}></TableCell>
                               <TableCell>Total TTC :</TableCell>
                               <TableCell>{totalTTC.toFixed(2)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell colSpan={4}></TableCell>
+                              <TableCell>Total HT :</TableCell>
+                              <TableCell>{totalHT.toFixed(2)}</TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell colSpan={4}></TableCell>
@@ -1394,7 +1492,7 @@ function calculateTimeValue(hour, minute) {
                           margin="normal"
                           required
                           multiline
-                          rows={4}
+                          rows={16}
                           sx={{
                             "& .MuiInputBase-root": { fontSize: "0.8rem" },
                             "& .MuiFormLabel-root": { fontSize: "0.8rem" },
@@ -1411,6 +1509,7 @@ function calculateTimeValue(hour, minute) {
                           required
                           size="small"
                           sx={{
+                            display: "none",
                             height: "30px",
                             "& .MuiInputBase-root": { fontSize: "0.8rem" },
                             "& .MuiFormLabel-root": { fontSize: "0.8rem" },

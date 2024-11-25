@@ -169,19 +169,20 @@ function EventDialog({
     ]);
   };
 
-  const calculateTotalHT = () => {
+  const calculateTotalTTC = () => {
     return details.reduce((total, detail) => {
       const { quantity, unitPrice, discountAmount } = detail;
       return total + (quantity * unitPrice - discountAmount);
     }, 0);
   };
 
-  const calculateTotalTTC = (totalHT) => {
-    return totalHT * 1.2; // 20% VAT
+  const calculateTotalHT = (totalTTC) => {
+    return totalTTC / 1.2; // 20% VAT
   };
 
-  const totalHT = calculateTotalHT();
-  const totalTTC = calculateTotalTTC(totalHT);
+  const totalTTC = calculateTotalTTC();
+
+  const totalHT = calculateTotalHT(totalTTC);
   return (
     <Dialog
       open={open}
@@ -348,11 +349,11 @@ function EventDialog({
                     Prix Unitaire
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
-                    Remise en €
+                    Remise
                   </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                  {/* <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                     Remise en %
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                     Actions
                   </TableCell>
@@ -379,7 +380,7 @@ function EventDialog({
                           handleDetailChange(
                             index,
                             "quantity",
-                            parseInt(e.target.value, 10) || 0
+                            parseInt(e.target.value, 10)
                           )
                         }
                         size="small"
@@ -407,7 +408,7 @@ function EventDialog({
                           handleDetailChange(
                             index,
                             "unitPrice",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value)
                           )
                         }
                         size="small"
@@ -428,6 +429,66 @@ function EventDialog({
                       />
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>
+                      <TextField
+                        type="text" // Permet la saisie libre (montant ou pourcentage)
+                        value={
+                          detail.discountPercent !== ""
+                            ? `${detail.discountPercent}%`
+                            : detail.discountAmount || ""
+                        } // Affiche soit le pourcentage, soit le montant
+                        onChange={(e) => {
+                          const input = e.target.value.trim();
+
+                          let formattedValue = input; // Supprime le symbole %
+                          detail.discountAmount = "";
+                          detail.discountPercent = "";
+
+                          let amount = parseFloat(formattedValue); // Tente de convertir en nombre
+
+                          // Gestion des cas de saisie valides
+                          if (input.includes("%") && !isNaN(amount)) {
+                            // Si l'utilisateur entre un pourcentage
+                            detail.discountPercent = amount; // Met à jour le pourcentage
+                            detail.discountAmount = ""; // Réinitialise le montant
+                          } else if (!isNaN(amount)) {
+                            // Si l'utilisateur entre un montant
+                            detail.discountAmount = amount; // Met à jour le montant
+                            detail.discountPercent = ""; // Réinitialise le pourcentage
+                          } else {
+                            // Si la saisie est invalide
+                            detail.discountAmount = "";
+                            detail.discountPercent = "";
+                          }
+
+                          // Mise à jour de la valeur brute pour affichage
+                          detail.inputValue = input;
+
+                          // Appelle la fonction pour notifier le changement
+                          handleDetailChange(
+                            index,
+                            "discountAmount",
+                            detail.discountAmount
+                          );
+                        }}
+                        size="small"
+                        fullWidth
+                        sx={{
+                          "& input": {
+                            MozAppearance: "textfield", // Pour Firefox
+                          },
+                          "& input::-webkit-outer-spin-button": {
+                            WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
+                            margin: 0,
+                          },
+                          "& input::-webkit-inner-spin-button": {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                          },
+                        }}
+                      />
+                    </TableCell>
+
+                    {/* <TableCell sx={{ fontSize: "0.8rem" }}>
                       <TextField
                         type="number"
                         value={detail.discountAmount}
@@ -454,8 +515,8 @@ function EventDialog({
                           },
                         }}
                       />
-                    </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem" }}>
+                    </TableCell> */}
+                    {/* <TableCell sx={{ fontSize: "0.8rem" }}>
                       <TextField
                         type="number"
                         value={detail.discountPercent}
@@ -482,7 +543,7 @@ function EventDialog({
                           },
                         }}
                       />
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell sx={{ fontSize: "0.8rem" }}>
                       <Button
                         onClick={() =>
@@ -508,11 +569,10 @@ function EventDialog({
 
           {/* Display totals */}
           <Typography variant="h6" sx={{ marginTop: 2 }}>
-            Total HT: {totalHT.toFixed(2)} €
-          </Typography>
-          <Typography variant="h6">
             Total TTC: {totalTTC.toFixed(2)} €
           </Typography>
+          <Typography variant="h6">Total HT: {totalHT.toFixed(2)} €</Typography>
+
           <Grid container spacing={2} item xs={12} md={12}>
             {/* Colonne 1: Infos  sur les travaux */}
             <Grid item xs={12} md={6}>
@@ -529,7 +589,7 @@ function EventDialog({
                 margin="normal"
                 required
                 multiline
-                rows={4}
+                rows={16}
                 sx={{
                   "& .MuiInputBase-root": { fontSize: "0.8rem" },
                   "& .MuiFormLabel-root": { fontSize: "0.8rem" },
@@ -546,6 +606,7 @@ function EventDialog({
                 required
                 size="small"
                 sx={{
+                  display: "none",
                   height: "30px",
                   "& .MuiInputBase-root": { fontSize: "0.8rem" },
                   "& .MuiFormLabel-root": { fontSize: "0.8rem" },
