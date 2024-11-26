@@ -295,7 +295,7 @@ const Planning = () => {
       // Cas où les événements couvrent plusieurs jours
 
       // Ajout du premier événement pour la date de début
-      const firstEventEndHour = 18; // Heure de fin de la journée
+      const firstEventEndHour = 19; // Heure de fin de la journée
       const firstEventEndMinute = 0; // Fin de la journée à 18:00
       const firstEvent = {
         ...newEvent,
@@ -309,7 +309,18 @@ const Planning = () => {
         newOrderNumber,
         true
       ); // Ajout à Firestore
-      await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+      const IsvalidDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      if (IsvalidDetails.length)
+        await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
 
       // Ajout des événements pour les jours intermédiaires (si applicable)
       let currentDate = new Date(startDate);
@@ -318,9 +329,9 @@ const Planning = () => {
         const dailyEvent = {
           ...newEvent,
           date: formatDate(currentDate),
-          startHour: 8,
+          startHour: 7,
           startMinute: 0,
-          endHour: 18,
+          endHour: 19,
           endMinute: 0,
           userId: userId,
           title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
@@ -330,7 +341,8 @@ const Planning = () => {
           newOrderNumber,
           true
         ); // Ajout à Firestore
-        await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+        if (IsvalidDetails.length)
+          await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
         currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
       }
 
@@ -338,7 +350,7 @@ const Planning = () => {
       const lastEvent = {
         ...newEvent,
         date: finDate,
-        startHour: 8,
+        startHour: 7,
         startMinute: 0,
         endHour: parseInt(newEvent.endHour), // Heure réelle de fin
         endMinute: parseInt(newEvent.endMinute),
@@ -351,7 +363,18 @@ const Planning = () => {
         newOrderNumber,
         false
       ); // Ajout à Firestore
-      await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
+
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+      if (validDetails.length)
+        await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
     } else {
       // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
@@ -365,7 +388,18 @@ const Planning = () => {
         newOrderNumber,
         false
       ); // Ajout à Firestore
-      await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      if (validDetails.length)
+        await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
     }
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
@@ -408,6 +442,37 @@ const Planning = () => {
   };
 
   // Fonction pour ajouter les détails de l'événement
+  // const addEventDetails = async (eventId, details) => {
+  //   try {
+  //     const batch = writeBatch(db); // Crée un batch pour les opérations
+
+  //     // Référence directe au document de l'événement avec l'ID existant
+  //     const eventRef = doc(db, "events", eventId);
+
+  //     // Boucle sur chaque détail et ajout à la sous-collection "details" de cet événement
+  //     for (const detail of details) {
+  //       const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
+  //       batch.set(detailRef, {
+  //         label: detail.label,
+  //         quantity: detail.quantity,
+  //         unitPrice: detail.unitPrice,
+  //         discountPercent: detail.discountPercent,
+  //         discountAmount: detail.discountAmount,
+  //       });
+  //     }
+
+  //     // Engager toutes les écritures dans le batch
+  //     await batch.commit();
+
+  //     console.log("Détails ajoutés avec succès à l'événement");
+  //   } catch (error) {
+  //     console.error(
+  //       "Erreur lors de l'ajout des détails à l'événement : ",
+  //       error
+  //     );
+  //   }
+  // };
+
   const addEventDetails = async (eventId, details) => {
     try {
       const batch = writeBatch(db); // Crée un batch pour les opérations
@@ -415,15 +480,34 @@ const Planning = () => {
       // Référence directe au document de l'événement avec l'ID existant
       const eventRef = doc(db, "events", eventId);
 
-      // Boucle sur chaque détail et ajout à la sous-collection "details" de cet événement
-      for (const detail of details) {
+      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      console.log("##############lidDetails####################", validDetails);
+
+      // Si aucun détail valide, on sort sans erreur
+      if (validDetails.length === 0) {
+        console.log("Aucun détail valide à enregistrer.");
+        return;
+      }
+
+      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      for (const detail of validDetails) {
         const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
         batch.set(detailRef, {
-          label: detail.label,
-          quantity: detail.quantity,
-          unitPrice: detail.unitPrice,
-          discountPercent: detail.discountPercent,
-          discountAmount: detail.discountAmount,
+          label: detail.label || "",
+          quantity: detail.quantity || 0,
+          unitPrice: detail.unitPrice || 0,
+          discountPercent: detail.discountPercent || 0,
+          discountAmount: detail.discountAmount || 0,
         });
       }
 
@@ -488,16 +572,16 @@ const Planning = () => {
           phone: event.phone,
         },
         vehicule: {
-          licensePlate: event.licensePlate,
-          vin: event.vin,
-          color: event.color,
-          model: event.model,
+          licensePlate: event.licensePlate ? event.licensePlate : "",
+          vin: event.vin ? event.vin : "",
+          color: event.color ? event.color : "",
+          model: event.model ? event.model : "",
         },
         details: {
           workDescription: event.workDescription,
-          price: event.price,
+          price: event.price ? event.price : "",
         },
-        operator: event.operator,
+        operator: event.operator ? event.operator : "",
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
       });
@@ -705,7 +789,7 @@ const Planning = () => {
         },
         details: {
           workDescription: updatedEvent.details.workDescription || "",
-          price: updatedEvent.details.price || 0, // Assurez-vous que le prix est un nombre valide
+          price: updatedEvent?.details?.price || 0, // Assurez-vous que le prix est un nombre valide
         },
         category: {
           id: updatedEvent.category?.id || "",
@@ -804,17 +888,33 @@ const Planning = () => {
   //   return detail.quantity * detail.unitPrice - discount;
   // };
 
+  // const calculateLineTotal = (detail) => {
+  //   const discountPercent =
+  //     detail.discountPercent > 0
+  //       ? detail.unitPrice * detail.quantity * (detail.discountPercent / 100)
+  //       : 0;
+
+  //   const discountAmount =
+  //     detail.discountAmount > 0 ? detail.discountAmount : 0;
+
+  //   const discount = discountPercent + discountAmount;
+
+  //   return detail.quantity * detail.unitPrice - discount;
+  // };
+
   const calculateLineTotal = (detail) => {
-    const discountPercent =
-      detail.discountPercent > 0
-        ? detail.unitPrice * detail.quantity * (detail.discountPercent / 100)
-        : 0;
+    let discount = 0;
 
-    const discountAmount =
-      detail.discountAmount > 0 ? detail.discountAmount : 0;
+    if (detail.discountPercent > 0) {
+      // Priorité au pourcentage
+      discount =
+        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
+    } else if (detail.discountAmount > 0) {
+      // Sinon, utilise le montant fixe
+      discount = detail.discountAmount;
+    }
 
-    const discount = discountPercent + discountAmount;
-
+    // Calcul du total après remise
     return detail.quantity * detail.unitPrice - discount;
   };
 
@@ -1105,7 +1205,6 @@ const Planning = () => {
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
-                        required
                         size="small"
                         sx={{
                           height: "30px",
@@ -1134,7 +1233,6 @@ const Planning = () => {
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
-                        required
                         size="small"
                         sx={{
                           height: "30px",
@@ -1149,7 +1247,6 @@ const Planning = () => {
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
-                        required
                         size="small"
                         sx={{
                           height: "30px",
@@ -1189,7 +1286,7 @@ const Planning = () => {
                               <TableCell
                                 style={{ width: "10%", textAlign: "center" }}
                               >
-                                Remise(€ ou %)
+                                Remise
                               </TableCell>
                               <TableCell
                                 style={{ width: "10%", textAlign: "center" }}
@@ -1540,7 +1637,6 @@ const Planning = () => {
                           onChange={handleInputChange}
                           fullWidth
                           margin="normal"
-                          required
                           size="small"
                           sx={{
                             height: "30px",
