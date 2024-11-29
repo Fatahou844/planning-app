@@ -638,6 +638,35 @@ const Planning = () => {
           color: selectedCat.color,
         },
       }));
+    } else if (name === "startTime") {
+      const isValid = /^\d{0,4}$/.test(value); // Format HHMM
+
+      if (isValid || value === "") {
+        // Si valide, extraire heure et minute
+        const startHour = isValid ? value.slice(0, 2) : "";
+        const startMinute = isValid ? value.slice(2, 4) : "";
+
+        // Mettre à jour les états startHour et startMinute
+        setNewEvent((prev) => ({
+          ...prev,
+          startHour,
+          startMinute,
+        }));
+      }
+    }
+
+    // Gestion de endTime
+    else if (name === "endTime") {
+      const isValid = /^\d{0,4}$/.test(value); // Format HHMM
+      if (isValid || value === "") {
+        const endHour = isValid ? value.slice(0, 2) : "";
+        const endMinute = isValid ? value.slice(2, 4) : "";
+        setNewEvent((prev) => ({
+          ...prev,
+          endHour,
+          endMinute,
+        }));
+      }
     } else {
       setNewEvent({ ...newEvent, [name]: value });
     }
@@ -1372,79 +1401,7 @@ const Planning = () => {
                                     }}
                                   />
                                 </TableCell>
-                                {/* <TableCell>
-                                  <TextField
-                                    name="discountPercent"
-                                    type="number"
-                                    value={detail.discountPercent}
-                                    onChange={(e) =>
-                                      handleDetailChange(e, index)
-                                    }
-                                    size="small"
-                                    style={{ maxWidth: 80 }}
-                                    sx={{
-                                      "& input[type=number]": {
-                                        MozAppearance: "textfield", // Pour Firefox
-                                      },
-                                      "& input[type=number]::-webkit-outer-spin-button":
-                                        {
-                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                          margin: 0,
-                                        },
-                                      "& input[type=number]::-webkit-inner-spin-button":
-                                        {
-                                          WebkitAppearance: "none",
-                                          margin: 0,
-                                        },
-                                    }}
-                                  />
-                                </TableCell> */}
-                                {/* <TableCell>
-                                  <TextField
-                                    name="discountAmount"
-                                    type="number"
-                                    value={detail.discountAmount}
-                                    onChange={(e) => {
-                                      let value = e.target.value;
 
-                                      // Vérifie si l'utilisateur a entré un '%'
-                                      if (value.includes("%")) {
-                                        const percentage = parseFloat(
-                                          value.replace("%", "")
-                                        );
-                                        if (!isNaN(percentage)) {
-                                          detail.discountPercent = percentage; // Met à jour discountPercent
-                                          detail.discountAmount = ""; // Réinitialise discountAmount
-                                        }
-                                      } else {
-                                        const amount = parseFloat(value);
-                                        if (!isNaN(amount)) {
-                                          detail.discountAmount = amount; // Met à jour discountAmount
-                                          detail.discountPercent = ""; // Réinitialise discountPercent
-                                        }
-                                      }
-
-                                      handleDetailChange(e, index); // Appelle la fonction pour refléter les changements
-                                    }}
-                                    size="small"
-                                    style={{ maxWidth: 80 }}
-                                    sx={{
-                                      "& input[type=number]": {
-                                        MozAppearance: "textfield", // Pour Firefox
-                                      },
-                                      "& input[type=number]::-webkit-outer-spin-button":
-                                        {
-                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                          margin: 0,
-                                        },
-                                      "& input[type=number]::-webkit-inner-spin-button":
-                                        {
-                                          WebkitAppearance: "none",
-                                          margin: 0,
-                                        },
-                                    }}
-                                  />
-                                </TableCell> */}
                                 <TableCell>
                                   <TextField
                                     name="discountAmount"
@@ -1457,6 +1414,14 @@ const Planning = () => {
                                       // Réinitialisation des champs de montant et pourcentage
                                       detail.discountAmount = "";
                                       detail.discountPercent = "";
+
+                                      // Uniformise les décimales en remplaçant les virgules par des points
+                                      const normalizedValue = value.replace(
+                                        ",",
+                                        "."
+                                      );
+
+                                      value = normalizedValue;
 
                                       if (value.includes("%")) {
                                         // Cas où l'utilisateur entre un pourcentage
@@ -1642,49 +1607,19 @@ const Planning = () => {
                             height: "30px",
                             "& .MuiInputBase-root": { fontSize: "0.8rem" },
                             "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                          }}
-                        />
-                        <Typography variant="body1">
-                          Date de l'événement
-                        </Typography>
-                        <TextField
-                          name="date"
-                          type="date"
-                          value={newEvent.date}
-                          onChange={handleInputChange}
-                          fullWidth
-                          margin="normal"
-                          required
-                          size="small"
-                          sx={{
-                            height: "30px",
-                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                          }}
-                        />
-                        <Typography variant="body1">Date de fin</Typography>
-                        <TextField
-                          name="finDate"
-                          type="date"
-                          value={finDate}
-                          onChange={handleInputChangeFinDate}
-                          fullWidth
-                          margin="normal"
-                          required
-                          size="small"
-                          sx={{
-                            height: "30px",
-                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            marginBottom: "0.9rem",
                           }}
                         />
                         <Grid container spacing={2}>
-                          <Grid item xs={6}>
+                          {/* Section Date de l'événement et Heure de début */}
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body1">
+                              Date de l'événement
+                            </Typography>
                             <TextField
-                              label="Heure de début"
-                              name="startHour"
-                              type="number"
-                              value={newEvent.startHour}
+                              name="date"
+                              type="date"
+                              value={newEvent.date}
                               onChange={handleInputChange}
                               fullWidth
                               margin="normal"
@@ -1694,29 +1629,66 @@ const Planning = () => {
                                 height: "30px",
                                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
                               }}
                             />
                           </Grid>
-                          <Grid item xs={6}>
+
+                          <Grid item xs={12} md={6}>
+                            <Typography
+                              variant="body1"
+                              sx={{ marginBottom: "0.9rem" }}
+                            >
+                              Heure de départ
+                            </Typography>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              border="1px solid #ccc"
+                              borderRadius="4px"
+                              padding="4px"
+                              sx={{
+                                backgroundColor: "#fff",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                "&:hover": { borderColor: "#1976d2" },
+                              }}
+                            >
+                              <TextField
+                                name="startTime"
+                                placeholder="HHMM (ex: 0700)"
+                                value={
+                                  `${newEvent.startHour}${newEvent.startMinute}` ||
+                                  ""
+                                }
+                                onChange={handleInputChange}
+                                margin="none"
+                                size="small"
+                                sx={{
+                                  flex: 1,
+                                  height: "30px",
+                                  "& .MuiInputBase-root": {
+                                    fontSize: "0.9rem",
+                                    padding: "4px 8px",
+                                  },
+                                  "& .MuiFormLabel-root": { display: "none" },
+                                  "& fieldset": { display: "none" },
+                                }}
+                              />
+                            </Box>
+                            {/* <Box mt={2}>
+                              <Typography variant="body2">
+                                Heure : {newEvent.startHour || "Non définie"}{" "}
+                                Minute : {newEvent.startMinute || "Non définie"}
+                              </Typography>
+                            </Box> */}
+                          </Grid>
+                          {/* Section Date de fin et Heure de fin */}
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body1">Date de fin</Typography>
                             <TextField
-                              label="Minutes de début"
-                              name="startMinute"
-                              type="number"
-                              value={newEvent.startMinute}
-                              onChange={handleInputChange}
+                              name="finDate"
+                              type="date"
+                              value={finDate}
+                              onChange={handleInputChangeFinDate}
                               fullWidth
                               margin="normal"
                               required
@@ -1725,85 +1697,60 @@ const Planning = () => {
                                 height: "30px",
                                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
                               }}
                             />
                           </Grid>
-                          <Grid item xs={6}>
-                            <TextField
-                              label="Heure de fin"
-                              name="endHour"
-                              type="number"
-                              value={newEvent.endHour}
-                              onChange={handleInputChange}
-                              fullWidth
-                              margin="normal"
-                              required
-                              size="small"
+
+                          <Grid item xs={12} md={6}>
+                            <Typography
+                              variant="body1"
+                              sx={{ marginBottom: "0.9rem" }}
+                            >
+                              Heure de fin
+                            </Typography>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              border="1px solid #ccc"
+                              borderRadius="4px"
+                              padding="4px"
                               sx={{
-                                height: "30px",
-                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
+                                backgroundColor: "#fff",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                "&:hover": { borderColor: "#1976d2" },
                               }}
-                            />
-                          </Grid>
-                          <Grid item xs={6}>
-                            <TextField
-                              label="Minutes de fin"
-                              name="endMinute"
-                              type="number"
-                              value={newEvent.endMinute}
-                              onChange={handleInputChange}
-                              fullWidth
-                              margin="normal"
-                              required
-                              size="small"
-                              sx={{
-                                height: "30px",
-                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
+                            >
+                              <TextField
+                                name="endTime"
+                                placeholder="HHMM (ex: 1730)"
+                                value={
+                                  `${newEvent.endHour}${newEvent.endMinute}` ||
+                                  ""
+                                }
+                                onChange={handleInputChange}
+                                margin="none"
+                                size="small"
+                                sx={{
+                                  flex: 1,
+                                  height: "30px",
+                                  "& .MuiInputBase-root": {
+                                    fontSize: "0.9rem",
+                                    padding: "4px 8px",
                                   },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
-                              }}
-                            />
+                                  "& .MuiFormLabel-root": { display: "none" },
+                                  "& fieldset": { display: "none" },
+                                }}
+                              />
+                            </Box>
+                            {/* <Box mt={2}>
+                              <Typography variant="body2">
+                                Heure : {newEvent.endHour || "Non définie"}{" "}
+                                Minute : {newEvent.endMinute || "Non définie"}
+                              </Typography>
+                            </Box> */}
                           </Grid>
                         </Grid>
+
                         <TextField
                           select
                           label="Catégorie"
