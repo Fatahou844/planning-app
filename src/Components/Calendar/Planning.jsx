@@ -657,6 +657,10 @@ const Planning = () => {
     } else {
       setNewEvent({ ...newEvent, [name]: value });
     }
+
+    if (name === "date") {
+      setFinDate(e.target.value);
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState("");
