@@ -1,12 +1,11 @@
 import AddIcon from "@mui/icons-material/Add"; // Icone de plus pour le bouton flottant
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
-  Accordion,
-  AccordionSummary,
   Box,
   Button,
+  Card,
+  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -132,6 +131,7 @@ const Planning = () => {
     endMinute: 0,
   });
   const [modalOpen, setModalOpen] = useState(false);
+  const [eventCount, setEventCount] = useState(0);
 
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
@@ -227,14 +227,6 @@ const Planning = () => {
 
   const currentHour = new Date().getHours();
 
-  const handleChange = (category) => {
-    setExpanded((prev) =>
-      prev.includes(category)
-        ? prev.filter((item) => item !== category)
-        : [...prev, category]
-    );
-  };
-
   const handleEventClick = (event) => {
     console.log("EVENT CURRENT", event);
     setSelectedEvent(event);
@@ -249,12 +241,6 @@ const Planning = () => {
     const colors = ["#FFB74D", "#64B5F6", "#81C784", "#9575CD", "#FF8A65"];
     // return colors[index % colors.length];
     return category.color;
-  };
-
-  const getEventColor = (catgory) => {
-    const colors = ["#FFCC80", "#90CAF9", "#A5D6A7", "#B39DDB", "#FFAB91"];
-    // return colors[index % colors.length];
-    return catgory.color;
   };
 
   // État pour afficher/masquer le modal
@@ -578,8 +564,9 @@ const Planning = () => {
           model: event.model ? event.model : "",
         },
         details: {
-          workDescription: event.workDescription,
+          workDescription: event.workDescription ? event.workDescription : "",
           price: event.price ? event.price : "",
+          acompte: deposit ? deposit : 0,
         },
         operator: event.operator ? event.operator : "",
         userId: event.userId, // UID de l'utilisateur
@@ -835,9 +822,41 @@ const Planning = () => {
 
       console.log("Événement mis à jour avec succès:", updatedEvent);
       // Fermez le modal après la mise à jour
+      // const fetchEvents = async () => {
+      //   try {
+      //     // Référence à la collection "events"
+      //     const eventsRef = collection(db, "events");
+
+      //     // Créer la requête avec la condition where pour filtrer par userId
+      //     const q = query(
+      //       eventsRef,
+      //       where("userId", "==", user.uid),
+      //       where("date", "==", selectedDate)
+      //     );
+
+      //     // Récupérer les documents correspondants
+      //     const querySnapshot = await getDocs(q);
+
+      //     // Récupérer les objets de la collection (id et data)
+      //     const eventsData = querySnapshot.docs.map((doc) => ({
+      //       id: doc.id,
+      //       ...doc.data(),
+      //     }));
+
+      //     // Mettre à jour l'état avec les données récupérées
+
+      //     console.log("eventsData", eventsData); // Pour vérifier les données dans la console
+      //     setDataEvents(eventsData);
+      //   } catch (error) {
+      //     console.error(
+      //       "Erreur lors de la récupération des événements : ",
+      //       error
+      //     );
+      //   }
+      // };
+
       const fetchEvents = async () => {
         try {
-          // Référence à la collection "events"
           const eventsRef = collection(db, "events");
 
           // Créer la requête avec la condition where pour filtrer par userId
@@ -847,18 +866,15 @@ const Planning = () => {
             where("date", "==", selectedDate)
           );
 
-          // Récupérer les documents correspondants
           const querySnapshot = await getDocs(q);
 
-          // Récupérer les objets de la collection (id et data)
           const eventsData = querySnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
 
-          // Mettre à jour l'état avec les données récupérées
+          console.log("recuperer à nouveau les RDVs#########", eventsData);
 
-          console.log("eventsData", eventsData); // Pour vérifier les données dans la console
           setDataEvents(eventsData);
         } catch (error) {
           console.error(
@@ -869,6 +885,10 @@ const Planning = () => {
       };
 
       fetchEvents(); // Appeler la fonction au montage du composant
+
+      setIsModalOpen(false); // Fermer le modal
+
+      // fetchEvents(); // Appeler la fonction au montage du composant
       handleModalClose(); // Ferme le modal après la sauvegarde
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'événement :", error);
@@ -985,6 +1005,39 @@ const Planning = () => {
   function calculateTimeValue(hour, minute) {
     return 2 * (hour - 7) + Math.floor(minute / 30) + 1;
   }
+
+  const handleEventFromChild = () => {
+    const fetchEvents = async () => {
+      try {
+        const eventsRef = collection(db, "events");
+
+        // Créer la requête avec la condition where pour filtrer par userId
+        const q = query(
+          eventsRef,
+          where("userId", "==", user.uid),
+          where("date", "==", selectedDate)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const eventsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("recuperer à nouveau les RDVs#########", eventsData);
+
+        setDataEvents(eventsData);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des événements : ",
+          error
+        );
+      }
+    };
+
+    fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+  };
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1082,7 +1135,7 @@ const Planning = () => {
               </IconButton>
             </Box>
             {/* Events Accordion */}
-            {uniqueCategories.map((category, index) => {
+            {/* {uniqueCategories.map((category, index) => {
               const categoryEvents = dataEvents.filter(
                 (event) => event.category.id === category.id
               ); // Filtrer les événements par catégorie
@@ -1111,10 +1164,36 @@ const Planning = () => {
                     },
                   }}
                 >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="body2">{category.name}</Typography>
-                  </AccordionSummary>
+                  <Typography variant="body2">{category.name}</Typography>
                 </Accordion>
+              );
+            })} */}
+
+            {uniqueCategories.map((category, index) => {
+              const categoryEvents = dataEvents.filter(
+                (event) => event.category.id === category.id
+              ); // Filtrer les événements par catégorie
+              const categoryHeight = calculateCategoryHeight({
+                events: categoryEvents,
+              }); // Calculer la hauteur de la catégorie
+
+              return (
+                <Card
+                  key={category.id}
+                  sx={{
+                    backgroundColor: getCategoryColor(category),
+                    marginTop: "16px",
+                    borderRadius: "8px",
+                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                    height: `${categoryHeight}px`, // Hauteur dynamique
+                    width: "calc(33.33% - 8px)", // Chaque carte occupe 1/3 de la largeur avec un gap
+                    minWidth: "200px", // Largeur minimale pour éviter des cartes trop petites
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="body2">{category.name}</Typography>
+                  </CardContent>
+                </Card>
               );
             })}
 
@@ -1509,27 +1588,23 @@ const Planning = () => {
                               <TableCell>Acompte :</TableCell>
                               <TableCell>
                                 <TextField
-                                  type="number"
+                                  type="text"
                                   value={deposit}
-                                  onChange={(e) =>
-                                    setDeposit(parseFloat(e.target.value) || 0)
-                                  }
+                                  onChange={(e) => setDeposit(e.target.value)}
                                   size="small"
                                   style={{ maxWidth: 100 }}
                                   sx={{
-                                    "& input[type=number]": {
+                                    "& input": {
                                       MozAppearance: "textfield", // Pour Firefox
                                     },
-                                    "& input[type=number]::-webkit-outer-spin-button":
-                                      {
-                                        WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                        margin: 0,
-                                      },
-                                    "& input[type=number]::-webkit-inner-spin-button":
-                                      {
-                                        WebkitAppearance: "none",
-                                        margin: 0,
-                                      },
+                                    "& input::-webkit-outer-spin-button": {
+                                      WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                      margin: 0,
+                                    },
+                                    "& input::-webkit-inner-spin-button": {
+                                      WebkitAppearance: "none",
+                                      margin: 0,
+                                    },
                                   }}
                                 />
                               </TableCell>
@@ -1552,7 +1627,6 @@ const Planning = () => {
                           onChange={handleInputChange}
                           fullWidth
                           margin="normal"
-                          required
                           multiline
                           rows={16}
                           sx={{
@@ -1993,6 +2067,7 @@ const Planning = () => {
           categories={categories}
           handleSave={handleSaveEvent}
           handleEventDetailClick={handleEventDetailClick}
+          onEventTriggered={handleEventFromChild}
         />
       )}
 

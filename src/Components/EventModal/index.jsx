@@ -34,6 +34,7 @@ function EventDialog({
   setEditedEvent,
   handleEventDetailClick,
   categories,
+  onEventTriggered,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -140,6 +141,10 @@ function EventDialog({
             // Ajouter les nouveaux détails
             await addDoc(detailsCollectionRef, detail);
           }
+        }
+
+        if (onEventTriggered) {
+          onEventTriggered(); // Notifie le parent
         }
 
         onClose();
@@ -310,7 +315,6 @@ function EventDialog({
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                required
                 size="small"
                 sx={{
                   "& .MuiInputBase-root": { fontSize: "0.8rem" },
@@ -324,7 +328,6 @@ function EventDialog({
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                required
                 size="small"
                 sx={{
                   "& .MuiInputBase-root": { fontSize: "0.8rem" },
@@ -488,62 +491,6 @@ function EventDialog({
                       />
                     </TableCell>
 
-                    {/* <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <TextField
-                        type="number"
-                        value={detail.discountAmount}
-                        onChange={(e) =>
-                          handleDetailChange(
-                            index,
-                            "discountAmount",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                        size="small"
-                        fullWidth
-                        sx={{
-                          "& input[type=number]": {
-                            MozAppearance: "textfield",
-                          },
-                          "& input[type=number]::-webkit-outer-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                          "& input[type=number]::-webkit-inner-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                        }}
-                      />
-                    </TableCell> */}
-                    {/* <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <TextField
-                        type="number"
-                        value={detail.discountPercent}
-                        onChange={(e) =>
-                          handleDetailChange(
-                            index,
-                            "discountPercent",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                        size="small"
-                        fullWidth
-                        sx={{
-                          "& input[type=number]": {
-                            MozAppearance: "textfield",
-                          },
-                          "& input[type=number]::-webkit-outer-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                          "& input[type=number]::-webkit-inner-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                        }}
-                      />
-                    </TableCell> */}
                     <TableCell sx={{ fontSize: "0.8rem" }}>
                       <Button
                         onClick={() =>
@@ -572,6 +519,13 @@ function EventDialog({
             Total TTC: {totalTTC.toFixed(2)} €
           </Typography>
           <Typography variant="h6">Total HT: {totalHT.toFixed(2)} €</Typography>
+          <Typography variant="h6">
+            Acompte :{" "}
+            {editedEvent?.details?.acompte
+              ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
+              : "0.00"}{" "}
+            €
+          </Typography>
 
           <Grid container spacing={2} item xs={12} md={12}>
             {/* Colonne 1: Infos  sur les travaux */}
@@ -587,7 +541,6 @@ function EventDialog({
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                required
                 multiline
                 rows={16}
                 sx={{
@@ -637,7 +590,6 @@ function EventDialog({
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
-                required
                 size="small"
                 sx={{
                   height: "30px",
