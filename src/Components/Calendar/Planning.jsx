@@ -999,6 +999,10 @@ const Planning = () => {
 
   // Fonction pour mettre à jour l'événement dans l'état local
   const handleEditedEventChange = (updatedEvent) => {
+    console.log(
+      "########### updatedEvent updatedEvent #################",
+      updatedEvent
+    );
     setSelectedEvent(updatedEvent);
   };
 

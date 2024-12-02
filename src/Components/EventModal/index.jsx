@@ -40,6 +40,7 @@ function EventDialog({
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
 
   useEffect(() => {
+    console.log("########### editedEvent ##############", editedEvent);
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
@@ -101,6 +102,18 @@ function EventDialog({
 
       return updatedEvent;
     });
+
+    if (name === "category") {
+      const selectedCat = categories.find((cat) => cat.id === value);
+      setEditedEvent((prevEvent) => ({
+        ...prevEvent,
+        category: {
+          id: selectedCat.id,
+          name: selectedCat.name,
+          color: selectedCat.color,
+        },
+      }));
+    }
   };
 
   // // Save the updated event to Firestore
