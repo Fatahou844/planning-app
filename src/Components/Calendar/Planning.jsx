@@ -1474,8 +1474,13 @@ const Planning = () => {
                                       handleDetailChange(e, index)
                                     }
                                     size="small"
-                                    style={{ maxWidth: 80 }}
+                                    style={{
+                                      maxWidth: 80,
+                                    }}
                                     sx={{
+                                      "& input": {
+                                        textAlign: "center", // Centrer horizontalement
+                                      },
                                       "& input[type=number]": {
                                         MozAppearance: "textfield", // Pour Firefox
                                       },
@@ -1505,8 +1510,14 @@ const Planning = () => {
                                     //   e.target.value = input.replace(",", ".");
                                     // }}
                                     size="small"
+                                    style={{
+                                      textAlign: "center",
+                                    }}
                                     fullWidth
                                     sx={{
+                                      "& input": {
+                                        textAlign: "center", // Centrer horizontalement
+                                      },
                                       "& input[type=number]": {
                                         MozAppearance: "textfield", // Pour Firefox
                                       },
@@ -1578,6 +1589,7 @@ const Planning = () => {
                                     sx={{
                                       "& input": {
                                         MozAppearance: "textfield", // Pour Firefox
+                                        textAlign: "center", // Centrer horizontalement
                                       },
                                       "& input::-webkit-outer-spin-button": {
                                         WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
@@ -1639,6 +1651,7 @@ const Planning = () => {
                                   sx={{
                                     "& input": {
                                       MozAppearance: "textfield", // Pour Firefox
+                                      textAlign: "center", // Centrer horizontalement
                                     },
                                     "& input::-webkit-outer-spin-button": {
                                       WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera

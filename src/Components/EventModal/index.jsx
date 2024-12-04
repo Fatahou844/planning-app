@@ -479,6 +479,10 @@ function EventDialog({
                         size="small"
                         fullWidth
                         sx={{
+                          "& input": {
+                            MozAppearance: "textfield", // Pour Firefox
+                            textAlign: "center", // Centrer horizontalement
+                          },
                           "& input[type=number]": {
                             MozAppearance: "textfield",
                           },
@@ -507,6 +511,10 @@ function EventDialog({
                         size="small"
                         fullWidth
                         sx={{
+                          "& input": {
+                            MozAppearance: "textfield", // Pour Firefox
+                            textAlign: "center", // Centrer horizontalement
+                          },
                           "& input[type=number]": {
                             MozAppearance: "textfield",
                           },
@@ -568,6 +576,7 @@ function EventDialog({
                         sx={{
                           "& input": {
                             MozAppearance: "textfield", // Pour Firefox
+                            textAlign: "center", // Centrer horizontalement
                           },
                           "& input::-webkit-outer-spin-button": {
                             WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
