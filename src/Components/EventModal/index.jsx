@@ -397,6 +397,32 @@ function EventDialog({
                   "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                 }}
               />
+              <TextField
+                label="kilométrage"
+                name="vehicule.kms"
+                value={editedEvent.vehicule?.kms || ""}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
+              <TextField
+                name="vehicule.controletech"
+                value={editedEvent.vehicule?.controletech || ""}
+                type="date"
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
             </Grid>
           </Grid>
 

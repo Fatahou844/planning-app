@@ -562,6 +562,8 @@ const Planning = () => {
           vin: event.vin ? event.vin : "",
           color: event.color ? event.color : "",
           model: event.model ? event.model : "",
+          kms: event.kms ? event.kms : "",
+          controletech: event.controletech ? event.controletech : "",
         },
         details: {
           workDescription: event.workDescription ? event.workDescription : "",
@@ -1360,6 +1362,37 @@ const Planning = () => {
                         label="Couleur"
                         name="color"
                         value={newEvent.color}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        size="small"
+                        sx={{
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                        }}
+                      />
+                      <TextField
+                        label="kilométrage"
+                        name="kms"
+                        value={newEvent.kms}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        size="small"
+                        sx={{
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                        }}
+                      />
+                      <Typography variant="body1">
+                        Prochain controle technique
+                      </Typography>
+                      <TextField
+                        name="controletech"
+                        type="date"
+                        value={newEvent.controletech}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
