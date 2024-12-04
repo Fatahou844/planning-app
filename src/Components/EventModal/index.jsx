@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -672,20 +673,44 @@ function EventDialog({
               {/* <Typography variant="h6">
                           Détails de l'événement
                         </Typography> */}
-              <TextField
-                label="Opérateur"
-                name="operator"
-                value={editedEvent.operator}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                size="small"
+
+              <Box
                 sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  display: "flex",
+                  gap: "1rem", // Espacement entre les champs
+                  marginBottom: "0.9rem",
                 }}
-              />
+              >
+                <TextField
+                  label="Opérateur"
+                  name="operator"
+                  value={editedEvent.operator}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    height: "30px",
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Réceptionnaire"
+                  name="receptor"
+                  value={editedEvent.receptor}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    height: "30px",
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+              </Box>
+
               <Typography variant="body1">Date de l'événement</Typography>
               <TextField
                 name="date"

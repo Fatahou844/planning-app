@@ -571,6 +571,7 @@ const Planning = () => {
           acompte: deposit ? deposit : 0,
         },
         operator: event.operator ? event.operator : "",
+        receptor: event.receptor ? event.receptor : "",
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
       });
@@ -1710,21 +1711,42 @@ const Planning = () => {
                         {/* <Typography variant="h6">
                           Détails de l'événement
                         </Typography> */}
-                        <TextField
-                          label="Opérateur"
-                          name="operator"
-                          value={newEvent.operator}
-                          onChange={handleInputChange}
-                          fullWidth
-                          margin="normal"
-                          size="small"
+                        <Box
                           sx={{
-                            height: "30px",
-                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            display: "flex",
+                            gap: "1rem", // Espacement entre les champs
                             marginBottom: "0.9rem",
                           }}
-                        />
+                        >
+                          <TextField
+                            label="Opérateur"
+                            name="operator"
+                            value={newEvent.operator}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                            sx={{
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            }}
+                          />
+
+                          <TextField
+                            label="Réceptionnaire"
+                            name="receptor"
+                            value={newEvent.receptor}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                            sx={{
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            }}
+                          />
+                        </Box>
+
                         <Grid container spacing={2}>
                           {/* Section Date de l'événement et Heure de début */}
                           <Grid item xs={12} md={6}>
