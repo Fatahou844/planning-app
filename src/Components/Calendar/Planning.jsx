@@ -1722,18 +1722,7 @@ const Planning = () => {
                             >
                               Heure de départ
                             </Typography>
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              border="1px solid #ccc"
-                              borderRadius="4px"
-                              padding="4px"
-                              sx={{
-                                backgroundColor: "#fff",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                                "&:hover": { borderColor: "#1976d2" },
-                              }}
-                            >
+                            <Grid item xs={6}>
                               <TextField
                                 name="startTime"
                                 placeholder="HHMM (ex: 0700)"
@@ -1745,17 +1734,16 @@ const Planning = () => {
                                 margin="none"
                                 size="small"
                                 sx={{
-                                  flex: 1,
                                   height: "30px",
                                   "& .MuiInputBase-root": {
-                                    fontSize: "0.9rem",
-                                    padding: "4px 8px",
+                                    fontSize: "0.8rem",
                                   },
-                                  "& .MuiFormLabel-root": { display: "none" },
-                                  "& fieldset": { display: "none" },
+                                  "& .MuiFormLabel-root": {
+                                    fontSize: "0.8rem",
+                                  },
                                 }}
                               />
-                            </Box>
+                            </Grid>
                             {/* <Box mt={2}>
                               <Typography variant="body2">
                                 Heure : {newEvent.startHour || "Non définie"}{" "}
@@ -1790,18 +1778,7 @@ const Planning = () => {
                             >
                               Heure de fin
                             </Typography>
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              border="1px solid #ccc"
-                              borderRadius="4px"
-                              padding="4px"
-                              sx={{
-                                backgroundColor: "#fff",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                                "&:hover": { borderColor: "#1976d2" },
-                              }}
-                            >
+                            <Grid item xs={6}>
                               <TextField
                                 name="endTime"
                                 placeholder="HHMM (ex: 1730)"
@@ -1813,17 +1790,16 @@ const Planning = () => {
                                 margin="none"
                                 size="small"
                                 sx={{
-                                  flex: 1,
                                   height: "30px",
                                   "& .MuiInputBase-root": {
-                                    fontSize: "0.9rem",
-                                    padding: "4px 8px",
+                                    fontSize: "0.8rem",
                                   },
-                                  "& .MuiFormLabel-root": { display: "none" },
-                                  "& fieldset": { display: "none" },
+                                  "& .MuiFormLabel-root": {
+                                    fontSize: "0.8rem",
+                                  },
                                 }}
                               />
-                            </Box>
+                            </Grid>
                             {/* <Box mt={2}>
                               <Typography variant="body2">
                                 Heure : {newEvent.endHour || "Non définie"}{" "}

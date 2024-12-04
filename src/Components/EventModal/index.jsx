@@ -70,64 +70,114 @@ function EventDialog({
     setEditedEvent((prev) => ({ ...prev, finDate: value }));
   };
 
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setEditedEvent((prevEvent) => {
+  //     const keys = name.split(".");
+  //     let updatedEvent = { ...prevEvent };
+
+  //     // Assurez-vous que la structure de l'objet est bien initialisée
+  //     keys.reduce((acc, key, idx) => {
+  //       // Si c'est le dernier élément, définissez la valeur
+  //       if (idx === keys.length - 1) {
+  //         // Convertir en entier si nécessaire
+  //         if (
+  //           key === "startHour" ||
+  //           key === "endHour" ||
+  //           key === "startMinute" ||
+  //           key === "endMinute"
+  //         ) {
+  //           acc[key] = parseInt(value, 10); // Convertit en entier
+  //         } else {
+  //           acc[key] = value; // Assigne simplement la valeur
+  //         }
+  //       } else {
+  //         // Si la clé n'existe pas, initialisez-la comme un objet vide
+  //         if (!acc[key]) {
+  //           acc[key] = {};
+  //         }
+  //       }
+  //       return acc[key];
+  //     }, updatedEvent);
+
+  //     return updatedEvent;
+  //   });
+
+  //   if (name === "category") {
+  //     const selectedCat = categories.find((cat) => cat.id === value);
+  //     setEditedEvent((prevEvent) => ({
+  //       ...prevEvent,
+  //       category: {
+  //         id: selectedCat.id,
+  //         name: selectedCat.name,
+  //         color: selectedCat.color,
+  //       },
+  //     }));
+  //   }
+  // };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setEditedEvent((prevEvent) => {
-      const keys = name.split(".");
-      let updatedEvent = { ...prevEvent };
+      const updatedEvent = { ...prevEvent };
 
-      // Assurez-vous que la structure de l'objet est bien initialisée
-      keys.reduce((acc, key, idx) => {
-        // Si c'est le dernier élément, définissez la valeur
-        if (idx === keys.length - 1) {
-          // Convertir en entier si nécessaire
-          if (
-            key === "startHour" ||
-            key === "endHour" ||
-            key === "startMinute" ||
-            key === "endMinute"
-          ) {
-            acc[key] = parseInt(value, 10); // Convertit en entier
-          } else {
-            acc[key] = value; // Assigne simplement la valeur
-          }
-        } else {
-          // Si la clé n'existe pas, initialisez-la comme un objet vide
-          if (!acc[key]) {
-            acc[key] = {};
-          }
+      if (name === "startTime") {
+        // Vérifier si le format est valide (HHMM ou vide)
+        const isValid = /^\d{0,4}$/.test(value);
+
+        if (isValid) {
+          const startHour = value.slice(0, 2) || ""; // Extraire les 2 premiers caractères pour l'heure
+          const startMinute = value.slice(2, 4) || ""; // Extraire les 2 derniers caractères pour les minutes
+
+          updatedEvent.startHour = startHour; // Convertir en entier ou garder vide
+          updatedEvent.startMinute = startMinute; // Convertir en entier ou garder vide
         }
-        return acc[key];
-      }, updatedEvent);
+      } else if (name === "endTime") {
+        // Gérer le champ combiné pour l'heure de fin
+        const isValid = /^\d{0,4}$/.test(value);
 
-      return updatedEvent;
-    });
+        if (isValid) {
+          const endHour = value.slice(0, 2) || "";
+          const endMinute = value.slice(2, 4) || "";
 
-    if (name === "category") {
-      const selectedCat = categories.find((cat) => cat.id === value);
-      setEditedEvent((prevEvent) => ({
-        ...prevEvent,
-        category: {
+          updatedEvent.endHour = endHour; // Convertir en entier ou garder vide
+          updatedEvent.endMinute = endMinute; // Convertir en entier ou garder vide
+        }
+      } else if (name === "category") {
+        // Gérer la catégorie
+        const selectedCat = categories.find((cat) => cat.id === value);
+        updatedEvent.category = {
           id: selectedCat.id,
           name: selectedCat.name,
           color: selectedCat.color,
-        },
-      }));
-    }
+        };
+      } else if (name.includes(".")) {
+        // Gérer les champs imbriqués (par exemple "address.street")
+        const keys = name.split(".");
+        let current = updatedEvent;
+
+        keys.forEach((key, index) => {
+          if (index === keys.length - 1) {
+            // Dernière clé, assigner la valeur
+            current[key] = value;
+          } else {
+            // Initialiser si le sous-objet n'existe pas
+            if (!current[key]) {
+              current[key] = {};
+            }
+            current = current[key];
+          }
+        });
+      } else {
+        // Gérer les autres champs
+        updatedEvent[name] = value;
+      }
+
+      return updatedEvent;
+    });
   };
 
-  // // Save the updated event to Firestore
-  // const handleSave = async () => {
-  //   if (editedEvent?.id) {
-  //     try {
-  //       const eventDocRef = doc(db, "events", editedEvent.id);
-  //       await updateDoc(eventDocRef, editedEvent);
-  //       onClose();
-  //     } catch (error) {
-  //       console.error("Erreur lors de la sauvegarde de l'événement :", error);
-  //     }
-  //   }
-  // };
   // Save the updated event to Firestore
   const handleSave = async () => {
     if (editedEvent?.id) {
@@ -645,10 +695,11 @@ function EventDialog({
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <TextField
-                    label="Heure de début"
-                    name="startHour"
-                    type="number"
-                    value={editedEvent.startHour}
+                    name="startTime"
+                    placeholder="HHMM (ex: 0700)"
+                    value={`${editedEvent.startHour || ""}${
+                      editedEvent.startMinute || ""
+                    }`}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
@@ -658,26 +709,17 @@ function EventDialog({
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      "& input[type=number]": {
-                        MozAppearance: "textfield",
-                      },
-                      "& input[type=number]::-webkit-outer-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
-                      "& input[type=number]::-webkit-inner-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
                     }}
                   />
                 </Grid>
+
                 <Grid item xs={6}>
                   <TextField
-                    label="Minutes de début"
-                    name="startMinute"
-                    type="number"
-                    value={editedEvent.startMinute}
+                    name="endTime"
+                    placeholder="HHMM (ex: 1900)"
+                    value={`${editedEvent.endHour || ""}${
+                      editedEvent.endMinute || ""
+                    }`}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
@@ -687,75 +729,6 @@ function EventDialog({
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      "& input[type=number]": {
-                        MozAppearance: "textfield",
-                      },
-                      "& input[type=number]::-webkit-outer-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
-                      "& input[type=number]::-webkit-inner-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Heure de fin"
-                    name="endHour"
-                    type="number"
-                    value={editedEvent.endHour}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    size="small"
-                    sx={{
-                      height: "30px",
-                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      "& input[type=number]": {
-                        MozAppearance: "textfield",
-                      },
-                      "& input[type=number]::-webkit-outer-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
-                      "& input[type=number]::-webkit-inner-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Minutes de fin"
-                    name="endMinute"
-                    type="number"
-                    value={editedEvent.endMinute}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    size="small"
-                    sx={{
-                      height: "30px",
-                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      "& input[type=number]": {
-                        MozAppearance: "textfield",
-                      },
-                      "& input[type=number]::-webkit-outer-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
-                      "& input[type=number]::-webkit-inner-spin-button": {
-                        WebkitAppearance: "none",
-                        margin: 0,
-                      },
                     }}
                   />
                 </Grid>
