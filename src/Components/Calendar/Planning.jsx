@@ -22,6 +22,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
@@ -1985,102 +1986,150 @@ const Planning = () => {
                                 index={eventIndex}
                               >
                                 {(provided, snapshot) => (
-                                  <Box
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    onClick={() => handleEventClick(event)}
-                                    sx={{
-                                      // position: "absolute",
-                                      // left: `${
-                                      //   ((event.startHour * 60 +
-                                      //     event.startMinute -
-                                      //     420) /
-                                      //     30) *
-                                      //   3.62708125
-                                      // }rem`,
-                                      // width: `${
-                                      //   ((event.endHour * 60 +
-                                      //     event.endMinute -
-                                      //     (event.startHour * 60 +
-                                      //       event.startMinute)) /
-                                      //     30) *
-                                      //   3.62708125
-                                      // }rem`, // Largeur calculée en fonction de la durée
-
-                                      gridColumnStart: calculateTimeValue(
-                                        event.startHour,
-                                        event.startMinute
-                                      ),
-                                      gridColumnEnd: calculateTimeValue(
-                                        event.endHour,
-                                        event.endMinute
-                                      ),
-
-                                      height: "40px",
-                                      backgroundColor:
-                                        event.category?.color || "#05AFC1",
-                                      border: snapshot.isDragging
-                                        ? "2px solid #90caf9"
-                                        : "1px solid #90caf9",
-                                      borderRadius: "10px",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      cursor: "pointer",
-                                      transition: "background-color 0.3s ease",
-                                    }}
-                                  >
-                                    <Box
-                                      display="flex"
-                                      alignItems="center"
-                                      justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
-                                      sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
-                                    >
+                                  <Tooltip
+                                    title={
                                       <Typography variant="body2">
                                         <span
                                           style={{
                                             fontWeight: "bold",
                                             fontSize: "1rem",
-                                            color: "#000",
+                                            color: "#1a73e8", // Bleu vif pour le titre
                                           }}
                                         >
                                           {event.title}
                                         </span>
                                         {" • "}
-                                        <span style={{ color: "gray" }}>
+                                        <span style={{ color: "#616161" }}>
+                                          {" "}
+                                          {/* Gris plus foncé pour les noms */}
                                           {event.person.firstName}{" "}
                                           {event.person.lastName}
                                         </span>
                                         {" • "}
-                                        <span
-                                          style={{ color: "textSecondary" }}
-                                        >
+                                        <span style={{ color: "#4caf50" }}>
+                                          {" "}
+                                          {/* Vert pour la plaque d'immatriculation */}
                                           {event.vehicule.licensePlate}
                                         </span>
                                       </Typography>
-                                      {event.nextDay && (
-                                        <ArrowForwardIcon
-                                          fontSize="medium"
-                                          sx={{
-                                            color: "white",
-                                            transition:
-                                              "transform 0.3s ease, color 0.3s ease",
-                                            "&:hover": {
-                                              color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
-                                              transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
-                                            },
-                                            boxShadow:
-                                              "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
-                                            borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
-                                            padding: "4px", // Ajoute un léger padding pour accentuer l'effet
-                                            backgroundColor:
-                                              "rgba(0, 0, 0, 0.05)", // Fond gris très léger
-                                          }}
-                                        />
-                                      )}
+                                    }
+                                    arrow
+                                    PopperProps={{
+                                      modifiers: [
+                                        {
+                                          name: "arrow",
+                                          options: {
+                                            padding: 10, // Augmenter l'espace autour de la flèche du tooltip
+                                          },
+                                        },
+                                      ],
+                                    }}
+                                    sx={{
+                                      backgroundColor: "#fff", // Fond blanc pour le tooltip
+                                      color: "#000", // Texte noir pour un bon contraste sur fond blanc
+                                      boxShadow:
+                                        "0px 2px 8px rgba(0, 0, 0, 0.1)", // Ombre légère pour la lisibilité
+                                      borderRadius: 2, // Coins arrondis pour le tooltip
+                                    }}
+                                  >
+                                    <Box
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      onClick={() => handleEventClick(event)}
+                                      sx={{
+                                        // position: "absolute",
+                                        // left: `${
+                                        //   ((event.startHour * 60 +
+                                        //     event.startMinute -
+                                        //     420) /
+                                        //     30) *
+                                        //   3.62708125
+                                        // }rem`,
+                                        // width: `${
+                                        //   ((event.endHour * 60 +
+                                        //     event.endMinute -
+                                        //     (event.startHour * 60 +
+                                        //       event.startMinute)) /
+                                        //     30) *
+                                        //   3.62708125
+                                        // }rem`, // Largeur calculée en fonction de la durée
+
+                                        gridColumnStart: calculateTimeValue(
+                                          event.startHour,
+                                          event.startMinute
+                                        ),
+                                        gridColumnEnd: calculateTimeValue(
+                                          event.endHour,
+                                          event.endMinute
+                                        ),
+
+                                        height: "40px",
+                                        backgroundColor:
+                                          event.category?.color || "#05AFC1",
+                                        border: snapshot.isDragging
+                                          ? "2px solid #90caf9"
+                                          : "1px solid #90caf9",
+                                        borderRadius: "10px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                        transition:
+                                          "background-color 0.3s ease",
+                                      }}
+                                    >
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
+                                        sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
+                                      >
+                                        <Typography variant="body2">
+                                          <span
+                                            style={{
+                                              fontWeight: "bold",
+                                              fontSize: "1rem",
+                                              color: "#000",
+                                            }}
+                                          >
+                                            {event.title}
+                                          </span>
+                                          {" • "}
+                                          <span style={{ color: "gray" }}>
+                                            {event.person.firstName}{" "}
+                                            {event.person.lastName}
+                                          </span>
+                                          {" • "}
+                                          <span
+                                            style={{ color: "textSecondary" }}
+                                          >
+                                            {event.vehicule.licensePlate}
+                                          </span>
+                                        </Typography>
+                                        {event.nextDay && (
+                                          <ArrowForwardIcon
+                                            fontSize="medium"
+                                            sx={{
+                                              color: "white",
+                                              transition:
+                                                "transform 0.3s ease, color 0.3s ease",
+                                              "&:hover": {
+                                                color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
+                                                transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
+                                              },
+                                              boxShadow:
+                                                "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
+                                              borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
+                                              padding: "4px", // Ajoute un léger padding pour accentuer l'effet
+                                              backgroundColor:
+                                                "rgba(0, 0, 0, 0.05)", // Fond gris très léger
+                                            }}
+                                          />
+                                        )}
+                                      </Box>
                                     </Box>
-                                  </Box>
+                                  </Tooltip>
                                 )}
                               </Draggable>
                             ))}
