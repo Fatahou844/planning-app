@@ -1993,20 +1993,19 @@ const Planning = () => {
                                           style={{
                                             fontWeight: "bold",
                                             fontSize: "1rem",
-                                            color: "#1a73e8", // Bleu vif pour le titre
                                           }}
                                         >
                                           {event.title}
                                         </span>
                                         {" • "}
-                                        <span style={{ color: "#616161" }}>
+                                        <span>
                                           {" "}
                                           {/* Gris plus foncé pour les noms */}
                                           {event.person.firstName}{" "}
                                           {event.person.lastName}
                                         </span>
                                         {" • "}
-                                        <span style={{ color: "#4caf50" }}>
+                                        <span>
                                           {" "}
                                           {/* Vert pour la plaque d'immatriculation */}
                                           {event.vehicule.licensePlate}
