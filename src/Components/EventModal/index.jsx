@@ -55,6 +55,7 @@ function EventDialog({
             ...doc.data(),
           }));
           setDetails(detailsData);
+          console.log("++++++++++++++++detailsData++++++++++++++", detailsData);
         } catch (error) {
           console.error("Erreur lors de la récupération des détails :", error);
         }
@@ -62,7 +63,7 @@ function EventDialog({
 
       fetchDetails();
     }
-  }, [editedEvent]);
+  }, [editedEvent.id]);
 
   // Handle input change for end date
   const handleChangeFinDate = (e) => {
@@ -70,52 +71,6 @@ function EventDialog({
     setFinDate(value);
     setEditedEvent((prev) => ({ ...prev, finDate: value }));
   };
-
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setEditedEvent((prevEvent) => {
-  //     const keys = name.split(".");
-  //     let updatedEvent = { ...prevEvent };
-
-  //     // Assurez-vous que la structure de l'objet est bien initialisée
-  //     keys.reduce((acc, key, idx) => {
-  //       // Si c'est le dernier élément, définissez la valeur
-  //       if (idx === keys.length - 1) {
-  //         // Convertir en entier si nécessaire
-  //         if (
-  //           key === "startHour" ||
-  //           key === "endHour" ||
-  //           key === "startMinute" ||
-  //           key === "endMinute"
-  //         ) {
-  //           acc[key] = parseInt(value, 10); // Convertit en entier
-  //         } else {
-  //           acc[key] = value; // Assigne simplement la valeur
-  //         }
-  //       } else {
-  //         // Si la clé n'existe pas, initialisez-la comme un objet vide
-  //         if (!acc[key]) {
-  //           acc[key] = {};
-  //         }
-  //       }
-  //       return acc[key];
-  //     }, updatedEvent);
-
-  //     return updatedEvent;
-  //   });
-
-  //   if (name === "category") {
-  //     const selectedCat = categories.find((cat) => cat.id === value);
-  //     setEditedEvent((prevEvent) => ({
-  //       ...prevEvent,
-  //       category: {
-  //         id: selectedCat.id,
-  //         name: selectedCat.name,
-  //         color: selectedCat.color,
-  //       },
-  //     }));
-  //   }
-  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
