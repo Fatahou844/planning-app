@@ -179,6 +179,33 @@ function EventDialog({
     setDetails(updatedDetails);
   };
 
+  const removeDetailRow = async (index) => {
+    // Met à jour l'affichage en supprimant la ligne localement
+    setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
+
+    // Récupère le détail à supprimer basé sur l'index
+    const detailToDelete = details[index];
+
+    if (detailToDelete && detailToDelete.id) {
+      try {
+        const eventDocRef = doc(db, "events", editedEvent.id);
+        const detailsCollectionRef = collection(eventDocRef, "details");
+        const detailDocRef = doc(detailsCollectionRef, detailToDelete.id);
+
+        // Supprime le document dans Firestore
+        await deleteDoc(detailDocRef);
+
+        console.log(
+          `Document avec l'id ${detailToDelete.id} supprimé de la base de données.`
+        );
+      } catch (error) {
+        console.error("Erreur lors de la suppression du document :", error);
+      }
+    } else {
+      console.warn("Aucun document trouvé pour cet index.");
+    }
+  };
+
   const handleAddDetail = () => {
     setDetails([
       ...details,
@@ -546,11 +573,7 @@ function EventDialog({
                     </TableCell>
 
                     <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <Button
-                        onClick={() =>
-                          handleDetailChange(index, "isDeleted", true)
-                        }
-                      >
+                      <Button onClick={() => removeDetailRow(index)}>
                         Supprimer
                       </Button>
                     </TableCell>
