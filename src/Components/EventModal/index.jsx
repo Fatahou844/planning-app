@@ -27,6 +27,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import InvoiceTemplate from "../InvoiceTemplate";
 
 function EventDialog({
   open,
@@ -40,8 +41,30 @@ function EventDialog({
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
 
+  const [invoiceExecuted, setInvoiceExecuted] = useState(false);
+  const handleChildInvoice = () => {
+    console.log("Une action a été exécutée dans le composant fils !");
+    setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
+  };
   useEffect(() => {
     console.log("########### editedEvent ##############", editedEvent);
+    if (editedEvent) {
+      const fetchDetails = async () => {
+        try {
+          const eventDocRef = doc(db, "events", editedEvent.id);
+          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+          editedEvent.isClosed = true;
+          await updateDoc(eventDocRef, editedEvent);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
+        }
+      };
+
+      fetchDetails();
+    }
+  }, [invoiceExecuted]);
+
+  useEffect(() => {
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
@@ -234,6 +257,54 @@ function EventDialog({
   const totalTTC = calculateTotalTTC();
 
   const totalHT = calculateTotalHT(totalTTC);
+
+  const invoiceData = {
+    orderNumber: "12345",
+    companyInfo: {
+      name: "Garage XYZ",
+      address: "123 Rue Exemple, Casablanca",
+      phone: "+212 5 20 30 40 50",
+      email: "contact@garagexyz.com",
+    },
+    vehicle: {
+      model: "Peugeot 208",
+      motor: "1.6L",
+      vin: "ABC1234567890XYZ",
+      km: "15000",
+      color: "Noir",
+    },
+    client: {
+      name: "Mohamed Laarbi",
+      address: "456 Rue Client, Casablanca",
+      phone: "+212 6 12 34 56 78",
+      email: "mohamed.laarbi@email.com",
+      rdv: "15 décembre 2024",
+    },
+    items: [
+      {
+        description: "Changement d'huile",
+        unitPriceHT: 20.0,
+        unitPriceTTC: 24.0,
+        quantity: 2,
+        discount: 10,
+      },
+      {
+        description: "Filtre à air",
+        unitPriceHT: 10.0,
+        unitPriceTTC: 12.0,
+        quantity: 1,
+        discount: 5,
+      },
+    ],
+    totals: {
+      totalHT: 50.0,
+      tva: 10.0,
+      totalTTC: 60.0,
+    },
+    observations:
+      "N'oubliez pas de vérifier les niveaux de liquide tous les 5000 km.",
+  };
+
   return (
     <Dialog
       open={open}
@@ -808,6 +879,11 @@ function EventDialog({
         <Button onClick={onClose} color="primary">
           Annuler
         </Button>
+        <InvoiceTemplate
+          editedEvent={editedEvent}
+          details={details}
+          onInvoiceExecuted={handleChildInvoice}
+        />{" "}
         <Button onClick={handleSave} color="primary" variant="contained">
           Modifier
         </Button>

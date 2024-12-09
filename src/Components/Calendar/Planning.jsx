@@ -573,6 +573,7 @@ const Planning = () => {
         },
         operator: event.operator ? event.operator : "",
         receptor: event.receptor ? event.receptor : "",
+        isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
       });
@@ -1911,7 +1912,7 @@ const Planning = () => {
                     </Grid>
 
                     {/* Boutons CTA en bas */}
-                    <Grid container spacing={2} justifyContent="flex-end">
+                    <Grid container spacing={3} justifyContent="flex-end">
                       <Grid item>
                         <Button
                           variant="contained"
@@ -1919,6 +1920,11 @@ const Planning = () => {
                           onClick={addEvent}
                         >
                           Enregistrer
+                        </Button>
+                      </Grid>
+                      <Grid item>
+                        <Button variant="contained" color="primary">
+                          Créer Facture
                         </Button>
                       </Grid>
                       <Grid item>
@@ -2117,6 +2123,12 @@ const Planning = () => {
                                             style={{ color: "textSecondary" }}
                                           >
                                             {event.vehicule.licensePlate}
+                                          </span>
+                                          <span
+                                            style={{ color: "textSecondary" }}
+                                          >
+                                            {" "}
+                                            {event?.isClosed ? "(Fermé)" : ""}
                                           </span>
                                         </Typography>
                                         {event.nextDay && (
