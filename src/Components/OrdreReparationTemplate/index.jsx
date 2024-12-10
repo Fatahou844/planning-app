@@ -3,7 +3,11 @@ import React from "react";
 
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
+const OrdreReparationTemplate = ({
+  editedEvent,
+  details,
+  onInvoiceExecuted,
+}) => {
   const { person, vehicule, date, title } = editedEvent;
   const invoiceData = {
     orderNumber: title ? title : "",
@@ -65,7 +69,7 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: `Facture No : ${invoiceData?.orderNumber}`,
+                text: `Ordre de réparation No : ${invoiceData?.orderNumber}`,
                 style: "headerInfo",
                 alignment: "left",
               },
@@ -328,12 +332,12 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: " ",
+                text: "Signature du Réceptionnaire",
                 style: "signature",
                 alignment: "left",
               },
               {
-                text: " ",
+                text: "Signature du Client",
                 style: "signature",
                 alignment: "right",
               },
@@ -457,10 +461,10 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   return (
     <div>
       <Button onClick={generatePdf} color="primary" variant="contained">
-        Facture
+        Créer OR
       </Button>
     </div>
   );
 };
 
-export default InvoiceTemplate;
+export default OrdreReparationTemplate;

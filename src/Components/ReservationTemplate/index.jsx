@@ -3,7 +3,7 @@ import React from "react";
 
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
+const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   const { person, vehicule, date, title } = editedEvent;
   const invoiceData = {
     orderNumber: title ? title : "",
@@ -65,12 +65,12 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: `Facture No : ${invoiceData?.orderNumber}`,
+                text: `Réservation No : ${invoiceData?.orderNumber}`,
                 style: "headerInfo",
                 alignment: "left",
               },
               {
-                text: `Date de facture : ${new Date().toLocaleDateString()}`,
+                text: `Date : ${new Date().toLocaleDateString()}`,
                 style: "headerInfo",
                 alignment: "right",
               },
@@ -328,12 +328,12 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: " ",
+                text: ``,
                 style: "signature",
                 alignment: "left",
               },
               {
-                text: " ",
+                text: "",
                 style: "signature",
                 alignment: "right",
               },
@@ -457,10 +457,10 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   return (
     <div>
       <Button onClick={generatePdf} color="primary" variant="contained">
-        Facture
+        Créer Réservation
       </Button>
     </div>
   );
 };
 
-export default InvoiceTemplate;
+export default ReservationTemplate;

@@ -3,10 +3,9 @@ import React from "react";
 
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
-  const { person, vehicule, date, title } = editedEvent;
+const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: NewEvent.title ? NewEvent.title : "",
     companyInfo: {
       name: "Garage XYZ",
       address: "123 Rue Exemple, Casablanca",
@@ -14,23 +13,22 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
       email: "contact@garagexyz.com",
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: NewEvent.model ? NewEvent.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: NewEvent.vin ? NewEvent.vin : "",
+      km: NewEvent.kms ? NewEvent.kms : "",
+      color: NewEvent.color ? NewEvent.color : "",
+      licensePlate: NewEvent.licensePlate ? NewEvent.licensePlate : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${NewEvent.firstName ? NewEvent.firstName : ""} ${
+        NewEvent.lastName ? NewEvent.lastName : ""
       }`,
-      address: `${person?.localAddress ? person?.localAddress : ""} ${
-        person?.codePostal ? person.codePostal : ""
+      address: `${NewEvent.localAddress ? NewEvent.localAddress : ""} ${
+        NewEvent.codePostal ? NewEvent.codePostal : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
-      rdv: date ? date : "", // Date de l'événement (le RDV)
+      phone: NewEvent.phone ? NewEvent.phone : "",
+      email: NewEvent.email ? NewEvent.email : "",
     },
     items: details.map((item) => ({
       description: item.label,
@@ -457,10 +455,10 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   return (
     <div>
       <Button onClick={generatePdf} color="primary" variant="contained">
-        Facture
+        Imprimer Facture
       </Button>
     </div>
   );
 };
 
-export default InvoiceTemplate;
+export default InvoiceTemplateWithoutOR;

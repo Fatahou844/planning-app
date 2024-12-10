@@ -38,6 +38,8 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
+import InvoiceTemplateWithoutOR from "../InvoiceTemplateWithoutOR";
+
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
@@ -214,7 +216,7 @@ const Planning = () => {
         // Mettre à jour l'état avec les données récupérées
 
         console.log("eventsData", eventsData); // Pour vérifier les données dans la console
-        setDataEvents(eventsData);
+        setDataEvents(eventsData.filter((event) => event.isClosed == false));
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des événements : ",
@@ -413,7 +415,7 @@ const Planning = () => {
           ...doc.data(),
         }));
 
-        setDataEvents(eventsData);
+        setDataEvents(eventsData.filter((event) => event.isClosed == false));
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des événements : ",
@@ -884,7 +886,7 @@ const Planning = () => {
 
           console.log("recuperer à nouveau les RDVs#########", eventsData);
 
-          setDataEvents(eventsData);
+          setDataEvents(eventsData.filter((event) => event.isClosed == false));
         } catch (error) {
           console.error(
             "Erreur lors de la récupération des événements : ",
@@ -1040,7 +1042,7 @@ const Planning = () => {
 
         console.log("recuperer à nouveau les RDVs#########", eventsData);
 
-        setDataEvents(eventsData);
+        setDataEvents(eventsData.filter((event) => event.isClosed == false));
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des événements : ",
@@ -1050,6 +1052,11 @@ const Planning = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+  };
+  const [invoiceExecuted, setInvoiceExecuted] = useState(false);
+  const handleChildInvoice = () => {
+    console.log("Une action a été exécutée dans le composant fils !");
+    setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
   };
   return (
     <DragDropContext>
@@ -1923,9 +1930,11 @@ const Planning = () => {
                         </Button>
                       </Grid>
                       <Grid item>
-                        <Button variant="contained" color="primary">
-                          Créer Facture
-                        </Button>
+                        <InvoiceTemplateWithoutOR
+                          NewEvent={newEvent}
+                          details={details}
+                          onInvoiceExecuted={handleChildInvoice}
+                        />{" "}
                       </Grid>
                       <Grid item>
                         <Button
@@ -1967,7 +1976,8 @@ const Planning = () => {
               {uniqueCategories.map((category, categoryIndex) => {
                 const categoryEvents = dataEvents.filter(
                   (event) => event.category.id === category.id
-                ); // Récupérer les événements de la catégorie
+                );
+                // Récupérer les événements de la catégorie
                 const lines = calculateEventLines(categoryEvents); // Calculer les lignes
 
                 return (

@@ -27,8 +27,10 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import DevisTemplate from "../DevisTemplate";
 import InvoiceTemplate from "../InvoiceTemplate";
-
+import OrdreReparationTemplate from "../OrdreReparationTemplate";
+import ReservationTemplate from "../ReservationTemplate";
 function EventDialog({
   open,
   onClose,
@@ -257,53 +259,6 @@ function EventDialog({
   const totalTTC = calculateTotalTTC();
 
   const totalHT = calculateTotalHT(totalTTC);
-
-  const invoiceData = {
-    orderNumber: "12345",
-    companyInfo: {
-      name: "Garage XYZ",
-      address: "123 Rue Exemple, Casablanca",
-      phone: "+212 5 20 30 40 50",
-      email: "contact@garagexyz.com",
-    },
-    vehicle: {
-      model: "Peugeot 208",
-      motor: "1.6L",
-      vin: "ABC1234567890XYZ",
-      km: "15000",
-      color: "Noir",
-    },
-    client: {
-      name: "Mohamed Laarbi",
-      address: "456 Rue Client, Casablanca",
-      phone: "+212 6 12 34 56 78",
-      email: "mohamed.laarbi@email.com",
-      rdv: "15 décembre 2024",
-    },
-    items: [
-      {
-        description: "Changement d'huile",
-        unitPriceHT: 20.0,
-        unitPriceTTC: 24.0,
-        quantity: 2,
-        discount: 10,
-      },
-      {
-        description: "Filtre à air",
-        unitPriceHT: 10.0,
-        unitPriceTTC: 12.0,
-        quantity: 1,
-        discount: 5,
-      },
-    ],
-    totals: {
-      totalHT: 50.0,
-      tva: 10.0,
-      totalTTC: 60.0,
-    },
-    observations:
-      "N'oubliez pas de vérifier les niveaux de liquide tous les 5000 km.",
-  };
 
   return (
     <Dialog
@@ -878,12 +833,15 @@ function EventDialog({
       <DialogActions>
         <Button onClick={onClose} color="primary">
           Annuler
-        </Button>
+        </Button>{" "}
         <InvoiceTemplate
           editedEvent={editedEvent}
           details={details}
           onInvoiceExecuted={handleChildInvoice}
         />{" "}
+        <OrdreReparationTemplate editedEvent={editedEvent} details={details} />{" "}
+        <DevisTemplate editedEvent={editedEvent} details={details} />
+        <ReservationTemplate editedEvent={editedEvent} details={details} />{" "}
         <Button onClick={handleSave} color="primary" variant="contained">
           Modifier
         </Button>
