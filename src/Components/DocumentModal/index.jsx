@@ -51,7 +51,7 @@ function DocumentModal({
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
-          const eventDocRef = doc(db, "events", editedEvent.id);
+          const eventDocRef = doc(db, collectionName, editedEvent.id);
           // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
           editedEvent.isClosed = true;
           await updateDoc(eventDocRef, editedEvent);
@@ -69,7 +69,7 @@ function DocumentModal({
       const fetchDetails = async () => {
         try {
           const detailsCollectionRef = collection(
-            doc(db, "events", editedEvent.id),
+            doc(db, collectionName, editedEvent.id),
             "details"
           );
           const detailsSnapshot = await getDocs(detailsCollectionRef);
@@ -211,7 +211,7 @@ function DocumentModal({
 
     if (detailToDelete && detailToDelete.id) {
       try {
-        const eventDocRef = doc(db, "events", editedEvent.id);
+        const eventDocRef = doc(db, collectionName, editedEvent.id);
         const detailsCollectionRef = collection(eventDocRef, "details");
         const detailDocRef = doc(detailsCollectionRef, detailToDelete.id);
 
