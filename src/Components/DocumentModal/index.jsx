@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -31,12 +30,12 @@ import DevisTemplate from "../DevisTemplate";
 import InvoiceTemplate from "../InvoiceTemplate";
 import OrdreReparationTemplate from "../OrdreReparationTemplate";
 import ReservationTemplate from "../ReservationTemplate";
-function EventDialog({
+function DocumentModal({
   open,
   onClose,
   editedEvent,
   setEditedEvent,
-  handleEventDetailClick,
+  collectionName,
   categories,
   onEventTriggered,
 }) {
@@ -49,7 +48,6 @@ function EventDialog({
     setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
   };
   useEffect(() => {
-    console.log("########### editedEvent ##############", editedEvent);
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
@@ -164,7 +162,7 @@ function EventDialog({
     if (editedEvent?.id) {
       try {
         // Référence du document de l'événement principal
-        const eventDocRef = doc(db, "events", editedEvent.id);
+        const eventDocRef = doc(db, collectionName, editedEvent.id);
         await updateDoc(eventDocRef, editedEvent);
 
         // Référence de la collection "details" sous l'événement
@@ -260,6 +258,13 @@ function EventDialog({
 
   const totalHT = calculateTotalHT(totalTTC);
 
+  let collectName = "Ordre de réparation";
+
+  if (collectionName == "events") collectName = "Ordre de réparation";
+  else if (collectionName == "devis") collectName = "devis";
+  else if (collectionName == "reservations") collectName = "résa";
+  else collectName = "facture";
+
   return (
     <Dialog
       open={open}
@@ -271,7 +276,7 @@ function EventDialog({
         },
       }}
     >
-      <DialogTitle>Modifier l'Ordre de Réparation</DialogTitle>
+      <DialogTitle>Modification {collectName}</DialogTitle>
       {editedEvent && (
         <DialogContent>
           <Grid container spacing={2}>
@@ -723,109 +728,6 @@ function EventDialog({
                   }}
                 />
               </Box>
-
-              <Typography variant="body1">Date de l'événement</Typography>
-              <TextField
-                name="date"
-                type="date"
-                value={editedEvent.date}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <Typography variant="body1">Date de fin</Typography>
-              <TextField
-                name="finDate"
-                type="date"
-                value={finDate}
-                onChange={handleChangeFinDate}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <TextField
-                    name="startTime"
-                    placeholder="HHMM (ex: 0700)"
-                    value={`${editedEvent.startHour || ""}${
-                      editedEvent.startMinute || ""
-                    }`}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    size="small"
-                    sx={{
-                      height: "30px",
-                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={6}>
-                  <TextField
-                    name="endTime"
-                    placeholder="HHMM (ex: 1900)"
-                    value={`${editedEvent.endHour || ""}${
-                      editedEvent.endMinute || ""
-                    }`}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    size="small"
-                    sx={{
-                      height: "30px",
-                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-              <TextField
-                select
-                label="Catégorie"
-                name="category"
-                value={editedEvent?.category?.id}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              >
-                {categories.map((categoryGroup, index) => (
-                  <MenuItem
-                    key={index}
-                    value={categoryGroup.id}
-                    sx={{
-                      fontSize: "0.8rem",
-                      minHeight: "30px",
-                    }}
-                  >
-                    {categoryGroup.name}
-                  </MenuItem>
-                ))}
-              </TextField>
             </Grid>
           </Grid>
         </DialogContent>
@@ -850,4 +752,4 @@ function EventDialog({
   );
 }
 
-export default EventDialog;
+export default DocumentModal;

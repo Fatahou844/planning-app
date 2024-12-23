@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -44,6 +45,7 @@ import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
 
 const Timeline = () => (
@@ -134,6 +136,8 @@ const Planning = () => {
     endMinute: 0,
   });
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen2, setModalOpen2] = useState(false);
+
   const [eventCount, setEventCount] = useState(0);
 
   const [expanded, setExpanded] = useState([
@@ -237,6 +241,11 @@ const Planning = () => {
   };
   const handleModalClose = () => {
     setModalOpen(false);
+  };
+
+  const handleModalClose2 = () => {
+    setModalOpen2(false);
+    console.log("modalOpen2", modalOpen2);
   };
 
   // Fonctions pour assigner les couleurs
@@ -430,37 +439,147 @@ const Planning = () => {
     setIsModalOpen(false); // Fermer le modal
   };
 
-  // Fonction pour ajouter les détails de l'événement
-  // const addEventDetails = async (eventId, details) => {
-  //   try {
-  //     const batch = writeBatch(db); // Crée un batch pour les opérations
+  const addReservation = async () => {
+    // Ajout du paramètre isMultiDay
+    if (!user) {
+      console.error("User not authenticated");
+      return; // Sortir si l'utilisateur n'est pas connecté
+    }
 
-  //     // Référence directe au document de l'événement avec l'ID existant
-  //     const eventRef = doc(db, "events", eventId);
+    const userId = user.uid; // UID de l'utilisateur connecté
 
-  //     // Boucle sur chaque détail et ajout à la sous-collection "details" de cet événement
-  //     for (const detail of details) {
-  //       const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
-  //       batch.set(detailRef, {
-  //         label: detail.label,
-  //         quantity: detail.quantity,
-  //         unitPrice: detail.unitPrice,
-  //         discountPercent: detail.discountPercent,
-  //         discountAmount: detail.discountAmount,
-  //       });
-  //     }
+    // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
+    const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = "Resa-" + generateOrderNumber(lastOrderNumber);
 
-  //     // Engager toutes les écritures dans le batch
-  //     await batch.commit();
+    // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
+    const singleResa = {
+      ...newEvent,
+      userId: userId,
+      title: newOrderNumber, // Utiliser le numéro de commande
+      nextDay: false,
+    };
+    const singleResaDocRef = await addSingleReservation(
+      singleResa,
+      newOrderNumber,
+      "reservations",
+      false
+    ); // Ajout à Firestore
+    const validDetails = details.filter((detail) => {
+      return (
+        detail.label?.trim() ||
+        detail.quantity?.toString().trim() ||
+        detail.unitPrice?.toString().trim() ||
+        detail.discountPercent?.toString().trim() ||
+        detail.discountAmount?.toString().trim()
+      );
+    });
 
-  //     console.log("Détails ajoutés avec succès à l'événement");
-  //   } catch (error) {
-  //     console.error(
-  //       "Erreur lors de l'ajout des détails à l'événement : ",
-  //       error
-  //     );
-  //   }
-  // };
+    if (validDetails.length)
+      await addEventDetailsGeneric(
+        singleResaDocRef.id,
+        details,
+        "reservations"
+      ); // Enregistrer les détails
+
+    // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+
+    resetForm();
+    setIsModalOpen(false); // Fermer le modal
+  };
+
+  const addDevis = async () => {
+    // Ajout du paramètre isMultiDay
+    if (!user) {
+      console.error("User not authenticated");
+      return; // Sortir si l'utilisateur n'est pas connecté
+    }
+
+    const userId = user.uid; // UID de l'utilisateur connecté
+
+    // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
+    const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = "devis-" + generateOrderNumber(lastOrderNumber);
+
+    // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
+    const singleResa = {
+      ...newEvent,
+      userId: userId,
+      title: newOrderNumber, // Utiliser le numéro de commande
+      nextDay: false,
+    };
+    const singleResaDocRef = await addSingleReservation(
+      singleResa,
+      newOrderNumber,
+      "devis",
+      false
+    ); // Ajout à Firestore
+    const validDetails = details.filter((detail) => {
+      return (
+        detail.label?.trim() ||
+        detail.quantity?.toString().trim() ||
+        detail.unitPrice?.toString().trim() ||
+        detail.discountPercent?.toString().trim() ||
+        detail.discountAmount?.toString().trim()
+      );
+    });
+
+    if (validDetails.length)
+      await addEventDetailsGeneric(singleResaDocRef.id, details, "devis"); // Enregistrer les détails
+
+    // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+
+    resetForm();
+    setIsModalOpen(false); // Fermer le modal
+  };
+
+  const addFacture = async () => {
+    // Ajout du paramètre isMultiDay
+    if (!user) {
+      console.error("User not authenticated");
+      return; // Sortir si l'utilisateur n'est pas connecté
+    }
+
+    const userId = user.uid; // UID de l'utilisateur connecté
+
+    // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
+    const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = "Facture-" + generateOrderNumber(lastOrderNumber);
+
+    // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
+    const singleResa = {
+      ...newEvent,
+      userId: userId,
+      title: newOrderNumber, // Utiliser le numéro de commande
+      nextDay: false,
+    };
+    const singleResaDocRef = await addSingleReservation(
+      singleResa,
+      newOrderNumber,
+      "factures",
+      true
+    ); // Ajout à Firestore
+    const validDetails = details.filter((detail) => {
+      return (
+        detail.label?.trim() ||
+        detail.quantity?.toString().trim() ||
+        detail.unitPrice?.toString().trim() ||
+        detail.discountPercent?.toString().trim() ||
+        detail.discountAmount?.toString().trim()
+      );
+    });
+
+    if (validDetails.length)
+      await addEventDetailsGeneric(singleResaDocRef.id, details, "factures"); // Enregistrer les détails
+
+    // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+
+    resetForm();
+    setIsModalOpen(false); // Fermer le modal
+  };
 
   const addEventDetails = async (eventId, details) => {
     try {
@@ -468,6 +587,56 @@ const Planning = () => {
 
       // Référence directe au document de l'événement avec l'ID existant
       const eventRef = doc(db, "events", eventId);
+
+      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      console.log("##############lidDetails####################", validDetails);
+
+      // Si aucun détail valide, on sort sans erreur
+      if (validDetails.length === 0) {
+        console.log("Aucun détail valide à enregistrer.");
+        return;
+      }
+
+      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      for (const detail of validDetails) {
+        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
+        batch.set(detailRef, {
+          label: detail.label || "",
+          quantity: detail.quantity || 0,
+          unitPrice: detail.unitPrice || 0,
+          discountPercent: detail.discountPercent || 0,
+          discountAmount: detail.discountAmount || 0,
+        });
+      }
+
+      // Engager toutes les écritures dans le batch
+      await batch.commit();
+
+      console.log("Détails ajoutés avec succès à l'événement");
+    } catch (error) {
+      console.error(
+        "Erreur lors de l'ajout des détails à l'événement : ",
+        error
+      );
+    }
+  };
+
+  const addEventDetailsGeneric = async (eventId, details, collectionName) => {
+    try {
+      const batch = writeBatch(db); // Crée un batch pour les opérations
+
+      // Référence directe au document de l'événement avec l'ID existant
+      const eventRef = doc(db, collectionName, eventId);
 
       // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
       const validDetails = details.filter((detail) => {
@@ -549,11 +718,13 @@ const Planning = () => {
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
         endMinute: parseInt(event.endMinute),
-        category: {
-          id: event.category.id,
-          name: event.category.name,
-          color: event.category.color,
-        },
+        category: event.category.id
+          ? {
+              id: event.category.id,
+              name: event.category.name,
+              color: event.category.color,
+            }
+          : null,
         person: {
           firstName: event.firstName,
           lastName: event.lastName,
@@ -578,6 +749,56 @@ const Planning = () => {
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
+      });
+
+      console.log("eventRef", event);
+
+      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+      await updateLastOrderNumberForUser(
+        event.userId,
+        parseInt(newOrderNumber)
+      );
+      return eventRef; // Retourner la référence du document
+    } catch (error) {
+      console.error("Error adding event: ", error);
+    }
+  };
+
+  const addSingleReservation = async (
+    event,
+    newOrderNumber,
+    collectionName,
+    isClosed
+  ) => {
+    try {
+      const eventRef = doc(collection(db, collectionName)); // Crée une référence à un nouveau document
+      console.log("category: event.categoryId", event.categoryId);
+
+      await setDoc(eventRef, {
+        eventId: eventRef.id,
+        title: newOrderNumber, // Utilise le numéro de commande fourni
+        date: event.date,
+        person: {
+          firstName: event.firstName,
+          lastName: event.lastName,
+          email: event.email,
+          phone: event.phone,
+        },
+        vehicule: {
+          licensePlate: event.licensePlate ? event.licensePlate : "",
+          vin: event.vin ? event.vin : "",
+          color: event.color ? event.color : "",
+          model: event.model ? event.model : "",
+          kms: event.kms ? event.kms : "",
+          controletech: event.controletech ? event.controletech : "",
+        },
+        details: {
+          workDescription: event.workDescription ? event.workDescription : "",
+          price: event.price ? event.price : "",
+          acompte: deposit ? deposit : 0,
+        },
+        isClosed: isClosed,
+        userId: event.userId, // UID de l'utilisateur
       });
 
       console.log("eventRef", event);
@@ -677,72 +898,234 @@ const Planning = () => {
     setSearchQuery(e.target.value);
   };
 
-  function handleSearchClick() {
+  // function handleSearchClick() {
+  //   const keyword = searchQuery;
+  //   // Ajoutez ici la logique de filtrage des événements si nécessaire
+  //   const searchEvents = async () => {
+  //     try {
+  //       // Normaliser le mot-clé pour la recherche (mettre en minuscule)
+  //       const lowerCaseKeyword = keyword.toLowerCase();
+
+  //       // Collection des événements dans Firestore
+  //       const eventsRef = collection(db, "events");
+
+  //       // Requêtes pour chaque champ à rechercher
+  //       const queries = [
+  //         query(
+  //           eventsRef,
+  //           where("person.firstName", ">=", lowerCaseKeyword),
+  //           where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
+  //         ),
+  //         query(
+  //           eventsRef,
+  //           where("person.lastName", ">=", lowerCaseKeyword),
+  //           where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
+  //         ),
+  //         query(
+  //           eventsRef,
+  //           where("person.email", ">=", lowerCaseKeyword),
+  //           where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
+  //         ),
+  //         query(
+  //           eventsRef,
+  //           where("title", ">=", lowerCaseKeyword),
+  //           where("title", "<=", lowerCaseKeyword + "\uf8ff")
+  //         ),
+  //       ];
+
+  //       // Stockage des résultats combinés
+  //       let allResults = [];
+
+  //       // Exécute chaque requête
+  //       for (const q of queries) {
+  //         const querySnapshot = await getDocs(q);
+  //         querySnapshot.forEach((doc) => {
+  //           // Ajout des documents aux résultats
+  //           allResults.push({ id: doc.id, ...doc.data() });
+  //         });
+  //       }
+
+  //       // Suppression des doublons
+  //       const uniqueResults = allResults.filter(
+  //         (value, index, self) =>
+  //           index === self.findIndex((t) => t.id === value.id)
+  //       );
+
+  //       console.log("Résultats de la recherche :", uniqueResults);
+  //       setDataEventsAll(uniqueResults);
+
+  //       return uniqueResults;
+  //     } catch (error) {
+  //       console.error("Erreur lors de la recherche des événements :", error);
+  //     }
+  //   };
+  //   searchEvents();
+  //   setOpen(true); // Ouvre le dialogue après la recherche
+  // }
+
+  // Gestionnaire d'événements pour la touche "Entrée"
+
+  // function handleSearchClick() {
+  //   const keyword = searchQuery;
+
+  //   const searchAllCollections = async () => {
+  //     try {
+  //       // Normaliser le mot-clé pour la recherche
+  //       const lowerCaseKeyword = keyword.toLowerCase();
+
+  //       // Liste des collections à rechercher
+  //       const collections = ["events", "devis", "factures", "reservations"];
+
+  //       // Stockage des résultats combinés
+  //       let allResults = [];
+
+  //       // Rechercher dans chaque collection
+  //       for (const collectionName of collections) {
+  //         const collectionRef = collection(db, collectionName);
+
+  //         // Requêtes pour chaque champ à rechercher
+  //         const queries = [
+  //           query(
+  //             collectionRef,
+  //             where("person.firstName", ">=", lowerCaseKeyword),
+  //             where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
+  //           ),
+  //           query(
+  //             collectionRef,
+  //             where("person.lastName", ">=", lowerCaseKeyword),
+  //             where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
+  //           ),
+  //           query(
+  //             collectionRef,
+  //             where("person.email", ">=", lowerCaseKeyword),
+  //             where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
+  //           ),
+  //           query(
+  //             collectionRef,
+  //             where("title", ">=", lowerCaseKeyword),
+  //             where("title", "<=", lowerCaseKeyword + "\uf8ff")
+  //           ),
+  //         ];
+
+  //         // Récupérer les résultats pour la collection courante
+  //         for (const q of queries) {
+  //           const querySnapshot = await getDocs(q);
+  //           querySnapshot.forEach((doc) => {
+  //             // Ajout des documents aux résultats avec indication de la collection
+  //             allResults.push({
+  //               id: doc.id,
+  //               collection: collectionName, // Pour savoir d'où vient le document
+  //               ...doc.data(),
+  //             });
+  //           });
+  //         }
+  //       }
+
+  //       // Suppression des doublons
+  //       const uniqueResults = allResults.filter(
+  //         (value, index, self) =>
+  //           index ===
+  //           self.findIndex(
+  //             (t) => t.id === value.id && t.collection === value.collection
+  //           )
+  //       );
+
+  //       console.log("Résultats combinés :", uniqueResults);
+
+  //       // Mettre à jour les résultats dans l'état
+  //       setDataEventsAll(uniqueResults);
+
+  //       return uniqueResults;
+  //     } catch (error) {
+  //       console.error("Erreur lors de la recherche des collections :", error);
+  //     }
+  //   };
+
+  //   searchAllCollections();
+  //   setOpen(true); // Ouvre le dialogue après la recherche
+  // }
+
+  async function handleSearchClick() {
     const keyword = searchQuery;
-    // Ajoutez ici la logique de filtrage des événements si nécessaire
-    const searchEvents = async () => {
-      try {
-        // Normaliser le mot-clé pour la recherche (mettre en minuscule)
-        const lowerCaseKeyword = keyword.toLowerCase();
+    const lowerCaseKeyword = keyword.toLowerCase();
 
-        // Collection des événements dans Firestore
-        const eventsRef = collection(db, "events");
+    // Liste des collections à rechercher
+    const collections = ["reservations", "devis", "factures", "events"];
 
-        // Requêtes pour chaque champ à rechercher
+    try {
+      // Préparer les requêtes pour chaque collection
+      const collectionPromises = collections.map(async (collectionName) => {
+        const collectionRef = collection(db, collectionName);
+
+        // Créer des requêtes pour chaque champ à rechercher
         const queries = [
           query(
-            eventsRef,
+            collectionRef,
             where("person.firstName", ">=", lowerCaseKeyword),
             where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
-            eventsRef,
+            collectionRef,
             where("person.lastName", ">=", lowerCaseKeyword),
             where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
-            eventsRef,
+            collectionRef,
             where("person.email", ">=", lowerCaseKeyword),
             where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
-            eventsRef,
+            collectionRef,
             where("title", ">=", lowerCaseKeyword),
             where("title", "<=", lowerCaseKeyword + "\uf8ff")
           ),
         ];
 
-        // Stockage des résultats combinés
-        let allResults = [];
-
-        // Exécute chaque requête
-        for (const q of queries) {
+        // Récupérer les résultats pour chaque requête
+        const queryPromises = queries.map(async (q) => {
           const querySnapshot = await getDocs(q);
+          const results = [];
           querySnapshot.forEach((doc) => {
-            // Ajout des documents aux résultats
-            allResults.push({ id: doc.id, ...doc.data() });
+            results.push({
+              id: doc.id,
+              collection: collectionName,
+              ...doc.data(),
+            });
           });
-        }
 
-        // Suppression des doublons
-        const uniqueResults = allResults.filter(
-          (value, index, self) =>
-            index === self.findIndex((t) => t.id === value.id)
-        );
+          return results;
+        });
 
-        console.log("Résultats de la recherche :", uniqueResults);
-        setDataEventsAll(uniqueResults);
+        // Combiner les résultats de toutes les requêtes pour cette collection
+        const collectionResults = (await Promise.all(queryPromises)).flat();
+        return collectionResults;
+      });
 
-        return uniqueResults;
-      } catch (error) {
-        console.error("Erreur lors de la recherche des événements :", error);
-      }
-    };
-    searchEvents();
-    setOpen(true); // Ouvre le dialogue après la recherche
+      // Attendre les résultats de toutes les collections
+      const allCollectionsResults = (
+        await Promise.all(collectionPromises)
+      ).flat();
+
+      // Suppression des doublons
+      const uniqueResults = allCollectionsResults.filter(
+        (value, index, self) =>
+          index ===
+          self.findIndex(
+            (t) => t.id === value.id && t.collection === value.collection
+          )
+      );
+
+      console.log("Résultats combinés :", uniqueResults);
+
+      // Mettre à jour les résultats dans l'état
+      setDataEventsAll(uniqueResults);
+
+      setOpen(true); // Ouvre le dialogue après la recherche
+    } catch (error) {
+      console.error("Erreur lors de la recherche des collections :", error);
+    }
   }
 
-  // Gestionnaire d'événements pour la touche "Entrée"
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       event.preventDefault(); // Éviter le comportement par défaut
@@ -752,9 +1135,10 @@ const Planning = () => {
 
   const uniqueCategories = dataEvents.reduce((accumulator, event) => {
     const category = event.category;
-    if (!accumulator.some((cat) => cat.id === category.id)) {
-      accumulator.push(category);
-    }
+    if (category)
+      if (!accumulator.some((cat) => cat.id === category.id)) {
+        accumulator.push(category);
+      }
     return accumulator;
   }, []);
 
@@ -1058,6 +1442,21 @@ const Planning = () => {
     console.log("Une action a été exécutée dans le composant fils !");
     setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
   };
+  const getBadgeColor = (collection) => {
+    switch (collection) {
+      case "events":
+        return "primary"; // Couleur bleu par défaut
+      case "devis":
+        return "secondary"; // Couleur violette par défaut
+      case "factures":
+        return "success"; // Couleur verte
+      case "reservations":
+        return "warning"; // Couleur jaune
+      default:
+        return "default"; // Couleur grise
+    }
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1189,33 +1588,34 @@ const Planning = () => {
               );
             })} */}
 
-            {uniqueCategories.map((category, index) => {
-              const categoryEvents = dataEvents.filter(
-                (event) => event.category.id === category.id
-              ); // Filtrer les événements par catégorie
-              const categoryHeight = calculateCategoryHeight({
-                events: categoryEvents,
-              }); // Calculer la hauteur de la catégorie
+            {uniqueCategories &&
+              uniqueCategories.map((category, index) => {
+                const categoryEvents = dataEvents
+                  .filter((event) => event.category != null)
+                  .filter((event) => event.category.id === category.id); // Filtrer les événements par catégorie
+                const categoryHeight = calculateCategoryHeight({
+                  events: categoryEvents,
+                }); // Calculer la hauteur de la catégorie
 
-              return (
-                <Card
-                  key={category.id}
-                  sx={{
-                    backgroundColor: getCategoryColor(category),
-                    marginTop: "16px",
-                    borderRadius: "8px",
-                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                    height: `${categoryHeight}px`, // Hauteur dynamique
-                    width: "calc(33.33% - 8px)", // Chaque carte occupe 1/3 de la largeur avec un gap
-                    minWidth: "200px", // Largeur minimale pour éviter des cartes trop petites
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="body2">{category.name}</Typography>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                return (
+                  <Card
+                    key={category.id}
+                    sx={{
+                      backgroundColor: getCategoryColor(category),
+                      marginTop: "16px",
+                      borderRadius: "8px",
+                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                      height: `${categoryHeight}px`, // Hauteur dynamique
+                      width: "calc(33.33% - 8px)", // Chaque carte occupe 1/3 de la largeur avec un gap
+                      minWidth: "200px", // Largeur minimale pour éviter des cartes trop petites
+                    }}
+                  >
+                    <CardContent>
+                      <Typography variant="body2">{category.name}</Typography>
+                    </CardContent>
+                  </Card>
+                );
+              })}
 
             {/* Floating Action Button */}
             <Fab
@@ -1917,37 +2317,77 @@ const Planning = () => {
                         </TextField>
                       </Grid>
                     </Grid>
-
-                    {/* Boutons CTA en bas */}
-                    <Grid container spacing={3} justifyContent="flex-end">
-                      <Grid item>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={addEvent}
-                        >
-                          Enregistrer
-                        </Button>
-                      </Grid>
-                      <Grid item>
-                        <InvoiceTemplateWithoutOR
-                          NewEvent={newEvent}
-                          details={details}
-                          onInvoiceExecuted={handleChildInvoice}
-                        />{" "}
-                      </Grid>
-                      <Grid item>
-                        <Button
-                          variant="outlined"
-                          color="secondary"
-                          onClick={() => setIsModalOpen(false)}
-                        >
-                          Annuler
-                        </Button>
-                      </Grid>
-                    </Grid>
                   </Grid>
                 </form>
+                <DialogActions
+                  sx={{
+                    position: "sticky", // Le footer reste collé
+                    bottom: 0, // Toujours en bas
+                    backgroundColor: "background.paper", // Fond cohérent avec le thème
+                    zIndex: 1, // Au-dessus du contenu
+                    borderTop: "1px solid #ddd", // Ligne de séparation
+                  }}
+                >
+                  {/* Boutons CTA en bas */}
+                  <Grid container spacing={3} justifyContent="flex-end">
+                    <Grid item>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={addEvent}
+                      >
+                        Créer un OR
+                      </Button>
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={addReservation}
+                      >
+                        Créer une résa
+                      </Button>
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={addDevis}
+                      >
+                        Créer un Devis
+                      </Button>
+                    </Grid>
+
+                    <Grid item>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={addFacture}
+                      >
+                        Facturer
+                      </Button>
+                    </Grid>
+
+                    <Grid item>
+                      <InvoiceTemplateWithoutOR
+                        NewEvent={newEvent}
+                        details={details}
+                        onInvoiceExecuted={handleChildInvoice}
+                      />{" "}
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => {
+                          setIsModalOpen(false);
+                        }}
+                      >
+                        Annuler
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </DialogActions>
               </DialogContent>
             </Dialog>
           </Box>
@@ -1974,9 +2414,9 @@ const Planning = () => {
               {" "}
               {/* Z-index élevé */}
               {uniqueCategories.map((category, categoryIndex) => {
-                const categoryEvents = dataEvents.filter(
-                  (event) => event.category.id === category.id
-                );
+                const categoryEvents = dataEvents
+                  .filter((event) => event.category != null)
+                  .filter((event) => event.category.id === category.id);
                 // Récupérer les événements de la catégorie
                 const lines = calculateEventLines(categoryEvents); // Calculer les lignes
 
@@ -2208,15 +2648,26 @@ const Planning = () => {
                     <TableCell>Nom</TableCell>
                     <TableCell>Email</TableCell>
                     <TableCell>Téléphone</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Heure de début</TableCell>
-                    <TableCell>Heure de fin</TableCell>
+
                     <TableCell>Véhicule</TableCell>
+                    <TableCell>Collection</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {dataEventsAll.map((event) => (
-                    <TableRow key={event.id}>
+                    <TableRow
+                      key={event.id}
+                      hover
+                      onClick={() => {
+                        setSelectedEvent(event); // Met à jour l'événement sélectionné
+
+                        if (event.collection !== "events") {
+                          setModalOpen2(true);
+                          console.log("modalOpen2 listing", modalOpen2);
+                        } else setModalOpen(true);
+                      }}
+                      style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
+                    >
                       <TableCell>{event.title}</TableCell>
                       <TableCell>{event.person.firstName}</TableCell>
                       <TableCell>{event.person.lastName}</TableCell>
@@ -2224,26 +2675,20 @@ const Planning = () => {
                       <TableCell>
                         {event.person.phone || "Non renseigné"}
                       </TableCell>
-                      <TableCell>
-                        {new Date(event.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {`${event.startHour}:${
-                          event.startMinute < 10
-                            ? `0${event.startMinute}`
-                            : event.startMinute
-                        }`}
-                      </TableCell>
-                      <TableCell>
-                        {`${event.endHour}:${
-                          event.endMinute < 10
-                            ? `0${event.endMinute}`
-                            : event.endMinute
-                        }`}
-                      </TableCell>
+
                       <TableCell>
                         {event.vehicule.model || "Non renseigné"} -{" "}
                         {event.vehicule.licensePlate || "Non renseignée"}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={event.collection}
+                          color={getBadgeColor(event.collection)}
+                          style={{
+                            fontWeight: "bold",
+                            textTransform: "capitalize",
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -2257,6 +2702,17 @@ const Planning = () => {
             Fermer
           </Button>
         </DialogActions>
+        {selectedEvent && selectedEvent.collection !== "events" && (
+          <DocumentModal
+            open={modalOpen2}
+            onClose={handleModalClose2}
+            editedEvent={selectedEvent}
+            setEditedEvent={handleEditedEventChange}
+            collectionName={selectedEvent.collection}
+            categories={categories}
+            onEventTriggered={handleEventFromChild}
+          />
+        )}
       </Dialog>
     </DragDropContext>
   );
