@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  Modal,
   Paper,
   Table,
   TableBody,
@@ -26,9 +27,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
-import DevisTemplate from "../DevisTemplate";
 import InvoiceTemplate from "../InvoiceTemplate";
-import OrdreReparationTemplate from "../OrdreReparationTemplate";
 import ReservationTemplate from "../ReservationTemplate";
 function DocumentModal({
   open,
@@ -265,6 +264,20 @@ function DocumentModal({
   else if (collectionName == "reservations") collectName = "résa";
   else collectName = "facture";
 
+  const [openOr, setOpenOr] = useState(false);
+
+  // Fonction pour ouvrir le modal
+  const handleOpenOr = () => setOpenOr(true);
+
+  // Fonction pour fermer le modal
+  const handleCloseOr = () => setOpenOr(false);
+
+  // Fonction pour confirmer l'action
+  const handleConfirmOr = () => {
+    handleSave(); // Appel de la fonction addEvent
+    handleCloseOr(); // Fermer le modal
+  };
+
   return (
     <Dialog
       open={open}
@@ -344,6 +357,34 @@ function DocumentModal({
                 label="Email"
                 name="person.email"
                 value={editedEvent.person?.email || ""}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
+              <TextField
+                label="Adresse locale"
+                name="person.adresse"
+                value={editedEvent.person?.adresse || ""}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
+              <TextField
+                label="Code postale"
+                name="person.postale"
+                value={editedEvent.person?.postale || ""}
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
@@ -733,20 +774,122 @@ function DocumentModal({
         </DialogContent>
       )}
       <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Annuler
-        </Button>{" "}
-        <InvoiceTemplate
-          editedEvent={editedEvent}
-          details={details}
-          onInvoiceExecuted={handleChildInvoice}
-        />{" "}
-        <OrdreReparationTemplate editedEvent={editedEvent} details={details} />{" "}
-        <DevisTemplate editedEvent={editedEvent} details={details} />
-        <ReservationTemplate editedEvent={editedEvent} details={details} />{" "}
-        <Button onClick={handleSave} color="primary" variant="contained">
-          Modifier
-        </Button>
+        {collectionName === "reservations" && (
+          <>
+            <Button onClick={onClose} color="primary">
+              Annuler
+            </Button>{" "}
+            <Button onClick={onClose} color="secondary">
+              Supprimer
+            </Button>{" "}
+            <Button onClick={handleOpenOr} color="primary" variant="contained">
+              Modifier
+            </Button>
+            <ReservationTemplate editedEvent={editedEvent} details={details} />{" "}
+            <InvoiceTemplate
+              editedEvent={editedEvent}
+              details={details}
+              onInvoiceExecuted={handleChildInvoice}
+            />{" "}
+            <Button onClick={onClose} color="primary">
+              Créer OR
+            </Button>{" "}
+          </>
+        )}
+        {collectionName === "devis" && (
+          <>
+            <Button onClick={onClose} color="primary">
+              Annuler
+            </Button>{" "}
+            <Button onClick={onClose} color="secondary">
+              Supprimer
+            </Button>{" "}
+            <Button onClick={handleOpenOr} color="primary" variant="contained">
+              Modifier
+            </Button>
+            <Button onClick={onClose} color="primary">
+              Créer OR
+            </Button>{" "}
+            <Button onClick={onClose} color="primary">
+              Créer un Resa
+            </Button>
+            <InvoiceTemplate
+              editedEvent={editedEvent}
+              details={details}
+              onInvoiceExecuted={handleChildInvoice}
+            />{" "}
+          </>
+        )}
+        {collectionName === "factures" && (
+          <>
+            <Button onClick={onClose} color="primary">
+              Annuler
+            </Button>{" "}
+            <Button onClick={handleOpenOr} color="primary" variant="contained">
+              Modifier
+            </Button>
+            <InvoiceTemplate
+              editedEvent={editedEvent}
+              details={details}
+              onInvoiceExecuted={handleChildInvoice}
+            />{" "}
+          </>
+        )}
+        <Modal
+          open={openOr}
+          onClose={handleCloseOr}
+          aria-labelledby="confirmation-modal-title"
+          aria-describedby="confirmation-modal-description"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "background.paper",
+              border: "2px solid #000",
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              id="confirmation-modal-title"
+              variant="h6"
+              component="h2"
+            >
+              Confirmation
+            </Typography>
+            <Typography
+              id="confirmation-modal-description"
+              sx={{ mt: 2, mb: 4 }}
+            >
+              Voulez vous appliquer les modifications?
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleCloseOr}
+              >
+                Non
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleConfirmOr}
+              >
+                Oui
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
       </DialogActions>
     </Dialog>
   );

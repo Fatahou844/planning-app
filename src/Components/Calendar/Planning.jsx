@@ -15,6 +15,7 @@ import {
   Grid,
   IconButton,
   MenuItem,
+  Modal,
   Paper,
   Table,
   TableBody,
@@ -39,7 +40,6 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import InvoiceTemplateWithoutOR from "../InvoiceTemplateWithoutOR";
 
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -123,7 +123,6 @@ const CurrentTimeLine = ({ currentHour }) => {
 
 const Planning = () => {
   const [events, setEvents] = useState(eventsData);
-  const [eventsCopied, setEventsCopied] = useState(eventsData);
   const [dataEvents, setDataEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
@@ -137,8 +136,6 @@ const Planning = () => {
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [modalOpen2, setModalOpen2] = useState(false);
-
-  const [eventCount, setEventCount] = useState(0);
 
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
@@ -783,6 +780,8 @@ const Planning = () => {
           lastName: event.lastName,
           email: event.email,
           phone: event.phone,
+          adresse: event.adresse ? event.adresse : "",
+          postale: event.postale ? event.postale : "",
         },
         vehicule: {
           licensePlate: event.licensePlate ? event.licensePlate : "",
@@ -897,153 +896,6 @@ const Planning = () => {
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
-
-  // function handleSearchClick() {
-  //   const keyword = searchQuery;
-  //   // Ajoutez ici la logique de filtrage des événements si nécessaire
-  //   const searchEvents = async () => {
-  //     try {
-  //       // Normaliser le mot-clé pour la recherche (mettre en minuscule)
-  //       const lowerCaseKeyword = keyword.toLowerCase();
-
-  //       // Collection des événements dans Firestore
-  //       const eventsRef = collection(db, "events");
-
-  //       // Requêtes pour chaque champ à rechercher
-  //       const queries = [
-  //         query(
-  //           eventsRef,
-  //           where("person.firstName", ">=", lowerCaseKeyword),
-  //           where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
-  //         ),
-  //         query(
-  //           eventsRef,
-  //           where("person.lastName", ">=", lowerCaseKeyword),
-  //           where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
-  //         ),
-  //         query(
-  //           eventsRef,
-  //           where("person.email", ">=", lowerCaseKeyword),
-  //           where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
-  //         ),
-  //         query(
-  //           eventsRef,
-  //           where("title", ">=", lowerCaseKeyword),
-  //           where("title", "<=", lowerCaseKeyword + "\uf8ff")
-  //         ),
-  //       ];
-
-  //       // Stockage des résultats combinés
-  //       let allResults = [];
-
-  //       // Exécute chaque requête
-  //       for (const q of queries) {
-  //         const querySnapshot = await getDocs(q);
-  //         querySnapshot.forEach((doc) => {
-  //           // Ajout des documents aux résultats
-  //           allResults.push({ id: doc.id, ...doc.data() });
-  //         });
-  //       }
-
-  //       // Suppression des doublons
-  //       const uniqueResults = allResults.filter(
-  //         (value, index, self) =>
-  //           index === self.findIndex((t) => t.id === value.id)
-  //       );
-
-  //       console.log("Résultats de la recherche :", uniqueResults);
-  //       setDataEventsAll(uniqueResults);
-
-  //       return uniqueResults;
-  //     } catch (error) {
-  //       console.error("Erreur lors de la recherche des événements :", error);
-  //     }
-  //   };
-  //   searchEvents();
-  //   setOpen(true); // Ouvre le dialogue après la recherche
-  // }
-
-  // Gestionnaire d'événements pour la touche "Entrée"
-
-  // function handleSearchClick() {
-  //   const keyword = searchQuery;
-
-  //   const searchAllCollections = async () => {
-  //     try {
-  //       // Normaliser le mot-clé pour la recherche
-  //       const lowerCaseKeyword = keyword.toLowerCase();
-
-  //       // Liste des collections à rechercher
-  //       const collections = ["events", "devis", "factures", "reservations"];
-
-  //       // Stockage des résultats combinés
-  //       let allResults = [];
-
-  //       // Rechercher dans chaque collection
-  //       for (const collectionName of collections) {
-  //         const collectionRef = collection(db, collectionName);
-
-  //         // Requêtes pour chaque champ à rechercher
-  //         const queries = [
-  //           query(
-  //             collectionRef,
-  //             where("person.firstName", ">=", lowerCaseKeyword),
-  //             where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
-  //           ),
-  //           query(
-  //             collectionRef,
-  //             where("person.lastName", ">=", lowerCaseKeyword),
-  //             where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
-  //           ),
-  //           query(
-  //             collectionRef,
-  //             where("person.email", ">=", lowerCaseKeyword),
-  //             where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
-  //           ),
-  //           query(
-  //             collectionRef,
-  //             where("title", ">=", lowerCaseKeyword),
-  //             where("title", "<=", lowerCaseKeyword + "\uf8ff")
-  //           ),
-  //         ];
-
-  //         // Récupérer les résultats pour la collection courante
-  //         for (const q of queries) {
-  //           const querySnapshot = await getDocs(q);
-  //           querySnapshot.forEach((doc) => {
-  //             // Ajout des documents aux résultats avec indication de la collection
-  //             allResults.push({
-  //               id: doc.id,
-  //               collection: collectionName, // Pour savoir d'où vient le document
-  //               ...doc.data(),
-  //             });
-  //           });
-  //         }
-  //       }
-
-  //       // Suppression des doublons
-  //       const uniqueResults = allResults.filter(
-  //         (value, index, self) =>
-  //           index ===
-  //           self.findIndex(
-  //             (t) => t.id === value.id && t.collection === value.collection
-  //           )
-  //       );
-
-  //       console.log("Résultats combinés :", uniqueResults);
-
-  //       // Mettre à jour les résultats dans l'état
-  //       setDataEventsAll(uniqueResults);
-
-  //       return uniqueResults;
-  //     } catch (error) {
-  //       console.error("Erreur lors de la recherche des collections :", error);
-  //     }
-  //   };
-
-  //   searchAllCollections();
-  //   setOpen(true); // Ouvre le dialogue après la recherche
-  // }
 
   async function handleSearchClick() {
     const keyword = searchQuery;
@@ -1216,39 +1068,6 @@ const Planning = () => {
       await updateDoc(eventDocRef, updatedData);
 
       console.log("Événement mis à jour avec succès:", updatedEvent);
-      // Fermez le modal après la mise à jour
-      // const fetchEvents = async () => {
-      //   try {
-      //     // Référence à la collection "events"
-      //     const eventsRef = collection(db, "events");
-
-      //     // Créer la requête avec la condition where pour filtrer par userId
-      //     const q = query(
-      //       eventsRef,
-      //       where("userId", "==", user.uid),
-      //       where("date", "==", selectedDate)
-      //     );
-
-      //     // Récupérer les documents correspondants
-      //     const querySnapshot = await getDocs(q);
-
-      //     // Récupérer les objets de la collection (id et data)
-      //     const eventsData = querySnapshot.docs.map((doc) => ({
-      //       id: doc.id,
-      //       ...doc.data(),
-      //     }));
-
-      //     // Mettre à jour l'état avec les données récupérées
-
-      //     console.log("eventsData", eventsData); // Pour vérifier les données dans la console
-      //     setDataEvents(eventsData);
-      //   } catch (error) {
-      //     console.error(
-      //       "Erreur lors de la récupération des événements : ",
-      //       error
-      //     );
-      //   }
-      // };
 
       const fetchEvents = async () => {
         try {
@@ -1323,28 +1142,6 @@ const Planning = () => {
     setNewEvent({ ...newEvent, price: totalTTC });
     setDetails(updatedDetails);
   };
-
-  // Calcul des totaux de la ligne en fonction de la quantité, du prix unitaire et des remises
-  // const calculateLineTotal = (detail) => {
-  //   const discount =
-  //     detail.unitPrice * detail.quantity * (detail.discountPercent / 100) +
-  //     detail.discountAmount;
-  //   return detail.quantity * detail.unitPrice - discount;
-  // };
-
-  // const calculateLineTotal = (detail) => {
-  //   const discountPercent =
-  //     detail.discountPercent > 0
-  //       ? detail.unitPrice * detail.quantity * (detail.discountPercent / 100)
-  //       : 0;
-
-  //   const discountAmount =
-  //     detail.discountAmount > 0 ? detail.discountAmount : 0;
-
-  //   const discount = discountPercent + discountAmount;
-
-  //   return detail.quantity * detail.unitPrice - discount;
-  // };
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -1437,11 +1234,7 @@ const Planning = () => {
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
   };
-  const [invoiceExecuted, setInvoiceExecuted] = useState(false);
-  const handleChildInvoice = () => {
-    console.log("Une action a été exécutée dans le composant fils !");
-    setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
-  };
+
   const getBadgeColor = (collection) => {
     switch (collection) {
       case "events":
@@ -1457,6 +1250,46 @@ const Planning = () => {
     }
   };
 
+  const [openOr, setOpenOr] = useState(false);
+  const [openResa, setOpenResa] = useState(false);
+  const [openDevis, setOpenDevis] = useState(false);
+  const [openFacture, setOpenFacture] = useState(false);
+
+  // Fonction pour ouvrir le modal
+  const handleOpenOr = () => setOpenOr(true);
+  const handleOpenResa = () => setOpenResa(true);
+  const handleOpenDevis = () => setOpenDevis(true);
+  const handleOpenFacture = () => setOpenFacture(true);
+
+  // Fonction pour fermer le modal
+  const handleCloseOr = () => setOpenOr(false);
+  const handleCloseResa = () => setOpenResa(false);
+  const handleCloseDevis = () => setOpenDevis(false);
+  const handleCloseFacture = () => setOpenFacture(false);
+
+  // Fonction pour confirmer l'action
+  const handleConfirmOr = () => {
+    addEvent(); // Appel de la fonction addEvent
+    handleCloseOr(); // Fermer le modal
+  };
+
+  // Fonction pour confirmer l'action
+  const handleConfirmResa = () => {
+    addReservation(); // Appel de la fonction addEvent
+    handleCloseResa(); // Fermer le modal
+  };
+
+  // Fonction pour confirmer l'action
+  const handleConfirmDevis = () => {
+    addDevis(); // Appel de la fonction addEvent
+    handleCloseDevis(); // Fermer le modal
+  };
+
+  // Fonction pour confirmer l'action
+  const handleConfirmFacture = () => {
+    addFacture(); // Appel de la fonction addEvent
+    handleCloseFacture(); // Fermer le modal
+  };
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1712,6 +1545,34 @@ const Planning = () => {
                         fullWidth
                         margin="normal"
                         required
+                        size="small"
+                        sx={{
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                        }}
+                      />
+                      <TextField
+                        label="Adresse locale"
+                        name="adresse"
+                        value={newEvent.adresse}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        size="small"
+                        sx={{
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                        }}
+                      />
+                      <TextField
+                        label="Code postale"
+                        name="postale"
+                        value={newEvent.postale}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
                         size="small"
                         sx={{
                           height: "30px",
@@ -2334,47 +2195,267 @@ const Planning = () => {
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={addEvent}
+                        onClick={handleOpenOr}
                       >
                         Créer un OR
                       </Button>
+                      <Modal
+                        open={openOr}
+                        onClose={handleCloseOr}
+                        aria-labelledby="confirmation-modal-title"
+                        aria-describedby="confirmation-modal-description"
+                      >
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            bgcolor: "background.paper",
+                            border: "2px solid #000",
+                            boxShadow: 24,
+                            p: 4,
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography
+                            id="confirmation-modal-title"
+                            variant="h6"
+                            component="h2"
+                          >
+                            Confirmation
+                          </Typography>
+                          <Typography
+                            id="confirmation-modal-description"
+                            sx={{ mt: 2, mb: 4 }}
+                          >
+                            Voulez vous créer un OR ?
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              onClick={handleCloseOr}
+                            >
+                              Non
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={handleConfirmOr}
+                            >
+                              Oui
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Modal>
                     </Grid>
                     <Grid item>
                       <Button
                         variant="outlined"
                         color="primary"
-                        onClick={addReservation}
+                        onClick={handleOpenResa}
                       >
                         Créer une résa
                       </Button>
+                      <Modal
+                        open={openResa}
+                        onClose={handleCloseResa}
+                        aria-labelledby="confirmation-modal-title"
+                        aria-describedby="confirmation-modal-description"
+                      >
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            bgcolor: "background.paper",
+                            border: "2px solid #000",
+                            boxShadow: 24,
+                            p: 4,
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography
+                            id="confirmation-modal-title"
+                            variant="h6"
+                            component="h2"
+                          >
+                            Confirmation
+                          </Typography>
+                          <Typography
+                            id="confirmation-modal-description"
+                            sx={{ mt: 2, mb: 4 }}
+                          >
+                            Voulez vous créer une réservation ?
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              onClick={handleCloseResa}
+                            >
+                              Non
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={handleConfirmResa}
+                            >
+                              Oui
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Modal>
                     </Grid>
                     <Grid item>
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={addDevis}
+                        onClick={handleOpenDevis}
                       >
                         Créer un Devis
                       </Button>
+                      <Modal
+                        open={openDevis}
+                        onClose={handleCloseDevis}
+                        aria-labelledby="confirmation-modal-title"
+                        aria-describedby="confirmation-modal-description"
+                      >
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            bgcolor: "background.paper",
+                            border: "2px solid #000",
+                            boxShadow: 24,
+                            p: 4,
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography
+                            id="confirmation-modal-title"
+                            variant="h6"
+                            component="h2"
+                          >
+                            Confirmation
+                          </Typography>
+                          <Typography
+                            id="confirmation-modal-description"
+                            sx={{ mt: 2, mb: 4 }}
+                          >
+                            Voulez vous créer un devis ?
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              onClick={handleCloseDevis}
+                            >
+                              Non
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={handleConfirmDevis}
+                            >
+                              Oui
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Modal>
                     </Grid>
 
                     <Grid item>
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={addFacture}
+                        onClick={handleOpenFacture}
                       >
                         Facturer
                       </Button>
+                      <Modal
+                        open={openFacture}
+                        onClose={handleCloseFacture}
+                        aria-labelledby="confirmation-modal-title"
+                        aria-describedby="confirmation-modal-description"
+                      >
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            bgcolor: "background.paper",
+                            border: "2px solid #000",
+                            boxShadow: 24,
+                            p: 4,
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography
+                            id="confirmation-modal-title"
+                            variant="h6"
+                            component="h2"
+                          >
+                            Confirmation
+                          </Typography>
+                          <Typography
+                            id="confirmation-modal-description"
+                            sx={{ mt: 2, mb: 4 }}
+                          >
+                            Voulez vous créer une facture ?
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              onClick={handleCloseFacture}
+                            >
+                              Non
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={handleConfirmFacture}
+                            >
+                              Oui
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Modal>
                     </Grid>
 
-                    <Grid item>
+                    {/* <Grid item>
                       <InvoiceTemplateWithoutOR
                         NewEvent={newEvent}
                         details={details}
                         onInvoiceExecuted={handleChildInvoice}
                       />{" "}
-                    </Grid>
+                    </Grid> */}
                     <Grid item>
                       <Button
                         variant="outlined"

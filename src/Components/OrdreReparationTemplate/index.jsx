@@ -461,7 +461,7 @@ const OrdreReparationTemplate = ({
   return (
     <div>
       <Button onClick={generatePdf} color="primary" variant="contained">
-        Créer OR
+        Imprimer OR
       </Button>
     </div>
   );

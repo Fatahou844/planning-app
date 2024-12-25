@@ -457,7 +457,7 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   return (
     <div>
       <Button onClick={generatePdf} color="primary" variant="contained">
-        Créer Réservation
+        Imprimer Resa
       </Button>
     </div>
   );
