@@ -3,6 +3,9 @@ import React from "react";
 
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
+import { Box, Modal, Typography } from "@mui/material";
+import { useState } from "react";
+
 const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   const { person, vehicule, date, title } = editedEvent;
   const invoiceData = {
@@ -53,7 +56,7 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
         0
       ),
     },
-    observations: ``,
+    observations: `${editedEvent.details.workDescription}`,
   };
 
   const documentDefinition = {
@@ -93,12 +96,12 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
                 alignment: "center",
               },
               {
-                text: "Informations Véhicule",
+                text: "",
                 style: "vehicleHeader",
                 alignment: "center",
               },
               {
-                text: "Informations Client",
+                text: "",
                 style: "clientHeader",
                 alignment: "center",
               },
@@ -161,7 +164,7 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
                 alignment: "center",
               },
               {
-                text: `License Plate : ${
+                text: `Immatriculation : ${
                   invoiceData.vehicle.licensePlate || ""
                 }`,
                 style: "vehicleInfo",
@@ -229,8 +232,8 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
             ],
             ...invoiceData.items.map((item) => [
               item.description,
-              `${item.unitPriceHT} €`,
-              `${item.unitPriceTTC} €`,
+              `${item.unitPriceHT.toFixed(2)} €`,
+              `${item.unitPriceTTC.toFixed(2)} €`,
               item.quantity,
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
@@ -454,11 +457,71 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   }
   // Générer le PDF
 
+  const [openOr, setOpenOr] = useState(false);
+
+  const handleOpenOr = () => setOpenOr(true);
+
+  const handleCloseOr = () => setOpenOr(false);
+
+  // Fonction pour confirmer l'action
+  const handleConfirmOr = () => {
+    generatePdf(); // Appel de la fonction addEvent
+    handleCloseOr(); // Fermer le modal
+  };
+
   return (
     <div>
-      <Button onClick={generatePdf} color="primary" variant="contained">
+      <Button onClick={handleOpenOr} color="primary" variant="contained">
         Imprimer Resa
       </Button>
+      <Modal
+        open={openOr}
+        onClose={handleCloseOr}
+        aria-labelledby="confirmation-modal-title"
+        aria-describedby="confirmation-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="confirmation-modal-title" variant="h6" component="h2">
+            Confirmation
+          </Typography>
+          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
+            Voulez vous imprimer cette réservation?
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleCloseOr}
+            >
+              Non
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleConfirmOr}
+            >
+              Oui
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };

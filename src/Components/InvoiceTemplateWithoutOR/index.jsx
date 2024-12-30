@@ -51,7 +51,7 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
         0
       ),
     },
-    observations: ``,
+    observations: `${editedEvent.details.workDescription}`,
   };
 
   const documentDefinition = {
@@ -91,12 +91,12 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
                 alignment: "center",
               },
               {
-                text: "Informations Véhicule",
+                text: "",
                 style: "vehicleHeader",
                 alignment: "center",
               },
               {
-                text: "Informations Client",
+                text: "",
                 style: "clientHeader",
                 alignment: "center",
               },
@@ -159,7 +159,7 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
                 alignment: "center",
               },
               {
-                text: `License Plate : ${
+                text: `Immatriculation : ${
                   invoiceData.vehicle.licensePlate || ""
                 }`,
                 style: "vehicleInfo",

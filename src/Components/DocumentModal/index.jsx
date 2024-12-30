@@ -27,8 +27,11 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import DevisTemplate from "../DevisTemplate";
 import InvoiceTemplate from "../InvoiceTemplate";
+import Notification from "../Notification";
 import ReservationTemplate from "../ReservationTemplate";
+
 function DocumentModal({
   open,
   onClose,
@@ -195,6 +198,36 @@ function DocumentModal({
     }
   };
 
+  const handleCreerCollection = async (collectionName) => {
+    if (editedEvent) {
+      try {
+        // Crée un nouveau document dans la collection principale avec les données de editedEvent
+        const newEventDocRef = await addDoc(
+          collection(db, collectionName),
+          editedEvent
+        );
+
+        // Référence de la collection "details" sous le nouveau document
+        const detailsCollectionRef = collection(newEventDocRef, "details");
+
+        for (const detail of details) {
+          if (!detail.isDeleted) {
+            // Ajoute tous les détails à la nouvelle collection "details"
+            await addDoc(detailsCollectionRef, detail);
+          }
+        }
+
+        if (onEventTriggered) {
+          onEventTriggered(); // Notifie le parent
+        }
+
+        onClose();
+      } catch (error) {
+        console.error("Erreur lors de la création de l'événement :", error);
+      }
+    }
+  };
+
   const handleDetailChange = (index, field, value) => {
     const updatedDetails = [...details];
     updatedDetails[index][field] = value;
@@ -265,19 +298,61 @@ function DocumentModal({
   else collectName = "facture";
 
   const [openOr, setOpenOr] = useState(false);
+  const [openCreerOr, setOpenCreerOr] = useState(false);
+  const [openCreerResa, setOpenCreerResa] = useState(false);
 
   // Fonction pour ouvrir le modal
   const handleOpenOr = () => setOpenOr(true);
 
+  const handleOpenCreerOr = () => setOpenCreerOr(true);
+  const handleOpenCreerResa = () => setOpenCreerResa(true);
+
   // Fonction pour fermer le modal
   const handleCloseOr = () => setOpenOr(false);
+  const handleCloseCreerOr = () => setOpenCreerOr(false);
+
+  const handleCloseCreerResa = () => setOpenCreerResa(false);
 
   // Fonction pour confirmer l'action
   const handleConfirmOr = () => {
     handleSave(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    handleOpen();
   };
 
+  const handleConfirmCreerOr = () => {
+    handleCreerCollection("events"); // Appel de la fonction addEvent
+    handleCloseCreerOr(); // Fermer le modal
+    handleOpen();
+  };
+
+  const handleConfirmCreerResa = () => {
+    handleCreerCollection("reservations"); // Appel de la fonction addEvent
+    handleCloseCreerResa(); // Fermer le modal
+    handleOpen();
+  };
+
+  const handleConfirmCreerFacture = () => {
+    handleCreerCollection("facures"); // Appel de la fonction addEvent
+    handleCloseOr(); // Fermer le modal
+  };
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const handleOpen = () => {
+    setNotification({
+      open: true,
+      message: "Modification effectué avec succès !",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+  };
+
+  const handleClose = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
+  };
   return (
     <Dialog
       open={open}
@@ -289,6 +364,12 @@ function DocumentModal({
         },
       }}
     >
+      <Notification
+        open={notification.open}
+        message={notification.message}
+        severity={notification.severity}
+        handleClose={handleClose}
+      />
       <DialogTitle>Modification {collectName}</DialogTitle>
       {editedEvent && (
         <DialogContent>
@@ -298,7 +379,7 @@ function DocumentModal({
               <TextField
                 margin="dense"
                 name="title"
-                label="O.R"
+                label={"NO " + collectName}
                 type="text"
                 fullWidth
                 value={editedEvent.title || ""}
@@ -385,6 +466,20 @@ function DocumentModal({
                 label="Code postale"
                 name="person.postale"
                 value={editedEvent.person?.postale || ""}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
+              <TextField
+                label="Ville"
+                name="person.ville"
+                value={editedEvent.person?.ville || ""}
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
@@ -791,7 +886,11 @@ function DocumentModal({
               details={details}
               onInvoiceExecuted={handleChildInvoice}
             />{" "}
-            <Button onClick={onClose} color="primary">
+            <Button
+              onClick={handleOpenCreerOr}
+              color="primary"
+              variant="contained"
+            >
               Créer OR
             </Button>{" "}
           </>
@@ -807,12 +906,25 @@ function DocumentModal({
             <Button onClick={handleOpenOr} color="primary" variant="contained">
               Modifier
             </Button>
-            <Button onClick={onClose} color="primary">
+            <Button
+              onClick={handleConfirmCreerOr}
+              color="primary"
+              variant="contained"
+            >
               Créer OR
             </Button>{" "}
-            <Button onClick={onClose} color="primary">
+            <Button
+              onClick={handleOpenCreerResa}
+              color="primary"
+              variant="contained"
+            >
               Créer un Resa
             </Button>
+            <DevisTemplate
+              editedEvent={editedEvent}
+              details={details}
+              onInvoiceExecuted={handleChildInvoice}
+            />
             <InvoiceTemplate
               editedEvent={editedEvent}
               details={details}
@@ -884,6 +996,116 @@ function DocumentModal({
                 variant="contained"
                 color="primary"
                 onClick={handleConfirmOr}
+              >
+                Oui
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+        <Modal
+          open={openCreerOr}
+          onClose={handleCloseCreerOr}
+          aria-labelledby="confirmation-modal-title"
+          aria-describedby="confirmation-modal-description"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "background.paper",
+              border: "2px solid #000",
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              id="confirmation-modal-title"
+              variant="h6"
+              component="h2"
+            >
+              Confirmation
+            </Typography>
+            <Typography
+              id="confirmation-modal-description"
+              sx={{ mt: 2, mb: 4 }}
+            >
+              Voulez vous creér un OR?
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleCloseCreerOr}
+              >
+                Non
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleConfirmCreerOr}
+              >
+                Oui
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+        <Modal
+          open={openCreerResa}
+          onClose={handleCloseCreerResa}
+          aria-labelledby="confirmation-modal-title"
+          aria-describedby="confirmation-modal-description"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "background.paper",
+              border: "2px solid #000",
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              id="confirmation-modal-title"
+              variant="h6"
+              component="h2"
+            >
+              Confirmation
+            </Typography>
+            <Typography
+              id="confirmation-modal-description"
+              sx={{ mt: 2, mb: 4 }}
+            >
+              Voulez vous creér une réservation?
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleCloseCreerResa}
+              >
+                Non
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleConfirmCreerResa}
               >
                 Oui
               </Button>

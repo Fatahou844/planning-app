@@ -29,6 +29,7 @@ import {
 import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import InvoiceTemplate from "../InvoiceTemplate";
+import Notification from "../Notification";
 import OrdreReparationTemplate from "../OrdreReparationTemplate";
 function EventDialog({
   open,
@@ -280,6 +281,25 @@ function EventDialog({
   const handleConfirmOr = () => {
     handleSave(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    handleOpen();
+  };
+
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const handleOpen = () => {
+    setNotification({
+      open: true,
+      message: "Ordre de Réparation modifié avec succès !",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+  };
+
+  const handleClose = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -293,6 +313,12 @@ function EventDialog({
         },
       }}
     >
+      <Notification
+        open={notification.open}
+        message={notification.message}
+        severity={notification.severity}
+        handleClose={handleClose}
+      />
       <DialogTitle>Modifier l'Ordre de Réparation</DialogTitle>
       {editedEvent && (
         <DialogContent>
@@ -389,6 +415,20 @@ function EventDialog({
                 label="Code postale"
                 name="person.postale"
                 value={editedEvent.person?.postale || ""}
+                onChange={handleChange}
+                fullWidth
+                margin="normal"
+                required
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+              />
+              <TextField
+                label="Ville"
+                name="person.ville"
+                value={editedEvent.person?.ville || ""}
                 onChange={handleChange}
                 fullWidth
                 margin="normal"

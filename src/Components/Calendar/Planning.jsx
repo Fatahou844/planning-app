@@ -47,6 +47,7 @@ import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
+import Notification from "../Notification";
 
 const Timeline = () => (
   <Box
@@ -481,6 +482,7 @@ const Planning = () => {
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
     await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+    handleOpenNotif("réservation");
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
@@ -527,6 +529,7 @@ const Planning = () => {
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
     await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+    handleOpenNotif("devis");
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
@@ -573,6 +576,7 @@ const Planning = () => {
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
     await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+    handleOpenNotif("Facture");
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
@@ -618,6 +622,7 @@ const Planning = () => {
 
       // Engager toutes les écritures dans le batch
       await batch.commit();
+      handleOpenNotif();
 
       console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
@@ -782,6 +787,7 @@ const Planning = () => {
           phone: event.phone,
           adresse: event.adresse ? event.adresse : "",
           postale: event.postale ? event.postale : "",
+          ville: event.ville ? event.ville : "",
         },
         vehicule: {
           licensePlate: event.licensePlate ? event.licensePlate : "",
@@ -807,6 +813,7 @@ const Planning = () => {
         event.userId,
         parseInt(newOrderNumber)
       );
+      handleOpenNotif("réservation");
       return eventRef; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
@@ -1290,6 +1297,24 @@ const Planning = () => {
     addFacture(); // Appel de la fonction addEvent
     handleCloseFacture(); // Fermer le modal
   };
+
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const handleOpenNotif = (collectionName) => {
+    setNotification({
+      open: true,
+      message: "Votre " + collectionName + " a été crée avec succès !",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+  };
+
+  const handleCloseNotif = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
+  };
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1304,6 +1329,12 @@ const Planning = () => {
           width: "100%",
         }}
       >
+        <Notification
+          open={notification.open}
+          message={notification.message}
+          severity={notification.severity}
+          handleClose={handleCloseNotif}
+        />
         {/* Header Section */}
         <Box
           sx={{
@@ -1567,9 +1598,23 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="Code postale"
+                        label="Code postal"
                         name="postale"
                         value={newEvent.postale}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        size="small"
+                        sx={{
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                        }}
+                      />
+                      <TextField
+                        label="Ville"
+                        name="ville"
+                        value={newEvent.ville}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2714,7 +2759,16 @@ const Planning = () => {
         />
       )}
 
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            width: "1200px",
+            maxWidth: "none",
+          },
+        }}
+      >
         <DialogTitle>Résultats de la recherche</DialogTitle>
         <DialogContent>
           {dataEventsAll.length === 0 ? (
