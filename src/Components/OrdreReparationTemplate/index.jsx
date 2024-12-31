@@ -32,33 +32,77 @@ const OrdreReparationTemplate = ({
       name: `${person?.firstName ? person.firstName : ""} ${
         person?.lastName ? person.lastName : ""
       }`,
-      address: `${person?.localAddress ? person?.localAddress : ""} ${
-        person?.codePostal ? person.codePostal : ""
+      adresse: `${person?.adresse ? person?.adresse : ""} ${
+        person?.postale ? person.postale : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
       phone: person?.phone ? person.phone : "",
       email: person?.email ? person.email : "",
+      ville: person?.ville ? person.ville : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
     items: details.map((item) => ({
       description: item.label,
-      unitPriceHT: item.unitPrice, // Prix sans taxe
-      unitPriceTTC: item.unitPrice * 1.2, // Exemple d'application de TVA à 20% pour l'affichage
+      unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
+      unitPriceTTC: item.unitPrice, // Prix TTC (déjà fourni)
       quantity: item.quantity,
       discount: item.discountPercent,
+      discountAmount: item.discountAmount,
+      unitPriceTTCafterDiscount:
+        item.unitPrice -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 100,
+      unitPriceHTafterDiscount:
+        item.unitPrice / 1.2 -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 120,
     })),
+    // totals: {
+    //   // Total HT
+    //   totalHT: details.reduce(
+    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
+    //     0
+    //   ),
+    //   // TVA (20% du total HT)
+    //   tva: details.reduce(
+    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
+    //     0
+    //   ),
+    //   // Total TTC
+    //   totalTTC: details.reduce(
+    //     (acc, item) => acc + item.unitPrice * item.quantity,
+    //     0
+    //   ),
+    // },
     totals: {
-      totalHT: details.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity,
-        0
-      ),
-      tva: details.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity * 0.2,
-        0
-      ),
-      totalTTC: details.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity * 1.2,
-        0
-      ),
+      // Total HT avec remises
+      totalHT: details.reduce((acc, item) => {
+        const unitPriceHT = item.unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceHT * item.quantity;
+      }, 0),
+      // TVA (20% du total HT avec remises)
+      tva: details.reduce((acc, item) => {
+        const unitPriceHT = item.unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceHT * item.quantity * 0.2;
+      }, 0),
+      // Total TTC avec remises
+      totalTTC: details.reduce((acc, item) => {
+        const discountedPriceTTC = Math.max(
+          0,
+          item.unitPrice * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceTTC * item.quantity;
+      }, 0),
     },
     observations: `${editedEvent.details.workDescription}`,
   };
@@ -175,7 +219,11 @@ const OrdreReparationTemplate = ({
                 alignment: "center",
               },
               {
-                text: " ",
+                text: `Adresse : ${
+                  invoiceData.client?.adresse ? invoiceData.client?.adresse : ""
+                } ${
+                  invoiceData.client?.postale ? invoiceData.client?.postale : ""
+                }`,
                 style: "clientInfo",
                 alignment: "center",
               },
@@ -192,7 +240,9 @@ const OrdreReparationTemplate = ({
                 alignment: "center",
               },
               {
-                text: " ",
+                text: `Ville : ${
+                  invoiceData.client?.ville ? invoiceData.client?.ville : ""
+                }`,
                 style: "clientInfo",
                 alignment: "center",
               },

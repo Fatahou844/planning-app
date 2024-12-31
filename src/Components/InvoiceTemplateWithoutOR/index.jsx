@@ -24,34 +24,39 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
       name: `${NewEvent.firstName ? NewEvent.firstName : ""} ${
         NewEvent.lastName ? NewEvent.lastName : ""
       }`,
-      address: `${NewEvent.localAddress ? NewEvent.localAddress : ""} ${
-        NewEvent.codePostal ? NewEvent.codePostal : ""
+      adresse: `${NewEvent.adresse ? NewEvent.adresse : ""} ${
+        NewEvent.postale ? NewEvent.postale : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
       phone: NewEvent.phone ? NewEvent.phone : "",
       email: NewEvent.email ? NewEvent.email : "",
+      ville: NewEvent?.ville ? NewEvent.ville : "",
     },
     items: details.map((item) => ({
       description: item.label,
-      unitPriceHT: item.unitPrice, // Prix sans taxe
-      unitPriceTTC: item.unitPrice * 1.2, // Exemple d'application de TVA à 20% pour l'affichage
+      unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
+      unitPriceTTC: item.unitPrice, // Prix TTC (déjà fourni)
       quantity: item.quantity,
       discount: item.discountPercent,
+      discountAmount: item.discountAmount,
     })),
     totals: {
+      // Total HT
       totalHT: details.reduce(
+        (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
+        0
+      ),
+      // TVA (20% du total HT)
+      tva: details.reduce(
+        (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
+        0
+      ),
+      // Total TTC
+      totalTTC: details.reduce(
         (acc, item) => acc + item.unitPrice * item.quantity,
         0
       ),
-      tva: details.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity * 0.2,
-        0
-      ),
-      totalTTC: details.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity * 1.2,
-        0
-      ),
     },
-    observations: `${editedEvent.details.workDescription}`,
+    observations: `${NewEvent.details.workDescription}`,
   };
 
   const documentDefinition = {
@@ -166,7 +171,11 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
                 alignment: "center",
               },
               {
-                text: " ",
+                text: `Adresse : ${
+                  invoiceData.client?.adresse ? invoiceData.client?.adresse : ""
+                } ${
+                  invoiceData.client?.postale ? invoiceData.client?.postale : ""
+                }`,
                 style: "clientInfo",
                 alignment: "center",
               },
@@ -183,7 +192,9 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
                 alignment: "center",
               },
               {
-                text: " ",
+                text: `Ville : ${
+                  invoiceData.client?.ville ? invoiceData.client?.ville : ""
+                }`,
                 style: "clientInfo",
                 alignment: "center",
               },
