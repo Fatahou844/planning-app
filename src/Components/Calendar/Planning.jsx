@@ -920,21 +920,25 @@ const Planning = () => {
         const queries = [
           query(
             collectionRef,
+            where("userId", "==", user.uid),
             where("person.firstName", ">=", lowerCaseKeyword),
             where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
             collectionRef,
+            where("userId", "==", user.uid),
             where("person.lastName", ">=", lowerCaseKeyword),
             where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
             collectionRef,
+            where("userId", "==", user.uid),
             where("person.email", ">=", lowerCaseKeyword),
             where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
           ),
           query(
             collectionRef,
+            where("userId", "==", user.uid),
             where("title", ">=", lowerCaseKeyword),
             where("title", "<=", lowerCaseKeyword + "\uf8ff")
           ),
