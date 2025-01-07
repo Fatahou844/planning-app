@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
-import React from "react";
+import React, { useState } from "react";
 
+import { Box, Modal, Typography } from "@mui/material";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
@@ -40,25 +41,41 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
       discountAmount: item.discountAmount,
     })),
     totals: {
-      // Total HT
+      // Total HT avec remises
       totalHT: details.reduce(
-        (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
+        (sum, detail) => sum + calculateLineTotal(detail) / 1.2,
         0
       ),
-      // TVA (20% du total HT)
+      // TVA (20% du total HT avec remises)
       tva: details.reduce(
-        (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
+        (sum, detail) =>
+          sum + calculateLineTotal(detail) - calculateLineTotal(detail) / 1.2,
         0
       ),
-      // Total TTC
+      // Total TTC avec remises
       totalTTC: details.reduce(
-        (acc, item) => acc + item.unitPrice * item.quantity,
+        (sum, detail) => sum + calculateLineTotal(detail),
         0
       ),
     },
     observations: `${NewEvent.details.workDescription}`,
   };
 
+  const calculateLineTotal = (detail) => {
+    let discount = 0;
+
+    if (detail.discountPercent > 0) {
+      // Priorité au pourcentage
+      discount =
+        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
+    } else if (detail.discountAmount > 0) {
+      // Sinon, utilise le montant fixe
+      discount = detail.discountAmount;
+    }
+
+    // Calcul du total après remise
+    return detail.quantity * detail.unitPrice - discount;
+  };
   const documentDefinition = {
     content: [
       // Header avec numéro de facture et date
@@ -249,7 +266,11 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
                 text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
                 alignment: "right",
               },
-              `${item.discount} %`,
+              `${
+                item.discount > 0
+                  ? item.discount + "%"
+                  : item.discountAmount + "€"
+              }`,
             ]),
           ],
         },
@@ -463,11 +484,71 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
   }
   // Générer le PDF
 
+  const [openOr, setOpenOr] = useState(false);
+
+  const handleOpenOr = () => setOpenOr(true);
+
+  const handleCloseOr = () => setOpenOr(false);
+
+  // Fonction pour confirmer l'action
+  const handleConfirmOr = () => {
+    generatePdf(); // Appel de la fonction addEvent
+    handleCloseOr(); // Fermer le modal
+  };
+
   return (
     <div>
-      <Button onClick={generatePdf} color="primary" variant="contained">
+      <Button onClick={handleOpenOr} color="primary" variant="contained">
         Imprimer Facture
       </Button>
+      <Modal
+        open={openOr}
+        onClose={handleCloseOr}
+        aria-labelledby="confirmation-modal-title"
+        aria-describedby="confirmation-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="confirmation-modal-title" variant="h6" component="h2">
+            Confirmation
+          </Typography>
+          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
+            Voulez vous imprimer cette facture?
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleCloseOr}
+            >
+              Non
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleConfirmOr}
+            >
+              Oui
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };

@@ -1144,14 +1144,55 @@ const Planning = () => {
   const [deposit, setDeposit] = useState(0);
 
   // Fonction pour gérer les changements dans les détails
-  const handleDetailChange = (event, index) => {
-    const { name, value } = event.target;
-    const updatedDetails = [...details];
-    if (name == "label") updatedDetails[index][name] = value || "";
-    else updatedDetails[index][name] = parseFloat(value);
+  // const handleDetailChange = (event, index) => {
+  //   const { name, value } = event.target;
+  //   const updatedDetails = [...details];
+  //   if (name == "label") updatedDetails[index][name] = value || "";
+  //   else updatedDetails[index][name] = parseFloat(value);
 
-    setNewEvent({ ...newEvent, price: totalTTC });
+  //   setNewEvent({ ...newEvent, price: totalTTC });
+  //   setDetails(updatedDetails);
+  // };
+
+  const handleDetailChange = (event, index) => {
+    const { name, value } = event.target; // Extraire le nom et la valeur du champ modifié
+    const updatedDetails = [...details]; // Créer une copie des détails
+
+    let normalizedValue = value.trim(); // Nettoyer les espaces inutiles
+    normalizedValue = normalizedValue.replace(",", "."); // Normaliser les décimales
+
+    if (name === "discountAmount" || name === "discountPercent") {
+      // Réinitialiser les deux champs
+      updatedDetails[index].discountAmount = "";
+      updatedDetails[index].discountPercent = "";
+
+      if (normalizedValue.includes("%")) {
+        // Si la valeur contient un %, on met à jour le pourcentage
+        const percent = parseFloat(normalizedValue.replace("%", ""));
+        if (!isNaN(percent)) {
+          updatedDetails[index].discountPercent = percent;
+        }
+      } else if (normalizedValue !== "") {
+        // Sinon, c'est un montant
+        const amount = parseFloat(normalizedValue);
+        if (!isNaN(amount)) {
+          updatedDetails[index].discountAmount = amount;
+        }
+      }
+
+      // Stocker la saisie brute dans inputValue (si besoin)
+      updatedDetails[index].inputValue = value;
+    } else {
+      // Autres champs : mise à jour standard
+      updatedDetails[index][name] =
+        name === "label" ? value || "" : parseFloat(value);
+    }
+
+    // Mettre à jour l'état avec les nouveaux détails
     setDetails(updatedDetails);
+
+    // Recalculer le prix total TTC si nécessaire
+    setNewEvent({ ...newEvent, price: totalTTC });
   };
 
   const calculateLineTotal = (detail) => {
@@ -1244,6 +1285,7 @@ const Planning = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+    handleModalClose2();
   };
 
   const getBadgeColor = (collection) => {
@@ -1852,7 +1894,7 @@ const Planning = () => {
                                     }}
                                   />
                                 </TableCell>
-
+                                {/* 
                                 <TableCell>
                                   <TextField
                                     name="discountAmount"
@@ -1881,12 +1923,14 @@ const Planning = () => {
                                         );
                                         if (!isNaN(percentage)) {
                                           detail.discountPercent = percentage; // Met à jour le pourcentage
+                                          detail.discountAmount = ""; // Met à jour le pourcentage
                                         }
                                       } else if (value !== "") {
                                         // Cas où l'utilisateur entre un montant
                                         const amount = parseFloat(value);
                                         if (!isNaN(amount)) {
                                           detail.discountAmount = amount; // Met à jour le montant
+                                          detail.discountPercent = ""; // Met à jour le pourcentage
                                         }
                                       }
 
@@ -1904,6 +1948,68 @@ const Planning = () => {
                                     }}
                                     size="small"
                                     // Optionnel : Pour interdire l'affichage du spinner pour les nombres
+                                    sx={{
+                                      "& input": {
+                                        MozAppearance: "textfield", // Pour Firefox
+                                        textAlign: "center", // Centrer horizontalement
+                                      },
+                                      "& input::-webkit-outer-spin-button": {
+                                        WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                        margin: 0,
+                                      },
+                                      "& input::-webkit-inner-spin-button": {
+                                        WebkitAppearance: "none",
+                                        margin: 0,
+                                      },
+                                    }}
+                                  />
+                                </TableCell> */}
+
+                                <TableCell>
+                                  <TextField
+                                    name="discountAmount"
+                                    type="text" // Permet la saisie de caractères comme '%'
+                                    value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
+                                    onChange={(e) => {
+                                      let value = e.target.value.trim(); // Supprime les espaces inutiles
+                                      let formattedValue = value; // Conserve la saisie brute pour affichage
+
+                                      // Uniformise les décimales en remplaçant les virgules par des points
+                                      const normalizedValue = value.replace(
+                                        ",",
+                                        "."
+                                      );
+
+                                      // Réinitialisation des valeurs par défaut
+                                      detail.discountAmount = "";
+                                      detail.discountPercent = "";
+
+                                      if (normalizedValue.includes("%")) {
+                                        // Cas où l'utilisateur entre un pourcentage
+                                        const percentage = parseFloat(
+                                          normalizedValue.replace("%", "")
+                                        );
+                                        if (!isNaN(percentage)) {
+                                          detail.discountPercent = percentage; // Met à jour le pourcentage
+                                          detail.discountAmount = ""; // Réinitialise le montant
+                                        }
+                                      } else if (normalizedValue !== "") {
+                                        // Cas où l'utilisateur entre un montant
+                                        const amount =
+                                          parseFloat(normalizedValue);
+                                        if (!isNaN(amount)) {
+                                          detail.discountAmount = amount; // Met à jour le montant
+                                          detail.discountPercent = ""; // Réinitialise le pourcentage
+                                        }
+                                      }
+
+                                      // Met à jour l'état de l'inputValue avec la saisie brute
+                                      detail.inputValue = formattedValue;
+
+                                      // Appelle la fonction de gestion des changements
+                                      handleDetailChange(e, index);
+                                    }}
+                                    size="small"
                                     sx={{
                                       "& input": {
                                         MozAppearance: "textfield", // Pour Firefox

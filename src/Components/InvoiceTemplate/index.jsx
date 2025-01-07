@@ -5,6 +5,21 @@ import { Box, Modal, Typography } from "@mui/material";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   const { person, vehicule, date, title } = editedEvent;
+  const calculateLineTotal = (detail) => {
+    let discount = 0;
+
+    if (detail.discountPercent > 0) {
+      // Priorité au pourcentage
+      discount =
+        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
+    } else if (detail.discountAmount > 0) {
+      // Sinon, utilise le montant fixe
+      discount = detail.discountAmount;
+    }
+
+    // Calcul du total après remise
+    return detail.quantity * detail.unitPrice - discount;
+  };
   const invoiceData = {
     orderNumber: title ? title : "",
     companyInfo: {
@@ -43,34 +58,21 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
     })),
     totals: {
       // Total HT avec remises
-      totalHT: details.reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
-        const discountedPriceHT = Math.max(
-          0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
-        );
-        return acc + discountedPriceHT * item.quantity;
-      }, 0),
+      totalHT: details.reduce(
+        (sum, detail) => sum + calculateLineTotal(detail) / 1.2,
+        0
+      ),
       // TVA (20% du total HT avec remises)
-      tva: details.reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
-        const discountedPriceHT = Math.max(
-          0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
-        );
-        return acc + discountedPriceHT * item.quantity * 0.2;
-      }, 0),
+      tva: details.reduce(
+        (sum, detail) =>
+          sum + calculateLineTotal(detail) - calculateLineTotal(detail) / 1.2,
+        0
+      ),
       // Total TTC avec remises
-      totalTTC: details.reduce((acc, item) => {
-        const discountedPriceTTC = Math.max(
-          0,
-          item.unitPrice * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
-        );
-        return acc + discountedPriceTTC * item.quantity;
-      }, 0),
+      totalTTC: details.reduce(
+        (sum, detail) => sum + calculateLineTotal(detail),
+        0
+      ),
     },
     observations: `${editedEvent.details.workDescription}`,
   };
@@ -265,7 +267,11 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
                 text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
                 alignment: "right",
               },
-              `${item.discount} %`,
+              `${
+                item.discount > 0
+                  ? item.discount + "%"
+                  : item.discountAmount + "€"
+              }`,
             ]),
           ],
         },
@@ -492,7 +498,7 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
 
   return (
     <div>
-      <Button onClick={generatePdf} color="primary" variant="contained">
+      <Button onClick={handleOpenOr} color="primary" variant="contained">
         Facture
       </Button>
       <Modal

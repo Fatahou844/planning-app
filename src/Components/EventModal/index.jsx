@@ -245,21 +245,6 @@ function EventDialog({
     ]);
   };
 
-  const calculateTotalTTC = () => {
-    return details.reduce((total, detail) => {
-      const { quantity, unitPrice, discountAmount } = detail;
-      return total + (quantity * unitPrice - discountAmount);
-    }, 0);
-  };
-
-  const calculateTotalHT = (totalTTC) => {
-    return totalTTC / 1.2; // 20% VAT
-  };
-
-  const totalTTC = calculateTotalTTC();
-
-  const totalHT = calculateTotalHT(totalTTC);
-
   const [openOr, setOpenOr] = useState(false);
   const [openResa, setOpenResa] = useState(false);
   const [openDevis, setOpenDevis] = useState(false);
@@ -301,6 +286,27 @@ function EventDialog({
   const handleClose = () => {
     setNotification((prev) => ({ ...prev, open: false }));
   };
+
+  const calculateLineTotal = (detail) => {
+    let discount = 0;
+
+    if (detail.discountPercent > 0) {
+      // Priorité au pourcentage
+      discount =
+        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
+    } else if (detail.discountAmount > 0) {
+      // Sinon, utilise le montant fixe
+      discount = detail.discountAmount;
+    }
+
+    // Calcul du total après remise
+    return detail.quantity * detail.unitPrice - discount;
+  };
+  const totalTTC = details.reduce(
+    (sum, detail) => sum + calculateLineTotal(detail),
+    0
+  );
+  const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
 
   return (
     <Dialog
@@ -545,6 +551,9 @@ function EventDialog({
                   {/* <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                     Remise en %
                   </TableCell> */}
+                  <TableCell style={{ width: "10%", textAlign: "center" }}>
+                    Total
+                  </TableCell>
                   <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                     Actions
                   </TableCell>
@@ -687,7 +696,9 @@ function EventDialog({
                         }}
                       />
                     </TableCell>
-
+                    <TableCell style={{ textAlign: "center" }}>
+                      {calculateLineTotal(detail).toFixed(2)}
+                    </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>
                       <Button onClick={() => removeDetailRow(index)}>
                         Supprimer
