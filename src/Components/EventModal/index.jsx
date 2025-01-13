@@ -198,6 +198,51 @@ function EventDialog({
     }
   };
 
+  const handleDelete = async (eventId) => {
+    try {
+      if (!eventId) {
+        console.warn("Aucun ID d'événement fourni pour la suppression.");
+        return;
+      }
+
+      // Référence au document principal de l'événement
+      const eventDocRef = doc(db, "events", eventId);
+
+      // Référence à la sous-collection "details"
+      const detailsCollectionRef = collection(eventDocRef, "details");
+
+      // Récupérer tous les documents de la sous-collection "details"
+      const detailsSnapshot = await getDocs(detailsCollectionRef);
+
+      // Supprimer chaque document de la sous-collection "details"
+      const deleteDetailsPromises = detailsSnapshot.docs.map((detailDoc) =>
+        deleteDoc(detailDoc.ref)
+      );
+      await Promise.all(deleteDetailsPromises);
+
+      // Supprimer le document principal de l'événement
+      await deleteDoc(eventDocRef);
+
+      console.log(
+        `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`
+      );
+      setNotification({
+        open: true,
+        message: "l'OR " + editedEvent.title + " a été supprimé",
+        severity: "success", // Peut être "error", "warning", "info"
+      });
+
+      handleCloseOrSup();
+      handleCloseOr();
+
+      if (onEventTriggered) {
+        onEventTriggered(); // Notifie le parent (si nécessaire)
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'événement :", error);
+    }
+  };
+
   const handleDetailChange = (index, field, value) => {
     const updatedDetails = [...details];
     updatedDetails[index][field] = value;
@@ -246,26 +291,28 @@ function EventDialog({
   };
 
   const [openOr, setOpenOr] = useState(false);
-  const [openResa, setOpenResa] = useState(false);
-  const [openDevis, setOpenDevis] = useState(false);
-  const [openFacture, setOpenFacture] = useState(false);
+
+  const [openOrSup, setOpenOrSup] = useState(false);
 
   // Fonction pour ouvrir le modal
   const handleOpenOr = () => setOpenOr(true);
-  const handleOpenResa = () => setOpenResa(true);
-  const handleOpenDevis = () => setOpenDevis(true);
-  const handleOpenFacture = () => setOpenFacture(true);
 
   // Fonction pour fermer le modal
   const handleCloseOr = () => setOpenOr(false);
-  const handleCloseResa = () => setOpenResa(false);
-  const handleCloseDevis = () => setOpenDevis(false);
-  const handleCloseFacture = () => setOpenFacture(false);
+
+  const handleOpenOrSup = () => setOpenOrSup(true);
+  const handleCloseOrSup = () => setOpenOrSup(false);
 
   // Fonction pour confirmer l'action
   const handleConfirmOr = () => {
     handleSave(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    handleOpen();
+  };
+
+  const handleConfirmOrSup = () => {
+    handleDelete(editedEvent.id); // Appel de la fonction addEvent
+    handleCloseOrSup(); // Fermer le modal
     handleOpen();
   };
 
@@ -278,13 +325,10 @@ function EventDialog({
   const handleOpen = () => {
     setNotification({
       open: true,
-      message: "Ordre de Réparation modifié avec succès !",
+      message: "Ordre de Réparation " + editedEvent.title + " modifié !",
       severity: "success", // Peut être "error", "warning", "info"
     });
-  };
-
-  const handleClose = () => {
-    setNotification((prev) => ({ ...prev, open: false }));
+    handleShowPopup();
   };
 
   const calculateLineTotal = (detail) => {
@@ -308,6 +352,17 @@ function EventDialog({
   );
   const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
 
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleShowPopup = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    console.log("fermeture du popup");
+  };
+
   return (
     <Dialog
       open={open}
@@ -319,12 +374,12 @@ function EventDialog({
         },
       }}
     >
-      <Notification
-        open={notification.open}
-        message={notification.message}
-        severity={notification.severity}
-        handleClose={handleClose}
-      />
+      {showPopup && (
+        <Notification
+          message={notification.message}
+          handleClose={handleClosePopup}
+        />
+      )}
       <DialogTitle>Modifier l'Ordre de Réparation</DialogTitle>
       {editedEvent && (
         <DialogContent>
@@ -935,9 +990,64 @@ function EventDialog({
         <Button onClick={onClose} color="primary">
           Annuler
         </Button>{" "}
-        <Button onClick={onClose} color="secondary">
+        <Button onClick={handleOpenOrSup} color="secondary">
           Supprimer
         </Button>{" "}
+        <Modal
+          open={openOrSup}
+          onClose={handleCloseOrSup}
+          aria-labelledby="confirmation-modal-title"
+          aria-describedby="confirmation-modal-description"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "background.paper",
+              border: "2px solid #000",
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              id="confirmation-modal-title"
+              variant="h6"
+              component="h2"
+            >
+              Confirmation
+            </Typography>
+            <Typography
+              id="confirmation-modal-description"
+              sx={{ mt: 2, mb: 4 }}
+            >
+              Voulez-vous supprimer l'OR ?
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleCloseOrSup}
+              >
+                Non
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleConfirmOrSup}
+              >
+                Oui
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
         <Button onClick={handleOpenOr} color="primary" variant="contained">
           Modifier
         </Button>
@@ -1001,6 +1111,7 @@ function EventDialog({
           editedEvent={editedEvent}
           details={details}
           onInvoiceExecuted={handleChildInvoice}
+          categories={categories}
         />{" "}
       </DialogActions>
     </Dialog>

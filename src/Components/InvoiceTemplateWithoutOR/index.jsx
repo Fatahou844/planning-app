@@ -5,8 +5,25 @@ import { Box, Modal, Typography } from "@mui/material";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
+  const { person, vehicule, date, title } = NewEvent;
+
+  const calculateLineTotal = (detail) => {
+    let discount = 0;
+
+    if (detail.discountPercent > 0) {
+      // Priorité au pourcentage
+      discount =
+        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
+    } else if (detail.discountAmount > 0) {
+      // Sinon, utilise le montant fixe
+      discount = detail.discountAmount;
+    }
+
+    // Calcul du total après remise
+    return detail.quantity * detail.unitPrice - discount;
+  };
   const invoiceData = {
-    orderNumber: NewEvent.title ? NewEvent.title : "",
+    orderNumber: title ? title : "",
     companyInfo: {
       name: "Garage XYZ",
       address: "123 Rue Exemple, Casablanca",
@@ -14,23 +31,24 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
       email: "contact@garagexyz.com",
     },
     vehicle: {
-      model: NewEvent.model ? NewEvent.model : "",
+      model: vehicule?.model ? vehicule.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: NewEvent.vin ? NewEvent.vin : "",
-      km: NewEvent.kms ? NewEvent.kms : "",
-      color: NewEvent.color ? NewEvent.color : "",
-      licensePlate: NewEvent.licensePlate ? NewEvent.licensePlate : "",
+      vin: vehicule?.vin ? vehicule.vin : "",
+      km: vehicule?.kms ? vehicule.kms : "",
+      color: vehicule?.color ? vehicule.color : "",
+      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
     },
     client: {
-      name: `${NewEvent.firstName ? NewEvent.firstName : ""} ${
-        NewEvent.lastName ? NewEvent.lastName : ""
+      name: `${person?.firstName ? person.firstName : ""} ${
+        person?.lastName ? person.lastName : ""
       }`,
-      adresse: `${NewEvent.adresse ? NewEvent.adresse : ""} ${
-        NewEvent.postale ? NewEvent.postale : ""
+      adresse: `${person?.adresse ? person?.adresse : ""} ${
+        person?.postale ? person.postale : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: NewEvent.phone ? NewEvent.phone : "",
-      email: NewEvent.email ? NewEvent.email : "",
-      ville: NewEvent?.ville ? NewEvent.ville : "",
+      phone: person?.phone ? person.phone : "",
+      email: person?.email ? person.email : "",
+      rdv: date ? date : "", // Date de l'événement (le RDV)
+      ville: person?.ville ? person?.ville : "",
     },
     items: details.map((item) => ({
       description: item.label,
@@ -61,21 +79,6 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
     observations: `${NewEvent.details.workDescription}`,
   };
 
-  const calculateLineTotal = (detail) => {
-    let discount = 0;
-
-    if (detail.discountPercent > 0) {
-      // Priorité au pourcentage
-      discount =
-        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
-      // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
-    }
-
-    // Calcul du total après remise
-    return detail.quantity * detail.unitPrice - discount;
-  };
   const documentDefinition = {
     content: [
       // Header avec numéro de facture et date
@@ -255,8 +258,8 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
             ],
             ...invoiceData.items.map((item) => [
               item.description,
-              `${item.unitPriceHT} €`,
-              `${item.unitPriceTTC} €`,
+              `${item.unitPriceHT.toFixed(2)} €`,
+              `${item.unitPriceTTC.toFixed(2)} €`,
               item.quantity,
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,

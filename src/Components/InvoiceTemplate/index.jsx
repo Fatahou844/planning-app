@@ -1,10 +1,29 @@
 import { Button } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Box, Modal, Typography } from "@mui/material";
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  writeBatch,
+} from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "../../hooks/firebaseConfig";
+import DocumentModal from "../DocumentModal";
+import Notification from "../Notification";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
-const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
+
+const InvoiceTemplate = ({
+  editedEvent,
+  categories,
+  details,
+  onInvoiceExecuted,
+}) => {
   const { person, vehicule, date, title } = editedEvent;
+  const [user] = useAuthState(auth);
+
   const calculateLineTotal = (detail) => {
     let discount = 0;
 
@@ -483,21 +502,296 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }
   }
+
+  const [facture, setFacture] = useState(null);
+  const [factureId, setFactureId] = useState(null);
+
   // Générer le PDF
   const [openOr, setOpenOr] = useState(false);
 
   const handleOpenOr = () => setOpenOr(true);
 
   const handleCloseOr = () => setOpenOr(false);
+  const addSingleReservation = async (
+    event,
+    newOrderNumber,
+    collectionName,
+    isClosed
+  ) => {
+    try {
+      const eventRef = doc(collection(db, collectionName)); // Crée une référence à un nouveau document
 
-  // Fonction pour confirmer l'action
+      await setDoc(eventRef, {
+        eventId: eventRef.id,
+        title: newOrderNumber, // Utilise le numéro de commande fourni
+        date: event.date,
+        person: {
+          firstName: event.person.firstName,
+          lastName: event.person.lastName,
+          email: event.person.email,
+          phone: event.person.phone,
+          adresse: event.person.adresse ? event.person.adresse : "",
+          postale: event.person.postale ? event.person.postale : "",
+          ville: event.person.ville ? event.person.ville : "",
+        },
+        vehicule: {
+          licensePlate: event.vehicule.licensePlate
+            ? event.vehicule.licensePlate
+            : "",
+          vin: event.vehicule.vin ? event.vehicule.vin : "",
+          color: event.vehicule.color ? event.vehicule.color : "",
+          model: event.vehicule.model ? event.vehicule.model : "",
+          kms: event.vehicule.kms ? event.vehicule.kms : "",
+          controletech: event.vehicule.controletech
+            ? event.vehicule.controletech
+            : "",
+        },
+        details: {
+          workDescription: event.details.workDescription
+            ? event.workDescription
+            : "",
+          price: event.details.price ? event.details.price : "",
+        },
+        isClosed: isClosed,
+        userId: event.userId, // UID de l'utilisateur
+        ordreReparation: editedEvent.id ? editedEvent.id : "",
+      });
+
+      console.log("eventRef", event);
+
+      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+      await updateLastOrderNumberForUser(
+        event.userId,
+        parseInt(newOrderNumber)
+      );
+      return eventRef; // Retourner la référence du document
+    } catch (error) {
+      console.error("Error adding event: ", error);
+    }
+  };
+
+  const addEventDetailsGeneric = async (eventId, details, collectionName) => {
+    try {
+      const batch = writeBatch(db); // Crée un batch pour les opérations
+
+      // Référence directe au document de l'événement avec l'ID existant
+      const eventRef = doc(db, collectionName, eventId);
+
+      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      console.log("##############lidDetails####################", validDetails);
+
+      // Si aucun détail valide, on sort sans erreur
+      if (validDetails.length === 0) {
+        console.log("Aucun détail valide à enregistrer.");
+        return;
+      }
+
+      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      for (const detail of validDetails) {
+        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
+        batch.set(detailRef, {
+          label: detail.label || "",
+          quantity: detail.quantity || 0,
+          unitPrice: detail.unitPrice || 0,
+          discountPercent: detail.discountPercent || 0,
+          discountAmount: detail.discountAmount || 0,
+        });
+      }
+
+      // Engager toutes les écritures dans le batch
+      await batch.commit();
+
+      console.log("Détails ajoutés avec succès à l'événement");
+    } catch (error) {
+      console.error(
+        "Erreur lors de l'ajout des détails à l'événement : ",
+        error
+      );
+    }
+  };
+
+  const getLastOrderNumberForUser = async (userId) => {
+    const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return docSnap.data().lastOrderNumber; // Récupère le dernier numéro
+    } else {
+      // Si le document n'existe pas encore, on commence à 00000 pour cet utilisateur
+      return 0;
+    }
+  };
+
+  // Fonction pour mettre à jour le dernier numéro de commande pour un userId
+  const updateLastOrderNumberForUser = async (userId, newOrderNumber) => {
+    const docRef = doc(db, "userOrderNumbers", userId); // Document unique par userId
+    await setDoc(docRef, { lastOrderNumber: newOrderNumber, userId: userId }); // Met à jour ou crée le document
+  };
+
+  // Fonction pour générer un numéro de commande formaté à 5 chiffres
+  const generateOrderNumber = (lastOrderNumber) => {
+    const newOrderNumber = lastOrderNumber + 1;
+    return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
+  };
+
+  const addFacture = async () => {
+    // Ajout du paramètre isMultiDay
+    if (!user) {
+      console.error("User not authenticated");
+      return; // Sortir si l'utilisateur n'est pas connecté
+    }
+
+    const userId = user.uid; // UID de l'utilisateur connecté
+
+    // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
+    const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+
+    // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
+    const singleResa = {
+      ...editedEvent,
+      userId: userId,
+      title: newOrderNumber, // Utiliser le numéro de commande
+      nextDay: false,
+    };
+    const singleResaDocRef = await addSingleReservation(
+      singleResa,
+      newOrderNumber,
+      "factures",
+      true
+    ); // Ajout à Firestore
+    const validDetails = details.filter((detail) => {
+      return (
+        detail.label?.trim() ||
+        detail.quantity?.toString().trim() ||
+        detail.unitPrice?.toString().trim() ||
+        detail.discountPercent?.toString().trim() ||
+        detail.discountAmount?.toString().trim()
+      );
+    });
+
+    console.log("singleResaDocRef", singleResaDocRef);
+
+    if (validDetails.length)
+      await addEventDetailsGeneric(singleResaDocRef.id, details, "factures"); // Enregistrer les détails
+
+    // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
+    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+    setNotification({
+      open: true,
+      message: "Facture " + newOrderNumber + " crée",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    // Récupérer la facture depuis Firestore
+    if (singleResaDocRef) {
+      const fact = await getFactureById(singleResaDocRef.id, "factures");
+      setFacture(fact);
+    }
+
+    console.log("Facture récupérée :", facture);
+  };
+
+  // const getFactureById = async (factureId, collectionName) => {
+  //   console.log("factureId", factureId);
+  //   if (!collectionName || !factureId) {
+  //     console.error("Paramètres manquants :", { collectionName, factureId });
+  //     throw new Error(
+  //       "Veuillez fournir un ID de facture valide et un nom de collection."
+  //     );
+  //   }
+  //   const docRef = collection(db, collectionName).doc(factureId);
+  //   const doc = await docRef.get();
+  //   if (doc.exists) {
+  //     return { id: doc.id, ...doc.data() };
+  //   } else {
+  //     throw new Error("Facture introuvable !");
+  //   }
+  // };
+
+  const getFactureById = async (factureId, collectionName) => {
+    if (!collectionName) {
+      throw new Error("Nom de la collection non fourni !");
+    }
+
+    if (!factureId) {
+      throw new Error("ID de la facture non fourni !");
+    }
+
+    try {
+      // Créer une référence au document
+      const docRef = doc(collection(db, collectionName), factureId);
+
+      // Récupérer les données du document
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setModalOpen2(true);
+        return { id: docSnap.id, ...docSnap.data() };
+      } else {
+        throw new Error("Facture introuvable !");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la facture :", error);
+      throw error;
+    }
+  };
+  // // Fonction pour confirmer l'action
   const handleConfirmOr = () => {
-    generatePdf(); // Appel de la fonction addEvent
+    // generatePdf(); // Appel de la fonction addEvent
+    addFacture();
+    handleShowPopup();
     handleCloseOr(); // Fermer le modal
+  };
+
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleShowPopup = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    console.log("fermeture du popup");
+  };
+
+  useEffect(() => {
+    setFacture(facture);
+  }, [facture]);
+  const [modalOpen2, setModalOpen2] = useState(false);
+
+  const handleModalClose2 = () => {
+    setModalOpen2(false);
+    console.log("modalOpen2", modalOpen2);
+  };
+
+  const handleEditedEventChange = (updatedEvent) => {
+    setFacture(updatedEvent);
   };
 
   return (
     <div>
+      {showPopup && (
+        <Notification
+          message={notification.message}
+          handleClose={handleClosePopup}
+        />
+      )}
       <Button onClick={handleOpenOr} color="primary" variant="contained">
         Facture
       </Button>
@@ -520,11 +814,8 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
             borderRadius: 2,
           }}
         >
-          <Typography id="confirmation-modal-title" variant="h6" component="h2">
-            Confirmation
-          </Typography>
           <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
-            Voulez vous imprimer cette facture?
+            Voulez vous créer une facture?
           </Typography>
           <Box
             sx={{
@@ -549,6 +840,16 @@ const InvoiceTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
           </Box>
         </Box>
       </Modal>
+      {facture && (
+        <DocumentModal
+          open={modalOpen2}
+          onClose={handleModalClose2}
+          editedEvent={facture}
+          setEditedEvent={handleEditedEventChange}
+          collectionName={"factures"}
+          categories={categories}
+        />
+      )}
     </div>
   );
 };

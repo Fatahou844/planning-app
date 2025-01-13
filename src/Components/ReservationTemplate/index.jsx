@@ -79,7 +79,11 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
         0
       ),
     },
-    observations: `${editedEvent.details.workDescription}`,
+    observations: `${
+      editedEvent?.details?.workDescription
+        ? editedEvent?.details?.workDescription
+        : ""
+    }`,
   };
 
   const documentDefinition = {

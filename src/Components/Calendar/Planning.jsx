@@ -432,6 +432,7 @@ const Planning = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant
+    handleOpenNotif("OR");
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
@@ -483,6 +484,7 @@ const Planning = () => {
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
     await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
     handleOpenNotif("réservation");
+    setCollectName("reservations");
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
@@ -600,8 +602,6 @@ const Planning = () => {
         );
       });
 
-      console.log("##############lidDetails####################", validDetails);
-
       // Si aucun détail valide, on sort sans erreur
       if (validDetails.length === 0) {
         console.log("Aucun détail valide à enregistrer.");
@@ -622,7 +622,6 @@ const Planning = () => {
 
       // Engager toutes les écritures dans le batch
       await batch.commit();
-      handleOpenNotif();
 
       console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
@@ -899,6 +898,7 @@ const Planning = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [dataEventsAll, setDataEventsAll] = useState([]);
+  const [collectName, setCollectName] = useState("");
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -1282,6 +1282,25 @@ const Planning = () => {
           error
         );
       }
+      if (selectedEvent) {
+        const fetchDetails = async () => {
+          try {
+            const eventDocRef = doc(db, "events", selectedEvent.id);
+            // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+            selectedEvent.isClosed = true;
+            await updateDoc(eventDocRef, selectedEvent);
+
+            console.log("ORDRE");
+          } catch (error) {
+            console.error(
+              "Erreur lors de la récupération des détails :",
+              error
+            );
+          }
+        };
+
+        fetchDetails();
+      }
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
@@ -1353,14 +1372,28 @@ const Planning = () => {
   const handleOpenNotif = (collectionName) => {
     setNotification({
       open: true,
-      message: "Votre " + collectionName + " a été crée avec succès !",
+      message: "Votre " + collectionName + " a été crée",
       severity: "success", // Peut être "error", "warning", "info"
     });
+    if (collectionName === "reservation") {
+      setCollectName("reservations");
+    } else {
+      setCollectName("");
+    }
+    handleShowPopup();
   };
 
-  const handleCloseNotif = () => {
-    setNotification((prev) => ({ ...prev, open: false }));
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleShowPopup = () => {
+    setShowPopup(true);
   };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    console.log("fermeture du popup");
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1375,12 +1408,15 @@ const Planning = () => {
           width: "100%",
         }}
       >
-        <Notification
-          open={notification.open}
-          message={notification.message}
-          severity={notification.severity}
-          handleClose={handleCloseNotif}
-        />
+        {showPopup && (
+          <Notification
+            message={notification.message}
+            handleClose={handleClosePopup}
+            collectionName={collectName}
+            dataEvent={selectedEvent}
+            dataDetails={details}
+          />
+        )}
         {/* Header Section */}
         <Box
           sx={{
@@ -2374,17 +2410,10 @@ const Planning = () => {
                           }}
                         >
                           <Typography
-                            id="confirmation-modal-title"
-                            variant="h6"
-                            component="h2"
-                          >
-                            Confirmation
-                          </Typography>
-                          <Typography
                             id="confirmation-modal-description"
                             sx={{ mt: 2, mb: 4 }}
                           >
-                            Voulez vous créer un OR ?
+                            Voulez-vous créer un OR ?
                           </Typography>
                           <Box
                             sx={{
@@ -2438,17 +2467,10 @@ const Planning = () => {
                           }}
                         >
                           <Typography
-                            id="confirmation-modal-title"
-                            variant="h6"
-                            component="h2"
-                          >
-                            Confirmation
-                          </Typography>
-                          <Typography
                             id="confirmation-modal-description"
                             sx={{ mt: 2, mb: 4 }}
                           >
-                            Voulez vous créer une réservation ?
+                            Voulez-vous créer une réservation ?
                           </Typography>
                           <Box
                             sx={{
@@ -2502,17 +2524,10 @@ const Planning = () => {
                           }}
                         >
                           <Typography
-                            id="confirmation-modal-title"
-                            variant="h6"
-                            component="h2"
-                          >
-                            Confirmation
-                          </Typography>
-                          <Typography
                             id="confirmation-modal-description"
                             sx={{ mt: 2, mb: 4 }}
                           >
-                            Voulez vous créer un devis ?
+                            Voulez-vous créer un devis ?
                           </Typography>
                           <Box
                             sx={{
@@ -2567,17 +2582,10 @@ const Planning = () => {
                           }}
                         >
                           <Typography
-                            id="confirmation-modal-title"
-                            variant="h6"
-                            component="h2"
-                          >
-                            Confirmation
-                          </Typography>
-                          <Typography
                             id="confirmation-modal-description"
                             sx={{ mt: 2, mb: 4 }}
                           >
-                            Voulez vous créer une facture ?
+                            Voulez-vous créer une facture ?
                           </Typography>
                           <Box
                             sx={{

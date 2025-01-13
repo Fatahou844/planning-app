@@ -33,6 +33,7 @@ import { auth, db } from "../../hooks/firebaseConfig";
 import AddOrdreReparationModal from "../AddOrdreReparationModal";
 import DevisTemplate from "../DevisTemplate";
 import InvoiceTemplate from "../InvoiceTemplate";
+import InvoiceTemplateWithoutOR from "../InvoiceTemplateWithoutOR";
 import Notification from "../Notification";
 import ReservationTemplate from "../ReservationTemplate";
 
@@ -56,6 +57,12 @@ function DocumentModal({
   const handleChildInvoice = () => {
     console.log("Une action a été exécutée dans le composant fils !");
     setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
+
+    if (onEventTriggered) {
+      onEventTriggered();
+    }
+
+    handleEventFromChild();
   };
 
   const formatDate = (date) => {
@@ -374,9 +381,10 @@ function DocumentModal({
   const handleOpen = () => {
     setNotification({
       open: true,
-      message: "Modification effectué avec succès !",
+      message: "Modification" + editedEvent.title + " effectué",
       severity: "success", // Peut être "error", "warning", "info"
     });
+    handleShowPopup();
   };
 
   const handleClose = () => {
@@ -418,7 +426,32 @@ function DocumentModal({
       }
     };
 
+    const fetchDetails = async () => {
+      try {
+        const eventDocRef = doc(db, "events", editedEvent.ordreReparation);
+        // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+        editedEvent.isClosed = true;
+        await updateDoc(eventDocRef, editedEvent);
+        window.location.href = "/planning/categories";
+      } catch (error) {
+        console.error("Erreur lors de la récupération des détails :", error);
+      }
+    };
+
+    fetchDetails();
+
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+  };
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleShowPopup = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    console.log("fermeture du popup");
   };
 
   return (
@@ -433,12 +466,12 @@ function DocumentModal({
           },
         }}
       >
-        <Notification
-          open={notification.open}
-          message={notification.message}
-          severity={notification.severity}
-          handleClose={handleClose}
-        />
+        {showPopup && (
+          <Notification
+            message={notification.message}
+            handleClose={handleClosePopup}
+          />
+        )}
         <DialogTitle>Modification {collectName}</DialogTitle>
         {editedEvent && (
           <DialogContent>
@@ -969,6 +1002,7 @@ function DocumentModal({
                 editedEvent={editedEvent}
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
+                categories={categories}
               />{" "}
               <Button
                 onClick={handleOpenCreerOr}
@@ -1017,6 +1051,7 @@ function DocumentModal({
                 editedEvent={editedEvent}
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
+                categories={categories}
               />{" "}
             </>
           )}
@@ -1032,8 +1067,8 @@ function DocumentModal({
               >
                 Modifier
               </Button>
-              <InvoiceTemplate
-                editedEvent={editedEvent}
+              <InvoiceTemplateWithoutOR
+                NewEvent={editedEvent}
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
               />{" "}
