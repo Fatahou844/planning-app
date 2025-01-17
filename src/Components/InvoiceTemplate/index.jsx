@@ -275,8 +275,8 @@ const InvoiceTemplate = ({
             ],
             ...invoiceData.items.map((item) => [
               item.description,
-              `${item.unitPriceHT.toFixed(2)} €`,
-              `${item.unitPriceTTC.toFixed(2)} €`,
+              `${item.unitPriceHT?.toFixed(2)} €`,
+              `${item.unitPriceTTC?.toFixed(2)} €`,
               item.quantity,
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
@@ -548,7 +548,7 @@ const InvoiceTemplate = ({
         },
         details: {
           workDescription: event.details.workDescription
-            ? event.workDescription
+            ? event.details.workDescription
             : "",
           price: event.details.price ? event.details.price : "",
         },
@@ -786,10 +786,13 @@ const InvoiceTemplate = ({
 
   return (
     <div>
-      {showPopup && (
+      {showPopup && facture && (
         <Notification
           message={notification.message}
           handleClose={handleClosePopup}
+          collectionName="factures"
+          dataEvent={facture}
+          dataDetails={details}
         />
       )}
       <Button onClick={handleOpenOr} color="primary" variant="contained">

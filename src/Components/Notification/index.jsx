@@ -1,4 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
+import DevisTemplate from "../DevisTemplate";
+import InvoiceTemplateWithoutOR from "../InvoiceTemplateWithoutOR";
+import OrdreReparationTemplate from "../OrdreReparationTemplate";
 import ReservationTemplate from "../ReservationTemplate";
 // Styles simples
 const styles = {
@@ -22,13 +25,26 @@ const styles = {
     textAlign: "center",
     minWidth: "300px",
   },
+
+  buttonContainer: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "20px",
+  },
   closeButton: {
-    marginTop: "10px",
-    padding: "5px 10px",
-    backgroundColor: "#007BFF",
+    backgroundColor: "#f44336",
     color: "#fff",
     border: "none",
-    borderRadius: "4px",
+    padding: "10px 20px",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  printButton: {
+    backgroundColor: "#4CAF50",
+    color: "#fff",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "5px",
     cursor: "pointer",
   },
 };
@@ -40,34 +56,79 @@ const Notification = ({
   collectionName,
   autoCloseDelay = 10000,
 }) => {
-  useEffect(() => {
-    // Fermer automatiquement la popup après `autoCloseDelay` millisecondes
-    const timer = setTimeout(() => {
-      handleClose();
-    }, autoCloseDelay);
-    console.log("collectionName", collectionName);
-    // Nettoyer le timer lorsqu'on démonte le composant
-    return () => clearTimeout(timer);
-  }, [handleClose, autoCloseDelay]);
+  // useEffect(() => {
+  //   // Fermer automatiquement la popup après `autoCloseDelay` millisecondes
+  //   const timer = setTimeout(() => {
+  //     handleClose();
+  //   }, autoCloseDelay);
+  //   console.log("collectionName", collectionName);
+  //   // Nettoyer le timer lorsqu'on démonte le composant
+  //   return () => clearTimeout(timer);
+  // }, [handleClose, autoCloseDelay]);
 
   return (
     <div style={styles.overlay}>
       <div style={styles.popup}>
-        <p>{message}</p>
-        {collectionName !== "reservations" && (
-          <button style={styles.closeButton} onClick={handleClose}>
-            Fermer
-          </button>
+        <p>{message}. Voulez-vous l'imprimer?</p>
+
+        {collectionName === "events" && (
+          <>
+            <div style={styles.buttonContainer}>
+              <button style={styles.closeButton} onClick={handleClose}>
+                Non
+              </button>
+              <button style={styles.printButton}>
+                <OrdreReparationTemplate
+                  editedEvent={dataEvent}
+                  details={dataDetails}
+                />
+              </button>
+            </div>
+          </>
         )}
+
         {collectionName === "reservations" && (
           <>
-            <button style={styles.closeButton} onClick={handleClose}>
-              Non
-            </button>
-            <ReservationTemplate
-              editedEvent={dataEvent}
-              details={dataDetails}
-            />{" "}
+            <div style={styles.buttonContainer}>
+              <button style={styles.closeButton} onClick={handleClose}>
+                Non
+              </button>
+              <button style={styles.printButton}>
+                <ReservationTemplate
+                  editedEvent={dataEvent}
+                  details={dataDetails}
+                />
+              </button>
+            </div>
+          </>
+        )}
+
+        {collectionName === "factures" && (
+          <>
+            <div style={styles.buttonContainer}>
+              <button style={styles.closeButton} onClick={handleClose}>
+                Non
+              </button>
+              <button style={styles.printButton}>
+                <InvoiceTemplateWithoutOR
+                  NewEvent={dataEvent}
+                  details={dataDetails}
+                />
+              </button>
+            </div>
+          </>
+        )}
+
+        {collectionName === "devis" && (
+          <>
+            <div style={styles.buttonContainer}>
+              <button style={styles.closeButton} onClick={handleClose}>
+                Non
+              </button>
+              <button style={styles.printButton}>
+                <DevisTemplate editedEvent={dataEvent} details={dataDetails} />
+              </button>
+            </div>
           </>
         )}
       </div>

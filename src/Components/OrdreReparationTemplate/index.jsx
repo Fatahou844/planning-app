@@ -104,7 +104,11 @@ const OrdreReparationTemplate = ({
         return acc + discountedPriceTTC * item.quantity;
       }, 0),
     },
-    observations: `${editedEvent.details.workDescription}`,
+    observations: `${
+      editedEvent?.details?.workDescription
+        ? editedEvent?.details?.workDescription
+        : ""
+    }`,
   };
 
   const documentDefinition = {
@@ -286,8 +290,8 @@ const OrdreReparationTemplate = ({
             ],
             ...invoiceData.items.map((item) => [
               item.description,
-              `${item.unitPriceHT.toFixed(2)} €`,
-              `${item.unitPriceTTC.toFixed(2)} €`,
+              `${item.unitPriceHT?.toFixed(2)} €`,
+              `${item.unitPriceTTC?.toFixed(2)} €`,
               item.quantity,
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,

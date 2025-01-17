@@ -364,757 +364,767 @@ function EventDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        style: {
-          width: "1200px",
-          maxWidth: "none",
-        },
-      }}
-    >
+    <>
       {showPopup && (
         <Notification
           message={notification.message}
           handleClose={handleClosePopup}
+          collectionName="events"
+          dataEvent={editedEvent}
+          dataDetails={details}
         />
       )}
-      <DialogTitle>Modifier l'Ordre de Réparation</DialogTitle>
-      {editedEvent && (
-        <DialogContent>
-          <Grid container spacing={2}>
-            {/* Informations Client */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                margin="dense"
-                name="title"
-                label="O.R"
-                type="text"
-                fullWidth
-                value={editedEvent.title || ""}
-                onChange={handleChange}
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-                disabled
-              />
-              {/* Autres champs d'informations client */}
-              <TextField
-                label="Nom"
-                name="person.lastName"
-                value={editedEvent.person?.lastName || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Prénom"
-                name="person.firstName"
-                value={editedEvent.person?.firstName || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Téléphone"
-                name="person.phone"
-                value={editedEvent.person?.phone || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Email"
-                name="person.email"
-                value={editedEvent.person?.email || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Adresse locale"
-                name="person.adresse"
-                value={editedEvent.person?.adresse || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Code postale"
-                name="person.postale"
-                value={editedEvent.person?.postale || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Ville"
-                name="person.ville"
-                value={editedEvent.person?.ville || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
+      <Dialog
+        open={open}
+        onClose={onClose}
+        PaperProps={{
+          style: {
+            width: "1200px",
+            maxWidth: "none",
+          },
+        }}
+      >
+        <DialogTitle>Modifier l'Ordre de Réparation</DialogTitle>
+        {editedEvent && (
+          <DialogContent>
+            <Grid container spacing={2}>
+              {/* Informations Client */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  margin="dense"
+                  name="title"
+                  label="O.R"
+                  type="text"
+                  fullWidth
+                  value={editedEvent.title || ""}
+                  onChange={handleChange}
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                  disabled
+                />
+                {/* Autres champs d'informations client */}
+                <TextField
+                  label="Nom"
+                  name="person.lastName"
+                  value={editedEvent.person?.lastName || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Prénom"
+                  name="person.firstName"
+                  value={editedEvent.person?.firstName || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Téléphone"
+                  name="person.phone"
+                  value={editedEvent.person?.phone || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Email"
+                  name="person.email"
+                  value={editedEvent.person?.email || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Adresse locale"
+                  name="person.adresse"
+                  value={editedEvent.person?.adresse || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Code postale"
+                  name="person.postale"
+                  value={editedEvent.person?.postale || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Ville"
+                  name="person.ville"
+                  value={editedEvent.person?.ville || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+              </Grid>
+
+              {/* Informations Véhicule */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  margin="dense"
+                  name="vehicule.licensePlate"
+                  label="Immatriculation"
+                  type="text"
+                  fullWidth
+                  value={editedEvent.vehicule?.licensePlate || ""}
+                  onChange={handleChange}
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="VIN"
+                  name="vehicule.vin"
+                  value={editedEvent.vehicule?.vin || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Modèle"
+                  name="vehicule.model"
+                  value={editedEvent.vehicule?.model || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="Couleur"
+                  name="vehicule.color"
+                  value={editedEvent.vehicule?.color || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  label="kilométrage"
+                  name="vehicule.kms"
+                  value={editedEvent.vehicule?.kms || ""}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  name="vehicule.controletech"
+                  value={editedEvent.vehicule?.controletech || ""}
+                  type="date"
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  size="small"
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+              </Grid>
             </Grid>
 
-            {/* Informations Véhicule */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                margin="dense"
-                name="vehicule.licensePlate"
-                label="Immatriculation"
-                type="text"
-                fullWidth
-                value={editedEvent.vehicule?.licensePlate || ""}
-                onChange={handleChange}
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="VIN"
-                name="vehicule.vin"
-                value={editedEvent.vehicule?.vin || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Modèle"
-                name="vehicule.model"
-                value={editedEvent.vehicule?.model || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="Couleur"
-                name="vehicule.color"
-                value={editedEvent.vehicule?.color || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                label="kilométrage"
-                name="vehicule.kms"
-                value={editedEvent.vehicule?.kms || ""}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                name="vehicule.controletech"
-                value={editedEvent.vehicule?.controletech || ""}
-                type="date"
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                size="small"
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-            </Grid>
-          </Grid>
-
-          {/* Table pour afficher les détails */}
-          <TableContainer component={Paper} sx={{ marginTop: 2 }}>
-            <Table size="small" aria-label="Event Details Table">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontSize: "0.8rem", width: "40%" }}>
-                    Label
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
-                    Quantité
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
-                    Prix Unitaire
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
-                    Remise
-                  </TableCell>
-                  {/* <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+            {/* Table pour afficher les détails */}
+            <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+              <Table size="small" aria-label="Event Details Table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "40%" }}>
+                      Label
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                      Quantité
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
+                      Prix Unitaire
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
+                      Remise
+                    </TableCell>
+                    {/* <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                     Remise en %
                   </TableCell> */}
-                  <TableCell style={{ width: "10%", textAlign: "center" }}>
-                    Total
-                  </TableCell>
-                  <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {details.map((detail, index) => (
-                  <TableRow key={detail.id}>
-                    <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <TextField
-                        value={detail.label}
-                        onChange={(e) =>
-                          handleDetailChange(index, "label", e.target.value)
-                        }
-                        size="small"
-                        fullWidth
-                      />
+                    <TableCell style={{ width: "10%", textAlign: "center" }}>
+                      Total
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <TextField
-                        type="number"
-                        value={detail.quantity}
-                        onChange={(e) =>
-                          handleDetailChange(
-                            index,
-                            "quantity",
-                            parseInt(e.target.value, 10)
-                          )
-                        }
-                        size="small"
-                        fullWidth
-                        sx={{
-                          "& input": {
-                            MozAppearance: "textfield", // Pour Firefox
-                            textAlign: "center", // Centrer horizontalement
-                          },
-                          "& input[type=number]": {
-                            MozAppearance: "textfield",
-                          },
-                          "& input[type=number]::-webkit-outer-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                          "& input[type=number]::-webkit-inner-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <TextField
-                        type="number"
-                        value={detail.unitPrice}
-                        onChange={(e) =>
-                          handleDetailChange(
-                            index,
-                            "unitPrice",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        size="small"
-                        fullWidth
-                        sx={{
-                          "& input": {
-                            MozAppearance: "textfield", // Pour Firefox
-                            textAlign: "center", // Centrer horizontalement
-                          },
-                          "& input[type=number]": {
-                            MozAppearance: "textfield",
-                          },
-                          "& input[type=number]::-webkit-outer-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                          "& input[type=number]::-webkit-inner-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <TextField
-                        type="text" // Permet la saisie libre (montant ou pourcentage)
-                        value={
-                          detail.discountPercent !== ""
-                            ? `${detail.discountPercent}%`
-                            : detail.discountAmount || ""
-                        } // Affiche soit le pourcentage, soit le montant
-                        onChange={(e) => {
-                          const input = e.target.value.trim();
-
-                          let formattedValue = input; // Supprime le symbole %
-                          detail.discountAmount = "";
-                          detail.discountPercent = "";
-
-                          let amount = parseFloat(formattedValue); // Tente de convertir en nombre
-
-                          // Gestion des cas de saisie valides
-                          if (input.includes("%") && !isNaN(amount)) {
-                            // Si l'utilisateur entre un pourcentage
-                            detail.discountPercent = amount; // Met à jour le pourcentage
-                            detail.discountAmount = ""; // Réinitialise le montant
-                          } else if (!isNaN(amount)) {
-                            // Si l'utilisateur entre un montant
-                            detail.discountAmount = amount; // Met à jour le montant
-                            detail.discountPercent = ""; // Réinitialise le pourcentage
-                          } else {
-                            // Si la saisie est invalide
-                            detail.discountAmount = "";
-                            detail.discountPercent = "";
-                          }
-
-                          // Mise à jour de la valeur brute pour affichage
-                          detail.inputValue = input;
-
-                          // Appelle la fonction pour notifier le changement
-                          handleDetailChange(
-                            index,
-                            "discountAmount",
-                            detail.discountAmount
-                          );
-                        }}
-                        size="small"
-                        fullWidth
-                        sx={{
-                          "& input": {
-                            MozAppearance: "textfield", // Pour Firefox
-                            textAlign: "center", // Centrer horizontalement
-                          },
-                          "& input::-webkit-outer-spin-button": {
-                            WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
-                            margin: 0,
-                          },
-                          "& input::-webkit-inner-spin-button": {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                          },
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell style={{ textAlign: "center" }}>
-                      {calculateLineTotal(detail).toFixed(2)}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem" }}>
-                      <Button onClick={() => removeDetailRow(index)}>
-                        Supprimer
-                      </Button>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                      Actions
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Button
-            onClick={handleAddDetail}
-            color="primary"
-            variant="contained"
-            sx={{ marginTop: 2 }}
-          >
-            Ajouter un Détail
-          </Button>
+                </TableHead>
+                <TableBody>
+                  {details.map((detail, index) => (
+                    <TableRow key={detail.id}>
+                      <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TextField
+                          value={detail.label}
+                          onChange={(e) =>
+                            handleDetailChange(index, "label", e.target.value)
+                          }
+                          size="small"
+                          fullWidth
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TextField
+                          type="number"
+                          value={detail.quantity}
+                          onChange={(e) =>
+                            handleDetailChange(
+                              index,
+                              "quantity",
+                              parseInt(e.target.value, 10)
+                            )
+                          }
+                          size="small"
+                          fullWidth
+                          sx={{
+                            "& input": {
+                              MozAppearance: "textfield", // Pour Firefox
+                              textAlign: "center", // Centrer horizontalement
+                            },
+                            "& input[type=number]": {
+                              MozAppearance: "textfield",
+                            },
+                            "& input[type=number]::-webkit-outer-spin-button": {
+                              WebkitAppearance: "none",
+                              margin: 0,
+                            },
+                            "& input[type=number]::-webkit-inner-spin-button": {
+                              WebkitAppearance: "none",
+                              margin: 0,
+                            },
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TextField
+                          type="number"
+                          value={detail.unitPrice}
+                          onChange={(e) =>
+                            handleDetailChange(
+                              index,
+                              "unitPrice",
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          size="small"
+                          fullWidth
+                          sx={{
+                            "& input": {
+                              MozAppearance: "textfield", // Pour Firefox
+                              textAlign: "center", // Centrer horizontalement
+                            },
+                            "& input[type=number]": {
+                              MozAppearance: "textfield",
+                            },
+                            "& input[type=number]::-webkit-outer-spin-button": {
+                              WebkitAppearance: "none",
+                              margin: 0,
+                            },
+                            "& input[type=number]::-webkit-inner-spin-button": {
+                              WebkitAppearance: "none",
+                              margin: 0,
+                            },
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TextField
+                          type="text" // Permet la saisie libre (montant ou pourcentage)
+                          value={
+                            detail.discountPercent !== ""
+                              ? `${detail.discountPercent}%`
+                              : detail.discountAmount || ""
+                          } // Affiche soit le pourcentage, soit le montant
+                          onChange={(e) => {
+                            const input = e.target.value.trim();
 
-          {/* Display totals */}
-          <Typography variant="h6" sx={{ marginTop: 2 }}>
-            Total TTC: {totalTTC.toFixed(2)} €
-          </Typography>
-          <Typography variant="h6">Total HT: {totalHT.toFixed(2)} €</Typography>
-          <Typography variant="h6">
-            Acompte :{" "}
-            {editedEvent?.details?.acompte
-              ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
-              : "0.00"}{" "}
-            €
-          </Typography>
+                            let formattedValue = input; // Supprime le symbole %
+                            detail.discountAmount = "";
+                            detail.discountPercent = "";
 
-          <Grid container spacing={2} item xs={12} md={12}>
-            {/* Colonne 1: Infos  sur les travaux */}
-            <Grid item xs={12} md={6}>
-              {/* <Typography variant="h6">
+                            let amount = parseFloat(formattedValue); // Tente de convertir en nombre
+
+                            // Gestion des cas de saisie valides
+                            if (input.includes("%") && !isNaN(amount)) {
+                              // Si l'utilisateur entre un pourcentage
+                              detail.discountPercent = amount; // Met à jour le pourcentage
+                              detail.discountAmount = ""; // Réinitialise le montant
+                            } else if (!isNaN(amount)) {
+                              // Si l'utilisateur entre un montant
+                              detail.discountAmount = amount; // Met à jour le montant
+                              detail.discountPercent = ""; // Réinitialise le pourcentage
+                            } else {
+                              // Si la saisie est invalide
+                              detail.discountAmount = "";
+                              detail.discountPercent = "";
+                            }
+
+                            // Mise à jour de la valeur brute pour affichage
+                            detail.inputValue = input;
+
+                            // Appelle la fonction pour notifier le changement
+                            handleDetailChange(
+                              index,
+                              "discountAmount",
+                              detail.discountAmount
+                            );
+                          }}
+                          size="small"
+                          fullWidth
+                          sx={{
+                            "& input": {
+                              MozAppearance: "textfield", // Pour Firefox
+                              textAlign: "center", // Centrer horizontalement
+                            },
+                            "& input::-webkit-outer-spin-button": {
+                              WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
+                              margin: 0,
+                            },
+                            "& input::-webkit-inner-spin-button": {
+                              WebkitAppearance: "none",
+                              margin: 0,
+                            },
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell style={{ textAlign: "center" }}>
+                        {calculateLineTotal(detail).toFixed(2)}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <Button onClick={() => removeDetailRow(index)}>
+                          Supprimer
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <Button
+              onClick={handleAddDetail}
+              color="primary"
+              variant="contained"
+              sx={{ marginTop: 2 }}
+            >
+              Ajouter un Détail
+            </Button>
+
+            {/* Display totals */}
+            <Typography variant="h6" sx={{ marginTop: 2 }}>
+              Total TTC: {totalTTC.toFixed(2)} €
+            </Typography>
+            <Typography variant="h6">
+              Total HT: {totalHT.toFixed(2)} €
+            </Typography>
+            <Typography variant="h6">
+              Acompte :{" "}
+              {editedEvent?.details?.acompte
+                ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
+                : "0.00"}{" "}
+              €
+            </Typography>
+
+            <Grid container spacing={2} item xs={12} md={12}>
+              {/* Colonne 1: Infos  sur les travaux */}
+              <Grid item xs={12} md={6}>
+                {/* <Typography variant="h6">
                           Informations Événement
                         </Typography> */}
 
-              <TextField
-                label="Travaux"
-                name="details.workDescription"
-                value={editedEvent.details?.workDescription}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                multiline
-                rows={16}
-                sx={{
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <TextField
-                name="details.price"
-                type="number"
-                value={editedEvent.details?.price}
-                placeholder="Prix"
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  display: "none",
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                  "& input[type=number]": {
-                    MozAppearance: "textfield",
-                  },
-                  "& input[type=number]::-webkit-outer-spin-button": {
-                    WebkitAppearance: "none",
-                    margin: 0,
-                  },
-                  "& input[type=number]::-webkit-inner-spin-button": {
-                    WebkitAppearance: "none",
-                    margin: 0,
-                  },
-                }}
-              />
-            </Grid>
+                <TextField
+                  label="Travaux"
+                  name="details.workDescription"
+                  value={editedEvent.details?.workDescription}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  multiline
+                  rows={16}
+                  sx={{
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <TextField
+                  name="details.price"
+                  type="number"
+                  value={editedEvent.details?.price}
+                  placeholder="Prix"
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    display: "none",
+                    height: "30px",
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    "& input[type=number]": {
+                      MozAppearance: "textfield",
+                    },
+                    "& input[type=number]::-webkit-outer-spin-button": {
+                      WebkitAppearance: "none",
+                      margin: 0,
+                    },
+                    "& input[type=number]::-webkit-inner-spin-button": {
+                      WebkitAppearance: "none",
+                      margin: 0,
+                    },
+                  }}
+                />
+              </Grid>
 
-            {/* Colonne 2: Infos sur l'événement */}
-            <Grid item xs={12} md={6}>
-              {/* <Typography variant="h6">
+              {/* Colonne 2: Infos sur l'événement */}
+              <Grid item xs={12} md={6}>
+                {/* <Typography variant="h6">
                           Détails de l'événement
                         </Typography> */}
 
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: "1rem", // Espacement entre les champs
+                    marginBottom: "0.9rem",
+                  }}
+                >
+                  <TextField
+                    label="Opérateur"
+                    name="operator"
+                    value={editedEvent.operator}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    sx={{
+                      height: "30px",
+                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    }}
+                  />
+                  <TextField
+                    label="Réceptionnaire"
+                    name="receptor"
+                    value={editedEvent.receptor}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    sx={{
+                      height: "30px",
+                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                    }}
+                  />
+                </Box>
+
+                <Typography variant="body1">Date de l'événement</Typography>
+                <TextField
+                  name="date"
+                  type="date"
+                  value={editedEvent.date}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    height: "30px",
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <Typography variant="body1">Date de fin</Typography>
+                <TextField
+                  name="finDate"
+                  type="date"
+                  value={finDate}
+                  onChange={handleChangeFinDate}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    height: "30px",
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                />
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      name="startTime"
+                      placeholder="HHMM (ex: 0700)"
+                      value={`${editedEvent.startHour || ""}${
+                        editedEvent.startMinute || ""
+                      }`}
+                      onChange={handleChange}
+                      fullWidth
+                      margin="normal"
+                      required
+                      size="small"
+                      sx={{
+                        height: "30px",
+                        "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                        "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={6}>
+                    <TextField
+                      name="endTime"
+                      placeholder="HHMM (ex: 1900)"
+                      value={`${editedEvent.endHour || ""}${
+                        editedEvent.endMinute || ""
+                      }`}
+                      onChange={handleChange}
+                      fullWidth
+                      margin="normal"
+                      required
+                      size="small"
+                      sx={{
+                        height: "30px",
+                        "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                        "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+                <TextField
+                  select
+                  label="Catégorie"
+                  name="category"
+                  value={editedEvent?.category?.id}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                  size="small"
+                  sx={{
+                    height: "30px",
+                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                  }}
+                >
+                  {categories.map((categoryGroup, index) => (
+                    <MenuItem
+                      key={index}
+                      value={categoryGroup.id}
+                      sx={{
+                        fontSize: "0.8rem",
+                        minHeight: "30px",
+                      }}
+                    >
+                      {categoryGroup.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+          </DialogContent>
+        )}
+        <DialogActions>
+          <Button onClick={onClose} color="primary">
+            Annuler
+          </Button>{" "}
+          <Button onClick={handleOpenOrSup} color="secondary">
+            Supprimer
+          </Button>{" "}
+          <Modal
+            open={openOrSup}
+            onClose={handleCloseOrSup}
+            aria-labelledby="confirmation-modal-title"
+            aria-describedby="confirmation-modal-description"
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                bgcolor: "background.paper",
+                border: "2px solid #000",
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
+              }}
+            >
+              <Typography
+                id="confirmation-modal-title"
+                variant="h6"
+                component="h2"
+              >
+                Confirmation
+              </Typography>
+              <Typography
+                id="confirmation-modal-description"
+                sx={{ mt: 2, mb: 4 }}
+              >
+                Voulez-vous supprimer l'OR ?
+              </Typography>
               <Box
                 sx={{
                   display: "flex",
-                  gap: "1rem", // Espacement entre les champs
-                  marginBottom: "0.9rem",
+                  justifyContent: "space-between",
                 }}
               >
-                <TextField
-                  label="Opérateur"
-                  name="operator"
-                  value={editedEvent.operator}
-                  onChange={handleChange}
-                  fullWidth
-                  margin="normal"
-                  size="small"
-                  sx={{
-                    height: "30px",
-                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                  }}
-                />
-                <TextField
-                  label="Réceptionnaire"
-                  name="receptor"
-                  value={editedEvent.receptor}
-                  onChange={handleChange}
-                  fullWidth
-                  margin="normal"
-                  size="small"
-                  sx={{
-                    height: "30px",
-                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                  }}
-                />
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleCloseOrSup}
+                >
+                  Non
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleConfirmOrSup}
+                >
+                  Oui
+                </Button>
               </Box>
-
-              <Typography variant="body1">Date de l'événement</Typography>
-              <TextField
-                name="date"
-                type="date"
-                value={editedEvent.date}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <Typography variant="body1">Date de fin</Typography>
-              <TextField
-                name="finDate"
-                type="date"
-                value={finDate}
-                onChange={handleChangeFinDate}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              />
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <TextField
-                    name="startTime"
-                    placeholder="HHMM (ex: 0700)"
-                    value={`${editedEvent.startHour || ""}${
-                      editedEvent.startMinute || ""
-                    }`}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    size="small"
-                    sx={{
-                      height: "30px",
-                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={6}>
-                  <TextField
-                    name="endTime"
-                    placeholder="HHMM (ex: 1900)"
-                    value={`${editedEvent.endHour || ""}${
-                      editedEvent.endMinute || ""
-                    }`}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    required
-                    size="small"
-                    sx={{
-                      height: "30px",
-                      "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                      "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-              <TextField
-                select
-                label="Catégorie"
-                name="category"
-                value={editedEvent?.category?.id}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                required
-                size="small"
-                sx={{
-                  height: "30px",
-                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                }}
-              >
-                {categories.map((categoryGroup, index) => (
-                  <MenuItem
-                    key={index}
-                    value={categoryGroup.id}
-                    sx={{
-                      fontSize: "0.8rem",
-                      minHeight: "30px",
-                    }}
-                  >
-                    {categoryGroup.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-          </Grid>
-        </DialogContent>
-      )}
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Annuler
-        </Button>{" "}
-        <Button onClick={handleOpenOrSup} color="secondary">
-          Supprimer
-        </Button>{" "}
-        <Modal
-          open={openOrSup}
-          onClose={handleCloseOrSup}
-          aria-labelledby="confirmation-modal-title"
-          aria-describedby="confirmation-modal-description"
-        >
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              bgcolor: "background.paper",
-              border: "2px solid #000",
-              boxShadow: 24,
-              p: 4,
-              borderRadius: 2,
-            }}
+            </Box>
+          </Modal>
+          <Button onClick={handleOpenOr} color="primary" variant="contained">
+            Modifier
+          </Button>
+          <Modal
+            open={openOr}
+            onClose={handleCloseOr}
+            aria-labelledby="confirmation-modal-title"
+            aria-describedby="confirmation-modal-description"
           >
-            <Typography
-              id="confirmation-modal-title"
-              variant="h6"
-              component="h2"
-            >
-              Confirmation
-            </Typography>
-            <Typography
-              id="confirmation-modal-description"
-              sx={{ mt: 2, mb: 4 }}
-            >
-              Voulez-vous supprimer l'OR ?
-            </Typography>
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                bgcolor: "background.paper",
+                border: "2px solid #000",
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
               }}
             >
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleCloseOrSup}
+              <Typography
+                id="confirmation-modal-title"
+                variant="h6"
+                component="h2"
               >
-                Non
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleConfirmOrSup}
+                Confirmation
+              </Typography>
+              <Typography
+                id="confirmation-modal-description"
+                sx={{ mt: 2, mb: 4 }}
               >
-                Oui
-              </Button>
+                Voulez vous enriregistrer les modifications ?
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleCloseOr}
+                >
+                  Non
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleConfirmOr}
+                >
+                  Oui
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </Modal>
-        <Button onClick={handleOpenOr} color="primary" variant="contained">
-          Modifier
-        </Button>
-        <Modal
-          open={openOr}
-          onClose={handleCloseOr}
-          aria-labelledby="confirmation-modal-title"
-          aria-describedby="confirmation-modal-description"
-        >
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              bgcolor: "background.paper",
-              border: "2px solid #000",
-              boxShadow: 24,
-              p: 4,
-              borderRadius: 2,
-            }}
-          >
-            <Typography
-              id="confirmation-modal-title"
-              variant="h6"
-              component="h2"
-            >
-              Confirmation
-            </Typography>
-            <Typography
-              id="confirmation-modal-description"
-              sx={{ mt: 2, mb: 4 }}
-            >
-              Voulez vous enriregistrer les modifications ?
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleCloseOr}
-              >
-                Non
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleConfirmOr}
-              >
-                Oui
-              </Button>
-            </Box>
-          </Box>
-        </Modal>
-        <OrdreReparationTemplate editedEvent={editedEvent} details={details} />{" "}
-        <InvoiceTemplate
-          editedEvent={editedEvent}
-          details={details}
-          onInvoiceExecuted={handleChildInvoice}
-          categories={categories}
-        />{" "}
-      </DialogActions>
-    </Dialog>
+          </Modal>
+          <OrdreReparationTemplate
+            editedEvent={editedEvent}
+            details={details}
+          />{" "}
+          <InvoiceTemplate
+            editedEvent={editedEvent}
+            details={details}
+            onInvoiceExecuted={handleChildInvoice}
+            categories={categories}
+          />{" "}
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 

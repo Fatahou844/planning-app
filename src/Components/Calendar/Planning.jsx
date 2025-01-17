@@ -1304,7 +1304,7 @@ const Planning = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
-    handleModalClose2();
+    // handleModalClose2();
   };
 
   const getBadgeColor = (collection) => {
@@ -1342,6 +1342,8 @@ const Planning = () => {
   // Fonction pour confirmer l'action
   const handleConfirmOr = () => {
     addEvent(); // Appel de la fonction addEvent
+    setCollectName("events");
+
     handleCloseOr(); // Fermer le modal
   };
 
@@ -1377,8 +1379,16 @@ const Planning = () => {
     });
     if (collectionName === "reservation") {
       setCollectName("reservations");
-    } else {
-      setCollectName("");
+    }
+
+    if (collectionName === "OR") {
+      setCollectName("events");
+    }
+    if (collectionName === "devis") {
+      setCollectName("devis");
+    }
+    if (collectionName === "Facture") {
+      setCollectName("factures");
     }
     handleShowPopup();
   };
@@ -1398,6 +1408,19 @@ const Planning = () => {
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
       {/* Header avec Barre de Recherche */}
+
+      {selectedEvent && (
+        <EventModal
+          open={modalOpen}
+          onClose={handleModalClose}
+          editedEvent={selectedEvent}
+          setEditedEvent={handleEditedEventChange}
+          categories={categories}
+          handleSave={handleSaveEvent}
+          handleEventDetailClick={handleEventDetailClick}
+          onEventTriggered={handleEventFromChild}
+        />
+      )}
 
       <Box
         sx={{
@@ -2864,19 +2887,6 @@ const Planning = () => {
       </Box>
       {/* Event Modal */}
 
-      {selectedEvent && (
-        <EventModal
-          open={modalOpen}
-          onClose={handleModalClose}
-          editedEvent={selectedEvent}
-          setEditedEvent={handleEditedEventChange}
-          categories={categories}
-          handleSave={handleSaveEvent}
-          handleEventDetailClick={handleEventDetailClick}
-          onEventTriggered={handleEventFromChild}
-        />
-      )}
-
       <Dialog
         open={open}
         onClose={handleClose}
@@ -2963,6 +2973,18 @@ const Planning = () => {
             setEditedEvent={handleEditedEventChange}
             collectionName={selectedEvent.collection}
             categories={categories}
+            onEventTriggered={handleEventFromChild}
+          />
+        )}
+        {selectedEvent && (
+          <EventModal
+            open={modalOpen}
+            onClose={handleModalClose}
+            editedEvent={selectedEvent}
+            setEditedEvent={handleEditedEventChange}
+            categories={categories}
+            handleSave={handleSaveEvent}
+            handleEventDetailClick={handleEventDetailClick}
             onEventTriggered={handleEventFromChild}
           />
         )}

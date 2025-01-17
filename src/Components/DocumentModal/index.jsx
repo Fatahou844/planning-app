@@ -381,7 +381,7 @@ function DocumentModal({
   const handleOpen = () => {
     setNotification({
       open: true,
-      message: "Modification" + editedEvent.title + " effectué",
+      message: "Modification " + editedEvent.title + " effectué",
       severity: "success", // Peut être "error", "warning", "info"
     });
     handleShowPopup();
@@ -456,6 +456,15 @@ function DocumentModal({
 
   return (
     <>
+      {showPopup && (
+        <Notification
+          message={notification.message}
+          handleClose={handleClosePopup}
+          dataEvent={editedEvent}
+          collectionName={collectionName}
+          dataDetails={details}
+        />
+      )}
       <Dialog
         open={open}
         onClose={onClose}
@@ -466,12 +475,6 @@ function DocumentModal({
           },
         }}
       >
-        {showPopup && (
-          <Notification
-            message={notification.message}
-            handleClose={handleClosePopup}
-          />
-        )}
         <DialogTitle>Modification {collectName}</DialogTitle>
         {editedEvent && (
           <DialogContent>

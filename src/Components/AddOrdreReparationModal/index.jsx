@@ -168,9 +168,14 @@ function AddOrdreReparationModal({
   };
 
   const handleDetailChange = (index, field, value) => {
-    const updatedDetails = [...details];
-    updatedDetails[index][field] = value;
-    setDetails(updatedDetails);
+    // Vérifiez si l'index existe dans le tableau
+    if (index >= 0 && index < details.length) {
+      const updatedDetails = [...details];
+      updatedDetails[index] = { ...updatedDetails[index], [field]: value }; // Mise à jour propre de l'objet
+      setDetails(updatedDetails);
+    } else {
+      console.error(`Index ${index} hors limites pour le tableau details.`);
+    }
   };
 
   const removeDetailRow = async (index) => {
@@ -823,154 +828,180 @@ function AddOrdreReparationModal({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {details.map((detail, index) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            <TextField
-                              name="label"
-                              value={detail.label}
-                              onChange={(e) => handleDetailChange(e, index)}
-                              size="small"
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              name="quantity"
-                              type="number"
-                              value={detail.quantity}
-                              onChange={(e) => handleDetailChange(e, index)}
-                              size="small"
-                              style={{
-                                maxWidth: 80,
-                              }}
-                              sx={{
-                                "& input": {
-                                  textAlign: "center", // Centrer horizontalement
-                                },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              name="unitPrice"
-                              type="number"
-                              value={detail.unitPrice}
-                              onChange={(e) => handleDetailChange(e, index)}
-                              // onInput={(e) => {
-                              //   const input = e.target.value;
-                              //   e.target.value = input.replace(",", ".");
-                              // }}
-                              size="small"
-                              style={{
-                                textAlign: "center",
-                              }}
-                              fullWidth
-                              sx={{
-                                "& input": {
-                                  textAlign: "center", // Centrer horizontalement
-                                },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
-                              }}
-                            />
-                          </TableCell>
-
-                          <TableCell>
-                            <TextField
-                              name="discountAmount"
-                              type="text" // Permet la saisie de caractères comme '%'
-                              value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
-                              onChange={(e) => {
-                                let value = e.target.value.trim(); // Supprime les espaces inutiles
-                                let formattedValue = value; // Conserve la saisie brute pour affichage
-
-                                // Uniformise les décimales en remplaçant les virgules par des points
-                                const normalizedValue = value.replace(",", ".");
-
-                                // Réinitialisation des valeurs par défaut
-                                detail.discountAmount = "";
-                                detail.discountPercent = "";
-
-                                if (normalizedValue.includes("%")) {
-                                  // Cas où l'utilisateur entre un pourcentage
-                                  const percentage = parseFloat(
-                                    normalizedValue.replace("%", "")
-                                  );
-                                  if (!isNaN(percentage)) {
-                                    detail.discountPercent = percentage; // Met à jour le pourcentage
-                                    detail.discountAmount = ""; // Réinitialise le montant
-                                  }
-                                } else if (normalizedValue !== "") {
-                                  // Cas où l'utilisateur entre un montant
-                                  const amount = parseFloat(normalizedValue);
-                                  if (!isNaN(amount)) {
-                                    detail.discountAmount = amount; // Met à jour le montant
-                                    detail.discountPercent = ""; // Réinitialise le pourcentage
-                                  }
+                      {details.length > 0 &&
+                        details.map((detail, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <TextField
+                                name="label"
+                                value={detail.label}
+                                onChange={(e) =>
+                                  handleDetailChange(
+                                    index,
+                                    "label",
+                                    e.target.value
+                                  )
                                 }
+                                size="small"
+                                fullWidth
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                name="quantity"
+                                type="number"
+                                value={detail.quantity}
+                                onChange={(e) =>
+                                  handleDetailChange(
+                                    index,
+                                    "quantity",
+                                    e.target.value
+                                  )
+                                }
+                                size="small"
+                                style={{
+                                  maxWidth: 80,
+                                }}
+                                sx={{
+                                  "& input": {
+                                    textAlign: "center", // Centrer horizontalement
+                                  },
+                                  "& input[type=number]": {
+                                    MozAppearance: "textfield", // Pour Firefox
+                                  },
+                                  "& input[type=number]::-webkit-outer-spin-button":
+                                    {
+                                      WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                      margin: 0,
+                                    },
+                                  "& input[type=number]::-webkit-inner-spin-button":
+                                    {
+                                      WebkitAppearance: "none",
+                                      margin: 0,
+                                    },
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                name="unitPrice"
+                                type="number"
+                                value={detail.unitPrice}
+                                onChange={(e) =>
+                                  handleDetailChange(
+                                    index,
+                                    "unitPrice",
+                                    e.target.value
+                                  )
+                                }
+                                // onInput={(e) => {
+                                //   const input = e.target.value;
+                                //   e.target.value = input.replace(",", ".");
+                                // }}
+                                size="small"
+                                style={{
+                                  textAlign: "center",
+                                }}
+                                fullWidth
+                                sx={{
+                                  "& input": {
+                                    textAlign: "center", // Centrer horizontalement
+                                  },
+                                  "& input[type=number]": {
+                                    MozAppearance: "textfield", // Pour Firefox
+                                  },
+                                  "& input[type=number]::-webkit-outer-spin-button":
+                                    {
+                                      WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                      margin: 0,
+                                    },
+                                  "& input[type=number]::-webkit-inner-spin-button":
+                                    {
+                                      WebkitAppearance: "none",
+                                      margin: 0,
+                                    },
+                                }}
+                              />
+                            </TableCell>
 
-                                // Met à jour l'état de l'inputValue avec la saisie brute
-                                detail.inputValue = formattedValue;
+                            <TableCell>
+                              <TextField
+                                name="discountAmount"
+                                type="text" // Permet la saisie de caractères comme '%'
+                                value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
+                                onChange={(e) => {
+                                  let value = e.target.value.trim(); // Supprime les espaces inutiles
+                                  let formattedValue = value; // Conserve la saisie brute pour affichage
 
-                                // Appelle la fonction de gestion des changements
-                                handleDetailChange(e, index);
-                              }}
-                              size="small"
-                              sx={{
-                                "& input": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                  textAlign: "center", // Centrer horizontalement
-                                },
-                                "& input::-webkit-outer-spin-button": {
-                                  WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                  margin: 0,
-                                },
-                                "& input::-webkit-inner-spin-button": {
-                                  WebkitAppearance: "none",
-                                  margin: 0,
-                                },
-                              }}
-                            />
-                          </TableCell>
+                                  // Uniformise les décimales en remplaçant les virgules par des points
+                                  const normalizedValue = value.replace(
+                                    ",",
+                                    "."
+                                  );
 
-                          <TableCell style={{ textAlign: "center" }}>
-                            {calculateLineTotal(detail).toFixed(2)}
-                          </TableCell>
-                          <TableCell style={{ textAlign: "center" }}>
-                            <Button
-                              color="secondary"
-                              onClick={() => removeDetailRow(index)}
-                            >
-                              Supprimer
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                                  // Réinitialisation des valeurs par défaut
+                                  detail.discountAmount = "";
+                                  detail.discountPercent = "";
+
+                                  if (normalizedValue.includes("%")) {
+                                    // Cas où l'utilisateur entre un pourcentage
+                                    const percentage = parseFloat(
+                                      normalizedValue.replace("%", "")
+                                    );
+                                    if (!isNaN(percentage)) {
+                                      detail.discountPercent = percentage; // Met à jour le pourcentage
+                                      detail.discountAmount = ""; // Réinitialise le montant
+                                    }
+                                  } else if (normalizedValue !== "") {
+                                    // Cas où l'utilisateur entre un montant
+                                    const amount = parseFloat(normalizedValue);
+                                    if (!isNaN(amount)) {
+                                      detail.discountAmount = amount; // Met à jour le montant
+                                      detail.discountPercent = ""; // Réinitialise le pourcentage
+                                    }
+                                  }
+
+                                  // Met à jour l'état de l'inputValue avec la saisie brute
+                                  detail.inputValue = formattedValue;
+
+                                  // Appelle la fonction de gestion des changements
+                                  handleDetailChange(
+                                    index,
+                                    "discountAmount",
+                                    e.target.value
+                                  );
+                                }}
+                                size="small"
+                                sx={{
+                                  "& input": {
+                                    MozAppearance: "textfield", // Pour Firefox
+                                    textAlign: "center", // Centrer horizontalement
+                                  },
+                                  "& input::-webkit-outer-spin-button": {
+                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                    margin: 0,
+                                  },
+                                  "& input::-webkit-inner-spin-button": {
+                                    WebkitAppearance: "none",
+                                    margin: 0,
+                                  },
+                                }}
+                              />
+                            </TableCell>
+
+                            <TableCell style={{ textAlign: "center" }}>
+                              {calculateLineTotal(detail).toFixed(2)}
+                            </TableCell>
+                            <TableCell style={{ textAlign: "center" }}>
+                              <Button
+                                color="secondary"
+                                onClick={() => removeDetailRow(index)}
+                              >
+                                Supprimer
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       <TableRow>
                         <TableCell colSpan={7}>
                           <Button
