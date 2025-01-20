@@ -25,6 +25,7 @@ import {
   getDocs,
   query,
   setDoc,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -40,6 +41,7 @@ function AddOrdreReparationModal({
   collectionName,
   categories,
   onEventTriggered,
+  collectionNameOpen,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -73,11 +75,33 @@ function AddOrdreReparationModal({
   };
 
   useEffect(() => {
-    if (editedEvent) {
+    if (editedEvent && collectionNameOpen == "reservations") {
       const fetchDetails = async () => {
         try {
           const detailsCollectionRef = collection(
             doc(db, "reservations", editedEvent.id),
+            "details"
+          );
+          const detailsSnapshot = await getDocs(detailsCollectionRef);
+          const detailsData = detailsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setDetails(detailsData);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
+        }
+      };
+
+      fetchDetails();
+    }
+  }, [, open, editedEvent.id]);
+  useEffect(() => {
+    if (editedEvent && collectionNameOpen == "devis") {
+      const fetchDetails = async () => {
+        try {
+          const detailsCollectionRef = collection(
+            doc(db, "devis", editedEvent.id),
             "details"
           );
           const detailsSnapshot = await getDocs(detailsCollectionRef);
@@ -374,9 +398,28 @@ function AddOrdreReparationModal({
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
+        devisOrResa: event.id ? event.id : "",
       });
 
       console.log("eventRef", event);
+
+      const fetchDetails = async () => {
+        try {
+          const eventDocRef = doc(db, "devis", event.id);
+          const eventDocRefResa = doc(db, "reservations", event.id);
+
+          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+          // Créer un nouvel objet pour la mise à jour
+          const updatedFields = { isClosed: true };
+
+          await updateDoc(eventDocRef, updatedFields);
+          await updateDoc(eventDocRefResa, updatedFields);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
+        }
+      };
+
+      fetchDetails();
 
       // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
       await updateLastOrderNumberForUser(

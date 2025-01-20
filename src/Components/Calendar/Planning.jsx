@@ -501,7 +501,7 @@ const Planning = () => {
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = "devis-" + generateOrderNumber(lastOrderNumber);
+    const newOrderNumber = generateOrderNumber(lastOrderNumber);
 
     // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
     const singleResa = {
@@ -548,7 +548,7 @@ const Planning = () => {
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = "Facture-" + generateOrderNumber(lastOrderNumber);
+    const newOrderNumber = generateOrderNumber(lastOrderNumber);
 
     // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
     const singleResa = {
@@ -752,6 +752,47 @@ const Planning = () => {
         nextDay: nextDay,
       });
 
+      setSelectedEvent({
+        eventId: eventRef.id,
+        title: newOrderNumber, // Utilise le numéro de commande fourni
+        date: event.date,
+        startHour: parseInt(event.startHour),
+        startMinute: parseInt(event.startMinute),
+        endHour: parseInt(event.endHour),
+        endMinute: parseInt(event.endMinute),
+        category: event.category.id
+          ? {
+              id: event.category.id,
+              name: event.category.name,
+              color: event.category.color,
+            }
+          : null,
+        person: {
+          firstName: event.firstName,
+          lastName: event.lastName,
+          email: event.email,
+          phone: event.phone,
+        },
+        vehicule: {
+          licensePlate: event.licensePlate ? event.licensePlate : "",
+          vin: event.vin ? event.vin : "",
+          color: event.color ? event.color : "",
+          model: event.model ? event.model : "",
+          kms: event.kms ? event.kms : "",
+          controletech: event.controletech ? event.controletech : "",
+        },
+        details: {
+          workDescription: event.workDescription ? event.workDescription : "",
+          price: event.price ? event.price : "",
+          acompte: deposit ? deposit : 0,
+        },
+        operator: event.operator ? event.operator : "",
+        receptor: event.receptor ? event.receptor : "",
+        isClosed: false,
+        userId: event.userId, // UID de l'utilisateur
+        nextDay: nextDay,
+      });
+
       console.log("eventRef", event);
 
       // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
@@ -802,6 +843,42 @@ const Planning = () => {
           acompte: deposit ? deposit : 0,
         },
         isClosed: isClosed,
+        userId: event.userId, // UID de l'utilisateur
+      });
+
+      setSelectedEvent({
+        eventId: eventRef.id,
+        title: newOrderNumber, // Utilise le numéro de commande fourni
+        date: event.date,
+
+        category: event.category.id
+          ? {
+              id: event.category.id,
+              name: event.category.name,
+              color: event.category.color,
+            }
+          : null,
+        person: {
+          firstName: event.firstName,
+          lastName: event.lastName,
+          email: event.email,
+          phone: event.phone,
+        },
+        vehicule: {
+          licensePlate: event.licensePlate ? event.licensePlate : "",
+          vin: event.vin ? event.vin : "",
+          color: event.color ? event.color : "",
+          model: event.model ? event.model : "",
+          kms: event.kms ? event.kms : "",
+          controletech: event.controletech ? event.controletech : "",
+        },
+        details: {
+          workDescription: event.workDescription ? event.workDescription : "",
+          price: event.price ? event.price : "",
+          acompte: deposit ? deposit : 0,
+        },
+
+        isClosed: false,
         userId: event.userId, // UID de l'utilisateur
       });
 
@@ -956,7 +1033,7 @@ const Planning = () => {
             });
           });
 
-          return results;
+          return results.filter((event) => event.isClosed === false);
         });
 
         // Combiner les résultats de toutes les requêtes pour cette collection
@@ -1282,25 +1359,25 @@ const Planning = () => {
           error
         );
       }
-      if (selectedEvent) {
-        const fetchDetails = async () => {
-          try {
-            const eventDocRef = doc(db, "events", selectedEvent.id);
-            // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-            selectedEvent.isClosed = true;
-            await updateDoc(eventDocRef, selectedEvent);
+      // if (selectedEvent) {
+      //   const fetchDetails = async () => {
+      //     try {
+      //       const eventDocRef = doc(db, "events", selectedEvent.id);
+      //       // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+      //       const updatedFields = { isClosed: true };
+      //       await updateDoc(eventDocRef, updatedFields);
 
-            console.log("ORDRE");
-          } catch (error) {
-            console.error(
-              "Erreur lors de la récupération des détails :",
-              error
-            );
-          }
-        };
+      //       console.log("ORDRE");
+      //     } catch (error) {
+      //       console.error(
+      //         "Erreur lors de la récupération des détails :",
+      //         error
+      //       );
+      //     }
+      //   };
 
-        fetchDetails();
-      }
+      //   fetchDetails();
+      // }
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur

@@ -73,34 +73,22 @@ function DocumentModal({
   const resetForm = () => {
     setFinDate(""); // Réinitialiser la date de fin
   };
-  useEffect(() => {
-    if (editedEvent) {
-      const fetchDetails = async () => {
-        try {
-          const eventDocRef = doc(db, collectionName, editedEvent.id);
-          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-          editedEvent.isClosed = true;
-          await updateDoc(eventDocRef, editedEvent);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des détails :", error);
-        }
-      };
+  // useEffect(() => {
+  //   if (editedEvent) {
+  //     const fetchDetails = async () => {
+  //       try {
+  //         const eventDocRef = doc(db, collectionName, editedEvent.id);
+  //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+  //         const updatedFields = { isClosed: true };
+  //         await updateDoc(eventDocRef, updatedFields);
+  //       } catch (error) {
+  //         console.error("Erreur lors de la récupération des détails :", error);
+  //       }
+  //     };
 
-      fetchDetails();
-    }
-  }, [invoiceExecuted]);
-  const addDetailRow = () => {
-    setDetails((prevDetails) => [
-      ...prevDetails,
-      {
-        label: "",
-        quantity: "",
-        unitPrice: "",
-        discountPercent: "",
-        discountAmount: "",
-      },
-    ]);
-  };
+  //     fetchDetails();
+  //   }
+  // }, [invoiceExecuted]);
 
   useEffect(() => {
     if (editedEvent) {
@@ -426,19 +414,21 @@ function DocumentModal({
       }
     };
 
-    const fetchDetails = async () => {
-      try {
-        const eventDocRef = doc(db, "events", editedEvent.ordreReparation);
-        // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-        editedEvent.isClosed = true;
-        await updateDoc(eventDocRef, editedEvent);
-        window.location.href = "/planning/categories";
-      } catch (error) {
-        console.error("Erreur lors de la récupération des détails :", error);
-      }
-    };
+    // const fetchDetails = async () => {
+    //   try {
+    //     const eventDocRef = doc(db, "events", editedEvent.ordreReparation);
+    //     // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+    //     // Créer un nouvel objet pour la mise à jour
+    //     const updatedFields = { isClosed: true };
 
-    fetchDetails();
+    //     await updateDoc(eventDocRef, updatedFields);
+    //     window.location.href = "/planning/categories";
+    //   } catch (error) {
+    //     console.error("Erreur lors de la récupération des détails :", error);
+    //   }
+    // };
+
+    // fetchDetails();
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
   };
@@ -1254,6 +1244,7 @@ function DocumentModal({
           categories={categories}
           onEventTriggered={handleEventFromChild}
           collectionName="events"
+          collectionNameOpen={collectionName}
         />
       )}
     </>
