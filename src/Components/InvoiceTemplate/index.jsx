@@ -20,6 +20,7 @@ const InvoiceTemplate = ({
   categories,
   details,
   onInvoiceExecuted,
+  closeEventModal,
 }) => {
   const { person, vehicule, date, title } = editedEvent;
   const [user] = useAuthState(auth);
@@ -70,7 +71,7 @@ const InvoiceTemplate = ({
     items: details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
-      unitPriceTTC: item.unitPrice, // Prix TTC (déjà fourni)
+      unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
       discount: item.discountPercent,
       discountAmount: item.discountAmount,
@@ -509,7 +510,12 @@ const InvoiceTemplate = ({
   // Générer le PDF
   const [openOr, setOpenOr] = useState(false);
 
-  const handleOpenOr = () => setOpenOr(true);
+  const handleOpenOr = () => {
+    setOpenOr(true); // Fermer EventModal via la prop closeEventModal
+    if (closeEventModal) {
+      closeEventModal();
+    }
+  };
 
   const handleCloseOr = () => setOpenOr(false);
   const addSingleReservation = async (
@@ -751,6 +757,10 @@ const InvoiceTemplate = ({
     addFacture();
     handleShowPopup();
     handleCloseOr(); // Fermer le modal
+    // if (closeEventModal) {
+    //   closeEventModal();
+    // }
+    // console.log("FERMETURE EVENTMODAL");
   };
 
   const [notification, setNotification] = useState({

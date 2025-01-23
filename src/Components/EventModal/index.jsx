@@ -30,7 +30,7 @@ import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import InvoiceTemplate from "../InvoiceTemplate";
 import Notification from "../Notification";
-import OrdreReparationTemplate from "../OrdreReparationTemplate";
+import OrdreReparationTemplate2 from "../OrdreReparationTemplate2";
 function EventDialog({
   open,
   onClose,
@@ -1112,7 +1112,7 @@ function EventDialog({
               </Box>
             </Box>
           </Modal>
-          <OrdreReparationTemplate
+          <OrdreReparationTemplate2
             editedEvent={editedEvent}
             details={details}
           />{" "}

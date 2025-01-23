@@ -244,6 +244,7 @@ const Planning = () => {
   const handleModalClose2 = () => {
     setModalOpen2(false);
     console.log("modalOpen2", modalOpen2);
+    handleModalClose();
   };
 
   // Fonctions pour assigner les couleurs
@@ -1033,7 +1034,13 @@ const Planning = () => {
             });
           });
 
-          return results.filter((event) => event.isClosed === false);
+          // Appliquer le filtre uniquement si collectionName n'est pas "factures"
+          if (collectionName !== "factures") {
+            return results.filter((event) => event.isClosed === false);
+          }
+
+          // Retourner les résultats sans filtre pour "factures"
+          return results;
         });
 
         // Combiner les résultats de toutes les requêtes pour cette collection
@@ -1678,7 +1685,10 @@ const Planning = () => {
                 padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
                 borderRadius: "8px", // Optionnel : ajoute un bord arrondi
               }}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsModalOpen(true);
+                setDetails([]);
+              }}
             >
               <AddIcon />
               <Typography sx={{ ml: 1 }}></Typography>
@@ -3003,6 +3013,7 @@ const Planning = () => {
 
                         if (event.collection !== "events") {
                           setModalOpen2(true);
+                          setModalOpen(false);
                           console.log("modalOpen2 listing", modalOpen2);
                         } else setModalOpen(true);
                       }}
@@ -3051,6 +3062,7 @@ const Planning = () => {
             collectionName={selectedEvent.collection}
             categories={categories}
             onEventTriggered={handleEventFromChild}
+            closeEventModal={handleModalClose}
           />
         )}
         {selectedEvent && (

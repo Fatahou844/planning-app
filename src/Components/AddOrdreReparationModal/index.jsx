@@ -229,20 +229,6 @@ function AddOrdreReparationModal({
     }
   };
 
-  const handleAddDetail = () => {
-    setDetails([
-      ...details,
-      {
-        // On ne définit pas d’ID pour indiquer qu’il s’agit d’un nouvel élément
-        label: "",
-        quantity: 0,
-        unitPrice: 0,
-        discountAmount: 0,
-        discountPercent: 0,
-      },
-    ]);
-  };
-
   const calculateLineTotal = (detail) => {
     let discount = 0;
 
@@ -403,23 +389,42 @@ function AddOrdreReparationModal({
 
       console.log("eventRef", event);
 
-      const fetchDetails = async () => {
+      const fetchCloseDevis = async () => {
         try {
           const eventDocRef = doc(db, "devis", event.id);
-          const eventDocRefResa = doc(db, "reservations", event.id);
 
           // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
           // Créer un nouvel objet pour la mise à jour
           const updatedFields = { isClosed: true };
 
           await updateDoc(eventDocRef, updatedFields);
-          await updateDoc(eventDocRefResa, updatedFields);
         } catch (error) {
-          console.error("Erreur lors de la récupération des détails :", error);
+          console.error(
+            "Erreur lors de la fermeture du devis après création de OR :",
+            error
+          );
         }
       };
 
-      fetchDetails();
+      const fetchCloseResa = async () => {
+        try {
+          const eventDocRefResa = doc(db, "reservations", event.id);
+
+          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+          // Créer un nouvel objet pour la mise à jour
+          const updatedFields = { isClosed: true };
+
+          await updateDoc(eventDocRefResa, updatedFields);
+        } catch (error) {
+          console.error(
+            "Erreur lors de la fermeture du résa après création de OR :",
+            error
+          );
+        }
+      };
+
+      fetchCloseDevis();
+      fetchCloseResa();
 
       // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
       await updateLastOrderNumberForUser(

@@ -1,9 +1,14 @@
 import { Button } from "@mui/material";
 import React, { useState } from "react";
 
+import { Box, Modal, Typography } from "@mui/material";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
+const InvoiceTemplateWithoutOR2 = ({
+  NewEvent,
+  details,
+  onInvoiceExecuted,
+}) => {
   const { person, vehicule, date, title } = NewEvent;
 
   const calculateLineTotal = (detail) => {
@@ -500,11 +505,59 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
 
   return (
     <div>
-      <Button onClick={handleConfirmOr} color="primary" variant="contained">
-        Oui
+      <Button onClick={handleOpenOr} color="primary" variant="contained">
+        Imprimer Facture
       </Button>
+      <Modal
+        open={openOr}
+        onClose={handleCloseOr}
+        aria-labelledby="confirmation-modal-title"
+        aria-describedby="confirmation-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="confirmation-modal-title" variant="h6" component="h2">
+            Confirmation
+          </Typography>
+          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
+            Voulez vous imprimer cette facture?
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleCloseOr}
+            >
+              Non
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleConfirmOr}
+            >
+              Oui
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };
 
-export default InvoiceTemplateWithoutOR;
+export default InvoiceTemplateWithoutOR2;

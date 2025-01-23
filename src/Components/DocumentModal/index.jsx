@@ -31,11 +31,11 @@ import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../../hooks/firebaseConfig";
 import AddOrdreReparationModal from "../AddOrdreReparationModal";
-import DevisTemplate from "../DevisTemplate";
+import DevisTemplate2 from "../DevisTemplate2";
 import InvoiceTemplate from "../InvoiceTemplate";
-import InvoiceTemplateWithoutOR from "../InvoiceTemplateWithoutOR";
+import InvoiceTemplateWithoutOR2 from "../InvoiceTemplateWithoutOR2";
 import Notification from "../Notification";
-import ReservationTemplate from "../ReservationTemplate";
+import ReservationTemplate2 from "../ReservationTemplate2";
 
 function DocumentModal({
   open,
@@ -45,6 +45,7 @@ function DocumentModal({
   collectionName,
   categories,
   onEventTriggered,
+  closeEventModal,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -380,6 +381,10 @@ function DocumentModal({
     setIsModalOpen(false);
     setOpenOr(false);
     onClose();
+    // Fermer EventModal via la prop closeEventModal
+    if (closeEventModal) {
+      closeEventModal();
+    }
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -987,7 +992,7 @@ function DocumentModal({
               >
                 Modifier
               </Button>
-              <ReservationTemplate
+              <ReservationTemplate2
                 editedEvent={editedEvent}
                 details={details}
               />{" "}
@@ -1035,7 +1040,7 @@ function DocumentModal({
               >
                 Créer un Resa
               </Button>
-              <DevisTemplate
+              <DevisTemplate2
                 editedEvent={editedEvent}
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
@@ -1050,17 +1055,28 @@ function DocumentModal({
           )}
           {collectionName === "factures" && (
             <>
-              <Button onClick={onClose} color="primary">
+              <Button
+                onClick={() => {
+                  if (closeEventModal) {
+                    console.log("Action dans DocumentModal");
+                    closeEventModal();
+                  }
+                  onClose();
+                }}
+                color="primary"
+              >
                 Annuler
               </Button>{" "}
               <Button
-                onClick={handleOpenOr}
+                onClick={() => {
+                  handleOpenOr(); // Fermer EventModal via la prop closeEventModal
+                }}
                 color="primary"
                 variant="contained"
               >
                 Modifier
               </Button>
-              <InvoiceTemplateWithoutOR
+              <InvoiceTemplateWithoutOR2
                 NewEvent={editedEvent}
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}

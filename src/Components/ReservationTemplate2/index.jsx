@@ -1,10 +1,13 @@
 import { Button } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
-  const { person, vehicule, date, title } = NewEvent;
+import { Box, Modal, Typography } from "@mui/material";
+import { useState } from "react";
+
+const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
+  const { person, vehicule, date, title } = editedEvent;
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -46,8 +49,9 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
       }`, // Si une adresse client est disponible, l'ajouter ici
       phone: person?.phone ? person.phone : "",
       email: person?.email ? person.email : "",
+      ville: person?.ville ? person.ville : "",
+
       rdv: date ? date : "", // Date de l'événement (le RDV)
-      ville: person?.ville ? person?.ville : "",
     },
     items: details.map((item) => ({
       description: item.label,
@@ -75,7 +79,11 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
         0
       ),
     },
-    observations: `${NewEvent.details.workDescription}`,
+    observations: `${
+      editedEvent?.details?.workDescription
+        ? editedEvent?.details?.workDescription
+        : ""
+    }`,
   };
 
   const documentDefinition = {
@@ -87,12 +95,12 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: `Facture No : ${invoiceData?.orderNumber}`,
+                text: `Réservation No : ${invoiceData?.orderNumber}`,
                 style: "headerInfo",
                 alignment: "left",
               },
               {
-                text: `Date de facture : ${new Date().toLocaleDateString()}`,
+                text: `Date : ${new Date().toLocaleDateString()}`,
                 style: "headerInfo",
                 alignment: "right",
               },
@@ -360,12 +368,12 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: " ",
+                text: ``,
                 style: "signature",
                 alignment: "left",
               },
               {
-                text: " ",
+                text: "",
                 style: "signature",
                 alignment: "right",
               },
@@ -500,11 +508,59 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
 
   return (
     <div>
-      <Button onClick={handleConfirmOr} color="primary" variant="contained">
-        Oui
+      <Button onClick={handleOpenOr} color="primary" variant="contained">
+        Imprimer Resa
       </Button>
+      <Modal
+        open={openOr}
+        onClose={handleCloseOr}
+        aria-labelledby="confirmation-modal-title"
+        aria-describedby="confirmation-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="confirmation-modal-title" variant="h6" component="h2">
+            Confirmation
+          </Typography>
+          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
+            Voulez vous imprimer cette réservation?
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleCloseOr}
+            >
+              Non
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleConfirmOr}
+            >
+              Oui
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };
 
-export default InvoiceTemplateWithoutOR;
+export default ReservationTemplate2;

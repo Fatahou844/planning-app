@@ -1,26 +1,17 @@
 import { Button } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 
+import { Box, Modal, Typography } from "@mui/material";
+import { useState } from "react";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
+const OrdreReparationTemplate2 = ({
+  editedEvent,
+  details,
+  onInvoiceExecuted,
+}) => {
+  const { person, vehicule, date, title } = editedEvent;
+  const [openOr, setOpenOr] = useState(false);
 
-const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
-  const { person, vehicule, date, title } = NewEvent;
-
-  const calculateLineTotal = (detail) => {
-    let discount = 0;
-
-    if (detail.discountPercent > 0) {
-      // Priorité au pourcentage
-      discount =
-        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
-      // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
-    }
-
-    // Calcul du total après remise
-    return detail.quantity * detail.unitPrice - discount;
-  };
   const invoiceData = {
     orderNumber: title ? title : "",
     companyInfo: {
@@ -46,8 +37,8 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
       }`, // Si une adresse client est disponible, l'ajouter ici
       phone: person?.phone ? person.phone : "",
       email: person?.email ? person.email : "",
+      ville: person?.ville ? person.ville : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
-      ville: person?.ville ? person?.ville : "",
     },
     items: details.map((item) => ({
       description: item.label,
@@ -56,27 +47,71 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
       quantity: item.quantity,
       discount: item.discountPercent,
       discountAmount: item.discountAmount,
+      unitPriceTTCafterDiscount:
+        item.unitPrice -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 100,
+      unitPriceHTafterDiscount:
+        item.unitPrice / 1.2 -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 120,
     })),
+    // totals: {
+    //   // Total HT
+    //   totalHT: details.reduce(
+    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
+    //     0
+    //   ),
+    //   // TVA (20% du total HT)
+    //   tva: details.reduce(
+    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
+    //     0
+    //   ),
+    //   // Total TTC
+    //   totalTTC: details.reduce(
+    //     (acc, item) => acc + item.unitPrice * item.quantity,
+    //     0
+    //   ),
+    // },
     totals: {
       // Total HT avec remises
-      totalHT: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail) / 1.2,
-        0
-      ),
+      totalHT: details.reduce((acc, item) => {
+        const unitPriceHT = item.unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceHT * item.quantity;
+      }, 0),
       // TVA (20% du total HT avec remises)
-      tva: details.reduce(
-        (sum, detail) =>
-          sum + calculateLineTotal(detail) - calculateLineTotal(detail) / 1.2,
-        0
-      ),
+      tva: details.reduce((acc, item) => {
+        const unitPriceHT = item.unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceHT * item.quantity * 0.2;
+      }, 0),
       // Total TTC avec remises
-      totalTTC: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail),
-        0
-      ),
+      totalTTC: details.reduce((acc, item) => {
+        const discountedPriceTTC = Math.max(
+          0,
+          item.unitPrice * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceTTC * item.quantity;
+      }, 0),
     },
-    observations: `${NewEvent.details.workDescription}`,
+    observations: `${
+      editedEvent?.details?.workDescription
+        ? editedEvent?.details?.workDescription
+        : ""
+    }`,
   };
+
+  console.log("INCOICE DATA*********************", invoiceData);
 
   const documentDefinition = {
     content: [
@@ -87,7 +122,7 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: `Facture No : ${invoiceData?.orderNumber}`,
+                text: `Ordre de réparation No : ${invoiceData?.orderNumber}`,
                 style: "headerInfo",
                 alignment: "left",
               },
@@ -257,8 +292,8 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
             ],
             ...invoiceData.items.map((item) => [
               item.description,
-              `${item.unitPriceHT.toFixed(2)} €`,
-              `${item.unitPriceTTC.toFixed(2)} €`,
+              `${item.unitPriceHT?.toFixed(2)} €`,
+              `${item.unitPriceTTC?.toFixed(2)} €`,
               item.quantity,
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
@@ -268,11 +303,7 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
                 text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
                 alignment: "right",
               },
-              `${
-                item.discount > 0
-                  ? item.discount + "%"
-                  : item.discountAmount + "€"
-              }`,
+              `${item.discount} %`,
             ]),
           ],
         },
@@ -360,12 +391,12 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: " ",
+                text: "Signature du Réceptionnaire",
                 style: "signature",
                 alignment: "left",
               },
               {
-                text: " ",
+                text: "Signature du Client",
                 style: "signature",
                 alignment: "right",
               },
@@ -486,8 +517,6 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
   }
   // Générer le PDF
 
-  const [openOr, setOpenOr] = useState(false);
-
   const handleOpenOr = () => setOpenOr(true);
 
   const handleCloseOr = () => setOpenOr(false);
@@ -500,11 +529,59 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
 
   return (
     <div>
-      <Button onClick={handleConfirmOr} color="primary" variant="contained">
-        Oui
+      <Button onClick={handleOpenOr} color="primary" variant="contained">
+        Imprimer OR
       </Button>
+      <Modal
+        open={openOr}
+        onClose={handleCloseOr}
+        aria-labelledby="confirmation-modal-title"
+        aria-describedby="confirmation-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="confirmation-modal-title" variant="h6" component="h2">
+            Confirmation
+          </Typography>
+          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
+            Voulez vous imprimer cet OR?
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleCloseOr}
+            >
+              Non
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleConfirmOr}
+            >
+              Oui
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };
 
-export default InvoiceTemplateWithoutOR;
+export default OrdreReparationTemplate2;

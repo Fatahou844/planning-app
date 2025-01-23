@@ -1,7 +1,6 @@
 import { Button } from "@mui/material";
 import React from "react";
 
-import { Box, Modal, Typography } from "@mui/material";
 import { useState } from "react";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const OrdreReparationTemplate = ({
@@ -43,7 +42,7 @@ const OrdreReparationTemplate = ({
     items: details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
-      unitPriceTTC: item.unitPrice, // Prix TTC (déjà fourni)
+      unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
       discount: item.discountPercent,
       discountAmount: item.discountAmount,
@@ -527,57 +526,9 @@ const OrdreReparationTemplate = ({
 
   return (
     <div>
-      <Button onClick={handleOpenOr} color="primary" variant="contained">
-        Imprimer OR
+      <Button onClick={handleConfirmOr} color="primary" variant="contained">
+        Oui
       </Button>
-      <Modal
-        open={openOr}
-        onClose={handleCloseOr}
-        aria-labelledby="confirmation-modal-title"
-        aria-describedby="confirmation-modal-description"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
-            border: "2px solid #000",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-          }}
-        >
-          <Typography id="confirmation-modal-title" variant="h6" component="h2">
-            Confirmation
-          </Typography>
-          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
-            Voulez vous imprimer cet OR?
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={handleCloseOr}
-            >
-              Non
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleConfirmOr}
-            >
-              Oui
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
     </div>
   );
 };
