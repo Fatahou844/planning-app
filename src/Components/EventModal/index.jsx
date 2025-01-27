@@ -314,6 +314,7 @@ function EventDialog({
     handleDelete(editedEvent.id); // Appel de la fonction addEvent
     handleCloseOrSup(); // Fermer le modal
     handleOpen();
+    onClose();
   };
 
   const [notification, setNotification] = useState({

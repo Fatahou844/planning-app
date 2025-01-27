@@ -7,6 +7,7 @@ const OrdreReparationTemplate = ({
   editedEvent,
   details,
   onInvoiceExecuted,
+  closeNotification,
 }) => {
   const { person, vehicule, date, title } = editedEvent;
   const [openOr, setOpenOr] = useState(false);
@@ -522,6 +523,7 @@ const OrdreReparationTemplate = ({
   const handleConfirmOr = () => {
     generatePdf(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    closeNotification();
   };
 
   return (

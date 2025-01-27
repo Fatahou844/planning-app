@@ -3,7 +3,12 @@ import React, { useState } from "react";
 
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
+const InvoiceTemplateWithoutOR = ({
+  NewEvent,
+  details,
+  onInvoiceExecuted,
+  closeNotification,
+}) => {
   const { person, vehicule, date, title } = NewEvent;
 
   const calculateLineTotal = (detail) => {
@@ -496,6 +501,7 @@ const InvoiceTemplateWithoutOR = ({ NewEvent, details, onInvoiceExecuted }) => {
   const handleConfirmOr = () => {
     generatePdf(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    closeNotification();
   };
 
   return (

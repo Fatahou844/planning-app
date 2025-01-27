@@ -46,6 +46,7 @@ function DocumentModal({
   categories,
   onEventTriggered,
   closeEventModal,
+  displayNotification,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -353,6 +354,7 @@ function DocumentModal({
     handleSave(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
     handleOpen();
+    displayNotification();
   };
 
   const handleConfirmCreerResa = () => {
@@ -435,13 +437,15 @@ function DocumentModal({
 
     // fetchDetails();
 
-    fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+    fetchEvents();
+    onEventTriggered(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
   };
 
   const [showPopup, setShowPopup] = useState(false);
 
   const handleShowPopup = () => {
     setShowPopup(true);
+    displayNotification();
   };
 
   const handleClosePopup = () => {
@@ -1261,6 +1265,7 @@ function DocumentModal({
           onEventTriggered={handleEventFromChild}
           collectionName="events"
           collectionNameOpen={collectionName}
+          closeDocumentModal={onClose}
         />
       )}
     </>

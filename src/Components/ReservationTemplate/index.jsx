@@ -5,7 +5,12 @@ import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake 
 
 import { useState } from "react";
 
-const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
+const ReservationTemplate = ({
+  editedEvent,
+  details,
+  onInvoiceExecuted,
+  closeNotification,
+}) => {
   const { person, vehicule, date, title } = editedEvent;
 
   const calculateLineTotal = (detail) => {
@@ -503,6 +508,7 @@ const ReservationTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   const handleConfirmOr = () => {
     generatePdf(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    closeNotification();
   };
 
   return (

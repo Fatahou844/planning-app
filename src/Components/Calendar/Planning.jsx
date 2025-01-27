@@ -149,6 +149,7 @@ const Planning = () => {
   const [user] = useAuthState(auth);
 
   const [selectedDate, setSelectedDate] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const today = new Date();
@@ -1125,6 +1126,8 @@ const Planning = () => {
   };
 
   const handleSaveEvent = async (updatedEvent) => {
+
+    
     if (!updatedEvent || !updatedEvent.id) return; // Vérifiez que l'événement a un ID
 
     try {
@@ -1207,6 +1210,39 @@ const Planning = () => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
+    setLoading(true);
+    const fetchEvents = async () => {
+      try {
+        const eventsRef = collection(db, "events");
+
+        // Créer la requête avec la condition where pour filtrer par userId
+        const q = query(
+          eventsRef,
+          where("userId", "==", user.uid),
+          where("date", "==", selectedDate)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const eventsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("recuperer à nouveau les RDVs#########", eventsData);
+
+        setDataEvents(eventsData.filter((event) => event.isClosed == false));
+        setLoading(false);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des événements : ",
+          error
+        );
+        setLoading(false);
+      }
+    };
+
+    fetchEvents(); // Appeler la fonction au montage du composant
     setOpen(false);
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
   };
@@ -1341,6 +1377,7 @@ const Planning = () => {
   const handleEventFromChild = () => {
     const fetchEvents = async () => {
       try {
+        setLoading(true)
         const eventsRef = collection(db, "events");
 
         // Créer la requête avec la condition where pour filtrer par userId
@@ -1360,31 +1397,16 @@ const Planning = () => {
         console.log("recuperer à nouveau les RDVs#########", eventsData);
 
         setDataEvents(eventsData.filter((event) => event.isClosed == false));
+        setLoading(false);
       } catch (error) {
+        setLoading(false);
         console.error(
           "Erreur lors de la récupération des événements : ",
           error
+          
         );
       }
-      // if (selectedEvent) {
-      //   const fetchDetails = async () => {
-      //     try {
-      //       const eventDocRef = doc(db, "events", selectedEvent.id);
-      //       // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-      //       const updatedFields = { isClosed: true };
-      //       await updateDoc(eventDocRef, updatedFields);
-
-      //       console.log("ORDRE");
-      //     } catch (error) {
-      //       console.error(
-      //         "Erreur lors de la récupération des détails :",
-      //         error
-      //       );
-      //     }
-      //   };
-
-      //   fetchDetails();
-      // }
+     
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
@@ -1475,6 +1497,29 @@ const Planning = () => {
       setCollectName("factures");
     }
     handleShowPopup();
+  };
+
+  const handleOpenNotifGetData = (collectionName) => {
+    setNotification({
+      open: true,
+      message: "Votre " + collectionName + " a été crée",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    if (collectionName === "reservation") {
+      setCollectName("reservations");
+    }
+
+    if (collectionName === "OR") {
+      setCollectName("events");
+    }
+    if (collectionName === "devis") {
+      setCollectName("devis");
+    }
+    if (collectionName === "Facture") {
+      setCollectName("factures");
+    }
+    handleShowPopup();
+    handleEventFromChild();
   };
 
   const [showPopup, setShowPopup] = useState(false);
@@ -1607,39 +1652,7 @@ const Planning = () => {
               </IconButton>
             </Box>
             {/* Events Accordion */}
-            {/* {uniqueCategories.map((category, index) => {
-              const categoryEvents = dataEvents.filter(
-                (event) => event.category.id === category.id
-              ); // Filtrer les événements par catégorie
-              const categoryHeight = calculateCategoryHeight({
-                events: categoryEvents,
-              }); // Calculer la hauteur de la catégorie
-
-              console.log(
-                "uniqueCategories uniqueCategories",
-                uniqueCategories
-              );
-
-              return (
-                <Accordion
-                  key={category.id}
-                  expanded={expanded.includes(category.name)}
-                  onChange={() => handleChange(category.name)}
-                  sx={{
-                    backgroundColor: getCategoryColor(category),
-                    borderRadius: "8px",
-                    marginBottom: "8px",
-                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                    height: `${categoryHeight}px`, // Hauteur dynamique
-                    "&:before": {
-                      display: "none",
-                    },
-                  }}
-                >
-                  <Typography variant="body2">{category.name}</Typography>
-                </Accordion>
-              );
-            })} */}
+           
 
             {uniqueCategories &&
               uniqueCategories.map((category, index) => {
@@ -2040,76 +2053,7 @@ const Planning = () => {
                                     }}
                                   />
                                 </TableCell>
-                                {/* 
-                                <TableCell>
-                                  <TextField
-                                    name="discountAmount"
-                                    type="text" // Permet la saisie de caractères comme '%'
-                                    value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
-                                    onChange={(e) => {
-                                      let value = e.target.value.trim(); // Supprime les espaces inutiles
-                                      let formattedValue = value; // Conserve la saisie brute pour affichage
-
-                                      // Réinitialisation des champs de montant et pourcentage
-                                      detail.discountAmount = "";
-                                      detail.discountPercent = "";
-
-                                      // Uniformise les décimales en remplaçant les virgules par des points
-                                      const normalizedValue = value.replace(
-                                        ",",
-                                        "."
-                                      );
-
-                                      value = normalizedValue;
-
-                                      if (value.includes("%")) {
-                                        // Cas où l'utilisateur entre un pourcentage
-                                        const percentage = parseFloat(
-                                          value.replace("%", "")
-                                        );
-                                        if (!isNaN(percentage)) {
-                                          detail.discountPercent = percentage; // Met à jour le pourcentage
-                                          detail.discountAmount = ""; // Met à jour le pourcentage
-                                        }
-                                      } else if (value !== "") {
-                                        // Cas où l'utilisateur entre un montant
-                                        const amount = parseFloat(value);
-                                        if (!isNaN(amount)) {
-                                          detail.discountAmount = amount; // Met à jour le montant
-                                          detail.discountPercent = ""; // Met à jour le pourcentage
-                                        }
-                                      }
-
-                                      // Si la valeur est vide, réinitialiser tout
-                                      if (value === "") {
-                                        detail.discountAmount = "";
-                                        detail.discountPercent = "";
-                                      }
-
-                                      // Met à jour l'état de l'inputValue avec la saisie brute
-                                      detail.inputValue = formattedValue;
-
-                                      // Appelle la fonction de gestion des changements
-                                      handleDetailChange(e, index);
-                                    }}
-                                    size="small"
-                                    // Optionnel : Pour interdire l'affichage du spinner pour les nombres
-                                    sx={{
-                                      "& input": {
-                                        MozAppearance: "textfield", // Pour Firefox
-                                        textAlign: "center", // Centrer horizontalement
-                                      },
-                                      "& input::-webkit-outer-spin-button": {
-                                        WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                        margin: 0,
-                                      },
-                                      "& input::-webkit-inner-spin-button": {
-                                        WebkitAppearance: "none",
-                                        margin: 0,
-                                      },
-                                    }}
-                                  />
-                                </TableCell> */}
+                              
 
                                 <TableCell>
                                   <TextField
@@ -2764,7 +2708,12 @@ const Planning = () => {
             <CurrentTimeLine currentHour={currentHour} />
 
             {/* Droppable Event Zones */}
-            <Box sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}>
+          {loading==true &&  <>
+ 
+            Chargement...
+
+          </>}
+           {loading==false && <Box sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}>
               {" "}
               {/* Z-index élevé */}
               {uniqueCategories.map((category, categoryIndex) => {
@@ -2860,22 +2809,7 @@ const Planning = () => {
                                       {...provided.dragHandleProps}
                                       onClick={() => handleEventClick(event)}
                                       sx={{
-                                        // position: "absolute",
-                                        // left: `${
-                                        //   ((event.startHour * 60 +
-                                        //     event.startMinute -
-                                        //     420) /
-                                        //     30) *
-                                        //   3.62708125
-                                        // }rem`,
-                                        // width: `${
-                                        //   ((event.endHour * 60 +
-                                        //     event.endMinute -
-                                        //     (event.startHour * 60 +
-                                        //       event.startMinute)) /
-                                        //     30) *
-                                        //   3.62708125
-                                        // }rem`, // Largeur calculée en fonction de la durée
+                                       
 
                                         gridColumnStart: calculateTimeValue(
                                           event.startHour,
@@ -2968,7 +2902,7 @@ const Planning = () => {
                   </Droppable>
                 );
               })}
-            </Box>
+            </Box>}
           </Box>
         </Box>
       </Box>
@@ -3053,6 +2987,17 @@ const Planning = () => {
             Fermer
           </Button>
         </DialogActions>
+
+        {showPopup && (
+          <Notification
+            message={notification.message}
+            handleClose={handleClosePopup}
+            collectionName={collectName}
+            dataEvent={selectedEvent}
+            dataDetails={details}
+          />
+        )}
+
         {selectedEvent && selectedEvent.collection !== "events" && (
           <DocumentModal
             open={modalOpen2}
@@ -3062,7 +3007,11 @@ const Planning = () => {
             collectionName={selectedEvent.collection}
             categories={categories}
             onEventTriggered={handleEventFromChild}
-            closeEventModal={handleModalClose}
+            closeEventModal={() => {
+              handleClose();
+              handleModalClose();
+            }}
+            displayNotification={() => handleOpenNotifGetData("O.R")}
           />
         )}
         {selectedEvent && (

@@ -4,7 +4,12 @@ import React from "react";
 import { useState } from "react";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
-const DevisTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
+const DevisTemplate = ({
+  editedEvent,
+  details,
+  onInvoiceExecuted,
+  closeNotification,
+}) => {
   const { person, vehicule, date, title } = editedEvent;
 
   const calculateLineTotal = (detail) => {
@@ -500,6 +505,7 @@ const DevisTemplate = ({ editedEvent, details, onInvoiceExecuted }) => {
   const handleConfirmOr = () => {
     generatePdf(); // Appel de la fonction addEvent
     handleCloseOr(); // Fermer le modal
+    closeNotification();
   };
 
   return (

@@ -42,6 +42,7 @@ function AddOrdreReparationModal({
   categories,
   onEventTriggered,
   collectionNameOpen,
+  closeDocumentModal
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -598,7 +599,7 @@ function AddOrdreReparationModal({
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant
-
+closeDocumentModal();
     resetForm();
     setIsModalOpen(false); // Fermer le modal
     if (onEventTriggered) {

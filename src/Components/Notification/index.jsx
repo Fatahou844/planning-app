@@ -81,6 +81,7 @@ const Notification = ({
                 <OrdreReparationTemplate
                   editedEvent={dataEvent}
                   details={dataDetails}
+                  closeNotification={handleClose}
                 />
               </button>
             </div>
@@ -97,6 +98,7 @@ const Notification = ({
                 <ReservationTemplate
                   editedEvent={dataEvent}
                   details={dataDetails}
+                  closeNotification={handleClose}
                 />
               </button>
             </div>
@@ -113,6 +115,7 @@ const Notification = ({
                 <InvoiceTemplateWithoutOR
                   NewEvent={dataEvent}
                   details={dataDetails}
+                  closeNotification={handleClose}
                 />
               </button>
             </div>
@@ -126,7 +129,11 @@ const Notification = ({
                 Non
               </button>
               <button style={styles.printButton}>
-                <DevisTemplate editedEvent={dataEvent} details={dataDetails} />
+                <DevisTemplate
+                  editedEvent={dataEvent}
+                  details={dataDetails}
+                  closeNotification={handleClose}
+                />
               </button>
             </div>
           </>
