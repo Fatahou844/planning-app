@@ -24,8 +24,10 @@ import {
   doc,
   getDocs,
   query,
+  setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -43,6 +45,7 @@ function DocumentModal({
   editedEvent,
   setEditedEvent,
   collectionName,
+  setCollectionName,
   categories,
   onEventTriggered,
   closeEventModal,
@@ -228,23 +231,98 @@ function DocumentModal({
     setEditedEvent(updatedEvent);
   };
 
-  const handleCreerCollection = async (collectionName) => {
+  const addEventDetailsGeneric = async (eventId, details, collectionName) => {
+    try {
+      const batch = writeBatch(db); // Crée un batch pour les opérations
+
+      // Référence directe au document de l'événement avec l'ID existant
+      const eventRef = doc(db, collectionName, eventId);
+
+      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      console.log("##############lidDetails####################", validDetails);
+
+      // Si aucun détail valide, on sort sans erreur
+      if (validDetails.length === 0) {
+        console.log("Aucun détail valide à enregistrer.");
+        return;
+      }
+
+      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      for (const detail of validDetails) {
+        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
+        batch.set(detailRef, {
+          label: detail.label || "",
+          quantity: detail.quantity || 0,
+          unitPrice: detail.unitPrice || 0,
+          discountPercent: detail.discountPercent || 0,
+          discountAmount: detail.discountAmount || 0,
+        });
+      }
+
+      // Engager toutes les écritures dans le batch
+      await batch.commit();
+
+      console.log("Détails ajoutés avec succès à l'événement");
+    } catch (error) {
+      console.error(
+        "Erreur lors de l'ajout des détails à l'événement : ",
+        error
+      );
+    }
+  };
+
+  const handleCreerCollection = async () => {
     if (editedEvent) {
       try {
         // Crée un nouveau document dans la collection principale avec les données de editedEvent
-        const editedEventDocRef = await addDoc(
-          collection(db, collectionName),
-          editedEvent
+
+        const editedEventDocRef = doc(collection(db, "reservations")); // Crée une référence à un nouveau document
+        await setDoc(editedEventDocRef, editedEvent);
+        console.log("editedEventDocRef", editedEventDocRef);
+
+        const validDetails = details.filter((detail) => {
+          return (
+            detail.label?.trim() ||
+            detail.quantity?.toString().trim() ||
+            detail.unitPrice?.toString().trim() ||
+            detail.discountPercent?.toString().trim() ||
+            detail.discountAmount?.toString().trim()
+          );
+        });
+
+        console.log(
+          "***************************** REFERENCE RESERVATION ***********************",
+          editedEventDocRef
         );
 
-        // Référence de la collection "details" sous le nouveau document
-        const detailsCollectionRef = collection(editedEventDocRef, "details");
+        if (validDetails.length)
+          await addEventDetailsGeneric(
+            editedEventDocRef.id,
+            details,
+            "reservations"
+          ); // Enregistrer les détails
 
-        for (const detail of details) {
-          if (!detail.isDeleted) {
-            // Ajoute tous les détails à la nouvelle collection "details"
-            await addDoc(detailsCollectionRef, detail);
-          }
+        setCollectionName("reservations");
+
+        try {
+          const eventDocRef = doc(db, "devis", editedEvent.id);
+          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+          // Créer un nouvel objet pour la mise à jour
+          const updatedFields = { isClosed: true };
+
+          await updateDoc(eventDocRef, updatedFields);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
         }
 
         if (onEventTriggered) {
@@ -326,12 +404,19 @@ function DocumentModal({
   );
   const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
 
-  let collectName = "Ordre de réparation";
+  // let collectName = "Ordre de réparation";
+  const [collectName, setCollectName] = useState("Ordre de réparation");
 
-  if (collectionName == "events") collectName = "Ordre de réparation";
-  else if (collectionName == "devis") collectName = "devis";
-  else if (collectionName == "reservations") collectName = "résa";
-  else collectName = "facture";
+  useEffect(() => {
+    console.log(
+      " *************** AFFICHER COLLECTION NAME **************",
+      collectionName
+    );
+    if (collectionName == "events") setCollectName("Ordre de réparation");
+    else if (collectionName == "devis") setCollectName("devis");
+    else if (collectionName == "reservations") setCollectName("résa");
+    else setCollectName("facture");
+  }, [editedEvent.id]);
 
   const [openOr, setOpenOr] = useState(false);
   const [openCreerOr, setOpenCreerOr] = useState(false);
@@ -358,9 +443,14 @@ function DocumentModal({
   };
 
   const handleConfirmCreerResa = () => {
-    handleCreerCollection("reservations"); // Appel de la fonction addEvent
+    handleCreerCollection(); // Appel de la fonction addEvent
     handleCloseCreerResa(); // Fermer le modal
-    handleOpen();
+    setNotification({
+      open: true,
+      message: "Votre réservation crée",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    handleShowPopup();
   };
 
   const [notification, setNotification] = useState({
@@ -438,7 +528,7 @@ function DocumentModal({
     // fetchDetails();
 
     fetchEvents();
-    onEventTriggered(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+    if (onEventTriggered) onEventTriggered(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
   };
 
   const [showPopup, setShowPopup] = useState(false);
@@ -1005,6 +1095,7 @@ function DocumentModal({
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
                 categories={categories}
+                closeEventModal={closeEventModal}
               />{" "}
               <Button
                 onClick={handleOpenCreerOr}
@@ -1054,6 +1145,7 @@ function DocumentModal({
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
                 categories={categories}
+                closeEventModal={onClose}
               />{" "}
             </>
           )}
@@ -1084,6 +1176,14 @@ function DocumentModal({
                 NewEvent={editedEvent}
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
+                closeDocumentModal={() => {
+                  if (closeEventModal) closeEventModal();
+                  onClose();
+                }}
+                closeEventModal={() => {
+                  if (closeEventModal) closeEventModal();
+                  onClose();
+                }}
               />{" "}
             </>
           )}

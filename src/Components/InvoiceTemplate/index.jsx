@@ -757,9 +757,9 @@ const InvoiceTemplate = ({
     addFacture();
     handleShowPopup();
     handleCloseOr(); // Fermer le modal
-    // if (closeEventModal) {
-    //   closeEventModal();
-    // }
+    if (closeEventModal) {
+      closeEventModal();
+    }
     // console.log("FERMETURE EVENTMODAL");
   };
 
@@ -861,6 +861,7 @@ const InvoiceTemplate = ({
           setEditedEvent={handleEditedEventChange}
           collectionName={"factures"}
           categories={categories}
+          closeEventModal={closeEventModal}
         />
       )}
     </div>

@@ -8,6 +8,8 @@ const InvoiceTemplateWithoutOR2 = ({
   NewEvent,
   details,
   onInvoiceExecuted,
+  closeDocumentModal,
+  closeEventModal,
 }) => {
   const { person, vehicule, date, title } = NewEvent;
 
@@ -500,7 +502,10 @@ const InvoiceTemplateWithoutOR2 = ({
   // Fonction pour confirmer l'action
   const handleConfirmOr = () => {
     generatePdf(); // Appel de la fonction addEvent
+    closeDocumentModal();
+    closeEventModal();
     handleCloseOr(); // Fermer le modal
+    window.location.href = "/planning/categories";
   };
 
   return (

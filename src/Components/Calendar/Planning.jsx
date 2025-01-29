@@ -137,6 +137,7 @@ const Planning = () => {
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [modalOpen2, setModalOpen2] = useState(false);
+  const [collectionName, setCollectionName] = useState("");
 
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
@@ -240,6 +241,7 @@ const Planning = () => {
   };
   const handleModalClose = () => {
     setModalOpen(false);
+    console.log("FERMETURE");
   };
 
   const handleModalClose2 = () => {
@@ -1126,8 +1128,6 @@ const Planning = () => {
   };
 
   const handleSaveEvent = async (updatedEvent) => {
-
-    
     if (!updatedEvent || !updatedEvent.id) return; // Vérifiez que l'événement a un ID
 
     try {
@@ -1377,7 +1377,7 @@ const Planning = () => {
   const handleEventFromChild = () => {
     const fetchEvents = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
         const eventsRef = collection(db, "events");
 
         // Créer la requête avec la condition where pour filtrer par userId
@@ -1403,10 +1403,8 @@ const Planning = () => {
         console.error(
           "Erreur lors de la récupération des événements : ",
           error
-          
         );
       }
-     
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
@@ -1652,7 +1650,6 @@ const Planning = () => {
               </IconButton>
             </Box>
             {/* Events Accordion */}
-           
 
             {uniqueCategories &&
               uniqueCategories.map((category, index) => {
@@ -2053,7 +2050,6 @@ const Planning = () => {
                                     }}
                                   />
                                 </TableCell>
-                              
 
                                 <TableCell>
                                   <TextField
@@ -2708,201 +2704,199 @@ const Planning = () => {
             <CurrentTimeLine currentHour={currentHour} />
 
             {/* Droppable Event Zones */}
-          {loading==true &&  <>
- 
-            Chargement...
+            {loading == true && <>Chargement...</>}
+            {loading == false && (
+              <Box
+                sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}
+              >
+                {" "}
+                {/* Z-index élevé */}
+                {uniqueCategories.map((category, categoryIndex) => {
+                  const categoryEvents = dataEvents
+                    .filter((event) => event.category != null)
+                    .filter((event) => event.category.id === category.id);
+                  // Récupérer les événements de la catégorie
+                  const lines = calculateEventLines(categoryEvents); // Calculer les lignes
 
-          </>}
-           {loading==false && <Box sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}>
-              {" "}
-              {/* Z-index élevé */}
-              {uniqueCategories.map((category, categoryIndex) => {
-                const categoryEvents = dataEvents
-                  .filter((event) => event.category != null)
-                  .filter((event) => event.category.id === category.id);
-                // Récupérer les événements de la catégorie
-                const lines = calculateEventLines(categoryEvents); // Calculer les lignes
-
-                return (
-                  <Droppable droppableId={category.id} key={category.id}>
-                    {(provided) => (
-                      <Box
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        sx={{
-                          position: "relative",
-                          borderRadius: "10px",
-                          marginBottom: "16px",
-                          padding: "8px 0",
-                          overflow: "hidden",
-                          width: "100%",
-                        }}
-                      >
-                        {lines.map((line, lineIndex) => (
-                          <Box
-                            key={`line-${lineIndex}`}
-                            sx={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                "repeat(24,minmax(50px,1fr))",
-                              alignItems: "center",
-                              position: "relative",
-                              height: "50px", // Hauteur de chaque ligne
-                              marginTop: lineIndex > 0 ? "8px" : 0,
-                            }}
-                          >
-                            {line.map((event, eventIndex) => (
-                              <Draggable
-                                key={`${event.title}-${categoryIndex}-${eventIndex}`}
-                                draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
-                                index={eventIndex}
-                              >
-                                {(provided, snapshot) => (
-                                  <Tooltip
-                                    title={
-                                      <Typography variant="body2">
-                                        <span
-                                          style={{
-                                            fontWeight: "bold",
-                                            fontSize: "1rem",
-                                          }}
-                                        >
-                                          {event.title}
-                                        </span>
-                                        {" • "}
-                                        <span>
-                                          {" "}
-                                          {/* Gris plus foncé pour les noms */}
-                                          {event.person.firstName}{" "}
-                                          {event.person.lastName}
-                                        </span>
-                                        {" • "}
-                                        <span>
-                                          {" "}
-                                          {/* Vert pour la plaque d'immatriculation */}
-                                          {event.vehicule.licensePlate}
-                                        </span>
-                                      </Typography>
-                                    }
-                                    arrow
-                                    PopperProps={{
-                                      modifiers: [
-                                        {
-                                          name: "arrow",
-                                          options: {
-                                            padding: 10, // Augmenter l'espace autour de la flèche du tooltip
-                                          },
-                                        },
-                                      ],
-                                    }}
-                                    sx={{
-                                      backgroundColor: "#fff", // Fond blanc pour le tooltip
-                                      color: "#000", // Texte noir pour un bon contraste sur fond blanc
-                                      boxShadow:
-                                        "0px 2px 8px rgba(0, 0, 0, 0.1)", // Ombre légère pour la lisibilité
-                                      borderRadius: 2, // Coins arrondis pour le tooltip
-                                    }}
-                                  >
-                                    <Box
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      onClick={() => handleEventClick(event)}
-                                      sx={{
-                                       
-
-                                        gridColumnStart: calculateTimeValue(
-                                          event.startHour,
-                                          event.startMinute
-                                        ),
-                                        gridColumnEnd: calculateTimeValue(
-                                          event.endHour,
-                                          event.endMinute
-                                        ),
-
-                                        height: "40px",
-                                        backgroundColor:
-                                          event.category?.color || "#05AFC1",
-                                        border: snapshot.isDragging
-                                          ? "2px solid #90caf9"
-                                          : "1px solid #90caf9",
-                                        borderRadius: "10px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                        transition:
-                                          "background-color 0.3s ease",
-                                      }}
-                                    >
-                                      <Box
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
-                                        sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
-                                      >
+                  return (
+                    <Droppable droppableId={category.id} key={category.id}>
+                      {(provided) => (
+                        <Box
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          sx={{
+                            position: "relative",
+                            borderRadius: "10px",
+                            marginBottom: "16px",
+                            padding: "8px 0",
+                            overflow: "hidden",
+                            width: "100%",
+                          }}
+                        >
+                          {lines.map((line, lineIndex) => (
+                            <Box
+                              key={`line-${lineIndex}`}
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(24,minmax(50px,1fr))",
+                                alignItems: "center",
+                                position: "relative",
+                                height: "50px", // Hauteur de chaque ligne
+                                marginTop: lineIndex > 0 ? "8px" : 0,
+                              }}
+                            >
+                              {line.map((event, eventIndex) => (
+                                <Draggable
+                                  key={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                  draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                  index={eventIndex}
+                                >
+                                  {(provided, snapshot) => (
+                                    <Tooltip
+                                      title={
                                         <Typography variant="body2">
                                           <span
                                             style={{
                                               fontWeight: "bold",
                                               fontSize: "1rem",
-                                              color: "#000",
                                             }}
                                           >
                                             {event.title}
                                           </span>
                                           {" • "}
-                                          <span style={{ color: "gray" }}>
+                                          <span>
+                                            {" "}
+                                            {/* Gris plus foncé pour les noms */}
                                             {event.person.firstName}{" "}
                                             {event.person.lastName}
                                           </span>
                                           {" • "}
-                                          <span
-                                            style={{ color: "textSecondary" }}
-                                          >
+                                          <span>
+                                            {" "}
+                                            {/* Vert pour la plaque d'immatriculation */}
                                             {event.vehicule.licensePlate}
                                           </span>
-                                          <span
-                                            style={{ color: "textSecondary" }}
-                                          >
-                                            {" "}
-                                            {event?.isClosed ? "(Fermé)" : ""}
-                                          </span>
                                         </Typography>
-                                        {event.nextDay && (
-                                          <ArrowForwardIcon
-                                            fontSize="medium"
-                                            sx={{
-                                              color: "white",
-                                              transition:
-                                                "transform 0.3s ease, color 0.3s ease",
-                                              "&:hover": {
-                                                color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
-                                                transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
-                                              },
-                                              boxShadow:
-                                                "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
-                                              borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
-                                              padding: "4px", // Ajoute un léger padding pour accentuer l'effet
-                                              backgroundColor:
-                                                "rgba(0, 0, 0, 0.05)", // Fond gris très léger
-                                            }}
-                                          />
-                                        )}
+                                      }
+                                      arrow
+                                      PopperProps={{
+                                        modifiers: [
+                                          {
+                                            name: "arrow",
+                                            options: {
+                                              padding: 10, // Augmenter l'espace autour de la flèche du tooltip
+                                            },
+                                          },
+                                        ],
+                                      }}
+                                      sx={{
+                                        backgroundColor: "#fff", // Fond blanc pour le tooltip
+                                        color: "#000", // Texte noir pour un bon contraste sur fond blanc
+                                        boxShadow:
+                                          "0px 2px 8px rgba(0, 0, 0, 0.1)", // Ombre légère pour la lisibilité
+                                        borderRadius: 2, // Coins arrondis pour le tooltip
+                                      }}
+                                    >
+                                      <Box
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        onClick={() => handleEventClick(event)}
+                                        sx={{
+                                          gridColumnStart: calculateTimeValue(
+                                            event.startHour,
+                                            event.startMinute
+                                          ),
+                                          gridColumnEnd: calculateTimeValue(
+                                            event.endHour,
+                                            event.endMinute
+                                          ),
+
+                                          height: "40px",
+                                          backgroundColor:
+                                            event.category?.color || "#05AFC1",
+                                          border: snapshot.isDragging
+                                            ? "2px solid #90caf9"
+                                            : "1px solid #90caf9",
+                                          borderRadius: "10px",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          cursor: "pointer",
+                                          transition:
+                                            "background-color 0.3s ease",
+                                        }}
+                                      >
+                                        <Box
+                                          display="flex"
+                                          alignItems="center"
+                                          justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
+                                          sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
+                                        >
+                                          <Typography variant="body2">
+                                            <span
+                                              style={{
+                                                fontWeight: "bold",
+                                                fontSize: "1rem",
+                                                color: "#000",
+                                              }}
+                                            >
+                                              {event.title}
+                                            </span>
+                                            {" • "}
+                                            <span style={{ color: "gray" }}>
+                                              {event.person.firstName}{" "}
+                                              {event.person.lastName}
+                                            </span>
+                                            {" • "}
+                                            <span
+                                              style={{ color: "textSecondary" }}
+                                            >
+                                              {event.vehicule.licensePlate}
+                                            </span>
+                                            <span
+                                              style={{ color: "textSecondary" }}
+                                            >
+                                              {" "}
+                                              {event?.isClosed ? "(Fermé)" : ""}
+                                            </span>
+                                          </Typography>
+                                          {event.nextDay && (
+                                            <ArrowForwardIcon
+                                              fontSize="medium"
+                                              sx={{
+                                                color: "white",
+                                                transition:
+                                                  "transform 0.3s ease, color 0.3s ease",
+                                                "&:hover": {
+                                                  color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
+                                                  transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
+                                                },
+                                                boxShadow:
+                                                  "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
+                                                borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
+                                                padding: "4px", // Ajoute un léger padding pour accentuer l'effet
+                                                backgroundColor:
+                                                  "rgba(0, 0, 0, 0.05)", // Fond gris très léger
+                                              }}
+                                            />
+                                          )}
+                                        </Box>
                                       </Box>
-                                    </Box>
-                                  </Tooltip>
-                                )}
-                              </Draggable>
-                            ))}
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
-                  </Droppable>
-                );
-              })}
-            </Box>}
+                                    </Tooltip>
+                                  )}
+                                </Draggable>
+                              ))}
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+                    </Droppable>
+                  );
+                })}
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
@@ -2944,7 +2938,7 @@ const Planning = () => {
                       hover
                       onClick={() => {
                         setSelectedEvent(event); // Met à jour l'événement sélectionné
-
+                        setCollectionName(event.collection);
                         if (event.collection !== "events") {
                           setModalOpen2(true);
                           setModalOpen(false);
@@ -3004,14 +2998,15 @@ const Planning = () => {
             onClose={handleModalClose2}
             editedEvent={selectedEvent}
             setEditedEvent={handleEditedEventChange}
-            collectionName={selectedEvent.collection}
+            collectionName={collectionName}
+            setCollectionName={setCollectionName}
             categories={categories}
             onEventTriggered={handleEventFromChild}
             closeEventModal={() => {
               handleClose();
               handleModalClose();
             }}
-            displayNotification={() => handleOpenNotifGetData("O.R")}
+            displayNotification={() => {if(collectionName=="events")handleOpenNotifGetData("O.R")}}
           />
         )}
         {selectedEvent && (

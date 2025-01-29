@@ -1122,6 +1122,7 @@ function EventDialog({
             details={details}
             onInvoiceExecuted={handleChildInvoice}
             categories={categories}
+            closeEventModal={onclose}
           />{" "}
         </DialogActions>
       </Dialog>
