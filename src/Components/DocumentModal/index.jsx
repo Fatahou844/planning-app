@@ -50,6 +50,7 @@ function DocumentModal({
   onEventTriggered,
   closeEventModal,
   displayNotification,
+  onFactureReceive,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -287,7 +288,7 @@ function DocumentModal({
         // Crée un nouveau document dans la collection principale avec les données de editedEvent
 
         const editedEventDocRef = doc(collection(db, "reservations")); // Crée une référence à un nouveau document
-        await setDoc(editedEventDocRef, editedEvent);
+        const response = await setDoc(editedEventDocRef, editedEvent);
         console.log("editedEventDocRef", editedEventDocRef);
 
         const validDetails = details.filter((detail) => {
@@ -302,7 +303,7 @@ function DocumentModal({
 
         console.log(
           "***************************** REFERENCE RESERVATION ***********************",
-          editedEventDocRef
+          response
         );
 
         if (validDetails.length)
@@ -541,6 +542,24 @@ function DocumentModal({
   const handleClosePopup = () => {
     setShowPopup(false);
     console.log("fermeture du popup");
+  };
+  const [facture, setFacture] = useState(null);
+  console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
+
+  const handleFactureGenerated = (facture) => {
+    if (onFactureReceive) {
+      onFactureReceive(facture);
+      console.log(
+        "Facture reçue dans DocumentModal handleFactureGenerated handleFactureGenerated:",
+        facture
+      );
+      setFacture(facture);
+    } // Envoie la facture au Grand-parent (Planning)
+    else {
+      console.error(
+        "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
+      );
+    }
   };
 
   return (
@@ -1096,6 +1115,7 @@ function DocumentModal({
                 onInvoiceExecuted={handleChildInvoice}
                 categories={categories}
                 closeEventModal={closeEventModal}
+                onFactureGenerated={handleFactureGenerated}
               />{" "}
               <Button
                 onClick={handleOpenCreerOr}
@@ -1146,6 +1166,7 @@ function DocumentModal({
                 onInvoiceExecuted={handleChildInvoice}
                 categories={categories}
                 closeEventModal={onClose}
+                onFactureGenerated={handleFactureGenerated}
               />{" "}
             </>
           )}

@@ -137,6 +137,9 @@ const Planning = () => {
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [modalOpen2, setModalOpen2] = useState(false);
+  const [modalOpen3, setModalOpen3] = useState(false);
+  const [facture, setFacture] = useState(null);
+
   const [collectionName, setCollectionName] = useState("");
 
   const [expanded, setExpanded] = useState([
@@ -230,7 +233,7 @@ const Planning = () => {
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant
-  }, [, selectedDate]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+  }, [, selectedDate, facture]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
 
   const currentHour = new Date().getHours();
 
@@ -247,7 +250,11 @@ const Planning = () => {
   const handleModalClose2 = () => {
     setModalOpen2(false);
     console.log("modalOpen2", modalOpen2);
-    handleModalClose();
+  };
+
+  const handleModalClose3 = () => {
+    setModalOpen3(false);
+    console.log("modalOpen2", modalOpen2);
   };
 
   // Fonctions pour assigner les couleurs
@@ -979,7 +986,7 @@ const Planning = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [dataEventsAll, setDataEventsAll] = useState([]);
-  const [collectName, setCollectName] = useState("");
+  const [collectName, setCollectName] = useState("factures");
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -1531,6 +1538,30 @@ const Planning = () => {
     console.log("fermeture du popup");
   };
 
+  // Fonction qui sera appelée par l'enfant pour envoyer la facture
+  const handleFactureReceived = (factureData) => {
+    setFacture(factureData);
+
+    if (factureData) {
+      setModalOpen(false);
+      setNotification({
+        open: true,
+        message: "Votre  Facture a été crée ",
+        severity: "success", // Peut être "error", "warning", "info"
+      });
+      setShowPopup(true);
+      setModalOpen2(false);
+      setModalOpen3(true);
+      setFacture(factureData);
+
+      console.log(
+        "##############################Facture reçue du child: #################################################",
+        factureData
+      );
+      handleOpenNotif("Facture");
+    }
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1546,6 +1577,32 @@ const Planning = () => {
           handleSave={handleSaveEvent}
           handleEventDetailClick={handleEventDetailClick}
           onEventTriggered={handleEventFromChild}
+          onFactureReceive={handleFactureReceived}
+        />
+      )}
+      {facture && (
+        <DocumentModal
+          open={modalOpen3}
+          onClose={handleModalClose3}
+          editedEvent={facture}
+          setEditedEvent={handleEditedEventChange}
+          collectionName={"factures"}
+          setCollectionName={setCollectionName}
+          categories={categories}
+          onFactureReceive={handleFactureReceived}
+        />
+      )}
+
+      {selectedEvent && selectedEvent.collection !== "events" && (
+        <DocumentModal
+          open={modalOpen2}
+          onClose={handleModalClose2}
+          editedEvent={selectedEvent}
+          setEditedEvent={handleEditedEventChange}
+          collectionName={collectionName}
+          setCollectionName={setCollectionName}
+          categories={categories}
+          onFactureReceive={handleFactureReceived}
         />
       )}
 
@@ -2992,24 +3049,7 @@ const Planning = () => {
           />
         )}
 
-        {selectedEvent && selectedEvent.collection !== "events" && (
-          <DocumentModal
-            open={modalOpen2}
-            onClose={handleModalClose2}
-            editedEvent={selectedEvent}
-            setEditedEvent={handleEditedEventChange}
-            collectionName={collectionName}
-            setCollectionName={setCollectionName}
-            categories={categories}
-            onEventTriggered={handleEventFromChild}
-            closeEventModal={() => {
-              handleClose();
-              handleModalClose();
-            }}
-            displayNotification={() => {if(collectionName=="events")handleOpenNotifGetData("O.R")}}
-          />
-        )}
-        {selectedEvent && (
+        {/* {selectedEvent && (
           <EventModal
             open={modalOpen}
             onClose={handleModalClose}
@@ -3017,10 +3057,11 @@ const Planning = () => {
             setEditedEvent={handleEditedEventChange}
             categories={categories}
             handleSave={handleSaveEvent}
+            onFactureReceive={handleFactureReceived}
             handleEventDetailClick={handleEventDetailClick}
             onEventTriggered={handleEventFromChild}
           />
-        )}
+        )} */}
       </Dialog>
     </DragDropContext>
   );

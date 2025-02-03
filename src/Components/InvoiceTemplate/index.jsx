@@ -7,12 +7,11 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../../hooks/firebaseConfig";
-import DocumentModal from "../DocumentModal";
-import Notification from "../Notification";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const InvoiceTemplate = ({
@@ -21,6 +20,7 @@ const InvoiceTemplate = ({
   details,
   onInvoiceExecuted,
   closeEventModal,
+  onFactureGenerated,
 }) => {
   const { person, vehicule, date, title } = editedEvent;
   const [user] = useAuthState(auth);
@@ -565,6 +565,24 @@ const InvoiceTemplate = ({
 
       console.log("eventRef", event);
 
+      if (event) {
+        const fetchDetails = async () => {
+          try {
+            const eventDocRef = doc(db, "events", eventRef.id);
+            // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+            event.isClosed = true;
+            await updateDoc(eventDocRef, event);
+          } catch (error) {
+            console.error(
+              "Erreur lors de la récupération des détails :",
+              error
+            );
+          }
+        };
+
+        fetchDetails();
+      }
+
       // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
       await updateLastOrderNumberForUser(
         event.userId,
@@ -693,6 +711,7 @@ const InvoiceTemplate = ({
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
     await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+
     setNotification({
       open: true,
       message: "Facture " + newOrderNumber + " crée",
@@ -702,9 +721,19 @@ const InvoiceTemplate = ({
     if (singleResaDocRef) {
       const fact = await getFactureById(singleResaDocRef.id, "factures");
       setFacture(fact);
+      if (onFactureGenerated) {
+        onFactureGenerated(fact);
+        console.log(
+          "Facture récupérée : onFactureGenerated",
+          onFactureGenerated
+        );
+      } else {
+        console.error(
+          "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
+        );
+      }
+      console.log("Facture récupérée :", fact);
     }
-
-    console.log("Facture récupérée :", facture);
   };
 
   // const getFactureById = async (factureId, collectionName) => {
@@ -782,6 +811,7 @@ const InvoiceTemplate = ({
 
   useEffect(() => {
     setFacture(facture);
+    if (onFactureGenerated) onFactureGenerated(facture);
   }, [facture]);
   const [modalOpen2, setModalOpen2] = useState(false);
 
@@ -790,13 +820,14 @@ const InvoiceTemplate = ({
     console.log("modalOpen2", modalOpen2);
   };
 
-  const handleEditedEventChange = (updatedEvent) => {
-    setFacture(updatedEvent);
-  };
+  // const handleEditedEventChange = (updatedEvent) => {
+  //   setFacture(updatedEvent);
+  //   onFactureGenerated (updatedEvent);
+  // };
 
   return (
     <div>
-      {showPopup && facture && (
+      {/* {showPopup && facture && (
         <Notification
           message={notification.message}
           handleClose={handleClosePopup}
@@ -804,7 +835,7 @@ const InvoiceTemplate = ({
           dataEvent={facture}
           dataDetails={details}
         />
-      )}
+      )} */}
       <Button onClick={handleOpenOr} color="primary" variant="contained">
         Facture
       </Button>
@@ -853,7 +884,7 @@ const InvoiceTemplate = ({
           </Box>
         </Box>
       </Modal>
-      {facture && (
+      {/* {facture && (
         <DocumentModal
           open={modalOpen2}
           onClose={handleModalClose2}
@@ -863,7 +894,7 @@ const InvoiceTemplate = ({
           categories={categories}
           closeEventModal={closeEventModal}
         />
-      )}
+      )} */}
     </div>
   );
 };

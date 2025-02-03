@@ -39,10 +39,29 @@ function EventDialog({
   handleEventDetailClick,
   categories,
   onEventTriggered,
+  onFactureReceive,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
+  const [facture, setFacture] = useState(null);
 
+  console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
+
+  const handleFactureGenerated = (facture) => {
+    if (onFactureReceive) {
+      onFactureReceive(facture);
+      console.log(
+        "Facture reçue dans DocumentModal handleFactureGenerated handleFactureGenerated:",
+        facture
+      );
+      setFacture(facture);
+    } // Envoie la facture au Grand-parent (Planning)
+    else {
+      console.error(
+        "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
+      );
+    }
+  };
   const [invoiceExecuted, setInvoiceExecuted] = useState(false);
   const handleChildInvoice = () => {
     console.log("Une action a été exécutée dans le composant fils !");
@@ -64,7 +83,7 @@ function EventDialog({
 
       fetchDetails();
     }
-  }, [invoiceExecuted]);
+  }, [invoiceExecuted, facture]);
 
   useEffect(() => {
     if (editedEvent) {
@@ -364,6 +383,12 @@ function EventDialog({
     console.log("fermeture du popup");
   };
 
+  // Fonction qui sera appelée par l'enfant pour envoyer la facture
+  const handleFactureReceived = (factureData) => {
+    setFacture(factureData);
+    console.log("Facture reçue du child:", factureData);
+  };
+
   return (
     <>
       {showPopup && (
@@ -375,6 +400,7 @@ function EventDialog({
           dataDetails={details}
         />
       )}
+
       <Dialog
         open={open}
         onClose={onClose}
@@ -1123,6 +1149,7 @@ function EventDialog({
             onInvoiceExecuted={handleChildInvoice}
             categories={categories}
             closeEventModal={onclose}
+            onFactureGenerated={handleFactureGenerated}
           />{" "}
         </DialogActions>
       </Dialog>
