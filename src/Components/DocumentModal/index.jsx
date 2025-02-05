@@ -1165,7 +1165,7 @@ function DocumentModal({
                 details={details}
                 onInvoiceExecuted={handleChildInvoice}
                 categories={categories}
-                closeEventModal={onClose}
+                closeEventModal={closeEventModal}
                 onFactureGenerated={handleFactureGenerated}
               />{" "}
             </>

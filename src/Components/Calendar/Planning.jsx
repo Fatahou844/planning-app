@@ -45,6 +45,7 @@ import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import DocModal from "../DocModal";
 import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
 import Notification from "../Notification";
@@ -160,8 +161,11 @@ const Planning = () => {
     // Formatage de la date en YYYY-MM-DD
     const formattedDate = today.toISOString().split("T")[0];
     setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
-  }, []); // État pour stocker la date sélectionnée
+  }, []); // État pour stocker la date sélectionnée  handleSearchClick
 
+  useEffect(() => {
+    handleSearchClick();
+  }, [facture]);
   // const handleDateChange = (e) => {
   //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
   // };
@@ -1594,7 +1598,7 @@ const Planning = () => {
       )}
 
       {selectedEvent && selectedEvent.collection !== "events" && (
-        <DocumentModal
+        <DocModal
           open={modalOpen2}
           onClose={handleModalClose2}
           editedEvent={selectedEvent}

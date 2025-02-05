@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  MenuItem,
   Modal,
   Paper,
   Table,
@@ -18,149 +17,92 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dayjs from "dayjs"; // Assure-toi d'avoir installé dayjs
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
   getDocs,
+  query,
+  setDoc,
   updateDoc,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "../../hooks/firebaseConfig";
+import AddOrdreReparationModal from "../AddOrdreReparationModal";
+import DevisTemplate2 from "../DevisTemplate2";
 import InvoiceTemplate from "../InvoiceTemplate";
+import InvoiceTemplateWithoutOR2 from "../InvoiceTemplateWithoutOR2";
 import Notification from "../Notification";
-import OrdreReparationTemplate2 from "../OrdreReparationTemplate2";
-function EventDialog({
+import ReservationTemplate2 from "../ReservationTemplate2";
+
+function DocModal({
   open,
   onClose,
   editedEvent,
   setEditedEvent,
-  handleEventDetailClick,
+  collectionName,
+  setCollectionName,
   categories,
   onEventTriggered,
+  closeEventModal,
+  displayNotification,
   onFactureReceive,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
-  const [facture, setFacture] = useState(null);
+  const [user] = useAuthState(auth);
+  const [events, setEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [dataEvents, setDataEvents] = useState([]);
 
-  console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
-
-  const handleFactureGenerated = (facture) => {
-    if (onFactureReceive) {
-      onFactureReceive(facture);
-      console.log(
-        "Facture reçue dans DocumentModal handleFactureGenerated handleFactureGenerated:",
-        facture
-      );
-      setFacture(facture);
-    } // Envoie la facture au Grand-parent (Planning)
-    else {
-      console.error(
-        "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
-      );
-    }
-  };
   const [invoiceExecuted, setInvoiceExecuted] = useState(false);
   const handleChildInvoice = () => {
     console.log("Une action a été exécutée dans le composant fils !");
     setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
+
+    if (onEventTriggered) {
+      onEventTriggered();
+    }
+
+    handleEventFromChild();
+  };
+
+  const formatDate = (date) => {
+    return date.toISOString().split("T")[0];
+  };
+
+  // Réinitialiser le formulaire
+  const resetForm = () => {
+    setFinDate(""); // Réinitialiser la date de fin
   };
   // useEffect(() => {
   //   if (editedEvent) {
   //     const fetchDetails = async () => {
   //       try {
-  //         const eventDocRef = doc(db, "events", editedEvent.id);
+  //         const eventDocRef = doc(db, collectionName, editedEvent.id);
   //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-  //         editedEvent.isClosed = true;
-  //         await updateDoc(eventDocRef, editedEvent);
+  //         const updatedFields = { isClosed: true };
+  //         await updateDoc(eventDocRef, updatedFields);
   //       } catch (error) {
   //         console.error("Erreur lors de la récupération des détails :", error);
   //       }
   //     };
 
-  //     const fetchDetails2 = async () => {
-  //       try {
-  //         const eventDocRef = doc(db, "reservations", editedEvent.id);
-  //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-  //         editedEvent.isClosed = true;
-  //         await updateDoc(eventDocRef, editedEvent);
-  //       } catch (error) {
-  //         console.error("Erreur lors de la récupération des détails :", error);
-  //       }
-  //     };
-
-  //     const fetchDetails3 = async () => {
-  //       try {
-  //         const eventDocRef = doc(db, "devis", editedEvent.id);
-  //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-  //         editedEvent.isClosed = true;
-  //         await updateDoc(eventDocRef, editedEvent);
-  //       } catch (error) {
-  //         console.error("Erreur lors de la récupération des détails :", error);
-  //       }
-  //     };
   //     fetchDetails();
-  //     fetchDetails2();
-  //     fetchDetails3();
   //   }
-  // }, [invoiceExecuted, facture]);
-
-  useEffect(() => {
-    if (editedEvent) {
-      const updateEvent = async () => {
-        console.log("Début de la mise à jour des documents...");
-
-        const tasks = [
-          { collection: "events", id: editedEvent.id },
-          { collection: "reservations", id: editedEvent.id },
-          { collection: "devis", id: editedEvent.id },
-        ];
-
-        const updateTasks = tasks.map(async (task) => {
-          try {
-            console.log(
-              `Mise à jour en cours pour ${task.collection} (ID: ${task.id})...`
-            );
-            const docRef = doc(db, task.collection, task.id);
-            await updateDoc(docRef, { isClosed: true });
-            console.log(
-              `✅ Mise à jour réussie pour ${task.collection} (ID: ${task.id})`
-            );
-          } catch (error) {
-            console.error(
-              `❌ Erreur lors de la mise à jour de ${task.collection} (ID: ${task.id}) :`,
-              error
-            );
-          }
-        });
-
-        const results = await Promise.allSettled(updateTasks);
-        results.forEach((result, index) => {
-          if (result.status === "fulfilled") {
-            console.log(`✅ ${tasks[index].collection} a bien été mis à jour.`);
-          } else {
-            console.error(
-              `❌ Échec de la mise à jour pour ${tasks[index].collection} :`,
-              result.reason
-            );
-          }
-        });
-
-        console.log("Mise à jour des documents terminée.");
-      };
-
-      updateEvent();
-    }
-  }, [invoiceExecuted, facture]);
+  // }, [invoiceExecuted]);
 
   useEffect(() => {
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
           const detailsCollectionRef = collection(
-            doc(db, "events", editedEvent.id),
+            doc(db, collectionName, editedEvent.id),
             "details"
           );
           const detailsSnapshot = await getDocs(detailsCollectionRef);
@@ -253,7 +195,7 @@ function EventDialog({
     if (editedEvent?.id) {
       try {
         // Référence du document de l'événement principal
-        const eventDocRef = doc(db, "events", editedEvent.id);
+        const eventDocRef = doc(db, collectionName, editedEvent.id);
         await updateDoc(eventDocRef, editedEvent);
 
         // Référence de la collection "details" sous l'événement
@@ -287,48 +229,112 @@ function EventDialog({
     }
   };
 
-  const handleDelete = async (eventId) => {
+  const handleEditedEventChange = (updatedEvent) => {
+    setEditedEvent(updatedEvent);
+  };
+
+  const addEventDetailsGeneric = async (eventId, details, collectionName) => {
     try {
-      if (!eventId) {
-        console.warn("Aucun ID d'événement fourni pour la suppression.");
+      const batch = writeBatch(db); // Crée un batch pour les opérations
+
+      // Référence directe au document de l'événement avec l'ID existant
+      const eventRef = doc(db, collectionName, eventId);
+
+      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      const validDetails = details.filter((detail) => {
+        return (
+          detail.label?.trim() ||
+          detail.quantity?.toString().trim() ||
+          detail.unitPrice?.toString().trim() ||
+          detail.discountPercent?.toString().trim() ||
+          detail.discountAmount?.toString().trim()
+        );
+      });
+
+      console.log("##############lidDetails####################", validDetails);
+
+      // Si aucun détail valide, on sort sans erreur
+      if (validDetails.length === 0) {
+        console.log("Aucun détail valide à enregistrer.");
         return;
       }
 
-      // Référence au document principal de l'événement
-      const eventDocRef = doc(db, "events", eventId);
-
-      // Référence à la sous-collection "details"
-      const detailsCollectionRef = collection(eventDocRef, "details");
-
-      // Récupérer tous les documents de la sous-collection "details"
-      const detailsSnapshot = await getDocs(detailsCollectionRef);
-
-      // Supprimer chaque document de la sous-collection "details"
-      const deleteDetailsPromises = detailsSnapshot.docs.map((detailDoc) =>
-        deleteDoc(detailDoc.ref)
-      );
-      await Promise.all(deleteDetailsPromises);
-
-      // Supprimer le document principal de l'événement
-      await deleteDoc(eventDocRef);
-
-      console.log(
-        `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`
-      );
-      setNotification({
-        open: true,
-        message: "l'OR " + editedEvent.title + " a été supprimé",
-        severity: "success", // Peut être "error", "warning", "info"
-      });
-
-      handleCloseOrSup();
-      handleCloseOr();
-
-      if (onEventTriggered) {
-        onEventTriggered(); // Notifie le parent (si nécessaire)
+      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      for (const detail of validDetails) {
+        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
+        batch.set(detailRef, {
+          label: detail.label || "",
+          quantity: detail.quantity || 0,
+          unitPrice: detail.unitPrice || 0,
+          discountPercent: detail.discountPercent || 0,
+          discountAmount: detail.discountAmount || 0,
+        });
       }
+
+      // Engager toutes les écritures dans le batch
+      await batch.commit();
+
+      console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
-      console.error("Erreur lors de la suppression de l'événement :", error);
+      console.error(
+        "Erreur lors de l'ajout des détails à l'événement : ",
+        error
+      );
+    }
+  };
+
+  const handleCreerCollection = async () => {
+    if (editedEvent) {
+      try {
+        // Crée un nouveau document dans la collection principale avec les données de editedEvent
+
+        const editedEventDocRef = doc(collection(db, "reservations")); // Crée une référence à un nouveau document
+        const response = await setDoc(editedEventDocRef, editedEvent);
+        console.log("editedEventDocRef", editedEventDocRef);
+
+        const validDetails = details.filter((detail) => {
+          return (
+            detail.label?.trim() ||
+            detail.quantity?.toString().trim() ||
+            detail.unitPrice?.toString().trim() ||
+            detail.discountPercent?.toString().trim() ||
+            detail.discountAmount?.toString().trim()
+          );
+        });
+
+        console.log(
+          "***************************** REFERENCE RESERVATION ***********************",
+          response
+        );
+
+        if (validDetails.length)
+          await addEventDetailsGeneric(
+            editedEventDocRef.id,
+            details,
+            "reservations"
+          ); // Enregistrer les détails
+
+        setCollectionName("reservations");
+
+        try {
+          const eventDocRef = doc(db, "devis", editedEvent.id);
+          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+          // Créer un nouvel objet pour la mise à jour
+          const updatedFields = { isClosed: true };
+
+          await updateDoc(eventDocRef, updatedFields);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
+        }
+
+        if (onEventTriggered) {
+          onEventTriggered(); // Notifie le parent
+        }
+
+        onClose();
+      } catch (error) {
+        console.error("Erreur lors de la création de l'événement :", error);
+      }
     }
   };
 
@@ -347,7 +353,7 @@ function EventDialog({
 
     if (detailToDelete && detailToDelete.id) {
       try {
-        const eventDocRef = doc(db, "events", editedEvent.id);
+        const eventDocRef = doc(db, collectionName, editedEvent.id);
         const detailsCollectionRef = collection(eventDocRef, "details");
         const detailDocRef = doc(detailsCollectionRef, detailToDelete.id);
 
@@ -379,48 +385,6 @@ function EventDialog({
     ]);
   };
 
-  const [openOr, setOpenOr] = useState(false);
-
-  const [openOrSup, setOpenOrSup] = useState(false);
-
-  // Fonction pour ouvrir le modal
-  const handleOpenOr = () => setOpenOr(true);
-
-  // Fonction pour fermer le modal
-  const handleCloseOr = () => setOpenOr(false);
-
-  const handleOpenOrSup = () => setOpenOrSup(true);
-  const handleCloseOrSup = () => setOpenOrSup(false);
-
-  // Fonction pour confirmer l'action
-  const handleConfirmOr = () => {
-    handleSave(); // Appel de la fonction addEvent
-    handleCloseOr(); // Fermer le modal
-    handleOpen();
-  };
-
-  const handleConfirmOrSup = () => {
-    handleDelete(editedEvent.id); // Appel de la fonction addEvent
-    handleCloseOrSup(); // Fermer le modal
-    handleOpen();
-    onClose();
-  };
-
-  const [notification, setNotification] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-
-  const handleOpen = () => {
-    setNotification({
-      open: true,
-      message: "Ordre de Réparation " + editedEvent.title + " modifié !",
-      severity: "success", // Peut être "error", "warning", "info"
-    });
-    handleShowPopup();
-  };
-
   const calculateLineTotal = (detail) => {
     let discount = 0;
 
@@ -442,35 +406,222 @@ function EventDialog({
   );
   const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
 
+  // let collectName = "Ordre de réparation";
+  const [collectName, setCollectName] = useState("Ordre de réparation");
+
+  useEffect(() => {
+    console.log(
+      " *************** AFFICHER COLLECTION NAME **************",
+      collectionName
+    );
+    if (collectionName == "events") setCollectName("Ordre de réparation");
+    else if (collectionName == "devis") setCollectName("devis");
+    else if (collectionName == "reservations") setCollectName("résa");
+    else setCollectName("facture");
+  }, [editedEvent.id]);
+
+  const [openOr, setOpenOr] = useState(false);
+  const [openCreerOr, setOpenCreerOr] = useState(false);
+  const [openCreerResa, setOpenCreerResa] = useState(false);
+
+  // Fonction pour ouvrir le modal
+  const handleOpenOr = () => setOpenOr(true);
+
+  const handleOpenCreerOr = () => setOpenCreerOr(true);
+  const handleOpenCreerResa = () => setOpenCreerResa(true);
+
+  // Fonction pour fermer le modal
+  const handleCloseOr = () => setOpenOr(false);
+  const handleCloseCreerOr = () => setOpenCreerOr(false);
+
+  const handleCloseCreerResa = () => setOpenCreerResa(false);
+
+  // Fonction pour confirmer l'action
+  const handleConfirmOr = () => {
+    handleSave(); // Appel de la fonction addEvent
+    handleCloseOr(); // Fermer le modal
+    handleOpen();
+    displayNotification();
+  };
+
+  const handleConfirmCreerResa = () => {
+    handleCreerCollection(); // Appel de la fonction addEvent
+    handleCloseCreerResa(); // Fermer le modal
+    setNotification({
+      open: true,
+      message: "Votre réservation crée",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    handleShowPopup();
+  };
+
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const handleOpen = () => {
+    setNotification({
+      open: true,
+      message: "Modification " + editedEvent.title + " effectué",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    handleShowPopup();
+  };
+
+  const handleClose = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
+    setIsModalOpen(false);
+    setOpenOr(false);
+    onClose();
+    // Fermer EventModal via la prop closeEventModal
+    if (closeEventModal) {
+      closeEventModal();
+    }
+  };
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleEventFromChild = () => {
+    const fetchEvents = async () => {
+      try {
+        const eventsRef = collection(db, "events");
+
+        // Créer la requête avec la condition where pour filtrer par userId
+        const q = query(
+          eventsRef,
+          where("userId", "==", user.uid),
+          where("date", "==", selectedDate)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const eventsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("recuperer à nouveau les RDVs#########", eventsData);
+
+        setDataEvents(eventsData.filter((event) => event.isClosed == false));
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des événements : ",
+          error
+        );
+      }
+    };
+
+    // const fetchDetails = async () => {
+    //   try {
+    //     const eventDocRef = doc(db, "events", editedEvent.ordreReparation);
+    //     // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
+    //     // Créer un nouvel objet pour la mise à jour
+    //     const updatedFields = { isClosed: true };
+
+    //     await updateDoc(eventDocRef, updatedFields);
+    //     window.location.href = "/planning/categories";
+    //   } catch (error) {
+    //     console.error("Erreur lors de la récupération des détails :", error);
+    //   }
+    // };
+
+    // fetchDetails();
+
+    fetchEvents();
+    if (onEventTriggered) onEventTriggered(); // Appeler la fonction au montage du composant    setEventCount((prevCount) => prevCount + 1); // Par exemple, incrémente un compteur
+  };
+
   const [showPopup, setShowPopup] = useState(false);
 
   const handleShowPopup = () => {
     setShowPopup(true);
+    displayNotification();
   };
 
   const handleClosePopup = () => {
     setShowPopup(false);
     console.log("fermeture du popup");
   };
+  const [facture, setFacture] = useState(null);
 
-  // Fonction qui sera appelée par l'enfant pour envoyer la facture
-  const handleFactureReceived = (factureData) => {
-    setFacture(factureData);
-    console.log("Facture reçue du child:", factureData);
+  useEffect(() => {
+    if (editedEvent) {
+      const updateEvent = async () => {
+        console.log("Début de la mise à jour des documents...");
+
+        const tasks = [
+          { collection: "events", id: editedEvent.id },
+          { collection: "reservations", id: editedEvent.id },
+          { collection: "devis", id: editedEvent.id },
+        ];
+
+        const updateTasks = tasks.map(async (task) => {
+          try {
+            console.log(
+              `Mise à jour en cours pour ${task.collection} (ID: ${task.id})...`
+            );
+            const docRef = doc(db, task.collection, task.id);
+            await updateDoc(docRef, { isClosed: true });
+            console.log(
+              `✅ Mise à jour réussie pour ${task.collection} (ID: ${task.id})`
+            );
+          } catch (error) {
+            console.error(
+              `❌ Erreur lors de la mise à jour de ${task.collection} (ID: ${task.id}) :`,
+              error
+            );
+          }
+        });
+
+        const results = await Promise.allSettled(updateTasks);
+        results.forEach((result, index) => {
+          if (result.status === "fulfilled") {
+            console.log(`✅ ${tasks[index].collection} a bien été mis à jour.`);
+          } else {
+            console.error(
+              `❌ Échec de la mise à jour pour ${tasks[index].collection} :`,
+              result.reason
+            );
+          }
+        });
+
+        console.log("Mise à jour des documents terminée.");
+      };
+
+      updateEvent();
+    }
+  }, [invoiceExecuted, facture]);
+
+  console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
+
+  const handleFactureGenerated = (facture) => {
+    if (onFactureReceive) {
+      onFactureReceive(facture);
+      console.log(
+        "Facture reçue dans DocumentModal handleFactureGenerated handleFactureGenerated:",
+        facture
+      );
+      setFacture(facture);
+    } // Envoie la facture au Grand-parent (Planning)
+    else {
+      console.error(
+        "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
+      );
+    }
   };
-
   return (
     <>
       {showPopup && (
         <Notification
           message={notification.message}
           handleClose={handleClosePopup}
-          collectionName="events"
           dataEvent={editedEvent}
+          collectionName={collectionName}
           dataDetails={details}
         />
       )}
-
       <Dialog
         open={open}
         onClose={onClose}
@@ -481,7 +632,7 @@ function EventDialog({
           },
         }}
       >
-        <DialogTitle>Modifier l'Ordre de Réparation</DialogTitle>
+        <DialogTitle>Modification {collectName}</DialogTitle>
         {editedEvent && (
           <DialogContent>
             <Grid container spacing={2}>
@@ -490,7 +641,7 @@ function EventDialog({
                 <TextField
                   margin="dense"
                   name="title"
-                  label="O.R"
+                  label={"NO " + collectName}
                   type="text"
                   fullWidth
                   value={editedEvent.title || ""}
@@ -855,6 +1006,7 @@ function EventDialog({
                       <TableCell style={{ textAlign: "center" }}>
                         {calculateLineTotal(detail).toFixed(2)}
                       </TableCell>
+
                       <TableCell sx={{ fontSize: "0.8rem" }}>
                         <Button onClick={() => removeDetailRow(index)}>
                           Supprimer
@@ -982,178 +1134,130 @@ function EventDialog({
                     }}
                   />
                 </Box>
-
-                <Typography variant="body1">Date de l'événement</Typography>
-                <TextField
-                  name="date"
-                  type="date"
-                  value={editedEvent.date}
-                  onChange={handleChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                  size="small"
-                  sx={{
-                    height: "30px",
-                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                  }}
-                />
-                <Typography variant="body1">Date de fin</Typography>
-                <TextField
-                  name="finDate"
-                  type="date"
-                  value={finDate}
-                  onChange={handleChangeFinDate}
-                  fullWidth
-                  margin="normal"
-                  required
-                  size="small"
-                  sx={{
-                    height: "30px",
-                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                  }}
-                />
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <TextField
-                      name="startTime"
-                      placeholder="HHMM (ex: 0700)"
-                      value={`${editedEvent.startHour || ""}${
-                        editedEvent.startMinute || ""
-                      }`}
-                      onChange={handleChange}
-                      fullWidth
-                      margin="normal"
-                      required
-                      size="small"
-                      sx={{
-                        height: "30px",
-                        "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                        "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={6}>
-                    <TextField
-                      name="endTime"
-                      placeholder="HHMM (ex: 1900)"
-                      value={`${editedEvent.endHour || ""}${
-                        editedEvent.endMinute || ""
-                      }`}
-                      onChange={handleChange}
-                      fullWidth
-                      margin="normal"
-                      required
-                      size="small"
-                      sx={{
-                        height: "30px",
-                        "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                        "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-                <TextField
-                  select
-                  label="Catégorie"
-                  name="category"
-                  value={editedEvent?.category?.id}
-                  onChange={handleChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                  size="small"
-                  sx={{
-                    height: "30px",
-                    "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                    "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                  }}
-                >
-                  {categories.map((categoryGroup, index) => (
-                    <MenuItem
-                      key={index}
-                      value={categoryGroup.id}
-                      sx={{
-                        fontSize: "0.8rem",
-                        minHeight: "30px",
-                      }}
-                    >
-                      {categoryGroup.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
               </Grid>
             </Grid>
           </DialogContent>
         )}
         <DialogActions>
-          <Button onClick={onClose} color="primary">
-            Annuler
-          </Button>{" "}
-          <Button onClick={handleOpenOrSup} color="secondary">
-            Supprimer
-          </Button>{" "}
-          <Modal
-            open={openOrSup}
-            onClose={handleCloseOrSup}
-            aria-labelledby="confirmation-modal-title"
-            aria-describedby="confirmation-modal-description"
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                bgcolor: "background.paper",
-                border: "2px solid #000",
-                boxShadow: 24,
-                p: 4,
-                borderRadius: 2,
-              }}
-            >
-              <Typography
-                id="confirmation-modal-title"
-                variant="h6"
-                component="h2"
+          {collectionName === "reservations" && (
+            <>
+              <Button onClick={onClose} color="primary">
+                Annuler
+              </Button>{" "}
+              <Button onClick={onClose} color="secondary">
+                Supprimer
+              </Button>{" "}
+              <Button
+                onClick={handleOpenOr}
+                color="primary"
+                variant="contained"
               >
-                Confirmation
-              </Typography>
-              <Typography
-                id="confirmation-modal-description"
-                sx={{ mt: 2, mb: 4 }}
+                Modifier
+              </Button>
+              <ReservationTemplate2
+                editedEvent={editedEvent}
+                details={details}
+              />{" "}
+              <InvoiceTemplate
+                editedEvent={editedEvent}
+                details={details}
+                onInvoiceExecuted={handleChildInvoice}
+                categories={categories}
+                closeEventModal={closeEventModal}
+                onFactureGenerated={handleFactureGenerated}
+              />{" "}
+              <Button
+                onClick={handleOpenCreerOr}
+                color="primary"
+                variant="contained"
               >
-                Voulez-vous supprimer l'OR ?
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
+                Créer OR
+              </Button>{" "}
+            </>
+          )}
+          {collectionName === "devis" && (
+            <>
+              <Button onClick={onClose} color="primary">
+                Annuler
+              </Button>{" "}
+              <Button onClick={onClose} color="secondary">
+                Supprimer
+              </Button>{" "}
+              <Button
+                onClick={handleOpenOr}
+                color="primary"
+                variant="contained"
+              >
+                Modifier
+              </Button>
+              <Button
+                onClick={handleOpenCreerOr}
+                color="primary"
+                variant="contained"
+              >
+                Créer OR
+              </Button>{" "}
+              <Button
+                onClick={handleOpenCreerResa}
+                color="primary"
+                variant="contained"
+              >
+                Créer un Resa
+              </Button>
+              <DevisTemplate2
+                editedEvent={editedEvent}
+                details={details}
+                onInvoiceExecuted={handleChildInvoice}
+              />
+              <InvoiceTemplate
+                editedEvent={editedEvent}
+                details={details}
+                onInvoiceExecuted={handleChildInvoice}
+                categories={categories}
+                closeEventModal={closeEventModal}
+                onFactureGenerated={handleFactureGenerated}
+              />{" "}
+            </>
+          )}
+          {collectionName === "factures" && (
+            <>
+              <Button
+                onClick={() => {
+                  if (closeEventModal) {
+                    console.log("Action dans DocumentModal");
+                    closeEventModal();
+                  }
+                  onClose();
                 }}
+                color="primary"
               >
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleCloseOrSup}
-                >
-                  Non
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleConfirmOrSup}
-                >
-                  Oui
-                </Button>
-              </Box>
-            </Box>
-          </Modal>
-          <Button onClick={handleOpenOr} color="primary" variant="contained">
-            Modifier
-          </Button>
+                Annuler
+              </Button>{" "}
+              <Button
+                onClick={() => {
+                  handleOpenOr(); // Fermer EventModal via la prop closeEventModal
+                }}
+                color="primary"
+                variant="contained"
+                disabled={dayjs(editedEvent.date).isBefore(dayjs(), "day")} // Désactive si la date est passée
+              >
+                Modifier
+              </Button>
+              <InvoiceTemplateWithoutOR2
+                NewEvent={editedEvent}
+                details={details}
+                onInvoiceExecuted={handleChildInvoice}
+                closeDocumentModal={() => {
+                  if (closeEventModal) closeEventModal();
+                  onClose();
+                }}
+                closeEventModal={() => {
+                  if (closeEventModal) closeEventModal();
+                  onClose();
+                }}
+              />{" "}
+            </>
+          )}
           <Modal
             open={openOr}
             onClose={handleCloseOr}
@@ -1184,7 +1288,7 @@ function EventDialog({
                 id="confirmation-modal-description"
                 sx={{ mt: 2, mb: 4 }}
               >
-                Voulez vous enriregistrer les modifications ?
+                Voulez vous appliquer les modifications?
               </Typography>
               <Box
                 sx={{
@@ -1209,22 +1313,134 @@ function EventDialog({
               </Box>
             </Box>
           </Modal>
-          <OrdreReparationTemplate2
-            editedEvent={editedEvent}
-            details={details}
-          />{" "}
-          <InvoiceTemplate
-            editedEvent={editedEvent}
-            details={details}
-            onInvoiceExecuted={handleChildInvoice}
-            categories={categories}
-            closeEventModal={onclose}
-            onFactureGenerated={handleFactureGenerated}
-          />{" "}
+          <Modal
+            open={openCreerOr}
+            onClose={handleCloseCreerOr}
+            aria-labelledby="confirmation-modal-title"
+            aria-describedby="confirmation-modal-description"
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                bgcolor: "background.paper",
+                border: "2px solid #000",
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
+              }}
+            >
+              <Typography
+                id="confirmation-modal-title"
+                variant="h6"
+                component="h2"
+              >
+                Confirmation
+              </Typography>
+              <Typography
+                id="confirmation-modal-description"
+                sx={{ mt: 2, mb: 4 }}
+              >
+                Voulez vous creér un OR?
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleCloseCreerOr}
+                >
+                  Non
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  Oui
+                </Button>
+              </Box>
+            </Box>
+          </Modal>
+          <Modal
+            open={openCreerResa}
+            onClose={handleCloseCreerResa}
+            aria-labelledby="confirmation-modal-title"
+            aria-describedby="confirmation-modal-description"
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                bgcolor: "background.paper",
+                border: "2px solid #000",
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
+              }}
+            >
+              <Typography
+                id="confirmation-modal-title"
+                variant="h6"
+                component="h2"
+              >
+                Confirmation
+              </Typography>
+              <Typography
+                id="confirmation-modal-description"
+                sx={{ mt: 2, mb: 4 }}
+              >
+                Voulez vous creér une réservation?
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleCloseCreerResa}
+                >
+                  Non
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleConfirmCreerResa}
+                >
+                  Oui
+                </Button>
+              </Box>
+            </Box>
+          </Modal>
         </DialogActions>
       </Dialog>
+
+      {editedEvent && (
+        <AddOrdreReparationModal
+          open={isModalOpen}
+          onClose={handleClose}
+          editedEvent={editedEvent}
+          setEditedEvent={handleEditedEventChange}
+          categories={categories}
+          onEventTriggered={handleEventFromChild}
+          collectionName="events"
+          collectionNameOpen={collectionName}
+          closeDocumentModal={onClose}
+        />
+      )}
     </>
   );
 }
 
-export default EventDialog;
+export default DocModal;
