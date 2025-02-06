@@ -164,7 +164,7 @@ const Planning = () => {
   }, []); // État pour stocker la date sélectionnée  handleSearchClick
 
   useEffect(() => {
-    handleSearchClick();
+    handleSearchClickFull();
   }, [facture]);
   // const handleDateChange = (e) => {
   //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
@@ -1082,6 +1082,95 @@ const Planning = () => {
       setDataEventsAll(uniqueResults);
 
       setOpen(true); // Ouvre le dialogue après la recherche
+    } catch (error) {
+      console.error("Erreur lors de la recherche des collections :", error);
+    }
+  }
+
+  async function handleSearchClickFull() {
+    const keyword = searchQuery;
+    const lowerCaseKeyword = keyword.toLowerCase();
+
+    // Liste des collections à rechercher
+    const collections = ["reservations", "devis", "factures", "events"];
+
+    try {
+      // Préparer les requêtes pour chaque collection
+      const collectionPromises = collections.map(async (collectionName) => {
+        const collectionRef = collection(db, collectionName);
+
+        // Créer des requêtes pour chaque champ à rechercher
+        const queries = [
+          query(
+            collectionRef,
+            where("userId", "==", user.uid),
+            where("person.firstName", ">=", lowerCaseKeyword),
+            where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+          query(
+            collectionRef,
+            where("userId", "==", user.uid),
+            where("person.lastName", ">=", lowerCaseKeyword),
+            where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+          query(
+            collectionRef,
+            where("userId", "==", user.uid),
+            where("person.email", ">=", lowerCaseKeyword),
+            where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+          query(
+            collectionRef,
+            where("userId", "==", user.uid),
+            where("title", ">=", lowerCaseKeyword),
+            where("title", "<=", lowerCaseKeyword + "\uf8ff")
+          ),
+        ];
+
+        // Récupérer les résultats pour chaque requête
+        const queryPromises = queries.map(async (q) => {
+          const querySnapshot = await getDocs(q);
+          const results = [];
+          querySnapshot.forEach((doc) => {
+            results.push({
+              id: doc.id,
+              collection: collectionName,
+              ...doc.data(),
+            });
+          });
+
+          // Appliquer le filtre uniquement si collectionName n'est pas "factures"
+          if (collectionName !== "factures") {
+            return results.filter((event) => event.isClosed === false);
+          }
+
+          // Retourner les résultats sans filtre pour "factures"
+          return results;
+        });
+
+        // Combiner les résultats de toutes les requêtes pour cette collection
+        const collectionResults = (await Promise.all(queryPromises)).flat();
+        return collectionResults;
+      });
+
+      // Attendre les résultats de toutes les collections
+      const allCollectionsResults = (
+        await Promise.all(collectionPromises)
+      ).flat();
+
+      // Suppression des doublons
+      const uniqueResults = allCollectionsResults.filter(
+        (value, index, self) =>
+          index ===
+          self.findIndex(
+            (t) => t.id === value.id && t.collection === value.collection
+          )
+      );
+
+      console.log("Résultats combinés :", uniqueResults);
+
+      // Mettre à jour les résultats dans l'état
+      setDataEventsAll(uniqueResults);
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
     }
