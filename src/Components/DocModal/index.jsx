@@ -52,6 +52,7 @@ function DocModal({
   closeEventModal,
   displayNotification,
   onFactureReceive,
+  onDelete,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -68,6 +69,7 @@ function DocModal({
     handleDelete(editedEvent.id); // Appel de la fonction addEvent
     handleCloseOrSup(); // Fermer le modal
     handleOpen();
+    onDelete();
     onClose();
   };
 

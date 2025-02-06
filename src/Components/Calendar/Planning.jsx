@@ -1696,6 +1696,7 @@ const Planning = () => {
           setCollectionName={setCollectionName}
           categories={categories}
           onFactureReceive={handleFactureReceived}
+          onDelete={handleSearchClick}
         />
       )}
 
