@@ -41,6 +41,7 @@ import {
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 
+import SettingsIcon from "@mui/icons-material/Settings";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
@@ -1782,16 +1783,6 @@ const Planning = () => {
           <Box
             sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
           >
-            {/* Date Filter Input */}
-            {/* <TextField
-              label="Filtrer par date"
-              variant="outlined"
-              fullWidth
-              sx={{ mb: 0.1 }}
-              value={selectedDate}
-              type="date"
-              onChange={handleDateChange}
-            /> */}
             <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
               <IconButton
                 onClick={() => handleDateChange(-1)}
@@ -1857,7 +1848,8 @@ const Planning = () => {
               sx={{
                 position: "fixed",
                 bottom: 16,
-                right: 16,
+                left: "50%",
+                transform: "translateX(-50%)",
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
@@ -1871,7 +1863,23 @@ const Planning = () => {
               }}
             >
               <AddIcon />
-              <Typography sx={{ ml: 1 }}></Typography>
+            </Fab>
+            <Fab
+              color="seconday"
+              aria-label="add"
+              sx={{
+                position: "fixed",
+                bottom: 16,
+                right: 16,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
+                padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+                borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+              }}
+            >
+              <SettingsIcon />
             </Fab>
 
             {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
