@@ -70,7 +70,7 @@ function DocModal({
     handleDelete(editedEvent.id); // Appel de la fonction addEvent
     handleCloseOrSup(); // Fermer le modal
     handleOpen();
-    onDelete();
+
     onClose();
   };
 
@@ -107,6 +107,17 @@ function DocModal({
         message: collectionName + editedEvent.title + " a été supprimé",
         severity: "success", // Peut être "error", "warning", "info"
       });
+
+      if (onDelete) {
+        onDelete();
+        console.log(
+          `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`
+        );
+      } else {
+        console.error(
+          "❌ ERREUR : onDelete  est undefined dans le Child ! onDelete"
+        );
+      }
 
       handleCloseOrSup();
       handleCloseOr();
