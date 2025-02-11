@@ -1655,6 +1655,24 @@ const Planning = () => {
     }
   };
 
+  const handleOnNotficationSuccess = () => {
+    setModalOpen(false);
+    setNotification({
+      open: true,
+      message: "Votre  OR a été crée ",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    setShowPopup(true);
+    setModalOpen2(false);
+
+    handleOpenNotif("OR");
+
+    console.log(
+      "*********************************** VOTRE OR A ETE CREE AVEC SUCCESS *****************************"
+    );
+    handleSearchClickFull();
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1697,6 +1715,7 @@ const Planning = () => {
           categories={categories}
           onFactureReceive={handleFactureReceived}
           onDelete={handleSearchClick}
+          onNotificationSuccess={handleOnNotficationSuccess}
         />
       )}
 

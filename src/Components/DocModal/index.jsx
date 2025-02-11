@@ -53,6 +53,7 @@ function DocModal({
   displayNotification,
   onFactureReceive,
   onDelete,
+  onNotificationSuccess,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -665,6 +666,18 @@ function DocModal({
     else {
       console.error(
         "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
+      );
+    }
+  };
+
+  const handleORCReated = () => {
+    if (onNotificationSuccess) {
+      onNotificationSuccess();
+      console.log("OR reçue dans DocumentModal handleORCReated :");
+    } // Envoie la facture au Grand-parent (Planning)
+    else {
+      console.error(
+        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child !"
       );
     }
   };
@@ -1604,6 +1617,7 @@ function DocModal({
           collectionName="events"
           collectionNameOpen={collectionName}
           closeDocumentModal={onClose}
+          onNotificationSuccess={handleORCReated}
         />
       )}
     </>

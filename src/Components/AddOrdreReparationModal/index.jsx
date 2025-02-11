@@ -42,7 +42,8 @@ function AddOrdreReparationModal({
   categories,
   onEventTriggered,
   collectionNameOpen,
-  closeDocumentModal
+  closeDocumentModal,
+  onNotificationSuccess,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -599,9 +600,17 @@ function AddOrdreReparationModal({
     };
 
     fetchEvents(); // Appeler la fonction au montage du composant
-closeDocumentModal();
+    closeDocumentModal();
     resetForm();
     setIsModalOpen(false); // Fermer le modal
+    if (onNotificationSuccess) {
+      onNotificationSuccess();
+      console.log("OR reçue dans DocumentModal onNotificationSuccess :");
+    } else {
+      console.error(
+        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child ! AddOrdeReparationModal"
+      );
+    }
     if (onEventTriggered) {
       onEventTriggered(); // Notifie le parent
     }
