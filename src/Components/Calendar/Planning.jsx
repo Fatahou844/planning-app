@@ -51,6 +51,29 @@ import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
 import Notification from "../Notification";
 
+const tabLabels = [
+  "Planning",
+  "Clients",
+  "Store",
+  "Team",
+  "Caisses",
+  "Pilotage",
+  "Marketing",
+  "Paramètres",
+];
+
+const TabPanel = ({ children, value, index }) => {
+  return (
+    <div hidden={value !== index}>
+      {value === index && (
+        <Box p={3}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+};
+
 const Timeline = () => (
   <Box
     sx={{
@@ -1673,7 +1696,11 @@ const Planning = () => {
     );
     handleSearchClickFull();
   };
+  const [activeTab, setActiveTab] = useState(0);
 
+  const handleChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1739,6 +1766,7 @@ const Planning = () => {
           />
         )}
         {/* Header Section */}
+
         <Box
           sx={{
             display: "flex", // Utiliser flex pour centrer les éléments
