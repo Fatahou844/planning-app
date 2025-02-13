@@ -661,7 +661,7 @@ function DocModal({
 
       updateEvent();
     }
-  }, [invoiceExecuted, facture]);
+  }, [facture]);
 
   console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
 

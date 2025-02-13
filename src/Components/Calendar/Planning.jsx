@@ -1743,6 +1743,7 @@ const Planning = () => {
           sx={{
             display: "flex", // Utiliser flex pour centrer les éléments
             alignItems: "center",
+
             justifyContent: "space-between", // Espacer les éléments
             backgroundColor: "#007A87",
             color: "white",
@@ -1783,6 +1784,16 @@ const Planning = () => {
           <Box
             sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
           >
+            {/* Date Filter Input */}
+            {/* <TextField
+              label="Filtrer par date"
+              variant="outlined"
+              fullWidth
+              sx={{ mb: 0.1 }}
+              value={selectedDate}
+              type="date"
+              onChange={handleDateChange}
+            /> */}
             <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
               <IconButton
                 onClick={() => handleDateChange(-1)}
