@@ -22,6 +22,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import Dashboard from "./Pages/Dashboard/Dashboard";
+import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 import Login from "./Pages/Login/index";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import PrivateRoute from "./hooks/PrivateRoute"; // Importez le composant PrivateRoute
@@ -240,6 +241,14 @@ const App = () => {
           element={
             <PrivateRoute>
               <UserDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/parametres"
+          element={
+            <PrivateRoute>
+              <GarageSettings />
             </PrivateRoute>
           }
         />

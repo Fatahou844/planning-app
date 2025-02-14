@@ -1,13 +1,42 @@
 import { Button } from "@mui/material";
-import React from "react";
-
-import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 import { Box, Modal, Typography } from "@mui/material";
-import { useState } from "react";
-
+import { collection, getDocs, query, where } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "../../hooks/firebaseConfig";
+import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
   const { person, vehicule, date, title } = editedEvent;
+  const [user] = useAuthState(auth);
+
+  const [companyInfo, setCompanyInfo] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "",
+    userId: user?.uid,
+  });
+
+  useEffect(() => {
+    const fetchGarageInfo = async () => {
+      if (!user) return;
+
+      const q = query(
+        collection(db, "garages"),
+        where("userId", "==", user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const garageData = querySnapshot.docs[0].data();
+        setCompanyInfo(garageData);
+      }
+    };
+
+    fetchGarageInfo();
+  }, [, user]);
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -24,13 +53,14 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     // Calcul du total après remise
     return detail.quantity * detail.unitPrice - discount;
   };
+
   const invoiceData = {
     orderNumber: title ? title : "",
     companyInfo: {
-      name: "Garage XYZ",
-      address: "123 Rue Exemple, Casablanca",
-      phone: "+212 5 20 30 40 50",
-      email: "contact@garagexyz.com",
+      name: companyInfo?.name,
+      address: companyInfo?.address,
+      phone: companyInfo?.phone,
+      email: companyInfo?.email,
     },
     vehicle: {
       model: vehicule?.model ? vehicule.model : "",

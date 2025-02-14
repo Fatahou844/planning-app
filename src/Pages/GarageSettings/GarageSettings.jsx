@@ -1,0 +1,140 @@
+import {
+  Button,
+  Container,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "../../hooks/firebaseConfig";
+
+const GarageSettings = () => {
+  const [user] = useAuthState(auth);
+  const [companyInfo, setCompanyInfo] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "",
+    userId: user?.uid,
+  });
+
+  useEffect(() => {
+    const fetchGarageInfo = async () => {
+      if (!user) return;
+
+      const q = query(
+        collection(db, "garages"),
+        where("userId", "==", user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const garageData = querySnapshot.docs[0].data();
+        setCompanyInfo(garageData);
+      }
+    };
+
+    fetchGarageInfo();
+  }, [user]);
+
+  const handleChange = (e) => {
+    setCompanyInfo({
+      ...companyInfo,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSave = async () => {
+    try {
+      await setDoc(doc(collection(db, "garages"), user?.uid), companyInfo);
+      alert("Informations enregistrées avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement :", error);
+    }
+  };
+
+  return (
+    <Container maxWidth="md" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Paramètres du Garage
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Nom du Garage"
+              fullWidth
+              name="name"
+              value={companyInfo.name}
+              onChange={handleChange}
+              size="small"
+              margin="normal"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Adresse"
+              fullWidth
+              name="address"
+              value={companyInfo.address}
+              onChange={handleChange}
+              size="small"
+              margin="normal"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Téléphone"
+              fullWidth
+              name="phone"
+              value={companyInfo.phone}
+              onChange={handleChange}
+              size="small"
+              margin="normal"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Email"
+              fullWidth
+              name="email"
+              value={companyInfo.email}
+              onChange={handleChange}
+              size="small"
+              margin="normal"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Site Web"
+              fullWidth
+              name="website"
+              value={companyInfo.website}
+              onChange={handleChange}
+              size="small"
+              margin="normal"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" color="primary" onClick={handleSave}>
+              Enregistrer
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Container>
+  );
+};
+
+export default GarageSettings;
