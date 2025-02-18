@@ -17,6 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dayjs from "dayjs"; // Assure-toi d'avoir installé dayjs
 import {
   addDoc,
   collection,
@@ -1188,6 +1189,7 @@ function DocumentModal({
                 onClick={() => {
                   handleOpenOr(); // Fermer EventModal via la prop closeEventModal
                 }}
+                disabled={dayjs(editedEvent.date).isBefore(dayjs(), "day")} // Désactive si la date est passée
                 color="primary"
                 variant="contained"
               >

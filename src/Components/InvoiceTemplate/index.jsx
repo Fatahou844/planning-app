@@ -6,6 +6,7 @@ import {
   collection,
   doc,
   getDoc,
+  serverTimestamp,
   setDoc,
   updateDoc,
   writeBatch,
@@ -561,6 +562,8 @@ const InvoiceTemplate = ({
         isClosed: isClosed,
         userId: event.userId, // UID de l'utilisateur
         ordreReparation: editedEvent.id ? editedEvent.id : "",
+        createdAt: serverTimestamp(), // Timestamp auto de création
+        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       console.log("eventRef", event);

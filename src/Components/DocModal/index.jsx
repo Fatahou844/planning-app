@@ -25,6 +25,7 @@ import {
   doc,
   getDocs,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -358,7 +359,47 @@ function DocModal({
         // Crée un nouveau document dans la collection principale avec les données de editedEvent
 
         const editedEventDocRef = doc(collection(db, "reservations")); // Crée une référence à un nouveau document
-        const response = await setDoc(editedEventDocRef, editedEvent);
+        const response = await setDoc(editedEventDocRef, {
+          eventId: editedEventDocRef.id,
+          title: editedEvent.title, // Utilise le numéro de commande fourni
+          devisId: editedEvent.id,
+          date: editedEvent.date,
+          person: {
+            firstName: editedEvent.person.firstName,
+            lastName: editedEvent.person.lastName,
+            email: editedEvent.person.email,
+            phone: editedEvent.person.phone,
+            adresse: editedEvent.person.adresse
+              ? editedEvent.person.adresse
+              : "",
+            postale: editedEvent.person.postale
+              ? editedEvent.person.postale
+              : "",
+            ville: editedEvent.person.ville ? editedEvent.person.ville : "",
+          },
+          vehicule: {
+            licensePlate: editedEvent.vehicule.licensePlate
+              ? editedEvent.vehicule.licensePlate
+              : "",
+            vin: editedEvent.vehicule.vin ? editedEvent.vehicule.vin : "",
+            color: editedEvent.vehicule.color ? editedEvent.vehicule.color : "",
+            model: editedEvent.vehicule.model ? editedEvent.vehicule.model : "",
+            kms: editedEvent.vehicule.kms ? editedEvent.vehicule.kms : "",
+            controletech: editedEvent.vehicule.controletech
+              ? editedEvent.vehicule.controletech
+              : "",
+          },
+          details: {
+            workDescription: editedEvent.details.workDescription
+              ? editedEvent.details.workDescription
+              : "",
+            price: editedEvent.details.price ? editedEvent.details.price : "",
+          },
+          isClosed: false,
+          userId: editedEvent.userId, // UID de l'utilisateur
+          createdAt: serverTimestamp(), // Timestamp auto de création
+          updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
+        });
         console.log("editedEventDocRef", editedEventDocRef);
 
         const validDetails = details.filter((detail) => {
@@ -399,6 +440,8 @@ function DocModal({
         if (onEventTriggered) {
           onEventTriggered(); // Notifie le parent
         }
+
+        handleResaCReated();
 
         onClose();
       } catch (error) {
@@ -685,6 +728,18 @@ function DocModal({
     if (onNotificationSuccess) {
       onNotificationSuccess();
       console.log("OR reçue dans DocumentModal handleORCReated :");
+    } // Envoie la facture au Grand-parent (Planning)
+    else {
+      console.error(
+        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child !"
+      );
+    }
+  };
+
+  const handleResaCReated = () => {
+    if (onNotificationSuccess) {
+      onNotificationSuccess();
+      console.log("Resa reçue dans DocumentModal handleResaCReated :");
     } // Envoie la facture au Grand-parent (Planning)
     else {
       console.error(
@@ -1430,7 +1485,10 @@ function DocModal({
                 }}
                 color="primary"
                 variant="contained"
-                disabled={dayjs(editedEvent.date).isBefore(dayjs(), "day")} // Désactive si la date est passée
+                disabled={dayjs(editedEvent.createdAt.toDate()).isBefore(
+                  dayjs(),
+                  "day"
+                )}
               >
                 Modifier
               </Button>

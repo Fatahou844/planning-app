@@ -28,6 +28,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -387,6 +388,8 @@ function AddOrdreReparationModal({
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
         devisOrResa: event.id ? event.id : "",
+              createdAt: serverTimestamp(), // Timestamp auto de création
+                updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       console.log("eventRef", event);

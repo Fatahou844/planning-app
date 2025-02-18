@@ -516,12 +516,32 @@ const InvoiceTemplateWithoutOR2 = ({
     },
   };
 
+  // function generatePdf() {
+  //   pdfMake.createPdf(documentDefinition).open();
+  //   if (onInvoiceExecuted) {
+  //     onInvoiceExecuted(); // Déclenche la fonction du parent
+  //   }
+  //   window.location.href = "/planning/categories";
+  // }
   function generatePdf() {
-    pdfMake.createPdf(documentDefinition).open();
-    if (onInvoiceExecuted) {
-      onInvoiceExecuted(); // Déclenche la fonction du parent
-    }
+    const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+
+    pdfDocGenerator.getBuffer((buffer) => {
+      // Une fois le PDF généré, on l'ouvre
+      pdfDocGenerator.open();
+
+      // Exécute la fonction parent après génération du PDF
+      if (onInvoiceExecuted) {
+        onInvoiceExecuted();
+      }
+
+      // Attendre un court instant avant de rediriger
+      setTimeout(() => {
+        window.location.href = "/planning/categories";
+      }, 1000); // Petit délai pour éviter les pages blanches
+    });
   }
+
   // Générer le PDF
 
   const [openOr, setOpenOr] = useState(false);
@@ -536,7 +556,6 @@ const InvoiceTemplateWithoutOR2 = ({
     closeDocumentModal();
     closeEventModal();
     handleCloseOr(); // Fermer le modal
-    window.location.href = "/planning/categories";
   };
 
   return (

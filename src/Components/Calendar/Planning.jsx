@@ -34,6 +34,7 @@ import {
   getDoc,
   getDocs,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -50,29 +51,6 @@ import DocModal from "../DocModal";
 import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
 import Notification from "../Notification";
-
-const tabLabels = [
-  "Planning",
-  "Clients",
-  "Store",
-  "Team",
-  "Caisses",
-  "Pilotage",
-  "Marketing",
-  "Paramètres",
-];
-
-const TabPanel = ({ children, value, index }) => {
-  return (
-    <div hidden={value !== index}>
-      {value === index && (
-        <Box p={3}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-};
 
 const Timeline = () => (
   <Box
@@ -789,6 +767,8 @@ const Planning = () => {
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
+        createdAt: serverTimestamp(), // Timestamp auto de création
+        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       setSelectedEvent({
@@ -830,6 +810,8 @@ const Planning = () => {
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
+        createdAt: serverTimestamp(), // Timestamp auto de création
+        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       console.log("eventRef", event);
@@ -883,6 +865,8 @@ const Planning = () => {
         },
         isClosed: isClosed,
         userId: event.userId, // UID de l'utilisateur
+        createdAt: serverTimestamp(), // Timestamp auto de création
+        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       setSelectedEvent({
@@ -919,6 +903,8 @@ const Planning = () => {
 
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
+        createdAt: serverTimestamp(), // Timestamp auto de création
+        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       console.log("eventRef", event);

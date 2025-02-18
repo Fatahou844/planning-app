@@ -67,79 +67,95 @@ const Notification = ({
   // }, [handleClose, autoCloseDelay]);
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.popup}>
-        <p>{message}. Voulez-vous l'imprimer?</p>
+    <>
+      {!message.includes("supprim") && (
+        <div style={styles.overlay}>
+          <div style={styles.popup}>
+            <p>{message}. Voulez-vous l'imprimer?</p>
 
-        {collectionName === "events" && (
-          <>
+            {collectionName === "events" && (
+              <>
+                <div style={styles.buttonContainer}>
+                  <button style={styles.closeButton} onClick={handleClose}>
+                    Non
+                  </button>
+                  <button style={styles.printButton}>
+                    <OrdreReparationTemplate
+                      editedEvent={dataEvent}
+                      details={dataDetails}
+                      closeNotification={handleClose}
+                    />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {collectionName === "reservations" && (
+              <>
+                <div style={styles.buttonContainer}>
+                  <button style={styles.closeButton} onClick={handleClose}>
+                    Non
+                  </button>
+                  <button style={styles.printButton}>
+                    <ReservationTemplate
+                      editedEvent={dataEvent}
+                      details={dataDetails}
+                      closeNotification={handleClose}
+                    />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {collectionName === "factures" && (
+              <>
+                <div style={styles.buttonContainer}>
+                  <button style={styles.closeButton} onClick={handleClose}>
+                    Non
+                  </button>
+                  <button style={styles.printButton}>
+                    <InvoiceTemplateWithoutOR
+                      NewEvent={dataEvent}
+                      details={dataDetails}
+                      closeNotification={handleClose}
+                    />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {collectionName === "devis" && (
+              <>
+                <div style={styles.buttonContainer}>
+                  <button style={styles.closeButton} onClick={handleClose}>
+                    Non
+                  </button>
+                  <button style={styles.printButton}>
+                    <DevisTemplate
+                      editedEvent={dataEvent}
+                      details={dataDetails}
+                      closeNotification={handleClose}
+                    />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {message.includes("supprim") && (
+        <div style={styles.overlay}>
+          <div style={styles.popup}>
+            <p>{message}</p>
             <div style={styles.buttonContainer}>
               <button style={styles.closeButton} onClick={handleClose}>
-                Non
-              </button>
-              <button style={styles.printButton}>
-                <OrdreReparationTemplate
-                  editedEvent={dataEvent}
-                  details={dataDetails}
-                  closeNotification={handleClose}
-                />
+                Fermer
               </button>
             </div>
-          </>
-        )}
-
-        {collectionName === "reservations" && (
-          <>
-            <div style={styles.buttonContainer}>
-              <button style={styles.closeButton} onClick={handleClose}>
-                Non
-              </button>
-              <button style={styles.printButton}>
-                <ReservationTemplate
-                  editedEvent={dataEvent}
-                  details={dataDetails}
-                  closeNotification={handleClose}
-                />
-              </button>
-            </div>
-          </>
-        )}
-
-        {collectionName === "factures" && (
-          <>
-            <div style={styles.buttonContainer}>
-              <button style={styles.closeButton} onClick={handleClose}>
-                Non
-              </button>
-              <button style={styles.printButton}>
-                <InvoiceTemplateWithoutOR
-                  NewEvent={dataEvent}
-                  details={dataDetails}
-                  closeNotification={handleClose}
-                />
-              </button>
-            </div>
-          </>
-        )}
-
-        {collectionName === "devis" && (
-          <>
-            <div style={styles.buttonContainer}>
-              <button style={styles.closeButton} onClick={handleClose}>
-                Non
-              </button>
-              <button style={styles.printButton}>
-                <DevisTemplate
-                  editedEvent={dataEvent}
-                  details={dataDetails}
-                  closeNotification={handleClose}
-                />
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
