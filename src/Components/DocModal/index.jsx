@@ -55,6 +55,7 @@ function DocModal({
   onFactureReceive,
   onDelete,
   onNotificationSuccess,
+  onSearchAfterDevisResa,
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
@@ -738,7 +739,8 @@ function DocModal({
 
   const handleResaCReated = () => {
     if (onNotificationSuccess) {
-      onNotificationSuccess();
+      //  onNotificationSuccess();
+      onSearchAfterDevisResa();
       console.log("Resa reçue dans DocumentModal handleResaCReated :");
     } // Envoie la facture au Grand-parent (Planning)
     else {
@@ -803,6 +805,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Prénom"
@@ -817,6 +828,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Téléphone"
@@ -831,6 +851,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Email"
@@ -845,6 +874,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Adresse locale"
@@ -859,6 +897,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Code postale"
@@ -873,6 +920,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Ville"
@@ -887,6 +943,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
               </Grid>
 
@@ -905,6 +970,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="VIN"
@@ -918,6 +992,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Modèle"
@@ -931,6 +1014,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="Couleur"
@@ -944,6 +1036,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   label="kilométrage"
@@ -957,6 +1058,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   name="vehicule.controletech"
@@ -970,6 +1080,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
               </Grid>
             </Grid>
@@ -980,7 +1099,7 @@ function DocModal({
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontSize: "0.8rem", width: "40%" }}>
-                      Label
+                      Libellé
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                       Quantité
@@ -1013,6 +1132,16 @@ function DocModal({
                           }
                           size="small"
                           fullWidth
+                          disabled={
+                            editedEvent?.createdAt &&
+                            typeof editedEvent.createdAt.toDate ===
+                              "function" &&
+                            dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(),
+                              "day"
+                            ) &&
+                            collectionName === "factures"
+                          }
                         />
                       </TableCell>
                       <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -1045,6 +1174,16 @@ function DocModal({
                               margin: 0,
                             },
                           }}
+                          disabled={
+                            editedEvent?.createdAt &&
+                            typeof editedEvent.createdAt.toDate ===
+                              "function" &&
+                            dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(),
+                              "day"
+                            ) &&
+                            collectionName === "factures"
+                          }
                         />
                       </TableCell>
                       <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -1077,6 +1216,16 @@ function DocModal({
                               margin: 0,
                             },
                           }}
+                          disabled={
+                            editedEvent?.createdAt &&
+                            typeof editedEvent.createdAt.toDate ===
+                              "function" &&
+                            dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(),
+                              "day"
+                            ) &&
+                            collectionName === "factures"
+                          }
                         />
                       </TableCell>
                       <TableCell sx={{ fontSize: "0.8rem" }}>
@@ -1137,6 +1286,16 @@ function DocModal({
                               margin: 0,
                             },
                           }}
+                          disabled={
+                            editedEvent?.createdAt &&
+                            typeof editedEvent.createdAt.toDate ===
+                              "function" &&
+                            dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(),
+                              "day"
+                            ) &&
+                            collectionName === "factures"
+                          }
                         />
                       </TableCell>
                       <TableCell style={{ textAlign: "center" }}>
@@ -1144,7 +1303,19 @@ function DocModal({
                       </TableCell>
 
                       <TableCell sx={{ fontSize: "0.8rem" }}>
-                        <Button onClick={() => removeDetailRow(index)}>
+                        <Button
+                          onClick={() => removeDetailRow(index)}
+                          disabled={
+                            editedEvent?.createdAt &&
+                            typeof editedEvent.createdAt.toDate ===
+                              "function" &&
+                            dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(),
+                              "day"
+                            ) &&
+                            collectionName === "factures"
+                          }
+                        >
                           Supprimer
                         </Button>
                       </TableCell>
@@ -1158,6 +1329,15 @@ function DocModal({
               color="primary"
               variant="contained"
               sx={{ marginTop: 2 }}
+              disabled={
+                editedEvent?.createdAt &&
+                typeof editedEvent.createdAt.toDate === "function" &&
+                dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                  dayjs(),
+                  "day"
+                ) &&
+                collectionName === "factures"
+              }
             >
               Ajouter un Détail
             </Button>
@@ -1197,6 +1377,15 @@ function DocModal({
                     "& .MuiInputBase-root": { fontSize: "0.8rem" },
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
                 <TextField
                   name="details.price"
@@ -1225,6 +1414,15 @@ function DocModal({
                       margin: 0,
                     },
                   }}
+                  disabled={
+                    editedEvent?.createdAt &&
+                    typeof editedEvent.createdAt.toDate === "function" &&
+                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                      dayjs(),
+                      "day"
+                    ) &&
+                    collectionName === "factures"
+                  }
                 />
               </Grid>
 
@@ -1254,6 +1452,15 @@ function DocModal({
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                     }}
+                    disabled={
+                      editedEvent?.createdAt &&
+                      typeof editedEvent.createdAt.toDate === "function" &&
+                      dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                        dayjs(),
+                        "day"
+                      ) &&
+                      collectionName === "factures"
+                    }
                   />
                   <TextField
                     label="Réceptionnaire"
@@ -1268,6 +1475,15 @@ function DocModal({
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                     }}
+                    disabled={
+                      editedEvent?.createdAt &&
+                      typeof editedEvent.createdAt.toDate === "function" &&
+                      dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                        dayjs(),
+                        "day"
+                      ) &&
+                      collectionName === "factures"
+                    }
                   />
                 </Box>
               </Grid>
@@ -1485,10 +1701,14 @@ function DocModal({
                 }}
                 color="primary"
                 variant="contained"
-                disabled={dayjs(editedEvent.createdAt.toDate()).isBefore(
-                  dayjs(),
-                  "day"
-                )}
+                disabled={
+                  editedEvent?.createdAt &&
+                  typeof editedEvent.createdAt.toDate === "function" &&
+                  dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                    dayjs(),
+                    "day"
+                  )
+                }
               >
                 Modifier
               </Button>

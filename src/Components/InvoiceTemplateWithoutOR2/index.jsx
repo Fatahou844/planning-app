@@ -582,9 +582,6 @@ const InvoiceTemplateWithoutOR2 = ({
             borderRadius: 2,
           }}
         >
-          <Typography id="confirmation-modal-title" variant="h6" component="h2">
-            Confirmation
-          </Typography>
           <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
             Voulez vous imprimer cette facture?
           </Typography>

@@ -42,7 +42,6 @@ import {
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 
-import SettingsIcon from "@mui/icons-material/Settings";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
 import eventsData from "../../data/eventsData.json";
@@ -1730,6 +1729,7 @@ const Planning = () => {
           onFactureReceive={handleFactureReceived}
           onDelete={handleSearchClickFull}
           onNotificationSuccess={handleOnNotficationSuccess}
+          onSearchAfterDevisResa={handleSearchClickFull}
         />
       )}
 
@@ -1889,7 +1889,7 @@ const Planning = () => {
             >
               <AddIcon />
             </Fab>
-            <Fab
+            {/* <Fab
               color="seconday"
               aria-label="add"
               sx={{
@@ -1905,7 +1905,7 @@ const Planning = () => {
               }}
             >
               <SettingsIcon />
-            </Fab>
+            </Fab> */}
 
             {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
 
