@@ -52,6 +52,7 @@ import EventModal from "../EventModal";
 import Notification from "../Notification";
 
 import logoGarage from "../../assets/images/garageLogo.jpg";
+import jumelles from "../../assets/images/jumelles.png";
 
 const Timeline = () => (
   <Box
@@ -1811,14 +1812,24 @@ const Planning = () => {
               mx: 3,
             }}
           >
+            <Box
+              component="img"
+              src={jumelles} // Vérifie le bon chemin
+              alt="Jumelle"
+              sx={{
+                height: 70,
+                width: "auto",
+              }}
+            />
             <TextField
               variant="outlined"
               placeholder="Rechercher un rendez-vous"
               size="small"
               sx={{
                 backgroundColor: "white",
-                borderRadius: "4px",
+                borderRadius: "16x",
                 width: "50%", // Ajustable selon besoin
+                ml: 2,
               }}
               onChange={handleSearchChange}
               value={searchQuery}

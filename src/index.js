@@ -32,6 +32,7 @@ const tabLabels = [
   { label: "Store", path: "/store" },
   { label: "Team", path: "/team" },
   { label: "Caisses", path: "/caisses" },
+  { label: "Catalogue", path: "/catalogue" },
   { label: "Pilotage", path: "/pilotage" },
   { label: "Marketing", path: "/marketing" },
   { label: "Paramètres", path: "/parametres" },
