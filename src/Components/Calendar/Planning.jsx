@@ -51,6 +51,8 @@ import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
 import Notification from "../Notification";
 
+import logoGarage from "../../assets/images/garageLogo.jpg";
+
 const Timeline = () => (
   <Box
     sx={{
@@ -1755,43 +1757,96 @@ const Planning = () => {
 
         <Box
           sx={{
-            display: "flex", // Utiliser flex pour centrer les éléments
+            display: "flex",
             alignItems: "center",
-
-            justifyContent: "space-between", // Espacer les éléments
-            backgroundColor: "#007A87",
+            justifyContent: "space-between",
+            // backgroundColor: "#007A87",
             color: "white",
             borderRadius: "8px",
-            padding: "10px",
-            mb: 2,
+            padding: "0px",
+            mb: "32px !important",
+            width: "100%", // Prend toute la largeur
           }}
         >
-          <Typography variant="h5">SaaS Garage</Typography>
+          {/* 📅 Sélecteur de date à gauche */}
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <IconButton
+              onClick={() => handleDateChange(-1)}
+              aria-label="Jour précédent"
+              sx={{ color: "blue" }} // Ajuste le style selon tes besoins
+            >
+              <ArrowBackIcon />
+            </IconButton>
 
-          {/* Search Bar */}
-          <TextField
-            variant="outlined"
-            placeholder="Rechercher un rendez-vous"
-            size="small"
+            <TextField
+              label="Filtrer par date"
+              variant="outlined"
+              size="small"
+              sx={{
+                backgroundColor: "white",
+                borderRadius: "4px",
+                width: 140,
+              }}
+              value={selectedDate}
+              type="date"
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+
+            <IconButton
+              onClick={() => handleDateChange(1)}
+              aria-label="Jour suivant"
+              sx={{ color: "blue" }}
+            >
+              <ArrowForwardIcon />
+            </IconButton>
+          </Box>
+
+          {/* 🔍 Barre de recherche centrée */}
+          <Box
             sx={{
-              backgroundColor: "white", // Couleur de fond de la barre de recherche
-              borderRadius: "4px",
               flexGrow: 1,
-              mx: 2, // Marge horizontale
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: 3,
             }}
-            onChange={handleSearchChange} // Remplacez par votre gestionnaire d'événements
-            value={searchQuery}
-            onKeyDown={handleKeyDown}
-          />
-
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleSearchClick}
           >
-            Rechercher
-          </Button>
+            <TextField
+              variant="outlined"
+              placeholder="Rechercher un rendez-vous"
+              size="small"
+              sx={{
+                backgroundColor: "white",
+                borderRadius: "4px",
+                width: "50%", // Ajustable selon besoin
+              }}
+              onChange={handleSearchChange}
+              value={searchQuery}
+              onKeyDown={handleKeyDown}
+            />
+
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSearchClick}
+              sx={{ ml: 2 }}
+            >
+              Rechercher
+            </Button>
+          </Box>
+
+          {/* 🔵 Logo à droite */}
+          <Box
+            component="img"
+            src={logoGarage} // Vérifie le bon chemin
+            alt="Logo"
+            sx={{
+              height: 90,
+              width: "auto",
+            }}
+          />
         </Box>
+
         {/* Flex container for Sidebar and Main Content */}
         <Box sx={{ display: "flex", flexGrow: 1 }}>
           {/* Sidebar Section */}
@@ -1799,42 +1854,27 @@ const Planning = () => {
             sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
           >
             {/* Date Filter Input */}
-            {/* <TextField
-              label="Filtrer par date"
-              variant="outlined"
-              fullWidth
-              sx={{ mb: 0.1 }}
-              value={selectedDate}
-              type="date"
-              onChange={handleDateChange}
-            /> */}
-            <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
-              <IconButton
-                onClick={() => handleDateChange(-1)}
-                aria-label="Jour précédent"
-                sx={{ color: "primary.main" }} // Ajuste le style selon tes besoins
-              >
-                <ArrowBackIcon />
-              </IconButton>
 
-              <TextField
-                label="Filtrer par date"
-                variant="outlined"
-                fullWidth
-                sx={{ mb: 0.1 }}
-                value={selectedDate}
-                type="date"
-                onChange={(e) => setSelectedDate(e.target.value)}
-              />
-
-              <IconButton
-                onClick={() => handleDateChange(1)}
-                aria-label="Jour suivant"
-                sx={{ color: "primary.main" }} // Ajuste le style selon tes besoins
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center" // Pour centrer le contenu horizontalement
+              sx={{
+                height: "56px", // Augmente la hauteur du bouton
+                padding: "0 16px", // Optionnel, pour ajuster les espacements horizontalement
+              }}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() =>
+                  setSelectedDate(new Date().toISOString().split("T")[0])
+                }
               >
-                <ArrowForwardIcon />
-              </IconButton>
+                Aujourd'hui
+              </Button>
             </Box>
+
             {/* Events Accordion */}
 
             {uniqueCategories &&
