@@ -1766,41 +1766,81 @@ const Planning = () => {
             borderRadius: "8px",
             padding: "0px",
             mb: "32px !important",
+            mt: "2.3rem",
             width: "100%", // Prend toute la largeur
           }}
         >
           {/* 📅 Sélecteur de date à gauche */}
-          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
-            <IconButton
-              onClick={() => handleDateChange(-1)}
-              aria-label="Jour précédent"
-              sx={{ color: "blue" }} // Ajuste le style selon tes besoins
-            >
-              <ArrowBackIcon />
-            </IconButton>
+          <Box
+            display="flex"
+            flexDirection="column" // Empile les éléments verticalement
+            alignItems="center"
+            gap={2} // Espace entre les éléments
+          >
+            {/* Section des boutons et du champ de date */}
+            <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+              <IconButton
+                onClick={() => handleDateChange(-1)}
+                aria-label="Jour précédent"
+                sx={{ color: "blue" }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
 
-            <TextField
-              label="Filtrer par date"
-              variant="outlined"
-              size="small"
+              <TextField
+                label="Filtrer par date"
+                variant="outlined"
+                size="small"
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: "4px",
+                  width: 140,
+                }}
+                value={selectedDate}
+                type="date"
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+
+              <IconButton
+                onClick={() => handleDateChange(1)}
+                aria-label="Jour suivant"
+                sx={{ color: "blue" }}
+              >
+                <ArrowForwardIcon />
+              </IconButton>
+            </Box>
+
+            {/* Bouton "Aujourd'hui" centré en dessous */}
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
               sx={{
-                backgroundColor: "white",
-                borderRadius: "4px",
-                width: 140,
+                // height: "56px", // Hauteur du bouton
+                padding: "0 16px",
               }}
-              value={selectedDate}
-              type="date"
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-
-            <IconButton
-              onClick={() => handleDateChange(1)}
-              aria-label="Jour suivant"
-              sx={{ color: "blue" }}
             >
-              <ArrowForwardIcon />
-            </IconButton>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() =>
+                  setSelectedDate(new Date().toISOString().split("T")[0])
+                }
+              >
+                Aujourd'hui
+              </Button>
+            </Box>
           </Box>
+
+          <Box
+            component="img"
+            src={jumelles} // Vérifie le bon chemin
+            alt="Jumelle"
+            sx={{
+              height: 70,
+              width: "auto",
+            }}
+          />
 
           {/* 🔍 Barre de recherche centrée */}
           <Box
@@ -1812,15 +1852,6 @@ const Planning = () => {
               mx: 3,
             }}
           >
-            <Box
-              component="img"
-              src={jumelles} // Vérifie le bon chemin
-              alt="Jumelle"
-              sx={{
-                height: 70,
-                width: "auto",
-              }}
-            />
             <TextField
               variant="outlined"
               placeholder="Rechercher un rendez-vous"
@@ -1852,8 +1883,12 @@ const Planning = () => {
             src={logoGarage} // Vérifie le bon chemin
             alt="Logo"
             sx={{
-              height: 90,
-              width: "auto",
+              height: 150,
+              width: "15%",
+              position: "fixed",
+              top: 10,
+              right: 10,
+              // zIndex: 1000, // S'assurer qu'il reste au-dessus des autres éléments
             }}
           />
         </Box>
@@ -1862,11 +1897,16 @@ const Planning = () => {
         <Box sx={{ display: "flex", flexGrow: 1 }}>
           {/* Sidebar Section */}
           <Box
-            sx={{ width: "250px", borderRight: "1px solid lightgray", pr: 2 }}
+            sx={{
+              width: "250px",
+              borderRight: "1px solid lightgray",
+              pr: 2,
+              mt: "56px",
+            }}
           >
             {/* Date Filter Input */}
 
-            <Box
+            {/* <Box
               display="flex"
               alignItems="center"
               justifyContent="center" // Pour centrer le contenu horizontalement
@@ -1884,7 +1924,7 @@ const Planning = () => {
               >
                 Aujourd'hui
               </Button>
-            </Box>
+            </Box> */}
 
             {/* Events Accordion */}
 
@@ -1970,7 +2010,7 @@ const Planning = () => {
                 },
               }}
             >
-              <DialogTitle>Ajouter un événement</DialogTitle>
+              <DialogTitle>Ajouter</DialogTitle>
               <DialogContent>
                 <form>
                   <Grid container spacing={2}>
@@ -2375,7 +2415,7 @@ const Planning = () => {
                                     color="secondary"
                                     onClick={() => removeDetailRow(index)}
                                   >
-                                    Supprimer
+                                    SUPP
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -3176,13 +3216,14 @@ const Planning = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Titre</TableCell>
-                    <TableCell>Prénom</TableCell>
                     <TableCell>Nom</TableCell>
-                    <TableCell>Email</TableCell>
+                    <TableCell>Prénom</TableCell>
+
                     <TableCell>Téléphone</TableCell>
+                    <TableCell>Email</TableCell>
 
                     <TableCell>Véhicule</TableCell>
-                    <TableCell>Collection</TableCell>
+                    <TableCell>Document</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -3202,16 +3243,15 @@ const Planning = () => {
                       style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
                     >
                       <TableCell>{event.title}</TableCell>
-                      <TableCell>{event.person.firstName}</TableCell>
                       <TableCell>{event.person.lastName}</TableCell>
+                      <TableCell>{event.person.firstName}</TableCell>
+
+                      <TableCell>{event.person.phone || ""}</TableCell>
                       <TableCell>{event.person.email}</TableCell>
-                      <TableCell>
-                        {event.person.phone || "Non renseigné"}
-                      </TableCell>
 
                       <TableCell>
-                        {event.vehicule.model || "Non renseigné"} -{" "}
-                        {event.vehicule.licensePlate || "Non renseignée"}
+                        {event.vehicule.model || ""} -{" "}
+                        {event.vehicule.licensePlate || ""}
                       </TableCell>
                       <TableCell>
                         <Chip

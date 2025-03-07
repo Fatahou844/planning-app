@@ -50,14 +50,25 @@ const DashboardTabs = () => {
   };
 
   return (
-    <Container maxWidth="xl">
+    <Container
+      maxWidth="xl"
+      sx={{
+        position: "fixed",
+        top: 0,
+        left: "50%",
+        transform: "translateX(-50%)", // Centre horizontalement
+        width: "80vw", // Ajuste la largeur pour un meilleur rendu
+        bgcolor: "background.paper",
+        boxShadow: 3,
+        borderRadius: 2,
+        zIndex: 999, // Toujours au-dessus
+        marginBottom: "20px", // Marge en bas pour l'espacement
+        p: 1,
+      }}
+    >
       <Box
         sx={{
           width: "100%",
-          bgcolor: "background.paper",
-          boxShadow: 3,
-          borderRadius: 2,
-          p: 1,
         }}
       >
         <Tabs

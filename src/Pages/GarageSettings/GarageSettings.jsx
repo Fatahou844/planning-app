@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Button,
   Container,
   Grid,
@@ -26,7 +27,9 @@ const GarageSettings = () => {
     phone: "",
     email: "",
     website: "",
+    logo: null, // Stocke le fichier image
     userId: user?.uid,
+    logoPreview: "", // Stocke l'URL de prévisualisation
   });
 
   useEffect(() => {
@@ -55,6 +58,18 @@ const GarageSettings = () => {
     });
   };
 
+  const handleLogoChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const previewURL = URL.createObjectURL(file);
+      setCompanyInfo((prev) => ({
+        ...prev,
+        logo: file,
+        logoPreview: previewURL,
+      }));
+    }
+  };
+
   const handleSave = async () => {
     try {
       await setDoc(doc(collection(db, "garages"), user?.uid), companyInfo);
@@ -65,12 +80,37 @@ const GarageSettings = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="md" sx={{ mt: "6rem" }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h5" gutterBottom>
           Paramètres du Garage
         </Typography>
-        <Grid container spacing={3}>
+        <Grid container spacing={3} alignItems="center">
+          {/* Aperçu du logo et Upload */}
+          <Grid
+            item
+            xs={12}
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+          >
+            <Avatar
+              src={companyInfo.logoPreview || companyInfo.logo}
+              sx={{ width: 100, height: 100, mb: 2 }}
+              alt="Logo du garage"
+            />
+            <Button variant="contained" component="label">
+              Changer le Logo
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleLogoChange}
+              />
+            </Button>
+          </Grid>
+
+          {/* Champs d'information */}
           <Grid item xs={12} md={6}>
             <TextField
               label="Nom du Garage"
