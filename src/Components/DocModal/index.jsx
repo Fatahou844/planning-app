@@ -908,7 +908,7 @@ function DocModal({
                   }
                 />
                 <TextField
-                  label="Code postale"
+                  label="Code postal"
                   name="person.postale"
                   value={editedEvent.person?.postale || ""}
                   onChange={handleChange}
@@ -1493,10 +1493,14 @@ function DocModal({
         <DialogActions>
           {collectionName === "reservations" && (
             <>
-              <Button onClick={onClose} color="primary">
+              <Button onClick={onClose} variant="contained" color="primary">
                 Annuler
               </Button>{" "}
-              <Button onClick={handleOpenOrSup} color="secondary">
+              <Button
+                onClick={handleOpenOrSup}
+                variant="contained"
+                color="primary"
+              >
                 Supprimer
               </Button>{" "}
               <Modal
@@ -1584,10 +1588,14 @@ function DocModal({
           )}
           {collectionName === "devis" && (
             <>
-              <Button onClick={onClose} color="primary">
+              <Button onClick={onClose} variant="contained" color="primary">
                 Annuler
               </Button>{" "}
-              <Button onClick={handleOpenOrSup} color="secondary">
+              <Button
+                onClick={handleOpenOrSup}
+                variant="contained"
+                color="primary"
+              >
                 Supprimer
               </Button>{" "}
               <Modal
@@ -1691,6 +1699,7 @@ function DocModal({
                   }
                   onClose();
                 }}
+                variant="contained"
                 color="primary"
               >
                 Annuler

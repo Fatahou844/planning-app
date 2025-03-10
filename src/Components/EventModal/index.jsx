@@ -574,7 +574,7 @@ function EventDialog({
                   }}
                 />
                 <TextField
-                  label="Code postale"
+                  label="Code postal"
                   name="person.postale"
                   value={editedEvent.person?.postale || ""}
                   onChange={handleChange}
@@ -983,7 +983,7 @@ function EventDialog({
                   />
                 </Box>
 
-                <Typography variant="body1">Date de l'événement</Typography>
+                <Typography variant="body1">Date de départ</Typography>
                 <TextField
                   name="date"
                   type="date"
@@ -1062,7 +1062,7 @@ function EventDialog({
                   name="category"
                   value={editedEvent?.category?.id}
                   onChange={handleChange}
-                  fullWidth
+                  fullWidthP
                   margin="normal"
                   required
                   size="small"
@@ -1090,10 +1090,10 @@ function EventDialog({
           </DialogContent>
         )}
         <DialogActions>
-          <Button onClick={onClose} color="primary">
+          <Button onClick={onClose} variant="contained" color="primary">
             Annuler
           </Button>{" "}
-          <Button onClick={handleOpenOrSup} color="secondary">
+          <Button onClick={handleOpenOrSup} variant="contained" color="primary">
             Supprimer
           </Button>{" "}
           <Modal

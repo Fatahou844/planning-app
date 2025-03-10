@@ -15,9 +15,10 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { auth, db, storage } from "../../hooks/firebaseConfig";
 
 const GarageSettings = () => {
   const [user] = useAuthState(auth);
@@ -72,7 +73,28 @@ const GarageSettings = () => {
 
   const handleSave = async () => {
     try {
-      await setDoc(doc(collection(db, "garages"), user?.uid), companyInfo);
+      let logoURL = companyInfo.logoPreview; // Garde l'ancien logo si aucun fichier n'est ajouté
+
+      if (companyInfo.logo) {
+        // Référence du fichier dans Firebase Storage
+        const logoRef = ref(storage, `logos/${user?.uid}.jpg`);
+
+        // Téléverser l'image
+        await uploadBytes(logoRef, companyInfo.logo);
+
+        // Obtenir l'URL publique du logo
+        logoURL = await getDownloadURL(logoRef);
+      }
+
+      await setDoc(doc(collection(db, "garages"), user?.uid), {
+        name: companyInfo.name,
+        address: companyInfo.address,
+        phone: companyInfo.phone,
+        email: companyInfo.email,
+        website: companyInfo.website,
+        userId: user?.uid,
+        logo: logoURL || "", // Enregistre l'URL dans Firestore
+      });
       alert("Informations enregistrées avec succès !");
     } catch (error) {
       console.error("Erreur lors de l'enregistrement :", error);

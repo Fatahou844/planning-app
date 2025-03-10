@@ -50,36 +50,88 @@ const DashboardTabs = () => {
   };
 
   return (
+    // <Container
+    //   maxWidth="xl"
+    //   sx={{
+    //     position: "fixed",
+    //     top: 0,
+    //     left: "50%",
+    //     transform: "translateX(-50%)", // Centre horizontalement
+    //     width: "80vw", // Ajuste la largeur pour un meilleur rendu
+    //     bgcolor: "background.paper",
+    //     boxShadow: 3,
+    //     borderRadius: 2,
+    //     zIndex: 999, // Toujours au-dessus
+    //     marginBottom: "20px", // Marge en bas pour l'espacement
+    //     p: 1,
+    //     paddingTop: "0px",
+    //     paddingBottom: "0px",
+    //   }}
+    // >
+    //   <Box
+    //     sx={{
+    //       width: "100%",
+    //     }}
+    //   >
+    //     <Tabs
+    //       value={activeTab !== -1 ? activeTab : 0}
+    //       onChange={handleChange}
+    //       variant="fullWidth"
+    //       textColor="primary"
+    //       indicatorColor="primary"
+    //     >
+    //       {tabLabels.map((tab, index) => (
+    //         <Tab
+    //           key={index}
+    //           label={tab.label}
+    //           sx={{
+    //             paddingTop: "0px",
+    //             paddingBottom: "0px",
+    //           }}
+    //         />
+    //       ))}
+    //     </Tabs>
+    //   </Box>
+    // </Container>
     <Container
       maxWidth="xl"
       sx={{
         position: "fixed",
         top: 0,
         left: "50%",
-        transform: "translateX(-50%)", // Centre horizontalement
-        width: "80vw", // Ajuste la largeur pour un meilleur rendu
+        transform: "translateX(-50%)",
+        width: "80vw",
         bgcolor: "background.paper",
         boxShadow: 3,
         borderRadius: 2,
-        zIndex: 999, // Toujours au-dessus
-        marginBottom: "20px", // Marge en bas pour l'espacement
-        p: 1,
+        zIndex: 999,
+        p: 0, // Suppression du padding
       }}
     >
-      <Box
-        sx={{
-          width: "100%",
-        }}
-      >
+      <Box sx={{ width: "100%" }}>
         <Tabs
           value={activeTab !== -1 ? activeTab : 0}
           onChange={handleChange}
           variant="fullWidth"
           textColor="primary"
           indicatorColor="primary"
+          sx={{
+            minHeight: "24px", // Hauteur ultra-mince
+            height: "24px",
+          }}
         >
           {tabLabels.map((tab, index) => (
-            <Tab key={index} label={tab.label} />
+            <Tab
+              key={index}
+              label={tab.label}
+              sx={{
+                minHeight: "24px", // Onglets aussi minces que possible
+                height: "24px",
+                padding: "2px 6px", // Réduction du padding
+                fontSize: "0.7rem", // Texte plus petit
+                lineHeight: "1", // Compactage du texte
+              }}
+            />
           ))}
         </Tabs>
       </Box>

@@ -24,11 +24,11 @@ import {
   getDoc,
   getDocs,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
   writeBatch,
-  serverTimestamp,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -388,8 +388,8 @@ function AddOrdreReparationModal({
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
         devisOrResa: event.id ? event.id : "",
-              createdAt: serverTimestamp(), // Timestamp auto de création
-                updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
+        createdAt: serverTimestamp(), // Timestamp auto de création
+        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
       });
 
       console.log("eventRef", event);
@@ -825,7 +825,7 @@ function AddOrdreReparationModal({
                     "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                   }}
                 />
-                <Typography variant="body1">
+                <Typography variant="body1" sx={{ marginTop: "1.3rem" }}>
                   Prochain controle technique
                 </Typography>
                 <TextField
@@ -1211,14 +1211,31 @@ function AddOrdreReparationModal({
                   <Grid container spacing={2}>
                     {/* Section Date de l'événement et Heure de début */}
                     <Grid item xs={12} md={6}>
-                      <Typography variant="body1">
-                        Date de l'événement
-                      </Typography>
+                      <Typography variant="body1">Date de début</Typography>
                       <TextField
                         name="date"
                         type="date"
                         value={editedEvent.date}
                         onChange={handleChange}
+                        fullWidth
+                        margin="normal"
+                        required
+                        size="small"
+                        sx={{
+                          height: "30px",
+                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                        }}
+                      />
+                    </Grid>
+                    {/* Section Date de fin et Heure de fin */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body1">Date de fin</Typography>
+                      <TextField
+                        name="finDate"
+                        type="date"
+                        value={finDate}
+                        onChange={handleChangeFinDate}
                         fullWidth
                         margin="normal"
                         required
@@ -1269,25 +1286,6 @@ function AddOrdreReparationModal({
                                 Minute : {editedEvent.startMinute || "Non définie"}
                               </Typography>
                             </Box> */}
-                    </Grid>
-                    {/* Section Date de fin et Heure de fin */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body1">Date de fin</Typography>
-                      <TextField
-                        name="finDate"
-                        type="date"
-                        value={finDate}
-                        onChange={handleChangeFinDate}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
                     </Grid>
 
                     <Grid item xs={12} md={6}>
@@ -1385,8 +1383,8 @@ function AddOrdreReparationModal({
 
               <Grid item>
                 <Button
-                  variant="outlined"
-                  color="secondary"
+                  variant="contained"
+                  color="primary"
                   onClick={handleInternalClose}
                 >
                   Annuler

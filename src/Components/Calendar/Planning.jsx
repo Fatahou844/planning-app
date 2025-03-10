@@ -1854,7 +1854,7 @@ const Planning = () => {
           >
             <TextField
               variant="outlined"
-              placeholder="Rechercher un rendez-vous"
+              placeholder="Rechercher"
               size="small"
               sx={{
                 backgroundColor: "white",
@@ -1884,7 +1884,7 @@ const Planning = () => {
             alt="Logo"
             sx={{
               height: 150,
-              width: "15%",
+              width: "10%",
               position: "fixed",
               top: 10,
               right: 10,
@@ -2080,7 +2080,7 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="Adresse locale"
+                        label="Adresse"
                         name="adresse"
                         value={newEvent.adresse}
                         onChange={handleInputChange}
@@ -2198,7 +2198,7 @@ const Planning = () => {
                           "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
-                      <Typography variant="body1">
+                      <Typography variant="body1" sx={{ marginTop: "1.3rem" }}>
                         Prochain controle technique
                       </Typography>
                       <TextField
@@ -2569,13 +2569,33 @@ const Planning = () => {
                           {/* Section Date de l'événement et Heure de début */}
                           <Grid item xs={12} md={6}>
                             <Typography variant="body1">
-                              Date de l'événement
+                              Date de départ
                             </Typography>
                             <TextField
                               name="date"
                               type="date"
                               value={newEvent.date}
                               onChange={handleInputChange}
+                              fullWidth
+                              margin="normal"
+                              required
+                              size="small"
+                              sx={{
+                                height: "30px",
+                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                              }}
+                            />
+                          </Grid>
+
+                          {/* Section Date de fin et Heure de fin */}
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body1">Date de fin</Typography>
+                            <TextField
+                              name="finDate"
+                              type="date"
+                              value={finDate}
+                              onChange={handleInputChangeFinDate}
                               fullWidth
                               margin="normal"
                               required
@@ -2623,25 +2643,6 @@ const Planning = () => {
                                 Minute : {newEvent.startMinute || "Non définie"}
                               </Typography>
                             </Box> */}
-                          </Grid>
-                          {/* Section Date de fin et Heure de fin */}
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body1">Date de fin</Typography>
-                            <TextField
-                              name="finDate"
-                              type="date"
-                              value={finDate}
-                              onChange={handleInputChangeFinDate}
-                              fullWidth
-                              margin="normal"
-                              required
-                              size="small"
-                              sx={{
-                                height: "30px",
-                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                              }}
-                            />
                           </Grid>
 
                           <Grid item xs={12} md={6}>
@@ -2785,7 +2786,7 @@ const Planning = () => {
                     </Grid>
                     <Grid item>
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         color="primary"
                         onClick={handleOpenResa}
                       >
@@ -2965,8 +2966,8 @@ const Planning = () => {
                     </Grid> */}
                     <Grid item>
                       <Button
-                        variant="outlined"
-                        color="secondary"
+                        variant="contained"
+                        color="primary"
                         onClick={() => {
                           setIsModalOpen(false);
                         }}
@@ -3139,7 +3140,12 @@ const Planning = () => {
                                               {event.title}
                                             </span>
                                             {" • "}
-                                            <span style={{ color: "gray" }}>
+                                            <span
+                                              style={{
+                                                color: "#1976d2",
+                                                fontWeight: "bold",
+                                              }}
+                                            >
                                               {event.person.firstName}{" "}
                                               {event.person.lastName}
                                             </span>
