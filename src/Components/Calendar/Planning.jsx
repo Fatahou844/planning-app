@@ -2973,7 +2973,7 @@ const Planning = () => {
                           setIsModalOpen(false);
                         }}
                       >
-                        Annuler
+                        SORTIR
                       </Button>
                     </Grid>
                   </Grid>
@@ -3222,7 +3222,7 @@ const Planning = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Titre</TableCell>
+                    <TableCell>N°</TableCell>
                     <TableCell>Nom</TableCell>
                     <TableCell>Prénom</TableCell>
 

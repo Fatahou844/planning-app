@@ -709,7 +709,7 @@ function AddOrdreReparationModal({
                   }}
                 />
                 <TextField
-                  label="Adresse locale"
+                  label="Adresse"
                   name="person.adresse"
                   value={editedEvent.person?.adresse}
                   onChange={handleChange}
@@ -1058,7 +1058,7 @@ function AddOrdreReparationModal({
                                 color="secondary"
                                 onClick={() => removeDetailRow(index)}
                               >
-                                Supprimer
+                                SUPP
                               </Button>
                             </TableCell>
                           </TableRow>

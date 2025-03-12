@@ -969,29 +969,38 @@ function DocumentModal({
                 </TableBody>
               </Table>
             </TableContainer>
-            <Button
-              onClick={handleAddDetail}
-              color="primary"
-              variant="contained"
-              sx={{ marginTop: 2 }}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                mt: 2,
+              }}
             >
-              Ajouter un Détail
-            </Button>
+              <Button
+                onClick={handleAddDetail}
+                color="primary"
+                variant="contained"
+                sx={{ marginTop: 2 }}
+              >
+                Ajouter
+              </Button>
 
-            {/* Display totals */}
-            <Typography variant="h6" sx={{ marginTop: 2 }}>
-              Total TTC: {totalTTC.toFixed(2)} €
-            </Typography>
-            <Typography variant="h6">
-              Total HT: {totalHT.toFixed(2)} €
-            </Typography>
-            <Typography variant="h6">
-              Acompte :{" "}
-              {editedEvent?.details?.acompte
-                ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
-                : "0.00"}{" "}
-              €
-            </Typography>
+              {/* Display totals */}
+              <Typography variant="h6" sx={{ marginTop: 2 }}>
+                Total TTC: {totalTTC.toFixed(2)} €
+              </Typography>
+              <Typography variant="h6">
+                Total HT: {totalHT.toFixed(2)} €
+              </Typography>
+              <Typography variant="h6">
+                Acompte :{" "}
+                {editedEvent?.details?.acompte
+                  ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
+                  : "0.00"}{" "}
+                €
+              </Typography>
+            </Box>
 
             <Grid container spacing={2} item xs={12} md={12}>
               {/* Colonne 1: Infos  sur les travaux */}
@@ -1094,9 +1103,9 @@ function DocumentModal({
           {collectionName === "reservations" && (
             <>
               <Button onClick={onClose} color="primary">
-                Annuler
+                Sortir
               </Button>{" "}
-              <Button onClick={onClose} color="secondary">
+              <Button onClick={onClose} color="primary" variant="contained">
                 Supprimer
               </Button>{" "}
               <Button
@@ -1130,9 +1139,9 @@ function DocumentModal({
           {collectionName === "devis" && (
             <>
               <Button onClick={onClose} color="primary">
-                Annuler
+                Sortir
               </Button>{" "}
-              <Button onClick={onClose} color="secondary">
+              <Button onClick={onClose} color="primary" variant="contained">
                 Supprimer
               </Button>{" "}
               <Button
@@ -1182,8 +1191,9 @@ function DocumentModal({
                   onClose();
                 }}
                 color="primary"
+                variant="contained"
               >
-                Annuler
+                Sortir
               </Button>{" "}
               <Button
                 onClick={() => {

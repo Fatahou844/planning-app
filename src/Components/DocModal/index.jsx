@@ -885,7 +885,7 @@ function DocModal({
                   }
                 />
                 <TextField
-                  label="Adresse locale"
+                  label="Adresse"
                   name="person.adresse"
                   value={editedEvent.person?.adresse || ""}
                   onChange={handleChange}
@@ -1316,7 +1316,7 @@ function DocModal({
                             collectionName === "factures"
                           }
                         >
-                          Supprimer
+                          SUPP
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -1324,39 +1324,47 @@ function DocModal({
                 </TableBody>
               </Table>
             </TableContainer>
-            <Button
-              onClick={handleAddDetail}
-              color="primary"
-              variant="contained"
-              sx={{ marginTop: 2 }}
-              disabled={
-                editedEvent?.createdAt &&
-                typeof editedEvent.createdAt.toDate === "function" &&
-                dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                  dayjs(),
-                  "day"
-                ) &&
-                collectionName === "factures"
-              }
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                mt: 2,
+              }}
             >
-              Ajouter un Détail
-            </Button>
+              <Button
+                onClick={handleAddDetail}
+                color="primary"
+                variant="contained"
+                sx={{ marginTop: 2 }}
+                disabled={
+                  editedEvent?.createdAt &&
+                  typeof editedEvent.createdAt.toDate === "function" &&
+                  dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                    dayjs(),
+                    "day"
+                  ) &&
+                  collectionName === "factures"
+                }
+              >
+                Ajouter
+              </Button>
 
-            {/* Display totals */}
-            <Typography variant="h6" sx={{ marginTop: 2 }}>
-              Total TTC: {totalTTC.toFixed(2)} €
-            </Typography>
-            <Typography variant="h6">
-              Total HT: {totalHT.toFixed(2)} €
-            </Typography>
-            <Typography variant="h6">
-              Acompte :{" "}
-              {editedEvent?.details?.acompte
-                ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
-                : "0.00"}{" "}
-              €
-            </Typography>
-
+              {/* Display totals */}
+              <Typography variant="h6" sx={{ marginTop: 2 }}>
+                Total TTC: {totalTTC.toFixed(2)} €
+              </Typography>
+              <Typography variant="h6">
+                Total HT: {totalHT.toFixed(2)} €
+              </Typography>
+              <Typography variant="h6">
+                Acompte :{" "}
+                {editedEvent?.details?.acompte
+                  ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
+                  : "0.00"}{" "}
+                €
+              </Typography>
+            </Box>
             <Grid container spacing={2} item xs={12} md={12}>
               {/* Colonne 1: Infos  sur les travaux */}
               <Grid item xs={12} md={6}>

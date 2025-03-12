@@ -494,6 +494,7 @@ const InvoiceTemplateWithoutOR2 = ({
         textAlign: "center",
         paddingTop: 10,
         fontSize: 10,
+        marginBottom: 30,
       },
       footer: {
         textAlign: "center",
