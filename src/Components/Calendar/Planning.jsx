@@ -1776,6 +1776,7 @@ const Planning = () => {
             flexDirection="column" // Empile les éléments verticalement
             alignItems="center"
             gap={2} // Espace entre les éléments
+            paddingLeft="2.2rem"
           >
             {/* Section des boutons et du champ de date */}
             <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
