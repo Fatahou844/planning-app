@@ -88,9 +88,12 @@ const Timeline = () => (
             paddingLeft: "0.5rem", // Ajouter un petit espace pour le texte
             position: "relative",
             zIndex: 1,
+            marginLeft: "-1.499rem",
           }}
         >
-          {7 + Math.floor(halfHour / 2)}:{halfHour % 2 === 0 ? "00" : "30"}
+          {/* {7 + Math.floor(halfHour / 2)}:{halfHour % 2 === 0 ? "00" : "30"} */}
+          {(7 + Math.floor(halfHour / 2)).toString().padStart(2, "0")}:
+          {halfHour % 2 === 0 ? "00" : "30"}
         </Typography>
         <Box
           sx={{
@@ -2227,7 +2230,7 @@ const Planning = () => {
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell style={{ width: "40%" }}>
+                              <TableCell style={{ width: "60%" }}>
                                 Libellé / travaux / articles
                               </TableCell>
                               <TableCell
@@ -2236,7 +2239,7 @@ const Planning = () => {
                                 Quantité
                               </TableCell>
                               <TableCell
-                                style={{ width: "15%", textAlign: "center" }}
+                                style={{ width: "10%", textAlign: "center" }}
                               >
                                 Prix Unitaire
                               </TableCell>

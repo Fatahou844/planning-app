@@ -853,7 +853,7 @@ function AddOrdreReparationModal({
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: "40%" }}>
+                        <TableCell style={{ width: "60%" }}>
                           Libellé / travaux / articles
                         </TableCell>
                         <TableCell
@@ -862,7 +862,7 @@ function AddOrdreReparationModal({
                           Quantité
                         </TableCell>
                         <TableCell
-                          style={{ width: "15%", textAlign: "center" }}
+                          style={{ width: "1O%", textAlign: "center" }}
                         >
                           Prix Unitaire
                         </TableCell>

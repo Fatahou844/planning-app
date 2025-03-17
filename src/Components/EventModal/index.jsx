@@ -692,16 +692,16 @@ function EventDialog({
               <Table size="small" aria-label="Event Details Table">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "40%" }}>
-                      Label
+                    <TableCell sx={{ fontSize: "0.8rem", width: "60%" }}>
+                      Libellé / travaux / articles
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                       Quantité
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                       Prix Unitaire
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "15%" }}>
+                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
                       Remise
                     </TableCell>
                     {/* <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
