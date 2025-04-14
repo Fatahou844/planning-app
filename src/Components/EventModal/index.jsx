@@ -18,19 +18,12 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  updateDoc,
-} from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import { useAxios } from "../../utils/hook/useAxios";
 import InvoiceTemplate from "../InvoiceTemplate";
 import Notification from "../Notification";
 import OrdreReparationTemplate2 from "../OrdreReparationTemplate2";
+
 function EventDialog({
   open,
   onClose,
@@ -44,6 +37,7 @@ function EventDialog({
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
   const [facture, setFacture] = useState(null);
+  const axios = useAxios();
 
   console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
 
@@ -67,45 +61,6 @@ function EventDialog({
     console.log("Une action a été exécutée dans le composant fils !");
     setInvoiceExecuted(!invoiceExecuted); // Met à jour l'état pour indiquer que l'action a été exécutée
   };
-  // useEffect(() => {
-  //   if (editedEvent) {
-  //     const fetchDetails = async () => {
-  //       try {
-  //         const eventDocRef = doc(db, "events", editedEvent.id);
-  //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-  //         editedEvent.isClosed = true;
-  //         await updateDoc(eventDocRef, editedEvent);
-  //       } catch (error) {
-  //         console.error("Erreur lors de la récupération des détails :", error);
-  //       }
-  //     };
-
-  //     const fetchDetails2 = async () => {
-  //       try {
-  //         const eventDocRef = doc(db, "reservations", editedEvent.id);
-  //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-  //         editedEvent.isClosed = true;
-  //         await updateDoc(eventDocRef, editedEvent);
-  //       } catch (error) {
-  //         console.error("Erreur lors de la récupération des détails :", error);
-  //       }
-  //     };
-
-  //     const fetchDetails3 = async () => {
-  //       try {
-  //         const eventDocRef = doc(db, "devis", editedEvent.id);
-  //         // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-  //         editedEvent.isClosed = true;
-  //         await updateDoc(eventDocRef, editedEvent);
-  //       } catch (error) {
-  //         console.error("Erreur lors de la récupération des détails :", error);
-  //       }
-  //     };
-  //     fetchDetails();
-  //     fetchDetails2();
-  //     fetchDetails3();
-  //   }
-  // }, [invoiceExecuted, facture]);
 
   useEffect(() => {
     if (editedEvent) {
@@ -113,7 +68,7 @@ function EventDialog({
         console.log("Début de la mise à jour des documents...");
 
         const tasks = [
-          { collection: "events", id: editedEvent.id },
+          { collection: "orders", id: editedEvent.id },
           { collection: "reservations", id: editedEvent.id },
           { collection: "devis", id: editedEvent.id },
         ];
@@ -121,10 +76,11 @@ function EventDialog({
         const updateTasks = tasks.map(async (task) => {
           try {
             console.log(
-              `Mise à jour en cours pour ${task.collection} (ID: ${task.id})...`
+              `🔁 Mise à jour en cours pour ${task.collection} (ID: ${task.id})...`
             );
-            const docRef = doc(db, task.collection, task.id);
-            await updateDoc(docRef, { isClosed: true });
+            await axios.put(`/${task.collection}/${task.id}`, {
+              isClosed: true,
+            });
             console.log(
               `✅ Mise à jour réussie pour ${task.collection} (ID: ${task.id})`
             );
@@ -138,16 +94,16 @@ function EventDialog({
 
         const results = await Promise.allSettled(updateTasks);
         results.forEach((result, index) => {
+          const { collection } = tasks[index];
           if (result.status === "fulfilled") {
-            console.log(`✅ ${tasks[index].collection} a bien été mis à jour.`);
+            console.log(`✅ ${collection} a bien été mis à jour.`);
           } else {
             console.error(
-              `❌ Échec de la mise à jour pour ${tasks[index].collection} :`,
+              `❌ Échec de la mise à jour pour ${collection} :`,
               result.reason
             );
           }
         });
-
         console.log("Mise à jour des documents terminée.");
       };
 
@@ -159,17 +115,11 @@ function EventDialog({
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
-          const detailsCollectionRef = collection(
-            doc(db, "events", editedEvent.id),
-            "details"
+          setDetails(editedEvent.Details);
+          console.log(
+            "++++++++++++++++detailsData++++++++++++++",
+            editedEvent.Details
           );
-          const detailsSnapshot = await getDocs(detailsCollectionRef);
-          const detailsData = detailsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setDetails(detailsData);
-          console.log("++++++++++++++++detailsData++++++++++++++", detailsData);
         } catch (error) {
           console.error("Erreur lors de la récupération des détails :", error);
         }
@@ -249,30 +199,64 @@ function EventDialog({
   };
 
   // Save the updated event to Firestore
+  // const handleSave = async () => {
+  //   if (editedEvent?.id) {
+  //     try {
+  //       // Référence du document de l'événement principal
+  //       const eventDocRef = doc(db, "events", editedEvent.id);
+  //       await updateDoc(eventDocRef, editedEvent);
+
+  //       // Référence de la collection "details" sous l'événement
+  //       const detailsCollectionRef = collection(eventDocRef, "details");
+
+  //       for (const detail of details) {
+  //         if (detail.isDeleted) {
+  //           // Supprimer les détails marqués comme supprimés
+  //           if (detail.id) {
+  //             const detailDocRef = doc(detailsCollectionRef, detail.id);
+  //             await deleteDoc(detailDocRef);
+  //           }
+  //         } else if (detail.id) {
+  //           // Mettre à jour les détails existants
+  //           const detailDocRef = doc(detailsCollectionRef, detail.id);
+  //           await updateDoc(detailDocRef, detail);
+  //         } else {
+  //           // Ajouter les nouveaux détails
+  //           await addDoc(detailsCollectionRef, detail);
+  //         }
+  //       }
+
+  //       if (onEventTriggered) {
+  //         onEventTriggered(); // Notifie le parent
+  //       }
+
+  //       onClose();
+  //     } catch (error) {
+  //       console.error("Erreur lors de la sauvegarde de l'événement :", error);
+  //     }
+  //   }
+  // };
+
   const handleSave = async () => {
     if (editedEvent?.id) {
       try {
-        // Référence du document de l'événement principal
-        const eventDocRef = doc(db, "events", editedEvent.id);
-        await updateDoc(eventDocRef, editedEvent);
+        // 1. Mettre à jour l'événement principal (order)
+        await axios.put(`/orders/${editedEvent.id}`, editedEvent);
 
-        // Référence de la collection "details" sous l'événement
-        const detailsCollectionRef = collection(eventDocRef, "details");
-
+        // 2. Traiter les lignes de détails
         for (const detail of details) {
-          if (detail.isDeleted) {
-            // Supprimer les détails marqués comme supprimés
-            if (detail.id) {
-              const detailDocRef = doc(detailsCollectionRef, detail.id);
-              await deleteDoc(detailDocRef);
-            }
+          if (detail.isDeleted && detail.id) {
+            // Supprimer le détail
+            await axios.deleteData(`/details/${detail.id}`);
           } else if (detail.id) {
-            // Mettre à jour les détails existants
-            const detailDocRef = doc(detailsCollectionRef, detail.id);
-            await updateDoc(detailDocRef, detail);
+            // Mettre à jour le détail existant
+            await axios.put(`/details/${detail.id}`, detail);
           } else {
-            // Ajouter les nouveaux détails
-            await addDoc(detailsCollectionRef, detail);
+            // Ajouter un nouveau détail
+            await axios.post(`/details`, {
+              ...detail,
+              orderId: editedEvent.id, // Lier le nouveau détail à l'order
+            });
           }
         }
 
@@ -280,7 +264,7 @@ function EventDialog({
           onEventTriggered(); // Notifie le parent
         }
 
-        onClose();
+        onClose(); // Ferme le formulaire/modal
       } catch (error) {
         console.error("Erreur lors de la sauvegarde de l'événement :", error);
       }
@@ -294,41 +278,41 @@ function EventDialog({
         return;
       }
 
-      // Référence au document principal de l'événement
-      const eventDocRef = doc(db, "events", eventId);
+      // 1. Récupérer les détails liés à l'ordre
 
-      // Référence à la sous-collection "details"
-      const detailsCollectionRef = collection(eventDocRef, "details");
+      const associatedDetails = editedEvent?.Details;
 
-      // Récupérer tous les documents de la sous-collection "details"
-      const detailsSnapshot = await getDocs(detailsCollectionRef);
-
-      // Supprimer chaque document de la sous-collection "details"
-      const deleteDetailsPromises = detailsSnapshot.docs.map((detailDoc) =>
-        deleteDoc(detailDoc.ref)
+      // 2. Supprimer tous les détails (si il y en a)
+      const deleteDetailPromises = associatedDetails.map((detail) =>
+        axios.deleteData(`/details/${detail.id}`)
       );
-      await Promise.all(deleteDetailsPromises);
+      await Promise.all(deleteDetailPromises);
 
-      // Supprimer le document principal de l'événement
-      await deleteDoc(eventDocRef);
+      // 3. Supprimer l'ordre principal
+      await axios.deleteData(`/orders/${eventId}`);
 
       console.log(
         `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`
       );
       setNotification({
         open: true,
-        message: "l'OR " + editedEvent.title + " a été supprimé",
-        severity: "success", // Peut être "error", "warning", "info"
+        message: "l'OR " + editedEvent.id + " a été supprimé",
+        severity: "success",
       });
 
       handleCloseOrSup();
       handleCloseOr();
 
       if (onEventTriggered) {
-        onEventTriggered(); // Notifie le parent (si nécessaire)
+        onEventTriggered();
       }
     } catch (error) {
       console.error("Erreur lors de la suppression de l'événement :", error);
+      setNotification({
+        open: true,
+        message: "Erreur lors de la suppression de l'OR",
+        severity: "error",
+      });
     }
   };
 
@@ -339,29 +323,27 @@ function EventDialog({
   };
 
   const removeDetailRow = async (index) => {
+    // Récupère le détail à supprimer avant de modifier le state
+    const detailToDelete = details[index];
+
     // Met à jour l'affichage en supprimant la ligne localement
     setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
 
-    // Récupère le détail à supprimer basé sur l'index
-    const detailToDelete = details[index];
-
+    // Si le détail est déjà en base, on le supprime
     if (detailToDelete && detailToDelete.id) {
       try {
-        const eventDocRef = doc(db, "events", editedEvent.id);
-        const detailsCollectionRef = collection(eventDocRef, "details");
-        const detailDocRef = doc(detailsCollectionRef, detailToDelete.id);
-
-        // Supprime le document dans Firestore
-        await deleteDoc(detailDocRef);
+        await axios.deleteData(`/details/${detailToDelete.id}`);
 
         console.log(
-          `Document avec l'id ${detailToDelete.id} supprimé de la base de données.`
+          `Détail avec l'id ${detailToDelete.id} supprimé de la base de données.`
         );
       } catch (error) {
-        console.error("Erreur lors de la suppression du document :", error);
+        console.error("Erreur lors de la suppression du détail :", error);
       }
     } else {
-      console.warn("Aucun document trouvé pour cet index.");
+      console.warn(
+        "Aucun ID trouvé pour ce détail, suppression uniquement locale."
+      );
     }
   };
 
@@ -415,7 +397,7 @@ function EventDialog({
   const handleOpen = () => {
     setNotification({
       open: true,
-      message: "Ordre de Réparation " + editedEvent.title + " modifié !",
+      message: "Ordre de Réparation " + editedEvent.id + " modifié !",
       severity: "success", // Peut être "error", "warning", "info"
     });
     handleShowPopup();
@@ -436,7 +418,7 @@ function EventDialog({
     // Calcul du total après remise
     return detail.quantity * detail.unitPrice - discount;
   };
-  const totalTTC = details.reduce(
+  const totalTTC = details?.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
     0
   );
@@ -493,7 +475,7 @@ function EventDialog({
                   label="O.R"
                   type="text"
                   fullWidth
-                  value={editedEvent.title || ""}
+                  value={editedEvent.id || ""}
                   onChange={handleChange}
                   size="small"
                   sx={{
@@ -506,7 +488,7 @@ function EventDialog({
                 <TextField
                   label="Nom"
                   name="person.lastName"
-                  value={editedEvent.person?.lastName || ""}
+                  value={editedEvent.Client?.name || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -520,7 +502,7 @@ function EventDialog({
                 <TextField
                   label="Prénom"
                   name="person.firstName"
-                  value={editedEvent.person?.firstName || ""}
+                  value={editedEvent.Client?.firstName || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -534,7 +516,7 @@ function EventDialog({
                 <TextField
                   label="Téléphone"
                   name="person.phone"
-                  value={editedEvent.person?.phone || ""}
+                  value={editedEvent.Client?.phone || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -548,7 +530,7 @@ function EventDialog({
                 <TextField
                   label="Email"
                   name="person.email"
-                  value={editedEvent.person?.email || ""}
+                  value={editedEvent.Client?.email || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -562,7 +544,7 @@ function EventDialog({
                 <TextField
                   label="Adresse"
                   name="person.adresse"
-                  value={editedEvent.person?.adresse || ""}
+                  value={editedEvent.Client?.adress || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -576,7 +558,7 @@ function EventDialog({
                 <TextField
                   label="Code postal"
                   name="person.postale"
-                  value={editedEvent.person?.postale || ""}
+                  value={editedEvent.Client?.postalCode || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -590,7 +572,7 @@ function EventDialog({
                 <TextField
                   label="Ville"
                   name="person.ville"
-                  value={editedEvent.person?.ville || ""}
+                  value={editedEvent.Client?.city || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -611,7 +593,7 @@ function EventDialog({
                   label="Immatriculation"
                   type="text"
                   fullWidth
-                  value={editedEvent.vehicule?.licensePlate || ""}
+                  value={editedEvent.Vehicle?.plateNumber || ""}
                   onChange={handleChange}
                   size="small"
                   sx={{
@@ -622,7 +604,7 @@ function EventDialog({
                 <TextField
                   label="VIN"
                   name="vehicule.vin"
-                  value={editedEvent.vehicule?.vin || ""}
+                  value={editedEvent.Vehicle?.vin || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -635,7 +617,7 @@ function EventDialog({
                 <TextField
                   label="Modèle"
                   name="vehicule.model"
-                  value={editedEvent.vehicule?.model || ""}
+                  value={editedEvent.Vehicle?.model || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -648,7 +630,7 @@ function EventDialog({
                 <TextField
                   label="Couleur"
                   name="vehicule.color"
-                  value={editedEvent.vehicule?.color || ""}
+                  value={editedEvent.Vehicle?.color || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -661,7 +643,7 @@ function EventDialog({
                 <TextField
                   label="kilométrage"
                   name="vehicule.kms"
-                  value={editedEvent.vehicule?.kms || ""}
+                  value={editedEvent.Vehicle?.mileage || ""}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -673,7 +655,7 @@ function EventDialog({
                 />
                 <TextField
                   name="vehicule.controletech"
-                  value={editedEvent.vehicule?.controletech || ""}
+                  value={editedEvent.Vehicle?.lastCheck || ""}
                   type="date"
                   onChange={handleChange}
                   fullWidth
@@ -716,152 +698,157 @@ function EventDialog({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {details.map((detail, index) => (
-                    <TableRow key={detail.id}>
-                      <TableCell sx={{ fontSize: "0.8rem" }}>
-                        <TextField
-                          value={detail.label}
-                          onChange={(e) =>
-                            handleDetailChange(index, "label", e.target.value)
-                          }
-                          size="small"
-                          fullWidth
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.8rem" }}>
-                        <TextField
-                          type="number"
-                          value={detail.quantity}
-                          onChange={(e) =>
-                            handleDetailChange(
-                              index,
-                              "quantity",
-                              parseInt(e.target.value, 10)
-                            )
-                          }
-                          size="small"
-                          fullWidth
-                          sx={{
-                            "& input": {
-                              MozAppearance: "textfield", // Pour Firefox
-                              textAlign: "center", // Centrer horizontalement
-                            },
-                            "& input[type=number]": {
-                              MozAppearance: "textfield",
-                            },
-                            "& input[type=number]::-webkit-outer-spin-button": {
-                              WebkitAppearance: "none",
-                              margin: 0,
-                            },
-                            "& input[type=number]::-webkit-inner-spin-button": {
-                              WebkitAppearance: "none",
-                              margin: 0,
-                            },
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.8rem" }}>
-                        <TextField
-                          type="number"
-                          value={detail.unitPrice}
-                          onChange={(e) =>
-                            handleDetailChange(
-                              index,
-                              "unitPrice",
-                              parseFloat(e.target.value)
-                            )
-                          }
-                          size="small"
-                          fullWidth
-                          sx={{
-                            "& input": {
-                              MozAppearance: "textfield", // Pour Firefox
-                              textAlign: "center", // Centrer horizontalement
-                            },
-                            "& input[type=number]": {
-                              MozAppearance: "textfield",
-                            },
-                            "& input[type=number]::-webkit-outer-spin-button": {
-                              WebkitAppearance: "none",
-                              margin: 0,
-                            },
-                            "& input[type=number]::-webkit-inner-spin-button": {
-                              WebkitAppearance: "none",
-                              margin: 0,
-                            },
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.8rem" }}>
-                        <TextField
-                          type="text" // Permet la saisie libre (montant ou pourcentage)
-                          value={
-                            detail.discountPercent !== ""
-                              ? `${detail.discountPercent}%`
-                              : detail.discountAmount || ""
-                          } // Affiche soit le pourcentage, soit le montant
-                          onChange={(e) => {
-                            const input = e.target.value.trim();
+                  {details &&
+                    details.map((detail, index) => (
+                      <TableRow key={detail.id}>
+                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                          <TextField
+                            value={detail.label}
+                            onChange={(e) =>
+                              handleDetailChange(index, "label", e.target.value)
+                            }
+                            size="small"
+                            fullWidth
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                          <TextField
+                            type="number"
+                            value={detail.quantity}
+                            onChange={(e) =>
+                              handleDetailChange(
+                                index,
+                                "quantity",
+                                parseInt(e.target.value, 10)
+                              )
+                            }
+                            size="small"
+                            fullWidth
+                            sx={{
+                              "& input": {
+                                MozAppearance: "textfield", // Pour Firefox
+                                textAlign: "center", // Centrer horizontalement
+                              },
+                              "& input[type=number]": {
+                                MozAppearance: "textfield",
+                              },
+                              "& input[type=number]::-webkit-outer-spin-button":
+                                {
+                                  WebkitAppearance: "none",
+                                  margin: 0,
+                                },
+                              "& input[type=number]::-webkit-inner-spin-button":
+                                {
+                                  WebkitAppearance: "none",
+                                  margin: 0,
+                                },
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                          <TextField
+                            type="number"
+                            value={detail.unitPrice}
+                            onChange={(e) =>
+                              handleDetailChange(
+                                index,
+                                "unitPrice",
+                                parseFloat(e.target.value)
+                              )
+                            }
+                            size="small"
+                            fullWidth
+                            sx={{
+                              "& input": {
+                                MozAppearance: "textfield", // Pour Firefox
+                                textAlign: "center", // Centrer horizontalement
+                              },
+                              "& input[type=number]": {
+                                MozAppearance: "textfield",
+                              },
+                              "& input[type=number]::-webkit-outer-spin-button":
+                                {
+                                  WebkitAppearance: "none",
+                                  margin: 0,
+                                },
+                              "& input[type=number]::-webkit-inner-spin-button":
+                                {
+                                  WebkitAppearance: "none",
+                                  margin: 0,
+                                },
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                          <TextField
+                            type="text" // Permet la saisie libre (montant ou pourcentage)
+                            value={
+                              detail.discountPercent !== ""
+                                ? `${detail.discountPercent}%`
+                                : detail.discountAmount || ""
+                            } // Affiche soit le pourcentage, soit le montant
+                            onChange={(e) => {
+                              const input = e.target.value.trim();
 
-                            let formattedValue = input; // Supprime le symbole %
-                            detail.discountAmount = "";
-                            detail.discountPercent = "";
-
-                            let amount = parseFloat(formattedValue); // Tente de convertir en nombre
-
-                            // Gestion des cas de saisie valides
-                            if (input.includes("%") && !isNaN(amount)) {
-                              // Si l'utilisateur entre un pourcentage
-                              detail.discountPercent = amount; // Met à jour le pourcentage
-                              detail.discountAmount = ""; // Réinitialise le montant
-                            } else if (!isNaN(amount)) {
-                              // Si l'utilisateur entre un montant
-                              detail.discountAmount = amount; // Met à jour le montant
-                              detail.discountPercent = ""; // Réinitialise le pourcentage
-                            } else {
-                              // Si la saisie est invalide
+                              let formattedValue = input; // Supprime le symbole %
                               detail.discountAmount = "";
                               detail.discountPercent = "";
-                            }
 
-                            // Mise à jour de la valeur brute pour affichage
-                            detail.inputValue = input;
+                              let amount = parseFloat(formattedValue); // Tente de convertir en nombre
 
-                            // Appelle la fonction pour notifier le changement
-                            handleDetailChange(
-                              index,
-                              "discountAmount",
-                              detail.discountAmount
-                            );
-                          }}
-                          size="small"
-                          fullWidth
-                          sx={{
-                            "& input": {
-                              MozAppearance: "textfield", // Pour Firefox
-                              textAlign: "center", // Centrer horizontalement
-                            },
-                            "& input::-webkit-outer-spin-button": {
-                              WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
-                              margin: 0,
-                            },
-                            "& input::-webkit-inner-spin-button": {
-                              WebkitAppearance: "none",
-                              margin: 0,
-                            },
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell style={{ textAlign: "center" }}>
-                        {calculateLineTotal(detail).toFixed(2)}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.8rem" }}>
-                        <Button onClick={() => removeDetailRow(index)}>
-                          SUPP
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                              // Gestion des cas de saisie valides
+                              if (input.includes("%") && !isNaN(amount)) {
+                                // Si l'utilisateur entre un pourcentage
+                                detail.discountPercent = amount; // Met à jour le pourcentage
+                                detail.discountAmount = ""; // Réinitialise le montant
+                              } else if (!isNaN(amount)) {
+                                // Si l'utilisateur entre un montant
+                                detail.discountAmount = amount; // Met à jour le montant
+                                detail.discountPercent = ""; // Réinitialise le pourcentage
+                              } else {
+                                // Si la saisie est invalide
+                                detail.discountAmount = "";
+                                detail.discountPercent = "";
+                              }
+
+                              // Mise à jour de la valeur brute pour affichage
+                              detail.inputValue = input;
+
+                              // Appelle la fonction pour notifier le changement
+                              handleDetailChange(
+                                index,
+                                "discountAmount",
+                                detail.discountAmount
+                              );
+                            }}
+                            size="small"
+                            fullWidth
+                            sx={{
+                              "& input": {
+                                MozAppearance: "textfield", // Pour Firefox
+                                textAlign: "center", // Centrer horizontalement
+                              },
+                              "& input::-webkit-outer-spin-button": {
+                                WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
+                                margin: 0,
+                              },
+                              "& input::-webkit-inner-spin-button": {
+                                WebkitAppearance: "none",
+                                margin: 0,
+                              },
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell style={{ textAlign: "center" }}>
+                          {calculateLineTotal(detail).toFixed(2)}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                          <Button onClick={() => removeDetailRow(index)}>
+                            SUPP
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -884,10 +871,10 @@ function EventDialog({
 
               {/* Display totals */}
               <Typography variant="h6" sx={{ marginTop: 2 }}>
-                Total TTC: {totalTTC.toFixed(2)} €
+                Total TTC: {totalTTC?.toFixed(2) || 0.0} €
               </Typography>
               <Typography variant="h6">
-                Total HT: {totalHT.toFixed(2)} €
+                Total HT: {totalHT?.toFixed(2) || 0.0} €
               </Typography>
               <Typography variant="h6">
                 Acompte :{" "}
@@ -907,7 +894,7 @@ function EventDialog({
                 <TextField
                   label="Travaux"
                   name="details.workDescription"
-                  value={editedEvent.details?.workDescription}
+                  value={editedEvent?.workDescription}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -921,7 +908,7 @@ function EventDialog({
                 <TextField
                   name="details.price"
                   type="number"
-                  value={editedEvent.details?.price}
+                  value={editedEvent?.price}
                   placeholder="Prix"
                   onChange={handleChange}
                   fullWidth
@@ -1223,7 +1210,7 @@ function EventDialog({
           />{" "}
           <InvoiceTemplate
             editedEvent={editedEvent}
-            details={details}
+            details={editedEvent.Details}
             onInvoiceExecuted={handleChildInvoice}
             categories={categories}
             closeEventModal={onclose}

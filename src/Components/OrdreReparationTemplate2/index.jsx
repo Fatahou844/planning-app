@@ -11,7 +11,7 @@ const OrdreReparationTemplate2 = ({
   details,
   onInvoiceExecuted,
 }) => {
-  const { person, vehicule, date, title } = editedEvent;
+  const { Client, Vehicle, date, title } = editedEvent;
   const [openOr, setOpenOr] = useState(false);
   const [user] = useAuthState(auth);
 
@@ -52,26 +52,26 @@ const OrdreReparationTemplate2 = ({
       email: companyInfo?.email,
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: Vehicle?.model ? Vehicle.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: Vehicle?.vin ? Vehicle.vin : "",
+      km: Vehicle?.mileage ? Vehicle.mileage : "",
+      color: Vehicle?.color ? Vehicle.color : "",
+      licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${Client?.firstName ? Client.firstName : ""} ${
+        Client?.lastName ? Client.lastName : ""
       }`,
-      adresse: `${person?.adresse ? person?.adresse : ""} ${
-        person?.postale ? person.postale : ""
+      adresse: `${Client?.address ? Client?.address : ""} ${
+        Client?.postalCode ? Client.postalCode : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
-      ville: person?.ville ? person.ville : "",
+      phone: Client?.phone ? Client.phone : "",
+      email: Client?.email ? Client.email : "",
+      ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
-    items: details.map((item) => ({
+    items: editedEvent?.Details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
@@ -89,24 +89,24 @@ const OrdreReparationTemplate2 = ({
     })),
     // totals: {
     //   // Total HT
-    //   totalHT: details.reduce(
+    //   totalHT: editedEvent?.Details.reduce(
     //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
     //     0
     //   ),
     //   // TVA (20% du total HT)
-    //   tva: details.reduce(
+    //   tva: editedEvent?.Details.reduce(
     //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
     //     0
     //   ),
     //   // Total TTC
-    //   totalTTC: details.reduce(
+    //   totalTTC: editedEvent?.Details.reduce(
     //     (acc, item) => acc + item.unitPrice * item.quantity,
     //     0
     //   ),
     // },
     totals: {
       // Total HT avec remises
-      totalHT: details.reduce((acc, item) => {
+      totalHT: editedEvent?.Details.reduce((acc, item) => {
         const unitPriceHT = item.unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
@@ -116,7 +116,7 @@ const OrdreReparationTemplate2 = ({
         return acc + discountedPriceHT * item.quantity;
       }, 0),
       // TVA (20% du total HT avec remises)
-      tva: details.reduce((acc, item) => {
+      tva: editedEvent?.Details.reduce((acc, item) => {
         const unitPriceHT = item.unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
@@ -126,7 +126,7 @@ const OrdreReparationTemplate2 = ({
         return acc + discountedPriceHT * item.quantity * 0.2;
       }, 0),
       // Total TTC avec remises
-      totalTTC: details.reduce((acc, item) => {
+      totalTTC: editedEvent?.Details.reduce((acc, item) => {
         const discountedPriceTTC = Math.max(
           0,
           item.unitPrice * (1 - item.discountPercent / 100) -

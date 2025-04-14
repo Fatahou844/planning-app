@@ -28,22 +28,11 @@ import {
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-  writeBatch,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useAuthState } from "react-firebase-hooks/auth";
+import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import eventsData from "../../data/eventsData.json";
 import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import DocModal from "../DocModal";
@@ -53,6 +42,10 @@ import Notification from "../Notification";
 
 import logoGarage from "../../assets/images/garageLogo.jpg";
 import jumelles from "../../assets/images/jumelles.png";
+import { useAxios } from "../../utils/hook/useAxios";
+import EmailSearch from "../EmailSearch/EmailSearch";
+import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
+import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 
 const Timeline = () => (
   <Box
@@ -131,6 +124,8 @@ const CurrentTimeLine = ({ currentHour }) => {
 };
 
 const Planning = () => {
+  const axios = useAxios();
+
   const [events, setEvents] = useState(eventsData);
   const [dataEvents, setDataEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState({
@@ -163,6 +158,11 @@ const Planning = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(false);
 
+  console.log(
+    "***************************** AXIOS *****************************",
+    axios
+  );
+
   useEffect(() => {
     const today = new Date();
     // Formatage de la date en YYYY-MM-DD
@@ -177,74 +177,55 @@ const Planning = () => {
   //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
   // };
   // Utilisation de useEffect pour récupérer les catégories depuis Firestore
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesRef = collection(db, "categories"); // Référence à la collection
-        const querySnapshot = await getDocs(categoriesRef); // Récupérer les documents
+        const response = await axios.get("/categories");
 
-        // Récupérer les objets de catégories (id et data)
-        const categoriesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        // Récupérer les données
+        const categoriesData = response.data;
 
-        // Extraire les noms des catégories pour l'état "expanded"
-        const categoryNames = categoriesData.map((category) => category.name);
-
-        // Mettre à jour l'état avec les noms de catégories
-        setExpanded(categoryNames);
-
-        // Mettre à jour l'état avec les objets complets de catégories
-        setCategories(categoriesData);
-        console.log("categoriesData", categoriesData);
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des catégories : ",
-          error
+        // Extraire les noms des catégories
+        const categoryNames = categoriesData.data.map(
+          (category) => category.name
         );
+
+        // Mettre à jour les états
+        setExpanded(categoryNames);
+        setCategories(categoriesData.data);
+
+        console.log("categoriesData", categoriesData.data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des catégories :", error);
       }
     };
 
-    fetchCategories(); // Appeler la fonction au montage du composant
-  }, []); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Référence à la collection "events"
-        const eventsRef = collection(db, "events");
+        const response = await axios.get(`/documents-garage/order/1/details`);
 
-        // Créer la requête avec la condition where pour filtrer par userId
-        const q = query(
-          eventsRef,
-          where("userId", "==", user.uid),
-          where("date", "==", selectedDate)
+        const eventsData = response.data.data;
+
+        // Filtrer les événements si nécessaire
+        const filteredEvents = eventsData.filter(
+          (event) => event.date === selectedDate && !event.isClosed
         );
 
-        // Récupérer les documents correspondants
-        const querySnapshot = await getDocs(q);
+        setDataEvents(filteredEvents);
 
-        // Récupérer les objets de la collection (id et data)
-        const eventsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Mettre à jour l'état avec les données récupérées
-
-        console.log("eventsData", eventsData); // Pour vérifier les données dans la console
-        setDataEvents(eventsData.filter((event) => event.isClosed == false));
+        console.log("eventsData", filteredEvents);
       } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des événements : ",
-          error
-        );
+        console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
-    fetchEvents(); // Appeler la fonction au montage du composant
-  }, [, selectedDate, facture]); // Le tableau vide signifie que l'effet se déclenche uniquement au montage
+    fetchEvents();
+  }, [selectedDate, facture]); // Dépendances pour recharger les données
 
   const currentHour = new Date().getHours();
 
@@ -421,35 +402,26 @@ const Planning = () => {
     }
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
 
     // Mettre à jour le state avec les événements ajoutés
     setEvents(updatedEvents);
 
     const fetchEvents = async () => {
       try {
-        const eventsRef = collection(db, "events");
+        const response = await axios.get(`/documents-garage/order/1/details`);
 
-        // Créer la requête avec la condition where pour filtrer par userId
-        const q = query(
-          eventsRef,
-          where("userId", "==", user.uid),
-          where("date", "==", selectedDate)
+        const eventsData = response.data.data;
+
+        // Filtrer les événements si nécessaire
+        const filteredEvents = eventsData.filter(
+          (event) => event.date === selectedDate && !event.isClosed
         );
 
-        const querySnapshot = await getDocs(q);
+        setDataEvents(filteredEvents);
 
-        const eventsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setDataEvents(eventsData.filter((event) => event.isClosed == false));
+        console.log("eventsData", filteredEvents);
       } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des événements : ",
-          error
-        );
+        console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
@@ -483,7 +455,7 @@ const Planning = () => {
     const singleResaDocRef = await addSingleReservation(
       singleResa,
       newOrderNumber,
-      "reservations",
+      "reservation",
       false
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
@@ -497,14 +469,9 @@ const Planning = () => {
     });
 
     if (validDetails.length)
-      await addEventDetailsGeneric(
-        singleResaDocRef.id,
-        details,
-        "reservations"
-      ); // Enregistrer les détails
+      await addEventDetailsGeneric(singleResaDocRef.id, details, "reservation"); // Enregistrer les détails
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
     handleOpenNotif("réservation");
     setCollectName("reservations");
 
@@ -529,7 +496,6 @@ const Planning = () => {
     const singleResa = {
       ...newEvent,
       userId: userId,
-      title: newOrderNumber, // Utiliser le numéro de commande
       nextDay: false,
     };
     const singleResaDocRef = await addSingleReservation(
@@ -552,7 +518,6 @@ const Planning = () => {
       await addEventDetailsGeneric(singleResaDocRef.id, details, "devis"); // Enregistrer les détails
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
     handleOpenNotif("devis");
 
     resetForm();
@@ -582,7 +547,7 @@ const Planning = () => {
     const singleResaDocRef = await addSingleReservation(
       singleResa,
       newOrderNumber,
-      "factures",
+      "facture",
       true
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
@@ -596,10 +561,9 @@ const Planning = () => {
     });
 
     if (validDetails.length)
-      await addEventDetailsGeneric(singleResaDocRef.id, details, "factures"); // Enregistrer les détails
+      await addEventDetailsGeneric(singleResaDocRef.id, details, "facture"); // Enregistrer les détails
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
     handleOpenNotif("Facture");
 
     resetForm();
@@ -608,19 +572,14 @@ const Planning = () => {
 
   const addEventDetails = async (eventId, details) => {
     try {
-      const batch = writeBatch(db); // Crée un batch pour les opérations
-
-      // Référence directe au document de l'événement avec l'ID existant
-      const eventRef = doc(db, "events", eventId);
-
-      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      // Filtrer les détails valides (exclut ceux où tous les champs sont vides ou non valides)
       const validDetails = details.filter((detail) => {
         return (
           detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.quantity ||
+          detail.unitPrice ||
+          detail.discountPercent ||
+          detail.discountAmount
         );
       });
 
@@ -630,20 +589,18 @@ const Planning = () => {
         return;
       }
 
-      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      // Envoyer chaque détail individuellement via une requête POST à l'API
       for (const detail of validDetails) {
-        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
-        batch.set(detailRef, {
+        await axios.post("/details", {
           label: detail.label || "",
           quantity: detail.quantity || 0,
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
           discountAmount: detail.discountAmount || 0,
+          orderId: eventId,
+          documentType: "Order",
         });
       }
-
-      // Engager toutes les écritures dans le batch
-      await batch.commit();
 
       console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
@@ -656,23 +613,21 @@ const Planning = () => {
 
   const addEventDetailsGeneric = async (eventId, details, collectionName) => {
     try {
-      const batch = writeBatch(db); // Crée un batch pour les opérations
-
-      // Référence directe au document de l'événement avec l'ID existant
-      const eventRef = doc(db, collectionName, eventId);
-
-      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      // Filtrer les détails valides (exclut ceux où tous les champs sont vides ou non valides)
       const validDetails = details.filter((detail) => {
         return (
           detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.quantity ||
+          detail.unitPrice ||
+          detail.discountPercent ||
+          detail.discountAmount
         );
       });
 
-      console.log("##############lidDetails####################", validDetails);
+      console.log(
+        "############## validDetails ####################",
+        validDetails
+      );
 
       // Si aucun détail valide, on sort sans erreur
       if (validDetails.length === 0) {
@@ -680,20 +635,43 @@ const Planning = () => {
         return;
       }
 
-      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
-      for (const detail of validDetails) {
-        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
-        batch.set(detailRef, {
-          label: detail.label || "",
-          quantity: detail.quantity || 0,
-          unitPrice: detail.unitPrice || 0,
-          discountPercent: detail.discountPercent || 0,
-          discountAmount: detail.discountAmount || 0,
-        });
-      }
-
-      // Engager toutes les écritures dans le batch
-      await batch.commit();
+      if (collectionName === "devis")
+        // Envoyer chaque détail individuellement via une requête POST à l'API
+        for (const detail of validDetails) {
+          await axios.post("/details", {
+            label: detail.label || "",
+            quantity: detail.quantity || 0,
+            unitPrice: detail.unitPrice || 0,
+            discountPercent: detail.discountPercent || 0,
+            discountAmount: detail.discountAmount || 0,
+            documentType: "Quote",
+            quoteId: eventId,
+          });
+        }
+      else if (collectionName === "reservation")
+        for (const detail of validDetails) {
+          await axios.post("/details", {
+            label: detail.label || "",
+            quantity: detail.quantity || 0,
+            unitPrice: detail.unitPrice || 0,
+            discountPercent: detail.discountPercent || 0,
+            discountAmount: detail.discountAmount || 0,
+            documentType: "Reservation",
+            reservationId: eventId,
+          });
+        }
+      else if (collectionName === "facture")
+        for (const detail of validDetails) {
+          await axios.post("/details", {
+            label: detail.label || "",
+            quantity: detail.quantity || 0,
+            unitPrice: detail.unitPrice || 0,
+            discountPercent: detail.discountPercent || 0,
+            discountAmount: detail.discountAmount || 0,
+            documentType: "Invoice",
+            invoiceId: eventId,
+          });
+        }
 
       console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
@@ -716,12 +694,6 @@ const Planning = () => {
     }
   };
 
-  // Fonction pour mettre à jour le dernier numéro de commande pour un userId
-  const updateLastOrderNumberForUser = async (userId, newOrderNumber) => {
-    const docRef = doc(db, "userOrderNumbers", userId); // Document unique par userId
-    await setDoc(docRef, { lastOrderNumber: newOrderNumber, userId: userId }); // Met à jour ou crée le document
-  };
-
   // Fonction pour générer un numéro de commande formaté à 5 chiffres
   const generateOrderNumber = (lastOrderNumber) => {
     const newOrderNumber = lastOrderNumber + 1;
@@ -730,197 +702,93 @@ const Planning = () => {
 
   const addSingleEvent = async (event, newOrderNumber, nextDay) => {
     try {
-      const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document
-      console.log("category: event.categoryId", event.categoryId);
-
-      await setDoc(eventRef, {
-        eventId: eventRef.id,
-        title: newOrderNumber, // Utilise le numéro de commande fourni
+      const order = await axios.post("/orders", {
         date: event.date,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
         endMinute: parseInt(event.endMinute),
-        category: event.category.id
-          ? {
-              id: event.category.id,
-              name: event.category.name,
-              color: event.category.color,
-            }
-          : null,
-        person: {
-          firstName: event.firstName,
-          lastName: event.lastName,
-          email: event.email,
-          phone: event.phone,
-        },
-        vehicule: {
-          licensePlate: event.licensePlate ? event.licensePlate : "",
-          vin: event.vin ? event.vin : "",
-          color: event.color ? event.color : "",
-          model: event.model ? event.model : "",
-          kms: event.kms ? event.kms : "",
-          controletech: event.controletech ? event.controletech : "",
-        },
-        details: {
-          workDescription: event.workDescription ? event.workDescription : "",
-          price: event.price ? event.price : "",
-          acompte: deposit ? deposit : 0,
-        },
-        operator: event.operator ? event.operator : "",
-        receptor: event.receptor ? event.receptor : "",
+        categoryId: event.category.id,
+        clientId: Client.id,
+        vehicleId: Vehicle.id,
+        workDescription: event.workDescription,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
-        createdAt: serverTimestamp(), // Timestamp auto de création
-        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
+        garageId: 1,
       });
 
       setSelectedEvent({
-        eventId: eventRef.id,
-        title: newOrderNumber, // Utilise le numéro de commande fourni
         date: event.date,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
         endMinute: parseInt(event.endMinute),
-        category: event.category.id
-          ? {
-              id: event.category.id,
-              name: event.category.name,
-              color: event.category.color,
-            }
-          : null,
-        person: {
-          firstName: event.firstName,
-          lastName: event.lastName,
-          email: event.email,
-          phone: event.phone,
-        },
-        vehicule: {
-          licensePlate: event.licensePlate ? event.licensePlate : "",
-          vin: event.vin ? event.vin : "",
-          color: event.color ? event.color : "",
-          model: event.model ? event.model : "",
-          kms: event.kms ? event.kms : "",
-          controletech: event.controletech ? event.controletech : "",
-        },
-        details: {
-          workDescription: event.workDescription ? event.workDescription : "",
-          price: event.price ? event.price : "",
-          acompte: deposit ? deposit : 0,
-        },
-        operator: event.operator ? event.operator : "",
-        receptor: event.receptor ? event.receptor : "",
+        categoryId: event.category.id,
+        clientId: Client.id,
+        vehicleId: Vehicle.id,
+        workDescription: event.workDescription,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
-        createdAt: serverTimestamp(), // Timestamp auto de création
-        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
+        garageId: 1,
       });
 
-      console.log("eventRef", event);
-
-      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-      await updateLastOrderNumberForUser(
-        event.userId,
-        parseInt(newOrderNumber)
-      );
-      return eventRef; // Retourner la référence du document
+      return order.data; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
     }
   };
 
-  const addSingleReservation = async (
-    event,
-    newOrderNumber,
-    collectionName,
-    isClosed
-  ) => {
+  const addSingleReservation = async (event, nextDay, collectionName) => {
     try {
-      const eventRef = doc(collection(db, collectionName)); // Crée une référence à un nouveau document
-      console.log("category: event.categoryId", event.categoryId);
-
-      await setDoc(eventRef, {
-        eventId: eventRef.id,
-        title: newOrderNumber, // Utilise le numéro de commande fourni
-        date: event.date,
-        person: {
-          firstName: event.firstName,
-          lastName: event.lastName,
-          email: event.email,
-          phone: event.phone,
-          adresse: event.adresse ? event.adresse : "",
-          postale: event.postale ? event.postale : "",
-          ville: event.ville ? event.ville : "",
-        },
-        vehicule: {
-          licensePlate: event.licensePlate ? event.licensePlate : "",
-          vin: event.vin ? event.vin : "",
-          color: event.color ? event.color : "",
-          model: event.model ? event.model : "",
-          kms: event.kms ? event.kms : "",
-          controletech: event.controletech ? event.controletech : "",
-        },
-        details: {
-          workDescription: event.workDescription ? event.workDescription : "",
-          price: event.price ? event.price : "",
-          acompte: deposit ? deposit : 0,
-        },
-        isClosed: isClosed,
-        userId: event.userId, // UID de l'utilisateur
-        createdAt: serverTimestamp(), // Timestamp auto de création
-        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
-      });
+      let response = 0;
+      if (collectionName == "devis")
+        response = await axios.post("/quotes", {
+          date: event.date,
+          clientId: Client.id,
+          vehicleId: Vehicle.id,
+          workDescription: event.workDescription,
+          isClosed: false,
+          userId: event.userId, // UID de l'utilisateur
+          nextDay: nextDay,
+          garageId: 1,
+        });
+      else if (collectionName == "facture")
+        response = await axios.post("/invoices", {
+          date: event.date,
+          clientId: Client.id,
+          vehicleId: Vehicle.id,
+          workDescription: event.workDescription,
+          isClosed: false,
+          userId: event.userId, // UID de l'utilisateur
+          nextDay: nextDay,
+          garageId: 1,
+        });
+      else if (collectionName == "reservation")
+        response = await axios.post("/reservations", {
+          date: event.date,
+          clientId: Client.id,
+          vehicleId: Vehicle.id,
+          workDescription: event.workDescription,
+          isClosed: false,
+          userId: event.userId, // UID de l'utilisateur
+          nextDay: nextDay,
+          garageId: 1,
+        });
 
       setSelectedEvent({
-        eventId: eventRef.id,
-        title: newOrderNumber, // Utilise le numéro de commande fourni
         date: event.date,
 
-        category: event.category.id
-          ? {
-              id: event.category.id,
-              name: event.category.name,
-              color: event.category.color,
-            }
-          : null,
-        person: {
-          firstName: event.firstName,
-          lastName: event.lastName,
-          email: event.email,
-          phone: event.phone,
-        },
-        vehicule: {
-          licensePlate: event.licensePlate ? event.licensePlate : "",
-          vin: event.vin ? event.vin : "",
-          color: event.color ? event.color : "",
-          model: event.model ? event.model : "",
-          kms: event.kms ? event.kms : "",
-          controletech: event.controletech ? event.controletech : "",
-        },
-        details: {
-          workDescription: event.workDescription ? event.workDescription : "",
-          price: event.price ? event.price : "",
-          acompte: deposit ? deposit : 0,
-        },
+        clientId: Client.id,
+        vehicleId: Vehicle.id,
 
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
-        createdAt: serverTimestamp(), // Timestamp auto de création
-        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
+        garageId: 1,
       });
 
-      console.log("eventRef", event);
-
-      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-      await updateLastOrderNumberForUser(
-        event.userId,
-        parseInt(newOrderNumber)
-      );
-      handleOpenNotif("réservation");
-      return eventRef; // Retourner la référence du document
+      return response.data; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
     }
@@ -1012,70 +880,56 @@ const Planning = () => {
   };
 
   async function handleSearchClick() {
-    const keyword = searchQuery;
-    const lowerCaseKeyword = keyword.toLowerCase();
+    const keyword = searchQuery.trim().toLowerCase();
 
     // Liste des collections à rechercher
-    const collections = ["reservations", "devis", "factures", "events"];
+    const collections = {
+      reservations: "reservation",
+      devis: "quote",
+      factures: "invoice",
+      events: "order",
+    };
 
     try {
       // Préparer les requêtes pour chaque collection
-      const collectionPromises = collections.map(async (collectionName) => {
-        const collectionRef = collection(db, collectionName);
+      const collectionPromises = Object.entries(collections).map(
+        async ([collectionKey, apiEndpoint]) => {
+          const url = `/documents-garage/${apiEndpoint}/1/details`;
 
-        // Créer des requêtes pour chaque champ à rechercher
-        const queries = [
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("person.firstName", ">=", lowerCaseKeyword),
-            where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("person.lastName", ">=", lowerCaseKeyword),
-            where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("person.email", ">=", lowerCaseKeyword),
-            where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("title", ">=", lowerCaseKeyword),
-            where("title", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-        ];
+          // Effectuer la requête GET
+          const response = await axios.get(url);
 
-        // Récupérer les résultats pour chaque requête
-        const queryPromises = queries.map(async (q) => {
-          const querySnapshot = await getDocs(q);
-          const results = [];
-          querySnapshot.forEach((doc) => {
-            results.push({
-              id: doc.id,
-              collection: collectionName,
-              ...doc.data(),
-            });
-          });
-
-          // Appliquer le filtre uniquement si collectionName n'est pas "factures"
-          if (collectionName !== "factures") {
-            return results.filter((event) => event.isClosed === false);
+          if (!response || !response.data) {
+            console.log(`Aucune donnée trouvée pour ${collectionKey}`);
+            return [];
           }
 
-          // Retourner les résultats sans filtre pour "factures"
-          return results;
-        });
+          // Ajouter le nom de la collection à chaque objet dans la réponse
+          const filtResults = response.data.data.map((item) => ({
+            ...item,
+            collectionName: collectionKey, // Ajouter le nom de la collection
+          }));
 
-        // Combiner les résultats de toutes les requêtes pour cette collection
-        const collectionResults = (await Promise.all(queryPromises)).flat();
-        return collectionResults;
-      });
+          // Filtrer les résultats en fonction du mot-clé
+          const filteredResults = filtResults.filter((item) => {
+            return (
+              item?.Client?.firstName?.toLowerCase().includes(keyword) ||
+              item?.Client?.name?.toLowerCase().includes(keyword) ||
+              item?.Client?.email?.toLowerCase().includes(keyword)
+            );
+          });
+
+          console.log(
+            "############  filteredResults ####################",
+            filtResults
+          );
+
+          // Appliquer le filtre "isClosed === false" pour toutes sauf factures
+          return collectionKey !== "factures"
+            ? filteredResults.filter((item) => item.isClosed === false)
+            : filteredResults;
+        }
+      );
 
       // Attendre les résultats de toutes les collections
       const allCollectionsResults = (
@@ -1087,15 +941,15 @@ const Planning = () => {
         (value, index, self) =>
           index ===
           self.findIndex(
-            (t) => t.id === value.id && t.collection === value.collection
+            (t) =>
+              t.id === value.id && t.collectionName === value.collectionName
           )
       );
 
       console.log("Résultats combinés :", uniqueResults);
 
-      // Mettre à jour les résultats dans l'état
+      // Mettre à jour l'état avec les résultats
       setDataEventsAll(uniqueResults);
-
       setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
@@ -1103,70 +957,56 @@ const Planning = () => {
   }
 
   async function handleSearchClickFull() {
-    const keyword = searchQuery;
-    const lowerCaseKeyword = keyword.toLowerCase();
+    const keyword = searchQuery.trim().toLowerCase();
 
     // Liste des collections à rechercher
-    const collections = ["reservations", "devis", "factures", "events"];
+    const collections = {
+      reservations: "reservation",
+      devis: "quote",
+      factures: "invoice",
+      events: "order",
+    };
 
     try {
       // Préparer les requêtes pour chaque collection
-      const collectionPromises = collections.map(async (collectionName) => {
-        const collectionRef = collection(db, collectionName);
+      const collectionPromises = Object.entries(collections).map(
+        async ([collectionKey, apiEndpoint]) => {
+          const url = `/documents-garage/${apiEndpoint}/1/details`;
 
-        // Créer des requêtes pour chaque champ à rechercher
-        const queries = [
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("person.firstName", ">=", lowerCaseKeyword),
-            where("person.firstName", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("person.lastName", ">=", lowerCaseKeyword),
-            where("person.lastName", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("person.email", ">=", lowerCaseKeyword),
-            where("person.email", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-          query(
-            collectionRef,
-            where("userId", "==", user.uid),
-            where("title", ">=", lowerCaseKeyword),
-            where("title", "<=", lowerCaseKeyword + "\uf8ff")
-          ),
-        ];
+          // Effectuer la requête GET
+          const response = await axios.get(url);
 
-        // Récupérer les résultats pour chaque requête
-        const queryPromises = queries.map(async (q) => {
-          const querySnapshot = await getDocs(q);
-          const results = [];
-          querySnapshot.forEach((doc) => {
-            results.push({
-              id: doc.id,
-              collection: collectionName,
-              ...doc.data(),
-            });
-          });
-
-          // Appliquer le filtre uniquement si collectionName n'est pas "factures"
-          if (collectionName !== "factures") {
-            return results.filter((event) => event.isClosed === false);
+          if (!response || !response.data) {
+            console.log(`Aucune donnée trouvée pour ${collectionKey}`);
+            return [];
           }
 
-          // Retourner les résultats sans filtre pour "factures"
-          return results;
-        });
+          // Ajouter le nom de la collection à chaque objet dans la réponse
+          const filtResults = response.data.data.map((item) => ({
+            ...item,
+            collectionName: collectionKey, // Ajouter le nom de la collection
+          }));
 
-        // Combiner les résultats de toutes les requêtes pour cette collection
-        const collectionResults = (await Promise.all(queryPromises)).flat();
-        return collectionResults;
-      });
+          // Filtrer les résultats en fonction du mot-clé
+          const filteredResults = filtResults.filter((item) => {
+            return (
+              item?.Client?.firstName?.toLowerCase().includes(keyword) ||
+              item?.Client?.name?.toLowerCase().includes(keyword) ||
+              item?.Client?.email?.toLowerCase().includes(keyword)
+            );
+          });
+
+          console.log(
+            "############  filteredResults ####################",
+            filtResults
+          );
+
+          // Appliquer le filtre "isClosed === false" pour toutes sauf factures
+          return collectionKey !== "factures"
+            ? filteredResults.filter((item) => item.isClosed === false)
+            : filteredResults;
+        }
+      );
 
       // Attendre les résultats de toutes les collections
       const allCollectionsResults = (
@@ -1178,14 +1018,16 @@ const Planning = () => {
         (value, index, self) =>
           index ===
           self.findIndex(
-            (t) => t.id === value.id && t.collection === value.collection
+            (t) =>
+              t.id === value.id && t.collectionName === value.collectionName
           )
       );
 
       console.log("Résultats combinés :", uniqueResults);
 
-      // Mettre à jour les résultats dans l'état
+      // Mettre à jour l'état avec les résultats
       setDataEventsAll(uniqueResults);
+      // setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
     }
@@ -1199,7 +1041,7 @@ const Planning = () => {
   };
 
   const uniqueCategories = dataEvents.reduce((accumulator, event) => {
-    const category = event.category;
+    const category = event.Category;
     if (category)
       if (!accumulator.some((cat) => cat.id === category.id)) {
         accumulator.push(category);
@@ -1253,15 +1095,15 @@ const Planning = () => {
       const updatedData = {
         title: updatedEvent.title || "", // Valeur par défaut si undefined
         person: {
-          firstName: updatedEvent.person.firstName || "", // Assurez-vous qu'il y a une valeur par défaut
-          lastName: updatedEvent.person.lastName || "",
-          email: updatedEvent.person.email || "",
-          phone: updatedEvent.person.phone || "",
+          firstName: updatedEvent.Client.firstName || "", // Assurez-vous qu'il y a une valeur par défaut
+          lastName: updatedEvent.Client.lastName || "",
+          email: updatedEvent.Client.email || "",
+          phone: updatedEvent.Client.phone || "",
         },
         vehicule: {
-          licensePlate: updatedEvent.vehicule.licensePlate || "",
-          vin: updatedEvent.vehicule.vin || "",
-          color: updatedEvent.vehicule.color || "",
+          plateNumber: updatedEvent.Vehicle.plateNumber || "",
+          vin: updatedEvent.Vehicle.vin || "",
+          color: updatedEvent.Vehicle.color || "",
         },
         details: {
           workDescription: updatedEvent.details.workDescription || "",
@@ -1284,34 +1126,27 @@ const Planning = () => {
 
       const fetchEvents = async () => {
         try {
-          const eventsRef = collection(db, "events");
+          const response = await axios.get(`/documents-garage/order/1/details`);
 
-          // Créer la requête avec la condition where pour filtrer par userId
-          const q = query(
-            eventsRef,
-            where("userId", "==", user.uid),
-            where("date", "==", selectedDate)
+          const eventsData = response.data.data;
+
+          // Filtrer les événements si nécessaire
+          const filteredEvents = eventsData.filter(
+            (event) => event.date === selectedDate && !event.isClosed
           );
 
-          const querySnapshot = await getDocs(q);
+          setDataEvents(filteredEvents);
 
-          const eventsData = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          console.log("recuperer à nouveau les RDVs#########", eventsData);
-
-          setDataEvents(eventsData.filter((event) => event.isClosed == false));
+          console.log("eventsData", filteredEvents);
         } catch (error) {
           console.error(
-            "Erreur lors de la récupération des événements : ",
+            "Erreur lors de la récupération des événements :",
             error
           );
         }
       };
 
-      fetchEvents(); // Appeler la fonction au montage du composant
+      fetchEvents();
 
       setIsModalOpen(false); // Fermer le modal
 
@@ -1328,36 +1163,23 @@ const Planning = () => {
     setLoading(true);
     const fetchEvents = async () => {
       try {
-        const eventsRef = collection(db, "events");
+        const response = await axios.get(`/documents-garage/order/1/details`);
 
-        // Créer la requête avec la condition where pour filtrer par userId
-        const q = query(
-          eventsRef,
-          where("userId", "==", user.uid),
-          where("date", "==", selectedDate)
+        const eventsData = response.data.data;
+
+        // Filtrer les événements si nécessaire
+        const filteredEvents = eventsData.filter(
+          (event) => event.date === selectedDate && !event.isClosed
         );
 
-        const querySnapshot = await getDocs(q);
+        setDataEvents(filteredEvents);
 
-        const eventsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        console.log("recuperer à nouveau les RDVs#########", eventsData);
-
-        setDataEvents(eventsData.filter((event) => event.isClosed == false));
-        setLoading(false);
       } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des événements : ",
-          error
-        );
-        setLoading(false);
+        console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
-    fetchEvents(); // Appeler la fonction au montage du composant
+    fetchEvents();
     setOpen(false);
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
   };
@@ -1377,17 +1199,6 @@ const Planning = () => {
     },
   ]);
   const [deposit, setDeposit] = useState(0);
-
-  // Fonction pour gérer les changements dans les détails
-  // const handleDetailChange = (event, index) => {
-  //   const { name, value } = event.target;
-  //   const updatedDetails = [...details];
-  //   if (name == "label") updatedDetails[index][name] = value || "";
-  //   else updatedDetails[index][name] = parseFloat(value);
-
-  //   setNewEvent({ ...newEvent, price: totalTTC });
-  //   setDetails(updatedDetails);
-  // };
 
   const handleDetailChange = (event, index) => {
     const { name, value } = event.target; // Extraire le nom et la valeur du champ modifié
@@ -1465,7 +1276,8 @@ const Planning = () => {
     setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
   };
 
-  // Calcul des totaux HT et TTC
+  // Calcul des totaux HT et TT
+
   const totalTTC = details.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
     0
@@ -1492,33 +1304,20 @@ const Planning = () => {
   const handleEventFromChild = () => {
     const fetchEvents = async () => {
       try {
-        setLoading(true);
-        const eventsRef = collection(db, "events");
+        const response = await axios.get(`/documents-garage/order/1/details`);
 
-        // Créer la requête avec la condition where pour filtrer par userId
-        const q = query(
-          eventsRef,
-          where("userId", "==", user.uid),
-          where("date", "==", selectedDate)
+        const eventsData = response.data.data;
+
+        // Filtrer les événements si nécessaire
+        const filteredEvents = eventsData.filter(
+          (event) => event.date === selectedDate && !event.isClosed
         );
 
-        const querySnapshot = await getDocs(q);
+        setDataEvents(filteredEvents);
 
-        const eventsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        console.log("recuperer à nouveau les RDVs#########", eventsData);
-
-        setDataEvents(eventsData.filter((event) => event.isClosed == false));
-        setLoading(false);
+        console.log("eventsData", filteredEvents);
       } catch (error) {
-        setLoading(false);
-        console.error(
-          "Erreur lors de la récupération des événements : ",
-          error
-        );
+        console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
@@ -1612,29 +1411,6 @@ const Planning = () => {
     handleShowPopup();
   };
 
-  const handleOpenNotifGetData = (collectionName) => {
-    setNotification({
-      open: true,
-      message: "Votre " + collectionName + " a été crée",
-      severity: "success", // Peut être "error", "warning", "info"
-    });
-    if (collectionName === "reservation") {
-      setCollectName("reservations");
-    }
-
-    if (collectionName === "OR") {
-      setCollectName("events");
-    }
-    if (collectionName === "devis") {
-      setCollectName("devis");
-    }
-    if (collectionName === "Facture") {
-      setCollectName("factures");
-    }
-    handleShowPopup();
-    handleEventFromChild();
-  };
-
   const [showPopup, setShowPopup] = useState(false);
 
   const handleShowPopup = () => {
@@ -1648,7 +1424,7 @@ const Planning = () => {
 
   // Fonction qui sera appelée par l'enfant pour envoyer la facture
   const handleFactureReceived = (factureData) => {
-    setFacture(factureData);
+    setFacture(factureData?.data);
 
     if (factureData) {
       setModalOpen(false);
@@ -1660,11 +1436,11 @@ const Planning = () => {
       setShowPopup(true);
       setModalOpen2(false);
       setModalOpen3(true);
-      setFacture(factureData);
+      setFacture(factureData?.data);
 
       console.log(
         "##############################Facture reçue du child: #################################################",
-        factureData
+        factureData.data
       );
       handleOpenNotif("Facture");
     }
@@ -1682,16 +1458,37 @@ const Planning = () => {
 
     handleOpenNotif("OR");
 
-    console.log(
-      "*********************************** VOTRE OR A ETE CREE AVEC SUCCESS *****************************"
-    );
     handleSearchClickFull();
   };
-  const [activeTab, setActiveTab] = useState(0);
+  const [Client, SetClient] = useState({
+    name: "",
+    firstName: "",
+    address: "",
+    email: "",
+    phone: "",
+    postalCode: "",
+    city: "",
+  });
 
-  const handleChange = (event, newValue) => {
-    setActiveTab(newValue);
+  const handleSelectClient = (client) => {
+    SetClient(client);
+    console.log("Client sélectionné :", client);
   };
+
+  const [Vehicle, setVehicle] = useState({
+    plateNumber: "",
+    vin: "",
+    model: "",
+    color: "",
+    mileage: "",
+    lastCheck: "",
+  });
+
+  const handleSelectVehicle = (vehicle) => {
+    setVehicle(vehicle);
+    console.log("Vehicule sélectionné :", vehicle);
+  };
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1935,8 +1732,8 @@ const Planning = () => {
             {uniqueCategories &&
               uniqueCategories.map((category, index) => {
                 const categoryEvents = dataEvents
-                  .filter((event) => event.category != null)
-                  .filter((event) => event.category.id === category.id); // Filtrer les événements par catégorie
+                  .filter((event) => event.Category != null)
+                  .filter((event) => event.Category.id === category.id); // Filtrer les événements par catégorie
                 const categoryHeight = calculateCategoryHeight({
                   events: categoryEvents,
                 }); // Calculer la hauteur de la catégorie
@@ -2023,40 +1820,18 @@ const Planning = () => {
                       <Typography variant="body1">
                         Informations Client
                       </Typography>
-                      <TextField
-                        label="Nom"
-                        name="lastName"
-                        value={newEvent.lastName}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
+                      <ClientSearch
+                        onSelectClient={handleSelectClient}
+                        Client={Client}
                       />
-                      <TextField
-                        label="Prénom"
-                        name="firstName"
-                        value={newEvent.firstName}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
+                      <FirstnameSearch
+                        onSelectClient={handleSelectClient}
+                        Client={Client}
                       />
                       <TextField
                         label="Téléphone"
                         name="phone"
-                        value={newEvent.phone}
+                        value={Client.phone}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2068,25 +1843,15 @@ const Planning = () => {
                           "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       />
-                      <TextField
-                        label="Email"
-                        name="email"
-                        value={newEvent.email}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
+                      <EmailSearch
+                        onSelectClient={handleSelectClient}
+                        Client={Client}
                       />
+
                       <TextField
                         label="Adresse"
                         name="adresse"
-                        value={newEvent.adresse}
+                        value={Client.address}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2100,7 +1865,7 @@ const Planning = () => {
                       <TextField
                         label="Code postal"
                         name="postale"
-                        value={newEvent.postale}
+                        value={Client.postalCode}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2114,7 +1879,7 @@ const Planning = () => {
                       <TextField
                         label="Ville"
                         name="ville"
-                        value={newEvent.ville}
+                        value={Client.city}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2132,10 +1897,10 @@ const Planning = () => {
                       <Typography variant="body1">
                         Informations Véhicule
                       </Typography>
-                      <TextField
+                      {/* <TextField
                         label="Immatriculation"
-                        name="licensePlate"
-                        value={newEvent.licensePlate}
+                        name="plateNumber"
+                        value={newEvent.plateNumber}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2145,11 +1910,15 @@ const Planning = () => {
                           "& .MuiInputBase-root": { fontSize: "0.8rem" },
                           "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
+                      /> */}
+                      <PlateNumberSearch
+                        onSelectClient={handleSelectVehicle}
+                        Client={Client}
                       />
                       <TextField
                         label="VIN"
                         name="vin"
-                        value={newEvent.vin}
+                        value={Vehicle.vin}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2163,7 +1932,7 @@ const Planning = () => {
                       <TextField
                         label="Modèle"
                         name="model"
-                        value={newEvent.model}
+                        value={Vehicle.model}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2177,7 +1946,7 @@ const Planning = () => {
                       <TextField
                         label="Couleur"
                         name="color"
-                        value={newEvent.color}
+                        value={Vehicle.color}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2191,7 +1960,7 @@ const Planning = () => {
                       <TextField
                         label="kilométrage"
                         name="kms"
-                        value={newEvent.kms}
+                        value={Vehicle.mileage}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -2208,7 +1977,7 @@ const Planning = () => {
                       <TextField
                         name="controletech"
                         type="date"
-                        value={newEvent.controletech}
+                        value={Vehicle.lastCheck}
                         onChange={handleInputChange}
                         fullWidth
                         margin="normal"
@@ -3012,10 +2781,14 @@ const Planning = () => {
                 {/* Z-index élevé */}
                 {uniqueCategories.map((category, categoryIndex) => {
                   const categoryEvents = dataEvents
-                    .filter((event) => event.category != null)
-                    .filter((event) => event.category.id === category.id);
+                    .filter((event) => event.Category != null)
+                    .filter((event) => event.Category.id === category.id);
                   // Récupérer les événements de la catégorie
                   const lines = calculateEventLines(categoryEvents); // Calculer les lignes
+                  console.log(
+                    "***********************************lines************************************",
+                    lines
+                  );
 
                   return (
                     <Droppable droppableId={category.id} key={category.id}>
@@ -3047,8 +2820,8 @@ const Planning = () => {
                             >
                               {line.map((event, eventIndex) => (
                                 <Draggable
-                                  key={`${event.title}-${categoryIndex}-${eventIndex}`}
-                                  draggableId={`${event.title}-${categoryIndex}-${eventIndex}`}
+                                  key={`${event.id}-${categoryIndex}-${eventIndex}`}
+                                  draggableId={`${event.id}-${categoryIndex}-${eventIndex}`}
                                   index={eventIndex}
                                 >
                                   {(provided, snapshot) => (
@@ -3061,20 +2834,20 @@ const Planning = () => {
                                               fontSize: "1rem",
                                             }}
                                           >
-                                            {event.title}
+                                            {event.id}
                                           </span>
                                           {" • "}
                                           <span>
                                             {" "}
                                             {/* Gris plus foncé pour les noms */}
-                                            {event.person.firstName}{" "}
-                                            {event.person.lastName}
+                                            {event.Client.firstName}{" "}
+                                            {event.Client.name}
                                           </span>
                                           {" • "}
                                           <span>
                                             {" "}
                                             {/* Vert pour la plaque d'immatriculation */}
-                                            {event.vehicule.licensePlate}
+                                            {event.Vehicle.plateNumber}
                                           </span>
                                         </Typography>
                                       }
@@ -3114,7 +2887,7 @@ const Planning = () => {
 
                                           height: "40px",
                                           backgroundColor:
-                                            event.category?.color || "#05AFC1",
+                                            event.Category?.color || "#05AFC1",
                                           border: snapshot.isDragging
                                             ? "2px solid #90caf9"
                                             : "1px solid #90caf9",
@@ -3141,7 +2914,7 @@ const Planning = () => {
                                                 color: "#000",
                                               }}
                                             >
-                                              {event.title}
+                                              #{event.id}
                                             </span>
                                             {" • "}
                                             <span
@@ -3150,14 +2923,14 @@ const Planning = () => {
                                                 fontWeight: "bold",
                                               }}
                                             >
-                                              {event.person.firstName}{" "}
-                                              {event.person.lastName}
+                                              {event.Client.firstName}{" "}
+                                              {event.Client.lastName}
                                             </span>
                                             {" • "}
                                             <span
                                               style={{ color: "textSecondary" }}
                                             >
-                                              {event.vehicule.licensePlate}
+                                              {event.Vehicle.plateNumber}
                                             </span>
                                             <span
                                               style={{ color: "textSecondary" }}
@@ -3243,8 +3016,8 @@ const Planning = () => {
                       hover
                       onClick={() => {
                         setSelectedEvent(event); // Met à jour l'événement sélectionné
-                        setCollectionName(event.collection);
-                        if (event.collection !== "events") {
+                        setCollectionName(event.collectionName);
+                        if (event.collectionName !== "events") {
                           setModalOpen2(true);
                           setModalOpen(false);
                           console.log("modalOpen2 listing", modalOpen2);
@@ -3252,21 +3025,21 @@ const Planning = () => {
                       }}
                       style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
                     >
-                      <TableCell>{event.title}</TableCell>
-                      <TableCell>{event.person.lastName}</TableCell>
-                      <TableCell>{event.person.firstName}</TableCell>
+                      <TableCell>{event.id}</TableCell>
+                      <TableCell>{event.Client.name}</TableCell>
+                      <TableCell>{event.Client.firstName}</TableCell>
 
-                      <TableCell>{event.person.phone || ""}</TableCell>
-                      <TableCell>{event.person.email}</TableCell>
+                      <TableCell>{event.Client.phone || ""}</TableCell>
+                      <TableCell>{event.Client.email}</TableCell>
 
                       <TableCell>
-                        {event.vehicule.model || ""} -{" "}
-                        {event.vehicule.licensePlate || ""}
+                        {event.Vehicle.model || ""} -{" "}
+                        {event.Vehicle.plateNumber || ""}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={event.collection}
-                          color={getBadgeColor(event.collection)}
+                          label={event.collectionName}
+                          color={getBadgeColor(event.collectionName)}
                           style={{
                             fontWeight: "bold",
                             textTransform: "capitalize",

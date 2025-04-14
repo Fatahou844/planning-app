@@ -14,7 +14,7 @@ const InvoiceTemplateWithoutOR2 = ({
   closeDocumentModal,
   closeEventModal,
 }) => {
-  const { person, vehicule, date, title } = NewEvent;
+  const { Client, Vehicle, date } = NewEvent;
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
@@ -28,6 +28,10 @@ const InvoiceTemplateWithoutOR2 = ({
 
   useEffect(() => {
     const fetchGarageInfo = async () => {
+      console.log(
+        "############################### NewEvent ######################################",
+        NewEvent
+      );
       if (!user) return;
 
       const q = query(
@@ -60,7 +64,7 @@ const InvoiceTemplateWithoutOR2 = ({
     return detail.quantity * detail.unitPrice - discount;
   };
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: NewEvent ? NewEvent.id : "",
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,
@@ -68,54 +72,82 @@ const InvoiceTemplateWithoutOR2 = ({
       email: companyInfo?.email,
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: Vehicle?.model ? Vehicle.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: Vehicle?.vin ? Vehicle.vin : "",
+      km: Vehicle?.mileage ? Vehicle.mileage : "",
+      color: Vehicle?.color ? Vehicle.color : "",
+      licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${Client?.firstName ? Client.firstName : ""} ${
+        Client?.lastName ? Client.lastName : ""
       }`,
-      adresse: `${person?.adresse ? person?.adresse : ""} ${
-        person?.postale ? person.postale : ""
+      adresse: `${Client?.address ? Client?.address : ""} ${
+        Client?.postalCode ? Client.postalCode : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
+      phone: Client?.phone ? Client.phone : "",
+      email: Client?.email ? Client.email : "",
+      ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
-      ville: person?.ville ? person?.ville : "",
     },
-    items: details.map((item) => ({
+    items: (NewEvent?.Details || []).map((item) => ({
       description: item.label,
-      unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
-      unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
+      unitPriceHT: item.unitPrice / 1.2,
+      unitPriceTTC: parseFloat(item.unitPrice),
       quantity: item.quantity,
       discount: item.discountPercent,
       discountAmount: item.discountAmount,
+      unitPriceTTCafterDiscount:
+        item.unitPrice -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 100,
+      unitPriceHTafterDiscount:
+        item.unitPrice / 1.2 -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 120,
     })),
+
     totals: {
       // Total HT avec remises
-      totalHT: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail) / 1.2,
-        0
-      ),
-      // TVA (20% du total HT avec remises)
-      tva: details.reduce(
-        (sum, detail) =>
-          sum + calculateLineTotal(detail) - calculateLineTotal(detail) / 1.2,
-        0
-      ),
-      // Total TTC avec remises
-      totalTTC: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail),
-        0
-      ),
-    },
-    observations: `${NewEvent.details.workDescription}`,
-  };
+      totalHT: (NewEvent?.Details || []).reduce((acc, item) => {
+        const unitPriceHT = item.unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceHT * item.quantity;
+      }, 0),
 
+      // TVA (20% du total HT avec remises)
+      tva: (NewEvent?.Details || []).reduce((acc, item) => {
+        const unitPriceHT = item.unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceHT * item.quantity * 0.2;
+      }, 0),
+
+      // Total TTC avec remises
+      totalTTC: (NewEvent?.Details || []).reduce((acc, item) => {
+        const discountedPriceTTC = Math.max(
+          0,
+          item.unitPrice * (1 - item.discountPercent / 100) -
+            item.discountAmount / item.quantity
+        );
+        return acc + discountedPriceTTC * item.quantity;
+      }, 0),
+    },
+
+    observations: `${
+      NewEvent?.details?.workDescription
+        ? NewEvent?.details?.workDescription
+        : ""
+    }`,
+  };
   const documentDefinition = {
     content: [
       // Header avec numéro de facture et date

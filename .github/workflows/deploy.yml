@@ -1,0 +1,38 @@
+name: Deploy React STAGING to VPS
+
+on:
+  push:
+    branches:
+      - stg
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies & build
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: 82.29.168.237
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf /var/www/stg-app/*
+            mkdir -p /var/www/stg-app
+            exit
+      - name: Copy build to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: 82.29.168.237
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "build/*"
+          target: "/var/www/stg-app/"

@@ -17,22 +17,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-  writeBatch,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../../hooks/firebaseConfig";
+import { useAxios } from "../../utils/hook/useAxios";
 
 function AddOrdreReparationModal({
   open,
@@ -52,6 +41,7 @@ function AddOrdreReparationModal({
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [dataEvents, setDataEvents] = useState([]);
+  const axios = useAxios();
 
   const [invoiceExecuted, setInvoiceExecuted] = useState(false);
 
@@ -81,38 +71,7 @@ function AddOrdreReparationModal({
     if (editedEvent && collectionNameOpen == "reservations") {
       const fetchDetails = async () => {
         try {
-          const detailsCollectionRef = collection(
-            doc(db, "reservations", editedEvent.id),
-            "details"
-          );
-          const detailsSnapshot = await getDocs(detailsCollectionRef);
-          const detailsData = detailsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setDetails(detailsData);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des détails :", error);
-        }
-      };
-
-      fetchDetails();
-    }
-  }, [, open, editedEvent.id]);
-  useEffect(() => {
-    if (editedEvent && collectionNameOpen == "devis") {
-      const fetchDetails = async () => {
-        try {
-          const detailsCollectionRef = collection(
-            doc(db, "devis", editedEvent.id),
-            "details"
-          );
-          const detailsSnapshot = await getDocs(detailsCollectionRef);
-          const detailsData = detailsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setDetails(detailsData);
+          setDetails(editedEvent.Details);
         } catch (error) {
           console.error("Erreur lors de la récupération des détails :", error);
         }
@@ -206,29 +165,27 @@ function AddOrdreReparationModal({
   };
 
   const removeDetailRow = async (index) => {
+    // Récupère le détail à supprimer avant de modifier le state
+    const detailToDelete = details[index];
+
     // Met à jour l'affichage en supprimant la ligne localement
     setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
 
-    // Récupère le détail à supprimer basé sur l'index
-    const detailToDelete = details[index];
-
+    // Si le détail est déjà en base, on le supprime
     if (detailToDelete && detailToDelete.id) {
       try {
-        const eventDocRef = doc(db, collectionName, editedEvent.id);
-        const detailsCollectionRef = collection(eventDocRef, "details");
-        const detailDocRef = doc(detailsCollectionRef, detailToDelete.id);
-
-        // Supprime le document dans Firestore
-        await deleteDoc(detailDocRef);
+        await axios.deleteData(`/details/${detailToDelete.id}`);
 
         console.log(
-          `Document avec l'id ${detailToDelete.id} supprimé de la base de données.`
+          `Détail avec l'id ${detailToDelete.id} supprimé de la base de données.`
         );
       } catch (error) {
-        console.error("Erreur lors de la suppression du document :", error);
+        console.error("Erreur lors de la suppression du détail :", error);
       }
     } else {
-      console.warn("Aucun document trouvé pour cet index.");
+      console.warn(
+        "Aucun ID trouvé pour ce détail, suppression uniquement locale."
+      );
     }
   };
 
@@ -247,11 +204,11 @@ function AddOrdreReparationModal({
     // Calcul du total après remise
     return detail.quantity * detail.unitPrice - discount;
   };
-  const totalTTC = details.reduce(
+  const totalTTC = details?.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
     0
   );
-  const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
+  const totalHT = totalTTC / 1.2 || 0; // Ajouter 20% de TVA
 
   let collectName = "Ordre de réparation";
 
@@ -265,23 +222,16 @@ function AddOrdreReparationModal({
 
   const addEventDetails = async (eventId, details) => {
     try {
-      const batch = writeBatch(db); // Crée un batch pour les opérations
-
-      // Référence directe au document de l'événement avec l'ID existant
-      const eventRef = doc(db, "events", eventId);
-
-      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      // Filtrer les détails valides (exclut ceux où tous les champs sont vides ou non valides)
       const validDetails = details.filter((detail) => {
         return (
           detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.quantity ||
+          detail.unitPrice ||
+          detail.discountPercent ||
+          detail.discountAmount
         );
       });
-
-      console.log("##############lidDetails####################", validDetails);
 
       // Si aucun détail valide, on sort sans erreur
       if (validDetails.length === 0) {
@@ -289,20 +239,18 @@ function AddOrdreReparationModal({
         return;
       }
 
-      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
+      // Envoyer chaque détail individuellement via une requête POST à l'API
       for (const detail of validDetails) {
-        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
-        batch.set(detailRef, {
+        await axios.post("/details", {
           label: detail.label || "",
           quantity: detail.quantity || 0,
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
           discountAmount: detail.discountAmount || 0,
+          orderId: eventId,
+          documentType: "Order",
         });
       }
-
-      // Engager toutes les écritures dans le batch
-      await batch.commit();
 
       console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
@@ -312,7 +260,6 @@ function AddOrdreReparationModal({
       );
     }
   };
-
   const getLastOrderNumberForUser = async (userId) => {
     const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
     const docSnap = await getDoc(docRef);
@@ -325,12 +272,6 @@ function AddOrdreReparationModal({
     }
   };
 
-  // Fonction pour mettre à jour le dernier numéro de commande pour un userId
-  const updateLastOrderNumberForUser = async (userId, newOrderNumber) => {
-    const docRef = doc(db, "userOrderNumbers", userId); // Document unique par userId
-    await setDoc(docRef, { lastOrderNumber: newOrderNumber, userId: userId }); // Met à jour ou crée le document
-  };
-
   // Fonction pour générer un numéro de commande formaté à 5 chiffres
   const generateOrderNumber = (lastOrderNumber) => {
     const newOrderNumber = lastOrderNumber + 1;
@@ -339,73 +280,37 @@ function AddOrdreReparationModal({
 
   const addSingleEvent = async (event, newOrderNumber, nextDay) => {
     try {
-      const eventRef = doc(collection(db, "events")); // Crée une référence à un nouveau document
       console.log("ORDRE DE REPARATION", event);
 
       console.log("category: event.categoryId", event.category.id);
 
-      await setDoc(eventRef, {
-        eventId: eventRef.id,
-        title: newOrderNumber, // Utilise le numéro de commande fourni
+      const order = await axios.post("/orders", {
         date: event.date,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
         endMinute: parseInt(event.endMinute),
-        category: event.category.id
-          ? {
-              id: event.category.id,
-              name: event.category.name,
-              color: event.category.color,
-            }
-          : null,
-        person: {
-          firstName: event.person.firstName,
-          lastName: event.person.lastName,
-          email: event.person.email,
-          phone: event.person.phone,
-        },
-        vehicule: {
-          licensePlate: event.vehicule.licensePlate
-            ? event.vehicule.licensePlate
-            : "",
-          vin: event.vehicule.vin ? event.vehicule.vin : "",
-          color: event.vehicule.color ? event.vehicule.color : "",
-          model: event.vehicule.model ? event.vehicule.model : "",
-          kms: event.vehicule.kms ? event.vehicule.kms : "",
-          controletech: event.vehicule.controletech
-            ? event.vehicule.controletech
-            : "",
-        },
-        details: {
-          workDescription: event.workDescription ? event.workDescription : "",
-          price: event.price ? event.price : "",
-          acompte: deposit ? deposit : 0,
-        },
-        operator: event.operator ? event.operator : "",
-        receptor: event.receptor ? event.receptor : "",
+        categoryId: event.category.id,
+        clientId: editedEvent.clientId,
+        vehicleId: editedEvent.vehicleId,
+        workDescription: event.workDescription,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
-        devisOrResa: event.id ? event.id : "",
-        createdAt: serverTimestamp(), // Timestamp auto de création
-        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
+        garageId: 1,
       });
 
       console.log("eventRef", event);
 
       const fetchCloseDevis = async () => {
         try {
-          const eventDocRef = doc(db, "devis", event.id);
-
-          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-          // Créer un nouvel objet pour la mise à jour
-          const updatedFields = { isClosed: true };
-
-          await updateDoc(eventDocRef, updatedFields);
+          await axios.put(`/quotes/${event.id}`, {
+            isClosed: true,
+          });
+          console.log("✅ Devis fermé avec succès.");
         } catch (error) {
           console.error(
-            "Erreur lors de la fermeture du devis après création de OR :",
+            "❌ Erreur lors de la fermeture du devis après création de OR :",
             error
           );
         }
@@ -413,16 +318,13 @@ function AddOrdreReparationModal({
 
       const fetchCloseResa = async () => {
         try {
-          const eventDocRefResa = doc(db, "reservations", event.id);
-
-          // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-          // Créer un nouvel objet pour la mise à jour
-          const updatedFields = { isClosed: true };
-
-          await updateDoc(eventDocRefResa, updatedFields);
+          await axios.put(`/reservations/${event.id}`, {
+            isClosed: true,
+          });
+          console.log("✅ Réservation fermée avec succès.");
         } catch (error) {
           console.error(
-            "Erreur lors de la fermeture du résa après création de OR :",
+            "❌ Erreur lors de la fermeture du résa après création de OR :",
             error
           );
         }
@@ -431,12 +333,7 @@ function AddOrdreReparationModal({
       fetchCloseDevis();
       fetchCloseResa();
 
-      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-      await updateLastOrderNumberForUser(
-        event.userId,
-        parseInt(newOrderNumber)
-      );
-      return eventRef; // Retourner la référence du document
+      return order.data; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
     }
@@ -570,35 +467,26 @@ function AddOrdreReparationModal({
     }
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
 
     // Mettre à jour le state avec les événements ajoutés
     setEvents(updatedEvents);
 
     const fetchEvents = async () => {
       try {
-        const eventsRef = collection(db, "events");
+        const response = await axios.get(`/documents-garage/order/1/details`);
 
-        // Créer la requête avec la condition where pour filtrer par userId
-        const q = query(
-          eventsRef,
-          where("userId", "==", user.uid),
-          where("date", "==", selectedDate)
+        const eventsData = response.data.data;
+
+        // Filtrer les événements si nécessaire
+        const filteredEvents = eventsData.filter(
+          (event) => event.date === selectedDate && !event.isClosed
         );
 
-        const querySnapshot = await getDocs(q);
+        setDataEvents(filteredEvents);
 
-        const eventsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setDataEvents(eventsData.filter((event) => event.isClosed == false));
+        console.log("eventsData", filteredEvents);
       } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des événements : ",
-          error
-        );
+        console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
@@ -651,7 +539,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Nom"
                   name="person.lastName"
-                  value={editedEvent.person?.lastName}
+                  value={editedEvent.Client?.name}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -666,7 +554,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Prénom"
                   name="person.firstName"
-                  value={editedEvent.person?.firstName}
+                  value={editedEvent.Client?.firstName}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -681,7 +569,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Téléphone"
                   name="person.phone"
-                  value={editedEvent.person?.phone}
+                  value={editedEvent.Client?.phone}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -696,7 +584,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Email"
                   name="person.email"
-                  value={editedEvent.person?.email}
+                  value={editedEvent.Client?.email}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -711,7 +599,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Adresse"
                   name="person.adresse"
-                  value={editedEvent.person?.adresse}
+                  value={editedEvent.Client?.address}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -725,7 +613,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Code postal"
                   name="person.postale"
-                  value={editedEvent.person?.postale}
+                  value={editedEvent.Client?.postalCode}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -739,7 +627,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Ville"
                   name="person.ville"
-                  value={editedEvent.person?.ville}
+                  value={editedEvent.Client?.city}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -758,7 +646,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Immatriculation"
                   name="vehicule.licensePlate"
-                  value={editedEvent.vehicule?.licensePlate}
+                  value={editedEvent.Vehicle?.plateNumber}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -772,7 +660,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="VIN"
                   name="vehicule.vin"
-                  value={editedEvent.vehicule?.vin}
+                  value={editedEvent.Vehicle?.vin}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -786,7 +674,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Modèle"
                   name="vehicule.model"
-                  value={editedEvent.vehicule?.model}
+                  value={editedEvent.Vehicle?.model}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -800,7 +688,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="Couleur"
                   name="vehicule.color"
-                  value={editedEvent.vehicule?.color}
+                  value={editedEvent.Vehicle?.color}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -814,7 +702,7 @@ function AddOrdreReparationModal({
                 <TextField
                   label="kilométrage"
                   name="vehicule.kms"
-                  value={editedEvent.vehicule?.kms}
+                  value={editedEvent.Vehicle?.mileage}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -831,7 +719,7 @@ function AddOrdreReparationModal({
                 <TextField
                   name="vehicule.controletech"
                   type="date"
-                  value={editedEvent.vehicule?.controletech}
+                  value={editedEvent.Vehicle?.lastCheck}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"

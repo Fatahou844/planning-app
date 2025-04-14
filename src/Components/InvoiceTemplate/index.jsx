@@ -2,17 +2,10 @@ import { Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
 import { Box, Modal, Typography } from "@mui/material";
-import {
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  writeBatch,
-} from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../../hooks/firebaseConfig";
+import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const InvoiceTemplate = ({
@@ -23,8 +16,9 @@ const InvoiceTemplate = ({
   closeEventModal,
   onFactureGenerated,
 }) => {
-  const { person, vehicule, date, title } = editedEvent;
+  const { Client, Vehicle, date, id } = editedEvent;
   const [user] = useAuthState(auth);
+  const axios = useAxios();
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -42,7 +36,7 @@ const InvoiceTemplate = ({
     return detail.quantity * detail.unitPrice - discount;
   };
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: id ? id : "",
     companyInfo: {
       name: "Garage XYZ",
       address: "123 Rue Exemple, Casablanca",
@@ -50,24 +44,24 @@ const InvoiceTemplate = ({
       email: "contact@garagexyz.com",
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: Vehicle?.model ? Vehicle.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: Vehicle?.vin ? Vehicle.vin : "",
+      km: Vehicle?.kms ? Vehicle.kms : "",
+      color: Vehicle?.color ? Vehicle.color : "",
+      licensePlate: Vehicle?.licensePlate ? Vehicle.licensePlate : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${Client?.firstName ? Client.firstName : ""} ${
+        Client?.name ? Client.name : ""
       }`,
-      adresse: `${person?.adresse ? person?.adresse : ""} ${
-        person?.postale ? person.postale : ""
+      adresse: `${Client?.adresse ? Client?.adresse : ""} ${
+        Client?.postale ? Client.postale : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
+      phone: Client?.phone ? Client.phone : "",
+      email: Client?.email ? Client.email : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
-      ville: person?.ville ? person?.ville : "",
+      ville: Client?.ville ? Client?.ville : "",
     },
     items: details.map((item) => ({
       description: item.label,
@@ -95,7 +89,7 @@ const InvoiceTemplate = ({
         0
       ),
     },
-    observations: `${editedEvent.details.workDescription}`,
+    observations: `${editedEvent.workDescription}`,
   };
 
   const documentDefinition = {
@@ -526,72 +520,39 @@ const InvoiceTemplate = ({
     isClosed
   ) => {
     try {
-      const eventRef = doc(collection(db, collectionName)); // Crée une référence à un nouveau document
+      let response = 0;
+      if (collectionName == "devis")
+        response = await axios.post("/quotes", {
+          date: event.date,
+          clientId: Client.id,
+          vehicleId: Vehicle.id,
+          workDescription: event.workDescription,
+          isClosed: false,
+          userId: event.userId, // UID de l'utilisateur
+          garageId: 1,
+        });
+      else if (collectionName == "facture")
+        response = await axios.post("/invoices", {
+          date: event.date,
+          clientId: Client.id,
+          vehicleId: Vehicle.id,
+          workDescription: event.workDescription,
+          isClosed: false,
+          userId: event.userId, // UID de l'utilisateur
+          garageId: 1,
+        });
+      else if (collectionName == "reservation")
+        response = await axios.post("/reservations", {
+          date: event.date,
+          clientId: Client.id,
+          vehicleId: Vehicle.id,
+          workDescription: event.workDescription,
+          isClosed: false,
+          userId: event.userId, // UID de l'utilisateur
+          garageId: 1,
+        });
 
-      await setDoc(eventRef, {
-        eventId: eventRef.id,
-        title: newOrderNumber, // Utilise le numéro de commande fourni
-        date: event.date,
-        person: {
-          firstName: event.person.firstName,
-          lastName: event.person.lastName,
-          email: event.person.email,
-          phone: event.person.phone,
-          adresse: event.person.adresse ? event.person.adresse : "",
-          postale: event.person.postale ? event.person.postale : "",
-          ville: event.person.ville ? event.person.ville : "",
-        },
-        vehicule: {
-          licensePlate: event.vehicule.licensePlate
-            ? event.vehicule.licensePlate
-            : "",
-          vin: event.vehicule.vin ? event.vehicule.vin : "",
-          color: event.vehicule.color ? event.vehicule.color : "",
-          model: event.vehicule.model ? event.vehicule.model : "",
-          kms: event.vehicule.kms ? event.vehicule.kms : "",
-          controletech: event.vehicule.controletech
-            ? event.vehicule.controletech
-            : "",
-        },
-        details: {
-          workDescription: event.details.workDescription
-            ? event.details.workDescription
-            : "",
-          price: event.details.price ? event.details.price : "",
-        },
-        isClosed: isClosed,
-        userId: event.userId, // UID de l'utilisateur
-        ordreReparation: editedEvent.id ? editedEvent.id : "",
-        createdAt: serverTimestamp(), // Timestamp auto de création
-        updatedAt: serverTimestamp(), // Timestamp auto de mise à jour
-      });
-
-      console.log("eventRef", event);
-
-      if (event) {
-        const fetchDetails = async () => {
-          try {
-            const eventDocRef = doc(db, "events", eventRef.id);
-            // Modifier la propriété 'isClosed' de l'objet avant la mise à jour
-            event.isClosed = true;
-            await updateDoc(eventDocRef, event);
-          } catch (error) {
-            console.error(
-              "Erreur lors de la récupération des détails :",
-              error
-            );
-          }
-        };
-
-        fetchDetails();
-      }
-
-      // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-      await updateLastOrderNumberForUser(
-        event.userId,
-        parseInt(newOrderNumber)
-      );
-      return eventRef; // Retourner la référence du document
+      return response.data; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
     }
@@ -599,23 +560,21 @@ const InvoiceTemplate = ({
 
   const addEventDetailsGeneric = async (eventId, details, collectionName) => {
     try {
-      const batch = writeBatch(db); // Crée un batch pour les opérations
-
-      // Référence directe au document de l'événement avec l'ID existant
-      const eventRef = doc(db, collectionName, eventId);
-
-      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
+      // Filtrer les détails valides (exclut ceux où tous les champs sont vides ou non valides)
       const validDetails = details.filter((detail) => {
         return (
           detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.quantity ||
+          detail.unitPrice ||
+          detail.discountPercent ||
+          detail.discountAmount
         );
       });
 
-      console.log("##############lidDetails####################", validDetails);
+      console.log(
+        "############## validDetails ####################",
+        validDetails
+      );
 
       // Si aucun détail valide, on sort sans erreur
       if (validDetails.length === 0) {
@@ -623,20 +582,43 @@ const InvoiceTemplate = ({
         return;
       }
 
-      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
-      for (const detail of validDetails) {
-        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
-        batch.set(detailRef, {
-          label: detail.label || "",
-          quantity: detail.quantity || 0,
-          unitPrice: detail.unitPrice || 0,
-          discountPercent: detail.discountPercent || 0,
-          discountAmount: detail.discountAmount || 0,
-        });
-      }
-
-      // Engager toutes les écritures dans le batch
-      await batch.commit();
+      if (collectionName === "devis")
+        // Envoyer chaque détail individuellement via une requête POST à l'API
+        for (const detail of validDetails) {
+          await axios.post("/details", {
+            label: detail.label || "",
+            quantity: detail.quantity || 0,
+            unitPrice: detail.unitPrice || 0,
+            discountPercent: detail.discountPercent || 0,
+            discountAmount: detail.discountAmount || 0,
+            documentType: "Quote",
+            quoteId: eventId,
+          });
+        }
+      else if (collectionName === "reservation")
+        for (const detail of validDetails) {
+          await axios.post("/details", {
+            label: detail.label || "",
+            quantity: detail.quantity || 0,
+            unitPrice: detail.unitPrice || 0,
+            discountPercent: detail.discountPercent || 0,
+            discountAmount: detail.discountAmount || 0,
+            documentType: "Reservation",
+            reservationId: eventId,
+          });
+        }
+      else if (collectionName === "facture")
+        for (const detail of validDetails) {
+          await axios.post("/details", {
+            label: detail.label || "",
+            quantity: detail.quantity || 0,
+            unitPrice: detail.unitPrice || 0,
+            discountPercent: detail.discountPercent || 0,
+            discountAmount: detail.discountAmount || 0,
+            documentType: "Invoice",
+            invoiceId: eventId,
+          });
+        }
 
       console.log("Détails ajoutés avec succès à l'événement");
     } catch (error) {
@@ -694,7 +676,7 @@ const InvoiceTemplate = ({
     const singleResaDocRef = await addSingleReservation(
       singleResa,
       newOrderNumber,
-      "factures",
+      "facture",
       true
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
@@ -707,13 +689,8 @@ const InvoiceTemplate = ({
       );
     });
 
-    console.log("singleResaDocRef", singleResaDocRef);
-
     if (validDetails.length)
-      await addEventDetailsGeneric(singleResaDocRef.id, details, "factures"); // Enregistrer les détails
-
-    // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
-    await updateLastOrderNumberForUser(userId, parseInt(newOrderNumber));
+      await addEventDetailsGeneric(singleResaDocRef.id, details, "facture"); // Enregistrer les détails
 
     setNotification({
       open: true,
@@ -766,20 +743,40 @@ const InvoiceTemplate = ({
     }
 
     try {
-      // Créer une référence au document
-      const docRef = doc(collection(db, collectionName), factureId);
+      // Déterminer l'URL de la requête en fonction de la collection
+      let url = "";
+      switch (collectionName) {
+        case "events":
+          url = `/documents/order/${factureId}/details`; // pour les événements /documents/:documentType/:id/details
+          break;
+        case "factures":
+          url = `/documents/invoice/${factureId}/details`; // pour les factures
+          break;
+        case "devis":
+          url = `/documents/quote/${factureId}/details`; // pour les devis
+          break;
+        case "reservations":
+          url = `/documents/reservation/${factureId}/details`; // pour les réservations
+          break;
+        default:
+          throw new Error(`Collection non supportée : ${collectionName}`);
+      }
 
-      // Récupérer les données du document
-      const docSnap = await getDoc(docRef);
+      // Effectuer la requête GET avec Axios
+      const response = await axios.get(url);
 
-      if (docSnap.exists()) {
+      // Si la facture est trouvée, ouvrir le modal et retourner les données
+      if (response.data) {
         setModalOpen2(true);
-        return { id: docSnap.id, ...docSnap.data() };
+        return response.data;
       } else {
         throw new Error("Facture introuvable !");
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de la facture :", error);
+      console.error(
+        "Erreur lors de la récupération de la facture via Axios :",
+        error
+      );
       throw error;
     }
   };

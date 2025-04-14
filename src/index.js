@@ -26,6 +26,7 @@ import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 import Login from "./Pages/Login/index";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import PrivateRoute from "./hooks/PrivateRoute"; // Importez le composant PrivateRoute
+import { ProvideAxios } from "./utils/hook/useAxios";
 const tabLabels = [
   { label: "Planning", path: "/planning/categories" },
   { label: "Clients", path: "/clients" },
@@ -283,41 +284,43 @@ const ActivitySidebar = () => {
 
 const App = () => {
   return (
-    <Router>
-      <ActivitySidebar />
+    <ProvideAxios>
+      <Router>
+        <ActivitySidebar />
 
-      <DashboardTabs />
+        <DashboardTabs />
 
-      <Routes>
-        <Route path="/" element={<Login />} />
+        <Routes>
+          <Route path="/" element={<Login />} />
 
-        {/* Routes protégées */}
-        <Route
-          path="/planning/categories"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/planning/customers"
-          element={
-            <PrivateRoute>
-              <UserDashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/parametres"
-          element={
-            <PrivateRoute>
-              <GarageSettings />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </Router>
+          {/* Routes protégées */}
+          <Route
+            path="/planning/categories"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/planning/customers"
+            element={
+              <PrivateRoute>
+                <UserDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/parametres"
+            element={
+              <PrivateRoute>
+                <GarageSettings />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </ProvideAxios>
   );
 };
 const root = ReactDOM.createRoot(document.getElementById("root"));

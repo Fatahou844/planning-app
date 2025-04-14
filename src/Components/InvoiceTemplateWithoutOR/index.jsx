@@ -111,7 +111,7 @@ const InvoiceTemplateWithoutOR = ({
         0
       ),
     },
-    observations: `${NewEvent.details.workDescription}`,
+    observations: `${NewEvent?.details?.workDescription}`,
   };
 
   const documentDefinition = {

@@ -18,6 +18,7 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
+import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import { auth, db, storage } from "../../hooks/firebaseConfig";
 
 const GarageSettings = () => {
@@ -33,6 +34,7 @@ const GarageSettings = () => {
     logoPreview: "", // Stocke l'URL de prévisualisation
   });
 
+  const [Client, SetClient] = useState(null);
   useEffect(() => {
     const fetchGarageInfo = async () => {
       if (!user) return;
@@ -99,6 +101,11 @@ const GarageSettings = () => {
     } catch (error) {
       console.error("Erreur lors de l'enregistrement :", error);
     }
+  };
+
+  const handleSelectClient = (client) => {
+    SetClient(client);
+    console.log("Client sélectionné :", client);
   };
 
   return (
@@ -188,6 +195,10 @@ const GarageSettings = () => {
               margin="normal"
             />
           </Grid>
+          <div style={{ padding: 20 }}>
+            <h1>Test de la recherche de clients</h1>
+            <ClientSearch onSelectClient={handleSelectClient} />
+          </div>
           <Grid item xs={12}>
             <Button variant="contained" color="primary" onClick={handleSave}>
               Enregistrer
