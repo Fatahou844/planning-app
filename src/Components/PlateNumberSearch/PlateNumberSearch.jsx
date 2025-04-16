@@ -84,10 +84,10 @@ const PlateNumberSearch = ({ onSelectClient, Client }) => {
       {/* Zone de recherche */}
       <Autocomplete
         options={clients}
-        getOptionLabel={(option) => option.plateNumber}
-        value={selectedClient}
+        getOptionLabel={(option) => option?.plateNumber || "—"}
+        value={selectedClient || null}
         onChange={handleSelectClient}
-        inputValue={inputValue}
+        inputValue={inputValue || ""}
         onInputChange={(event, newValue) => setInputValue(newValue)}
         freeSolo
         renderInput={(params) => (
