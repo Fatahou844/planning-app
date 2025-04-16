@@ -7,36 +7,36 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../../hooks/firebaseConfig";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
-  const { person, vehicule, date, title } = editedEvent;
+  const { Client, Vehicle, date, title } = editedEvent;
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    website: "",
-    userId: user?.uid,
-  });
+      name: "Fatah Garage",
+      address: "78 Rue Freetown France",
+      phone: "06 09 08 77 88",
+      email: "contactgaragefatahou.com",
+      website: "www.garagefatahou.com",
+      userId: user?.uid,
+    });
 
-  useEffect(() => {
-    const fetchGarageInfo = async () => {
-      if (!user) return;
+  // useEffect(() => {
+  //   const fetchGarageInfo = async () => {
+  //     if (!user) return;
 
-      const q = query(
-        collection(db, "garages"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+  //     const q = query(
+  //       collection(db, "garages"),
+  //       where("userId", "==", user.uid)
+  //     );
+  //     const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const garageData = querySnapshot.docs[0].data();
-        setCompanyInfo(garageData);
-      }
-    };
+  //     if (!querySnapshot.empty) {
+  //       const garageData = querySnapshot.docs[0].data();
+  //       setCompanyInfo(garageData);
+  //     }
+  //   };
 
-    fetchGarageInfo();
-  }, [, user]);
+  //   fetchGarageInfo();
+  // }, [, user]);
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -63,52 +63,91 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       email: companyInfo?.email,
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: Vehicle?.model ? Vehicle.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: Vehicle?.vin ? Vehicle.vin : "",
+      km: Vehicle?.mileage ? Vehicle.mileage : "",
+      color: Vehicle?.color ? Vehicle.color : "",
+      licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${Client?.firstName ? Client.firstName : ""} ${
+        Client?.lastName ? Client.lastName : ""
       }`,
-      adresse: `${person?.adresse ? person?.adresse : ""} ${
-        person?.postale ? person.postale : ""
+      adresse: `${Client?.address ? Client?.address : ""} ${
+        Client?.postalCode ? Client.postalCode : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
-      ville: person?.ville ? person.ville : "",
-
+      phone: Client?.phone ? Client.phone : "",
+      email: Client?.email ? Client.email : "",
+      ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
-    items: details.map((item) => ({
+    items: editedEvent?.Details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
-      discount: item.discountPercent,
-      discountAmount: item.discountAmount,
+      discount: item.discountPercent || 0,
+      discountAmount: item.discountAmount || 0,
+      unitPriceTTCafterDiscount:
+        item.unitPrice -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 100,
+      unitPriceHTafterDiscount:
+        item.unitPrice / 1.2 -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 120,
     })),
+
     totals: {
-      // Total HT avec remises
-      totalHT: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail) / 1.2,
-        0
-      ),
-      // TVA (20% du total HT avec remises)
-      tva: details.reduce(
-        (sum, detail) =>
-          sum + calculateLineTotal(detail) - calculateLineTotal(detail) / 1.2,
-        0
-      ),
-      // Total TTC avec remises
-      totalTTC: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail),
-        0
-      ),
+      totalHT: editedEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
+        );
+
+        return acc + discountedPriceHT * quantity;
+      }, 0),
+
+      tva: editedEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
+        );
+
+        return acc + discountedPriceHT * quantity * 0.2;
+      }, 0),
+
+      totalTTC: editedEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const discountedPriceTTC = Math.max(
+          0,
+          unitPrice * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
+        );
+
+        return acc + discountedPriceTTC * quantity;
+      }, 0),
     },
+
     observations: `${
       editedEvent?.details?.workDescription
         ? editedEvent?.details?.workDescription

@@ -1,10 +1,9 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { auth } from "../../hooks/firebaseConfig";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const OrdreReparationTemplate2 = ({
   editedEvent,
@@ -16,32 +15,32 @@ const OrdreReparationTemplate2 = ({
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    website: "",
+    name: "Fatah Garage",
+    address: "78 Rue Freetown France",
+    phone: "06 09 08 77 88",
+    email: "contactgaragefatahou.com",
+    website: "www.garagefatahou.com",
     userId: user?.uid,
   });
 
-  useEffect(() => {
-    const fetchGarageInfo = async () => {
-      if (!user) return;
+  // useEffect(() => {
+  //   const fetchGarageInfo = async () => {
+  //     if (!user) return;
 
-      const q = query(
-        collection(db, "garages"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+  //     const q = query(
+  //       collection(db, "garages"),
+  //       where("userId", "==", user.uid)
+  //     );
+  //     const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const garageData = querySnapshot.docs[0].data();
-        setCompanyInfo(garageData);
-      }
-    };
+  //     if (!querySnapshot.empty) {
+  //       const garageData = querySnapshot.docs[0].data();
+  //       setCompanyInfo(garageData);
+  //     }
+  //   };
 
-    fetchGarageInfo();
-  }, [, user]);
+  //   fetchGarageInfo();
+  // }, [, user]);
 
   const invoiceData = {
     orderNumber: title ? title : "",
@@ -76,8 +75,8 @@ const OrdreReparationTemplate2 = ({
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
-      discount: item.discountPercent,
-      discountAmount: item.discountAmount,
+      discount: item.discountPercent || 0,
+      discountAmount: item.discountAmount || 0,
       unitPriceTTCafterDiscount:
         item.unitPrice -
         item.discountAmount -
@@ -87,54 +86,56 @@ const OrdreReparationTemplate2 = ({
         item.discountAmount -
         (item.unitPrice * item.discountPercent) / 120,
     })),
-    // totals: {
-    //   // Total HT
-    //   totalHT: editedEvent?.Details.reduce(
-    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
-    //     0
-    //   ),
-    //   // TVA (20% du total HT)
-    //   tva: editedEvent?.Details.reduce(
-    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
-    //     0
-    //   ),
-    //   // Total TTC
-    //   totalTTC: editedEvent?.Details.reduce(
-    //     (acc, item) => acc + item.unitPrice * item.quantity,
-    //     0
-    //   ),
-    // },
+
     totals: {
-      // Total HT avec remises
       totalHT: editedEvent?.Details.reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceHT * item.quantity;
+
+        return acc + discountedPriceHT * quantity;
       }, 0),
-      // TVA (20% du total HT avec remises)
+
       tva: editedEvent?.Details.reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceHT * item.quantity * 0.2;
+
+        return acc + discountedPriceHT * quantity * 0.2;
       }, 0),
-      // Total TTC avec remises
+
       totalTTC: editedEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
         const discountedPriceTTC = Math.max(
           0,
-          item.unitPrice * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPrice * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceTTC * item.quantity;
+
+        return acc + discountedPriceTTC * quantity;
       }, 0),
     },
+
     observations: `${
       editedEvent?.details?.workDescription
         ? editedEvent?.details?.workDescription
@@ -351,7 +352,7 @@ const OrdreReparationTemplate2 = ({
             [
               { text: "Total HT :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.totalHT.toFixed(2)} €`,
+                text: `${invoiceData.totals.totalHT.toFixed(2) || 0.0} €`,
                 alignment: "right",
                 style: "totalValue",
               },
@@ -359,7 +360,7 @@ const OrdreReparationTemplate2 = ({
             [
               { text: "TVA (20%) :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.tva.toFixed(2)} €`,
+                text: `${invoiceData.totals.tva.toFixed(2) || 0.0} €`,
                 alignment: "right",
                 style: "totalValue",
               },
@@ -367,7 +368,7 @@ const OrdreReparationTemplate2 = ({
             [
               { text: "Total TTC :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
+                text: `${invoiceData.totals.totalTTC.toFixed(2) || 0.0} €`,
                 alignment: "right",
                 style: "totalValue",
               },

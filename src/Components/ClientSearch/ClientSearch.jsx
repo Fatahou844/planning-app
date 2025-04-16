@@ -22,6 +22,22 @@ const ClientSearch = ({ onSelectClient, Client }) => {
     email: "",
     phone: "",
   });
+  const [errors, setErrors] = useState({
+    phone: "",
+    email: "",
+  });
+
+  const [isFormInvalid, setIsFormInvalid] = useState(false);
+
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const regex = /^\+?[0-9\s\-]{7,15}$/; // Accepte les formats avec +, espace, tirets
+    return regex.test(phone);
+  };
   const axios = useAxios();
 
   // 🔍 Recherche automatique des clients
@@ -53,7 +69,19 @@ const ClientSearch = ({ onSelectClient, Client }) => {
 
   // ✏️ Gérer les champs du formulaire de création
   const handleNewClientChange = (e) => {
-    setNewClient({ ...newClient, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // Nouvelle valeur du client mise à jour localement
+    const updatedClient = { ...newClient, [name]: value };
+
+    setNewClient(updatedClient);
+
+    // Reset de l'erreur pour ce champ
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    // Recalcul de la validité du formulaire
+    const hasErrors = Object.values(errors).some((err) => err !== "");
+    const isInvalid = !updatedClient.phone || !updatedClient.email || hasErrors;
+    setIsFormInvalid(isInvalid);
   };
 
   const clientData = {
@@ -72,6 +100,31 @@ const ClientSearch = ({ onSelectClient, Client }) => {
         setInputValue(""); // Réinitialiser la recherche
       })
       .catch((err) => console.error(err));
+  };
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    let error = "";
+
+    if (
+      name === "email" &&
+      value &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    ) {
+      error = "Email invalide";
+    }
+
+    if (name === "phone" && value && !/^\+?[0-9\s\-]{7,15}$/.test(value)) {
+      error = "Téléphone invalide";
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+
+    // Recalcule si le form devient invalide
+    const hasErrors = Object.values({ ...errors, [name]: error }).some(
+      (err) => err !== ""
+    );
+    const isInvalid = !newClient.phone || !newClient.email || hasErrors;
+    setIsFormInvalid(isInvalid);
   };
 
   return (
@@ -152,6 +205,9 @@ const ClientSearch = ({ onSelectClient, Client }) => {
             margin="normal"
             onChange={handleNewClientChange}
             size="small"
+            onBlur={handleBlur}
+            error={!!errors.phone}
+            helperText={errors.phone}
           />
           <TextField
             name="email"
@@ -160,6 +216,9 @@ const ClientSearch = ({ onSelectClient, Client }) => {
             margin="normal"
             onChange={handleNewClientChange}
             size="small"
+            onBlur={handleBlur}
+            error={!!errors.email}
+            helperText={errors.email}
           />
           <TextField
             name="address"
@@ -192,6 +251,7 @@ const ClientSearch = ({ onSelectClient, Client }) => {
             onClick={handleCreateClient}
             variant="contained"
             color="primary"
+            disabled={isFormInvalid}
           >
             Créer
           </Button>

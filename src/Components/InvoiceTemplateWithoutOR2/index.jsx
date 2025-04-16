@@ -1,10 +1,9 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { auth } from "../../hooks/firebaseConfig";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const InvoiceTemplateWithoutOR2 = ({
@@ -18,36 +17,36 @@ const InvoiceTemplateWithoutOR2 = ({
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    website: "",
+    name: "Fatah Garage",
+    address: "78 Rue Freetown France",
+    phone: "06 09 08 77 88",
+    email: "contactgaragefatahou.com",
+    website: "www.garagefatahou.com",
     userId: user?.uid,
   });
 
-  useEffect(() => {
-    const fetchGarageInfo = async () => {
-      console.log(
-        "############################### NewEvent ######################################",
-        NewEvent
-      );
-      if (!user) return;
+  // useEffect(() => {
+  //   const fetchGarageInfo = async () => {
+  //     console.log(
+  //       "############################### NewEvent ######################################",
+  //       NewEvent
+  //     );
+  //     if (!user) return;
 
-      const q = query(
-        collection(db, "garages"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+  //     const q = query(
+  //       collection(db, "garages"),
+  //       where("userId", "==", user.uid)
+  //     );
+  //     const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const garageData = querySnapshot.docs[0].data();
-        setCompanyInfo(garageData);
-      }
-    };
+  //     if (!querySnapshot.empty) {
+  //       const garageData = querySnapshot.docs[0].data();
+  //       setCompanyInfo(garageData);
+  //     }
+  //   };
 
-    fetchGarageInfo();
-  }, [, user]);
+  //   fetchGarageInfo();
+  // }, [, user]);
   const calculateLineTotal = (detail) => {
     let discount = 0;
 
@@ -91,10 +90,10 @@ const InvoiceTemplateWithoutOR2 = ({
       ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
-    items: (NewEvent?.Details || []).map((item) => ({
+    items: NewEvent?.Details.map((item) => ({
       description: item.label,
-      unitPriceHT: item.unitPrice / 1.2,
-      unitPriceTTC: parseFloat(item.unitPrice),
+      unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
+      unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
       discount: item.discountPercent,
       discountAmount: item.discountAmount,
@@ -109,36 +108,51 @@ const InvoiceTemplateWithoutOR2 = ({
     })),
 
     totals: {
-      // Total HT avec remises
-      totalHT: (NewEvent?.Details || []).reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
+      totalHT: NewEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceHT * item.quantity;
+
+        return acc + discountedPriceHT * quantity;
       }, 0),
 
-      // TVA (20% du total HT avec remises)
-      tva: (NewEvent?.Details || []).reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
+      tva: NewEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceHT * item.quantity * 0.2;
+
+        return acc + discountedPriceHT * quantity * 0.2;
       }, 0),
 
-      // Total TTC avec remises
-      totalTTC: (NewEvent?.Details || []).reduce((acc, item) => {
+      totalTTC: NewEvent?.Details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
         const discountedPriceTTC = Math.max(
           0,
-          item.unitPrice * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPrice * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceTTC * item.quantity;
+
+        return acc + discountedPriceTTC * quantity;
       }, 0),
     },
 

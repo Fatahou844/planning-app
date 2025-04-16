@@ -198,50 +198,23 @@ function EventDialog({
     });
   };
 
-  // Save the updated event to Firestore
-  // const handleSave = async () => {
-  //   if (editedEvent?.id) {
-  //     try {
-  //       // Référence du document de l'événement principal
-  //       const eventDocRef = doc(db, "events", editedEvent.id);
-  //       await updateDoc(eventDocRef, editedEvent);
-
-  //       // Référence de la collection "details" sous l'événement
-  //       const detailsCollectionRef = collection(eventDocRef, "details");
-
-  //       for (const detail of details) {
-  //         if (detail.isDeleted) {
-  //           // Supprimer les détails marqués comme supprimés
-  //           if (detail.id) {
-  //             const detailDocRef = doc(detailsCollectionRef, detail.id);
-  //             await deleteDoc(detailDocRef);
-  //           }
-  //         } else if (detail.id) {
-  //           // Mettre à jour les détails existants
-  //           const detailDocRef = doc(detailsCollectionRef, detail.id);
-  //           await updateDoc(detailDocRef, detail);
-  //         } else {
-  //           // Ajouter les nouveaux détails
-  //           await addDoc(detailsCollectionRef, detail);
-  //         }
-  //       }
-
-  //       if (onEventTriggered) {
-  //         onEventTriggered(); // Notifie le parent
-  //       }
-
-  //       onClose();
-  //     } catch (error) {
-  //       console.error("Erreur lors de la sauvegarde de l'événement :", error);
-  //     }
-  //   }
-  // };
-
   const handleSave = async () => {
     if (editedEvent?.id) {
       try {
+        const order = {
+          date: editedEvent.date,
+          startHour: parseInt(editedEvent.startHour),
+          startMinute: parseInt(editedEvent.startMinute),
+          endHour: parseInt(editedEvent.endHour),
+          endMinute: parseInt(editedEvent.endMinute),
+          categoryId: editedEvent.category.id,
+          clientId: editedEvent.clientId,
+          vehicleId: editedEvent.vehicleId,
+          workDescription: editedEvent.workDescription,
+          garageId: 1,
+        };
         // 1. Mettre à jour l'événement principal (order)
-        await axios.put(`/orders/${editedEvent.id}`, editedEvent);
+        await axios.put(`/orders/${editedEvent.id}`, order);
 
         // 2. Traiter les lignes de détails
         for (const detail of details) {

@@ -269,8 +269,21 @@ function DocModal({
       const config = typeMap[collectionName];
       if (!config) throw new Error("Type de collection non reconnu.");
 
+      const DocData = {
+        date: editedEvent.date,
+        startHour: parseInt(editedEvent.startHour),
+        startMinute: parseInt(editedEvent.startMinute),
+        endHour: parseInt(editedEvent.endHour),
+        endMinute: parseInt(editedEvent.endMinute),
+        categoryId: editedEvent.category.id,
+        clientId: editedEvent.clientId,
+        vehicleId: editedEvent.vehicleId,
+        workDescription: editedEvent.workDescription,
+        garageId: 1,
+      };
+
       // 1. Mettre à jour le document principal
-      await axios.put(`${config.api}/${editedEvent.id}`, editedEvent);
+      await axios.put(`${config.api}/${editedEvent.id}`, DocData);
 
       // 2. Traiter les détails
       for (const detail of details) {
