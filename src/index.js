@@ -21,6 +21,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 import Login from "./Pages/Login/index";
@@ -292,6 +293,7 @@ const App = () => {
 
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/connexion" element={<AuthPages />} />
 
           {/* Routes protégées */}
           <Route

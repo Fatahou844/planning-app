@@ -1,212 +1,438 @@
+// export default GarageSettings;
+
+import DeleteIcon from "@mui/icons-material/Delete";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Chip from "@mui/material/Chip";
+import { useAxios } from "../../utils/hook/useAxios";
+
 import {
-  Avatar,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
   Button,
-  Container,
+  Card,
+  CardContent,
+  CardHeader,
+  FormControl,
   Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  collection,
-  doc,
-  getDocs,
-  query,
-  setDoc,
-  where,
-} from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import ClientSearch from "../../Components/ClientSearch/ClientSearch";
-import { auth, db, storage } from "../../hooks/firebaseConfig";
+import { SketchPicker } from "react-color";
 
 const GarageSettings = () => {
-  const [user] = useAuthState(auth);
-  const [companyInfo, setCompanyInfo] = useState({
+  const [garageInfo, setGarageInfo] = useState({
     name: "",
-    address: "",
+    website: "",
     phone: "",
     email: "",
-    website: "",
-    logo: null, // Stocke le fichier image
-    userId: user?.uid,
-    logoPreview: "", // Stocke l'URL de prévisualisation
+    address: "",
+    logo: null,
   });
 
-  const [Client, SetClient] = useState(null);
+  const [userInfo, setUserInfo] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
+
+  const [garageParams, setGarageParams] = useState({
+    note: "",
+    description: "",
+  });
+
+  const [categories, setCategories] = useState([
+    { name: "Vidange", color: "#1976d2" },
+  ]);
+  const axios = useAxios();
+
   useEffect(() => {
-    const fetchGarageInfo = async () => {
-      if (!user) return;
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get("/categories");
 
-      const q = query(
-        collection(db, "garages"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+        // Récupérer les données
+        const categoriesData = response.data;
 
-      if (!querySnapshot.empty) {
-        const garageData = querySnapshot.docs[0].data();
-        setCompanyInfo(garageData);
+        // Extraire les noms des catégories
+        const categoryNames = categoriesData.data.map(
+          (category) => category.name
+        );
+
+        // Mettre à jour les états
+        setCategories(categoriesData.data);
+
+        console.log("categoriesData", categoriesData.data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des catégories :", error);
       }
     };
 
-    fetchGarageInfo();
-  }, [user]);
+    fetchCategories();
+  }, []);
 
-  const handleChange = (e) => {
-    setCompanyInfo({
-      ...companyInfo,
-      [e.target.name]: e.target.value,
-    });
+  const handleAddCategory = () => {
+    setCategories([...categories, { name: "", color: "#000000" }]);
   };
 
-  const handleLogoChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const previewURL = URL.createObjectURL(file);
-      setCompanyInfo((prev) => ({
-        ...prev,
-        logo: file,
-        logoPreview: previewURL,
-      }));
-    }
+  const handleCategoryChange = (index, field, value) => {
+    const updated = [...categories];
+    updated[index][field] = value;
+    setCategories(updated);
   };
 
-  const handleSave = async () => {
-    try {
-      let logoURL = companyInfo.logoPreview; // Garde l'ancien logo si aucun fichier n'est ajouté
+  const handleRemoveCategory = (index) => {
+    const updated = categories.filter((_, i) => i !== index);
+    setCategories(updated);
+  };
+  const [users, setUsers] = useState([
+    // exemple initial
+    { firstName: "", lastName: "", email: "", role: "employe" },
+  ]);
 
-      if (companyInfo.logo) {
-        // Référence du fichier dans Firebase Storage
-        const logoRef = ref(storage, `logos/${user?.uid}.jpg`);
-
-        // Téléverser l'image
-        await uploadBytes(logoRef, companyInfo.logo);
-
-        // Obtenir l'URL publique du logo
-        logoURL = await getDownloadURL(logoRef);
-      }
-
-      await setDoc(doc(collection(db, "garages"), user?.uid), {
-        name: companyInfo.name,
-        address: companyInfo.address,
-        phone: companyInfo.phone,
-        email: companyInfo.email,
-        website: companyInfo.website,
-        userId: user?.uid,
-        logo: logoURL || "", // Enregistre l'URL dans Firestore
-      });
-      alert("Informations enregistrées avec succès !");
-    } catch (error) {
-      console.error("Erreur lors de l'enregistrement :", error);
-    }
+  const handleUserChange = (index, field, value) => {
+    const newUsers = [...users];
+    newUsers[index][field] = value;
+    setUsers(newUsers);
   };
 
-  const handleSelectClient = (client) => {
-    SetClient(client);
-    console.log("Client sélectionné :", client);
+  const handleAddUser = () => {
+    setUsers([
+      ...users,
+      { firstName: "", lastName: "", email: "", role: "employe" },
+    ]);
+  };
+
+  const handleRemoveUser = (index) => {
+    const newUsers = [...users];
+    newUsers.splice(index, 1);
+    setUsers(newUsers);
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: "6rem" }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Paramètres du Garage
-        </Typography>
-        <Grid container spacing={3} alignItems="center">
-          {/* Aperçu du logo et Upload */}
-          <Grid
-            item
-            xs={12}
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-          >
-            <Avatar
-              src={companyInfo.logoPreview || companyInfo.logo}
-              sx={{ width: 100, height: 100, mb: 2 }}
-              alt="Logo du garage"
-            />
-            <Button variant="contained" component="label">
-              Changer le Logo
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleLogoChange}
-              />
-            </Button>
-          </Grid>
+    <Box p={4}>
+      <Typography variant="h4" gutterBottom sx={{ px: 3 }}>
+        Paramètres du Garage
+      </Typography>
+      <Grid container spacing={4} sx={{ p: 3 }}>
+        {/* Colonne Gauche */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Stack spacing={2}>
+              <Alert severity="info">Informations générales du garage</Alert>
+              <Alert severity="warning">
+                Seul l'administrateur peut modifier
+              </Alert>
 
-          {/* Champs d'information */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Nom du Garage"
-              fullWidth
-              name="name"
-              value={companyInfo.name}
-              onChange={handleChange}
-              size="small"
-              margin="normal"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Adresse"
-              fullWidth
-              name="address"
-              value={companyInfo.address}
-              onChange={handleChange}
-              size="small"
-              margin="normal"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Téléphone"
-              fullWidth
-              name="phone"
-              value={companyInfo.phone}
-              onChange={handleChange}
-              size="small"
-              margin="normal"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Email"
-              fullWidth
-              name="email"
-              value={companyInfo.email}
-              onChange={handleChange}
-              size="small"
-              margin="normal"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              label="Site Web"
-              fullWidth
-              name="website"
-              value={companyInfo.website}
-              onChange={handleChange}
-              size="small"
-              margin="normal"
-            />
-          </Grid>
-          <div style={{ padding: 20 }}>
-            <h1>Test de la recherche de clients</h1>
-            <ClientSearch onSelectClient={handleSelectClient} />
-          </div>
-          <Grid item xs={12}>
-            <Button variant="contained" color="primary" onClick={handleSave}>
-              Enregistrer
-            </Button>
-          </Grid>
+              <TextField label="Nom du garage" fullWidth />
+              <TextField label="Site web" fullWidth />
+              <TextField label="Téléphone" fullWidth />
+              <TextField label="Email" fullWidth />
+              <TextField label="Adresse" fullWidth />
+              <Button variant="contained" component="label">
+                Upload Logo
+                <input hidden type="file" />
+              </Button>
+            </Stack>
+            <Box textAlign="right" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ width: "100%" }}
+              >
+                Enregistrer les modifications
+              </Button>
+            </Box>
+          </Paper>
+
+          <Paper elevation={3} sx={{ mt: 4, p: 3 }}>
+            <Stack spacing={2}>
+              <Alert severity="info">
+                Paramètres personnalisés à afficher dans les documents
+              </Alert>
+              <Alert severity="warning">
+                Seul l'administrateur peut modifier
+              </Alert>
+
+              <TextField label="Note" fullWidth multiline rows={2} />
+              <TextField label="Description" fullWidth multiline rows={4} />
+              <Box textAlign="right" mt={2}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ width: "100%" }}
+                >
+                  Enregistrer les modifications
+                </Button>
+              </Box>
+            </Stack>
+          </Paper>
         </Grid>
-      </Paper>
-    </Container>
+
+        {/* Colonne Droite */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+            <Stack spacing={2}>
+              <Alert severity="info">
+                Informations de l'utilisateur connecté
+              </Alert>
+              <TextField label="Prénom" fullWidth />
+              <TextField label="Nom" fullWidth />
+              <TextField label="Email" fullWidth />
+              <TextField label="Mot de passe" type="password" fullWidth />
+            </Stack>
+            <Box textAlign="right" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ width: "100%" }}
+              >
+                Enregistrer les modifications
+              </Button>
+            </Box>
+          </Paper>
+
+          <Paper elevation={3} sx={{ mt: 4, p: 3 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Gestion des catégories d'ordres de réparation
+            </Alert>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Seul l'administrateur peut modifier
+            </Alert>
+
+            <Stack spacing={2}>
+              {categories.map((category, index) => {
+                const isSystem = category.type === "system";
+
+                return (
+                  <Accordion key={index}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                          gap: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography>
+                            {category.name || "Nouvelle catégorie"}
+                          </Typography>
+                          {isSystem && (
+                            <Chip
+                              label="Catégorie système"
+                              color="warning"
+                              size="small"
+                              sx={{ ml: 1 }}
+                            />
+                          )}
+                        </Box>
+                        <Box
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: "50%",
+                            backgroundColor: category.color,
+                            border: "1px solid #ccc",
+                          }}
+                        />
+                      </Box>
+                    </AccordionSummary>
+
+                    <AccordionDetails>
+                      <Stack spacing={2}>
+                        <TextField
+                          label="Nom de la catégorie"
+                          value={category.name}
+                          onChange={(e) =>
+                            handleCategoryChange(index, "name", e.target.value)
+                          }
+                          fullWidth
+                          disabled={isSystem}
+                        />
+
+                        <Box
+                          sx={{
+                            pointerEvents: isSystem ? "none" : "auto",
+                            opacity: isSystem ? 0.5 : 1,
+                          }}
+                        >
+                          <SketchPicker
+                            color={category.color}
+                            onChangeComplete={(color) =>
+                              handleCategoryChange(index, "color", color.hex)
+                            }
+                          />
+                        </Box>
+
+                        {!isSystem && (
+                          <Button
+                            color="error"
+                            onClick={() => handleRemoveCategory(index)}
+                          >
+                            Supprimer
+                          </Button>
+                        )}
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              })}
+
+              <Button variant="outlined" onClick={handleAddCategory}>
+                Ajouter une catégorie
+              </Button>
+            </Stack>
+
+            <Box textAlign="right" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ width: "100%" }}
+              >
+                Enregistrer les modifications
+              </Button>
+            </Box>
+          </Paper>
+
+          <Card sx={{ mt: 4, p: 3 }}>
+            <CardHeader title="👥 Gestion des utilisateurs" />
+            <CardContent>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Attribue un rôle à chaque utilisateur pour gérer leurs droits
+                d'accès.
+              </Alert>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Seul l'administrateur peut modifier
+              </Alert>
+
+              <Stack spacing={2}>
+                {users.map((user, index) => (
+                  <Accordion key={index}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                          gap: 2,
+                        }}
+                      >
+                        <Typography>
+                          {user.firstName}{" "}
+                          {user.lastName || "Nouvel utilisateur"}
+                        </Typography>
+                        <Chip
+                          label={
+                            user.role === "admin"
+                              ? "Administrateur"
+                              : user.role === "technicien"
+                              ? "Technicien"
+                              : "Employé"
+                          }
+                          color={
+                            user.role === "admin"
+                              ? "error"
+                              : user.role === "technicien"
+                              ? "primary"
+                              : "default"
+                          }
+                          size="small"
+                        />
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 2,
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          flexDirection: "row",
+                        }}
+                      >
+                        <TextField
+                          label="Nom"
+                          value={user.lastName}
+                          onChange={(e) =>
+                            handleUserChange(index, "lastName", e.target.value)
+                          }
+                        />
+                        <TextField
+                          label="Prénom"
+                          value={user.firstName}
+                          onChange={(e) =>
+                            handleUserChange(index, "firstName", e.target.value)
+                          }
+                        />
+                        <TextField
+                          label="Email"
+                          value={user.email}
+                          onChange={(e) =>
+                            handleUserChange(index, "email", e.target.value)
+                          }
+                          fullWidth
+                        />
+                        <FormControl sx={{ minWidth: 150 }}>
+                          <InputLabel>Rôle</InputLabel>
+                          <Select
+                            value={user.role}
+                            label="Rôle"
+                            onChange={(e) =>
+                              handleUserChange(index, "role", e.target.value)
+                            }
+                          >
+                            <MenuItem value="admin">Administrateur</MenuItem>
+                            <MenuItem value="technicien">Technicien</MenuItem>
+                            <MenuItem value="employe">Employé</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleRemoveUser(index)}
+                          disabled={user.role === "admin"} // Optionnel : empêcher la suppression d'un admin
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+
+                <Button variant="outlined" onClick={handleAddUser}>
+                  ➕ Ajouter un utilisateur
+                </Button>
+              </Stack>
+
+              <Box textAlign="right" mt={2}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ width: "100%" }}
+                >
+                  Enregistrer les modifications
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
