@@ -42,7 +42,6 @@ import Notification from "../Notification";
 import logoGarage from "../../assets/images/garageLogo.jpg";
 import jumelles from "../../assets/images/jumelles.png";
 import { useAxios } from "../../utils/hook/useAxios";
-import { useUser } from "../../utils/hook/UserContext";
 import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
@@ -153,7 +152,7 @@ const Planning = () => {
     "Climatisation",
   ]);
   const [categories, setCategories] = useState([]);
-  const [user] = useUser();
+  const user = { id: 1 };
 
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(false);
