@@ -31,10 +31,9 @@ import dayjs from "dayjs"; // ou luxon selon ta préférence
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { useAuthState } from "react-firebase-hooks/auth";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import eventsData from "../../data/eventsData.json";
-import { auth, db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
+import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
 import DocModal from "../DocModal";
 import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
@@ -43,6 +42,7 @@ import Notification from "../Notification";
 import logoGarage from "../../assets/images/garageLogo.jpg";
 import jumelles from "../../assets/images/jumelles.png";
 import { useAxios } from "../../utils/hook/useAxios";
+import { useUser } from "../../utils/hook/UserContext";
 import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
@@ -153,7 +153,7 @@ const Planning = () => {
     "Climatisation",
   ]);
   const [categories, setCategories] = useState([]);
-  const [user] = useAuthState(auth);
+  const [user] = useUser();
 
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(false);
@@ -284,7 +284,7 @@ const Planning = () => {
     const updatedEvents = [...events]; // Crée une copie de l'array events
     const startDate = new Date(newEvent.date); // Date de début
     const endDate = new Date(finDate); // Date de fin
-    const userId = user.uid; // UID de l'utilisateur connecté
+    const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     const lastOrderNumber = await getLastOrderNumberForUser(userId);
@@ -439,7 +439,7 @@ const Planning = () => {
       return; // Sortir si l'utilisateur n'est pas connecté
     }
 
-    const userId = user.uid; // UID de l'utilisateur connecté
+    const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     const lastOrderNumber = await getLastOrderNumberForUser(userId);
@@ -486,7 +486,7 @@ const Planning = () => {
       return; // Sortir si l'utilisateur n'est pas connecté
     }
 
-    const userId = user.uid; // UID de l'utilisateur connecté
+    const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     const lastOrderNumber = await getLastOrderNumberForUser(userId);
@@ -531,7 +531,7 @@ const Planning = () => {
       return; // Sortir si l'utilisateur n'est pas connecté
     }
 
-    const userId = user.uid; // UID de l'utilisateur connecté
+    const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     const lastOrderNumber = await getLastOrderNumberForUser(userId);
@@ -1173,7 +1173,6 @@ const Planning = () => {
         );
 
         setDataEvents(filteredEvents);
-
       } catch (error) {
         console.error("Erreur lors de la récupération des événements :", error);
       }
