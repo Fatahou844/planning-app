@@ -28,7 +28,7 @@ import {
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
@@ -286,8 +286,8 @@ const Planning = () => {
     const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
-    const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+    // const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = 1000;
 
     if (isMultiDay && startDate.getTime() !== endDate.getTime()) {
       // Cas où les événements couvrent plusieurs jours
@@ -441,8 +441,8 @@ const Planning = () => {
     const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
-    const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = "Resa-" + generateOrderNumber(lastOrderNumber);
+    // const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = "Resa-" + 1000;
 
     // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
     const singleResa = {
@@ -488,8 +488,8 @@ const Planning = () => {
     const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
-    const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+    // const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = 1000;
 
     // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
     const singleResa = {
@@ -533,8 +533,8 @@ const Planning = () => {
     const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
-    const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+    // const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = 1000;
 
     // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
     const singleResa = {
@@ -681,17 +681,17 @@ const Planning = () => {
     }
   };
 
-  const getLastOrderNumberForUser = async (userId) => {
-    const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
-    const docSnap = await getDoc(docRef);
+  // const getLastOrderNumberForUser = async (userId) => {
+  //   const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
+  //   const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      return docSnap.data().lastOrderNumber; // Récupère le dernier numéro
-    } else {
-      // Si le document n'existe pas encore, on commence à 00000 pour cet utilisateur
-      return 0;
-    }
-  };
+  //   if (docSnap.exists()) {
+  //     return docSnap.data().lastOrderNumber; // Récupère le dernier numéro
+  //   } else {
+  //     // Si le document n'existe pas encore, on commence à 00000 pour cet utilisateur
+  //     return 0;
+  //   }
+  // };
 
   // Fonction pour générer un numéro de commande formaté à 5 chiffres
   const generateOrderNumber = (lastOrderNumber) => {

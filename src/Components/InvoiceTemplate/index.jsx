@@ -3,8 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { Box, Modal, Typography } from "@mui/material";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { db } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
@@ -17,7 +16,7 @@ const InvoiceTemplate = ({
   onFactureGenerated,
 }) => {
   const { Client, Vehicle, date, id } = editedEvent;
-  const [user] = useAuthState(auth);
+  const user = { id: 1 };
   const axios = useAxios();
 
   const calculateLineTotal = (detail) => {
@@ -660,11 +659,11 @@ const InvoiceTemplate = ({
     //   return; // Sortir si l'utilisateur n'est pas connecté
     // }
 
-    const userId = user.uid; // UID de l'utilisateur connecté
+    const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
-    const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+    // const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = 100000;
 
     // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
     const singleResa = {

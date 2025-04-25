@@ -19,8 +19,7 @@ import {
 } from "@mui/material";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { db } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
 
 function AddOrdreReparationModal({
@@ -37,7 +36,8 @@ function AddOrdreReparationModal({
 }) {
   const [details, setDetails] = useState([]);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
-  const [user] = useAuthState(auth);
+  const user = { id: 1 };
+
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [dataEvents, setDataEvents] = useState([]);
@@ -349,11 +349,11 @@ function AddOrdreReparationModal({
     const updatedEvents = [...events]; // Crée une copie de l'array events
     const startDate = new Date(editedEvent.date); // Date de début
     const endDate = new Date(finDate); // Date de fin
-    const userId = user.uid; // UID de l'utilisateur connecté
+    const userId = user.id; // UID de l'utilisateur connecté
 
     // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
-    const lastOrderNumber = await getLastOrderNumberForUser(userId);
-    const newOrderNumber = generateOrderNumber(lastOrderNumber);
+    // const lastOrderNumber = await getLastOrderNumberForUser(userId);
+    const newOrderNumber = 10000;
 
     if (isMultiDay && startDate.getTime() !== endDate.getTime()) {
       // Cas où les événements couvrent plusieurs jours
