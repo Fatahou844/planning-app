@@ -2,8 +2,8 @@ import axios from "axios";
 import React, { createContext, useContext } from "react";
 
 const axiosContext = createContext();
-const baseUrl = "http://api.zpdigital.fr/v1";
-//const baseUrl = "http://localhost:4000/v1" ;
+const BASE_URL_API = "http://api.zpdigital.fr";
+const baseUrl = `${BASE_URL_API}/v1`;
 
 export function ProvideAxios({ children }) {
   const axios = useProvideAxios();
@@ -25,57 +25,39 @@ function useProvideAxios() {
 
   const authToken = getCookie("jwtToken");
 
-  // Configurations par défaut pour les requêtes sans cookies (withCredentials: false)
+  const configDefaullt = {
+    withCredentials: true, // TRÈS IMPORTANT
+    headers: {
+      Authorization: `Bearer ${authToken}`, // Utilisation de Bearer pour les jetons JWT
+      // Si vous utilisez un autre type d'autorisation, ajustez cette ligne en conséquence
+    },
+  };
 
-  const post = async (url, data, withCredentials = false) => {
+  const post = async (url, data, config = configDefaullt) => {
+    //  setHeader();
+
     try {
-      return await axios.post(baseUrl + url, data, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        withCredentials: withCredentials, // Par défaut false, mais peut être défini à true si besoin
-      });
+      return await axios.post(baseUrl + url, data, (config = configDefaullt));
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   };
 
-  const get = async (url, withCredentials = false) => {
+  const get = async (url, config) => {
+    //    setHeader();
     try {
-      return await axios.get(baseUrl + url, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        withCredentials: withCredentials, // Par défaut false, mais peut être défini à true si besoin
-      });
+      return await axios.get(baseUrl + url, (config = configDefaullt));
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   };
 
-  const put = async (url, data, withCredentials = false) => {
+  const put = async (url, data, config) => {
+    //    setHeader();
     try {
-      return await axios.put(baseUrl + url, data, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        withCredentials: withCredentials, // Par défaut false, mais peut être défini à true si besoin
-      });
+      return await axios.put(baseUrl + url, data, config);
     } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const deleteData = async (url, withCredentials = false) => {
-    try {
-      return await axios.delete(baseUrl + url, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        withCredentials: withCredentials, // Par défaut false, mais peut être défini à true si besoin
-      });
-    } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   };
 
@@ -83,6 +65,5 @@ function useProvideAxios() {
     post,
     get,
     put,
-    deleteData,
   };
 }

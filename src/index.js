@@ -24,10 +24,11 @@ import {
 import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
-import Login from "./Pages/Login/index";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
-import PrivateRoute from "./hooks/PrivateRoute"; // Importez le composant PrivateRoute
 import { ProvideAxios } from "./utils/hook/useAxios";
+import { UserProvider } from "./utils/hook/UserContext";
+import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
+
 const tabLabels = [
   { label: "Planning", path: "/planning/categories" },
   { label: "Clients", path: "/clients" },
@@ -286,42 +287,35 @@ const ActivitySidebar = () => {
 const App = () => {
   return (
     <ProvideAxios>
-      <Router>
-        <ActivitySidebar />
+      <UserProvider>
+        <Router>
+          <ActivitySidebar />
 
-        <DashboardTabs />
+          <DashboardTabs />
 
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/connexion" element={<AuthPages />} />
+          <Routes>
+            <Route path="/" element={<AuthPages />} />
+            <Route path="/connexion" element={<AuthPages />} />
 
-          {/* Routes protégées */}
-          <Route
-            path="/planning/categories"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/planning/customers"
-            element={
-              <PrivateRoute>
-                <UserDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/parametres"
-            element={
-              <PrivateRoute>
-                <GarageSettings />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-      </Router>
+            {/* Routes protégées */}
+
+            <Route
+              path="/planning/categories"
+              element={<PrivateRoute Component={Dashboard} />}
+            />
+
+            <Route
+              path="/planning/customers"
+              element={<PrivateRoute Component={UserDashboard} />}
+            />
+
+            <Route
+              path="/parametres"
+              element={<PrivateRoute Component={GarageSettings} />}
+            />
+          </Routes>
+        </Router>
+      </UserProvider>
     </ProvideAxios>
   );
 };

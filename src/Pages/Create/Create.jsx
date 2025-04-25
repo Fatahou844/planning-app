@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useState } from "react";
-
+import { useAxios } from "../../utils/hook/useAxios";
 const garagesMock = [
   { label: "Garage Auto Pro", id: 1 },
   { label: "Garage SpeedX", id: 2 },
@@ -20,6 +20,7 @@ const garagesMock = [
 export default function AuthPages() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  const axios = useAxios();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -34,10 +35,25 @@ export default function AuthPages() {
     setForm({ ...form, [field]: value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.email || !form.password) {
       setAlertMessage("Veuillez remplir les champs requis.");
       return;
+    }
+
+    if (isSignUp) {
+      await axios.post("/data/user-data", {
+        firstName: form.firstName,
+        name: form.lastName,
+        garageId: 1,
+        email: form.email,
+        password: form.password,
+      });
+    } else {
+      await axios.post("/login", {
+        email: form.email,
+        password: form.password,
+      });
     }
 
     if (isSignUp && (!form.firstName || !form.lastName || !form.garage)) {

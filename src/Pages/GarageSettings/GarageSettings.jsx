@@ -52,7 +52,7 @@ const GarageSettings = () => {
   });
 
   const [categories, setCategories] = useState([
-    { name: "Vidange", color: "#1976d2" },
+    { name: "Vidange", color: "#1976d2", type: "system", garageId: null },
   ]);
   const axios = useAxios();
 
@@ -82,7 +82,10 @@ const GarageSettings = () => {
   }, []);
 
   const handleAddCategory = () => {
-    setCategories([...categories, { name: "", color: "#000000" }]);
+    setCategories([
+      ...categories,
+      { name: "", color: "#000000", garageId: 1, type: "company", isNew: true },
+    ]);
   };
 
   const handleCategoryChange = (index, field, value) => {
@@ -117,6 +120,49 @@ const GarageSettings = () => {
     const newUsers = [...users];
     newUsers.splice(index, 1);
     setUsers(newUsers);
+  };
+
+  const handleSaveNewCategories = async () => {
+    const newCategories = categories.filter((cat) => cat.isNew);
+
+    if (newCategories.length === 0) {
+      console.log("Aucune nouvelle catégorie à enregistrer.");
+      return;
+    }
+
+    try {
+      const responses = await Promise.all(
+        newCategories.map((cat) =>
+          axios.post("/categories", {
+            name: cat.name,
+            color: cat.color,
+            garageId: cat.garageId,
+            type: cat.type,
+          })
+        )
+      );
+
+      // Met à jour les catégories avec les données renvoyées du backend
+      const updatedCategories = [...categories];
+      let newIndex = 0;
+
+      updatedCategories.forEach((cat, index) => {
+        if (cat.isNew) {
+          updatedCategories[index] = {
+            ...responses[newIndex].data,
+            isNew: false,
+          };
+          newIndex++;
+        }
+      });
+
+      const CategoriesRecupered = axios.get("/categories");
+
+      setCategories(CategoriesRecupered.data.data);
+      console.log("✅ Nouvelles catégories enregistrées avec succès !");
+    } catch (error) {
+      console.error("❌ Erreur lors de la sauvegarde :", error);
+    }
   };
 
   return (
@@ -211,87 +257,96 @@ const GarageSettings = () => {
             </Alert>
 
             <Stack spacing={2}>
-              {categories.map((category, index) => {
-                const isSystem = category.type === "system";
+              {categories &&
+                categories.map((category, index) => {
+                  const isSystem = category.type === "system";
 
-                return (
-                  <Accordion key={index}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                          gap: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography>
-                            {category.name || "Nouvelle catégorie"}
-                          </Typography>
-                          {isSystem && (
-                            <Chip
-                              label="Catégorie système"
-                              color="warning"
-                              size="small"
-                              sx={{ ml: 1 }}
-                            />
-                          )}
-                        </Box>
+                  return (
+                    <Accordion key={index}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Box
                           sx={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: "50%",
-                            backgroundColor: category.color,
-                            border: "1px solid #ccc",
-                          }}
-                        />
-                      </Box>
-                    </AccordionSummary>
-
-                    <AccordionDetails>
-                      <Stack spacing={2}>
-                        <TextField
-                          label="Nom de la catégorie"
-                          value={category.name}
-                          onChange={(e) =>
-                            handleCategoryChange(index, "name", e.target.value)
-                          }
-                          fullWidth
-                          disabled={isSystem}
-                        />
-
-                        <Box
-                          sx={{
-                            pointerEvents: isSystem ? "none" : "auto",
-                            opacity: isSystem ? 0.5 : 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            gap: 2,
                           }}
                         >
-                          <SketchPicker
-                            color={category.color}
-                            onChangeComplete={(color) =>
-                              handleCategoryChange(index, "color", color.hex)
-                            }
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography>
+                              {category.name || "Nouvelle catégorie"}
+                            </Typography>
+                            {isSystem && (
+                              <Chip
+                                label="Catégorie système"
+                                color="warning"
+                                size="small"
+                                sx={{ ml: 1 }}
+                              />
+                            )}
+                          </Box>
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: "50%",
+                              backgroundColor: category.color,
+                              border: "1px solid #ccc",
+                            }}
                           />
                         </Box>
+                      </AccordionSummary>
 
-                        {!isSystem && (
-                          <Button
-                            color="error"
-                            onClick={() => handleRemoveCategory(index)}
+                      <AccordionDetails>
+                        <Stack spacing={2}>
+                          <TextField
+                            label="Nom de la catégorie"
+                            value={category.name}
+                            onChange={(e) =>
+                              handleCategoryChange(
+                                index,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            fullWidth
+                            disabled={isSystem}
+                          />
+
+                          <Box
+                            sx={{
+                              pointerEvents: isSystem ? "none" : "auto",
+                              opacity: isSystem ? 0.5 : 1,
+                            }}
                           >
-                            Supprimer
-                          </Button>
-                        )}
-                      </Stack>
-                    </AccordionDetails>
-                  </Accordion>
-                );
-              })}
+                            <SketchPicker
+                              color={category.color}
+                              onChangeComplete={(color) =>
+                                handleCategoryChange(index, "color", color.hex)
+                              }
+                            />
+                          </Box>
+
+                          {!isSystem && (
+                            <Button
+                              color="error"
+                              onClick={() => handleRemoveCategory(index)}
+                            >
+                              Supprimer
+                            </Button>
+                          )}
+                        </Stack>
+                      </AccordionDetails>
+                    </Accordion>
+                  );
+                })}
 
               <Button variant="outlined" onClick={handleAddCategory}>
                 Ajouter une catégorie
@@ -303,6 +358,7 @@ const GarageSettings = () => {
                 variant="contained"
                 color="primary"
                 sx={{ width: "100%" }}
+                onClick={handleSaveNewCategories}
               >
                 Enregistrer les modifications
               </Button>
