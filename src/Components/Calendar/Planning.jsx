@@ -276,10 +276,10 @@ const Planning = () => {
 
   const addEvent = async (isMultiDay = false) => {
     // Ajout du paramètre isMultiDay
-    if (!user) {
-      console.error("User not authenticated");
-      return; // Sortir si l'utilisateur n'est pas connecté
-    }
+    // if (!user) {
+    //   console.error("User not authenticated");
+    //   return; // Sortir si l'utilisateur n'est pas connecté
+    // }
 
     const updatedEvents = [...events]; // Crée une copie de l'array events
     const startDate = new Date(newEvent.date); // Date de début
@@ -434,10 +434,10 @@ const Planning = () => {
 
   const addReservation = async () => {
     // Ajout du paramètre isMultiDay
-    if (!user) {
-      console.error("User not authenticated");
-      return; // Sortir si l'utilisateur n'est pas connecté
-    }
+    // if (!user) {
+    //   console.error("User not authenticated");
+    //   return; // Sortir si l'utilisateur n'est pas connecté
+    // }
 
     const userId = user.id; // UID de l'utilisateur connecté
 
@@ -481,10 +481,10 @@ const Planning = () => {
 
   const addDevis = async () => {
     // Ajout du paramètre isMultiDay
-    if (!user) {
-      console.error("User not authenticated");
-      return; // Sortir si l'utilisateur n'est pas connecté
-    }
+    // if (!user) {
+    //   console.error("User not authenticated");
+    //   return; // Sortir si l'utilisateur n'est pas connecté
+    // }
 
     const userId = user.id; // UID de l'utilisateur connecté
 
@@ -526,10 +526,10 @@ const Planning = () => {
 
   const addFacture = async () => {
     // Ajout du paramètre isMultiDay
-    if (!user) {
-      console.error("User not authenticated");
-      return; // Sortir si l'utilisateur n'est pas connecté
-    }
+    // if (!user) {
+    //   console.error("User not authenticated");
+    //   return; // Sortir si l'utilisateur n'est pas connecté
+    // }
 
     const userId = user.id; // UID de l'utilisateur connecté
 

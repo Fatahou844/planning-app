@@ -655,10 +655,10 @@ const InvoiceTemplate = ({
 
   const addFacture = async () => {
     // Ajout du paramètre isMultiDay
-    if (!user) {
-      console.error("User not authenticated");
-      return; // Sortir si l'utilisateur n'est pas connecté
-    }
+    // if (!user) {
+    //   console.error("User not authenticated");
+    //   return; // Sortir si l'utilisateur n'est pas connecté
+    // }
 
     const userId = user.uid; // UID de l'utilisateur connecté
 
