@@ -18,6 +18,8 @@ const PrivateRoute = ({ Component }) => {
     const authToken = getCookie("jwtToken");
 
     const config = {
+      withCredentials: true, // TRÈS IMPORTANT
+
       headers: {
         Authorization: `Bearer ${authToken}`, // Utilisation de Bearer pour les jetons JWT
         // Si vous utilisez un autre type d'autorisation, ajustez cette ligne en conséquence
