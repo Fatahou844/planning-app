@@ -6,7 +6,7 @@ const PrivateRoute = ({ Component }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [role, setRole] = useState("user");
-  const BASE_URL_API = "http://api.zpdigital.fr";
+  const BASE_URL_API = "https://api.zpdigital.fr";
 
   useEffect(() => {
     function getCookie(name) {

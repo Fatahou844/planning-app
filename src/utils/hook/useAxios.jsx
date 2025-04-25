@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { createContext, useContext } from "react";
 
 const axiosContext = createContext();
-const BASE_URL_API = "http://api.zpdigital.fr";
+const BASE_URL_API = "https://api.zpdigital.fr";
 const baseUrl = `${BASE_URL_API}/v1`;
 
 export function ProvideAxios({ children }) {
