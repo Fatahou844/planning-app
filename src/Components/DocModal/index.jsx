@@ -275,7 +275,7 @@ function DocModal({
         startMinute: parseInt(editedEvent.startMinute),
         endHour: parseInt(editedEvent.endHour),
         endMinute: parseInt(editedEvent.endMinute),
-        categoryId: editedEvent.category.id,
+        categoryId: editedEvent?.Category?.id,
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
         workDescription: editedEvent.workDescription,
@@ -288,7 +288,7 @@ function DocModal({
       // 2. Traiter les détails
       for (const detail of details) {
         if (detail.isDeleted && detail.id) {
-          await axios.delete(`/details/${detail.id}`);
+          await axios.deleteData(`/details/${detail.id}`);
         } else if (detail.id) {
           await axios.put(`/details/${detail.id}`, detail);
         } else {
@@ -540,7 +540,7 @@ function DocModal({
   const handleOpen = () => {
     setNotification({
       open: true,
-      message: "Modification " + editedEvent.title + " effectué",
+      message: "Modification " + editedEvent.id + " effectué",
       severity: "success", // Peut être "error", "warning", "info"
     });
     handleShowPopup();

@@ -3,6 +3,8 @@ import React, { createContext, useContext } from "react";
 
 const axiosContext = createContext();
 const BASE_URL_API = "https://api.zpdigital.fr";
+//const BASE_URL_API = "http://localhost:4001";
+
 const baseUrl = `${BASE_URL_API}/v1`;
 
 export function ProvideAxios({ children }) {
@@ -52,6 +54,15 @@ function useProvideAxios() {
     }
   };
 
+  const deleteData = async (url, config) => {
+    //    setHeader();
+    try {
+      return await axios.delete(baseUrl + url, (config = configDefaullt));
+    } catch (error) {
+      // console.log(error);
+    }
+  };
+
   const put = async (url, data, config) => {
     //    setHeader();
     try {
@@ -65,5 +76,6 @@ function useProvideAxios() {
     post,
     get,
     put,
+    deleteData,
   };
 }

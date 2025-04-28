@@ -81,23 +81,6 @@ const GarageSettings = () => {
     fetchCategories();
   }, []);
 
-  const handleAddCategory = () => {
-    setCategories([
-      ...categories,
-      { name: "", color: "#000000", garageId: 1, type: "company", isNew: true },
-    ]);
-  };
-
-  const handleCategoryChange = (index, field, value) => {
-    const updated = [...categories];
-    updated[index][field] = value;
-    setCategories(updated);
-  };
-
-  const handleRemoveCategory = (index) => {
-    const updated = categories.filter((_, i) => i !== index);
-    setCategories(updated);
-  };
   const [users, setUsers] = useState([
     // exemple initial
     { firstName: "", lastName: "", email: "", role: "employe" },
@@ -116,52 +99,138 @@ const GarageSettings = () => {
     ]);
   };
 
-  const handleRemoveUser = (index) => {
+  const handleRemoveUser = async (index) => {
     const newUsers = [...users];
     newUsers.splice(index, 1);
     setUsers(newUsers);
   };
 
-  const handleSaveNewCategories = async () => {
-    const newCategories = categories.filter((cat) => cat.isNew);
+  const handleAddCategory = () => {
+    setCategories([
+      ...categories,
+      {
+        name: "",
+        color: "#000000",
+        garageId: 1,
+        type: "company",
+        isNew: true,
+      },
+    ]);
+  };
 
-    if (newCategories.length === 0) {
-      console.log("Aucune nouvelle catégorie à enregistrer.");
+  const handleCategoryChange = (index, field, value) => {
+    const updated = [...categories];
+    updated[index][field] = value;
+    // Si ce n'est pas une nouvelle catégorie, on marque comme modifiée
+    if (!updated[index].isNew) {
+      updated[index].isModified = true;
+    }
+    setCategories(updated);
+  };
+
+  const handleRemoveCategory = async (index) => {
+    // 1. Récupérer l'élément à supprimer
+    const categoryToRemove = categories[index];
+
+    // 2. Faire la requête DELETE avec son id
+    if (categoryToRemove && categoryToRemove.id) {
+      await axios.deleteData(`/categories/${categoryToRemove.id}`);
+    } else {
+      console.error("Impossible de trouver l'id de la catégorie !");
+    }
+    const updated = categories.filter((_, i) => i !== index);
+    setCategories(updated);
+  };
+
+  // const handleSaveNewCategories = async () => {
+  //   const newCategories = categories.filter((cat) => cat.isNew);
+
+  //   if (newCategories.length === 0) {
+  //     console.log("Aucune nouvelle catégorie à enregistrer.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const responses = await Promise.all(
+  //       newCategories.map((cat) =>
+  //         axios.post("/categories", {
+  //           name: cat.name,
+  //           color: cat.color,
+  //           garageId: cat.garageId,
+  //           type: cat.type,
+  //         })
+  //       )
+  //     );
+
+  //     // Met à jour les catégories avec les données renvoyées du backend
+  //     const updatedCategories = [...categories];
+  //     let newIndex = 0;
+
+  //     updatedCategories.forEach((cat, index) => {
+  //       if (cat.isNew) {
+  //         updatedCategories[index] = {
+  //           ...responses[newIndex].data,
+  //           isNew: false,
+  //         };
+  //         newIndex++;
+  //       }
+  //     });
+
+  //     const CategoriesRecupered = axios.get("/categories");
+
+  //     setCategories(CategoriesRecupered.data.data);
+  //     console.log("✅ Nouvelles catégories enregistrées avec succès !");
+  //   } catch (error) {
+  //     console.error("❌ Erreur lors de la sauvegarde :", error);
+  //   }
+  // };
+
+  const handleSaveCategories = async () => {
+    // 1. Séparer les nouvelles catégories et celles existantes modifiées
+    const newCategories = categories.filter((cat) => cat.isNew);
+    const updatedCategories = categories.filter(
+      (cat) => !cat.isNew && cat.isModified
+    );
+
+    if (newCategories.length === 0 && updatedCategories.length === 0) {
+      console.log("Aucune modification ou nouvelle catégorie à enregistrer.");
       return;
     }
 
     try {
-      const responses = await Promise.all(
-        newCategories.map((cat) =>
-          axios.post("/categories", {
-            name: cat.name,
-            color: cat.color,
-            garageId: cat.garageId,
-            type: cat.type,
-          })
-        )
+      // 2. Traiter l'ajout des nouvelles catégories (POST)
+      const createPromises = newCategories.map((cat) =>
+        axios.post("/categories", {
+          name: cat.name,
+          color: cat.color,
+          garageId: cat.garageId,
+          type: cat.type,
+        })
       );
 
-      // Met à jour les catégories avec les données renvoyées du backend
-      const updatedCategories = [...categories];
-      let newIndex = 0;
+      // 3. Traiter la mise à jour des catégories existantes (PUT)
+      const updatePromises = updatedCategories.map((cat) =>
+        axios.put(`/categories/${cat.id}`, {
+          name: cat.name,
+          color: cat.color,
+          garageId: cat.garageId,
+          type: cat.type,
+        })
+      );
 
-      updatedCategories.forEach((cat, index) => {
-        if (cat.isNew) {
-          updatedCategories[index] = {
-            ...responses[newIndex].data,
-            isNew: false,
-          };
-          newIndex++;
-        }
-      });
+      // 4. Exécuter toutes les requêtes en parallèle
+      const responses = await Promise.all([
+        ...createPromises,
+        ...updatePromises,
+      ]);
 
-      const CategoriesRecupered = axios.get("/categories");
+      // 5. Recharger la liste complète après enregistrement
+      const res = await axios.get("/categories");
 
-      setCategories(CategoriesRecupered.data.data);
-      console.log("✅ Nouvelles catégories enregistrées avec succès !");
+      setCategories(res.data.data);
+      console.log("✅ Catégories sauvegardées avec succès !");
     } catch (error) {
-      console.error("❌ Erreur lors de la sauvegarde :", error);
+      console.error("❌ Erreur lors de la sauvegarde des catégories :", error);
     }
   };
 
@@ -358,7 +427,7 @@ const GarageSettings = () => {
                 variant="contained"
                 color="primary"
                 sx={{ width: "100%" }}
-                onClick={handleSaveNewCategories}
+                onClick={handleSaveCategories}
               >
                 Enregistrer les modifications
               </Button>

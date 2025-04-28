@@ -167,7 +167,7 @@ function EventDialog({
       } else if (name === "category") {
         // Gérer la catégorie
         const selectedCat = categories.find((cat) => cat.id === value);
-        updatedEvent.category = {
+        updatedEvent.Category = {
           id: selectedCat.id,
           name: selectedCat.name,
           color: selectedCat.color,
@@ -207,7 +207,7 @@ function EventDialog({
           startMinute: parseInt(editedEvent.startMinute),
           endHour: parseInt(editedEvent.endHour),
           endMinute: parseInt(editedEvent.endMinute),
-          categoryId: editedEvent.category.id,
+          categoryId: editedEvent?.Category?.id,
           clientId: editedEvent.clientId,
           vehicleId: editedEvent.vehicleId,
           workDescription: editedEvent.workDescription,
@@ -229,6 +229,7 @@ function EventDialog({
             await axios.post(`/details`, {
               ...detail,
               orderId: editedEvent.id, // Lier le nouveau détail à l'order
+              documentType: "Order",
             });
           }
         }
@@ -1028,7 +1029,7 @@ function EventDialog({
                   select
                   label="Catégorie"
                   name="category"
-                  value={editedEvent?.category?.id}
+                  value={editedEvent?.Category?.id}
                   onChange={handleChange}
                   fullWidthP
                   margin="normal"

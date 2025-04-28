@@ -224,7 +224,7 @@ function DocumentModal({
       // 2. Traiter les détails
       for (const detail of details) {
         if (detail.isDeleted && detail.id) {
-          await axios.delete(`/details/${detail.id}`);
+          await axios.deleteData(`/details/${detail.id}`);
         } else if (detail.id) {
           await axios.put(`/details/${detail.id}`, detail);
         } else {
