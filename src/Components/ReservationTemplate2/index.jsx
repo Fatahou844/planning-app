@@ -1,23 +1,22 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { auth } from "../../hooks/firebaseConfig";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
   const { Client, Vehicle, date, title } = editedEvent;
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
-      name: "Fatah Garage",
-      address: "78 Rue Freetown France",
-      phone: "06 09 08 77 88",
-      email: "contactgaragefatahou.com",
-      website: "www.garagefatahou.com",
-      userId: user?.uid,
-    });
+    name: "Fatah Garage",
+    address: "78 Rue Freetown France",
+    phone: "06 09 08 77 88",
+    email: "contactgaragefatahou.com",
+    website: "www.garagefatahou.com",
+    userId: user?.uid,
+  });
 
   // useEffect(() => {
   //   const fetchGarageInfo = async () => {
@@ -82,7 +81,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
-    items: editedEvent?.Details.map((item) => ({
+    items: details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
@@ -100,7 +99,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     })),
 
     totals: {
-      totalHT: editedEvent?.Details.reduce((acc, item) => {
+      totalHT: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
         const discountAmount = parseFloat(item.discountAmount) || 0;
@@ -116,7 +115,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
         return acc + discountedPriceHT * quantity;
       }, 0),
 
-      tva: editedEvent?.Details.reduce((acc, item) => {
+      tva: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
         const discountAmount = parseFloat(item.discountAmount) || 0;
@@ -132,7 +131,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
         return acc + discountedPriceHT * quantity * 0.2;
       }, 0),
 
-      totalTTC: editedEvent?.Details.reduce((acc, item) => {
+      totalTTC: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
         const discountAmount = parseFloat(item.discountAmount) || 0;
@@ -148,11 +147,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       }, 0),
     },
 
-    observations: `${
-      editedEvent?.details?.workDescription
-        ? editedEvent?.details?.workDescription
-        : ""
-    }`,
+    observations: `${details?.workDescription ? details?.workDescription : ""}`,
   };
 
   const documentDefinition = {
