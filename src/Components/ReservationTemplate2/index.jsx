@@ -71,7 +71,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     },
     client: {
       name: `${Client?.firstName ? Client.firstName : ""} ${
-        Client?.lastName ? Client.lastName : ""
+        Client?.name ? Client.name : ""
       }`,
       adresse: `${Client?.address ? Client?.address : ""} ${
         Client?.postalCode ? Client.postalCode : ""

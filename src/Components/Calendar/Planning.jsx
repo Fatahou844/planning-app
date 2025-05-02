@@ -731,6 +731,20 @@ const Planning = () => {
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
         garageId: 1,
+        Client: {
+          name: Client.name,
+          firstName: Client.firstName,
+          address: Client.address,
+          postalCode: Client.postalCode,
+        },
+        Vehicle: {
+          mileage: Vehicle.mileage,
+          plateNumber: Vehicle.plateNumber,
+          lastCheck: Vehicle.lastCheck,
+          vin: Vehicle.vin,
+          model: Vehicle.model,
+          color: Vehicle.color,
+        },
       });
 
       return order.data; // Retourner la référence du document
@@ -785,6 +799,23 @@ const Planning = () => {
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         garageId: 1,
+        Client: {
+          name: Client.name,
+          firstName: Client.firstName,
+          address: Client.address,
+          postalCode: Client.postalCode,
+          city: Client.city,
+          phone: Client.phone,
+          email: Client.email
+        },
+        Vehicle: {
+          mileage: Vehicle.mileage,
+          plateNumber: Vehicle.plateNumber,
+          lastCheck: Vehicle.lastCheck,
+          vin: Vehicle.vin,
+          model: Vehicle.model,
+          color: Vehicle.color,
+        },
       });
 
       return response.data; // Retourner la référence du document

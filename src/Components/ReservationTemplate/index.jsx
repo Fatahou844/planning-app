@@ -10,7 +10,7 @@ const ReservationTemplate = ({
   onInvoiceExecuted,
   closeNotification,
 }) => {
-  const { person, vehicule, date, title } = editedEvent;
+  const { Client, Vehicle, date, title } = editedEvent;
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
@@ -65,24 +65,23 @@ const ReservationTemplate = ({
       email: companyInfo?.email,
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: Vehicle?.model ? Vehicle.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: Vehicle?.vin ? Vehicle.vin : "",
+      km: Vehicle?.mileage ? Vehicle.mileage : "",
+      color: Vehicle?.color ? Vehicle.color : "",
+      licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${Client?.firstName ? Client.firstName : ""} ${
+        Client?.name ? Client.name : ""
       }`,
-      adresse: `${person?.adresse ? person?.adresse : ""} ${
-        person?.postale ? person.postale : ""
+      adresse: `${Client?.address ? Client?.address : ""} ${
+        Client?.postalCode ? Client.postalCode : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
-      ville: person?.ville ? person.ville : "",
-
+      phone: Client?.phone ? Client.phone : "",
+      email: Client?.email ? Client.email : "",
+      ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
     items: details.map((item) => ({
@@ -92,25 +91,65 @@ const ReservationTemplate = ({
       quantity: item.quantity,
       discount: item.discountPercent,
       discountAmount: item.discountAmount,
+      unitPriceTTCafterDiscount:
+        item.unitPrice -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 100,
+      unitPriceHTafterDiscount:
+        item.unitPrice / 1.2 -
+        item.discountAmount -
+        (item.unitPrice * item.discountPercent) / 120,
     })),
+
     totals: {
-      // Total HT avec remises
-      totalHT: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail) / 1.2,
-        0
-      ),
-      // TVA (20% du total HT avec remises)
-      tva: details.reduce(
-        (sum, detail) =>
-          sum + calculateLineTotal(detail) - calculateLineTotal(detail) / 1.2,
-        0
-      ),
-      // Total TTC avec remises
-      totalTTC: details.reduce(
-        (sum, detail) => sum + calculateLineTotal(detail),
-        0
-      ),
+      totalHT: details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
+        );
+
+        return acc + discountedPriceHT * quantity;
+      }, 0),
+
+      tva: details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
+        const discountedPriceHT = Math.max(
+          0,
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
+        );
+
+        return acc + discountedPriceHT * quantity * 0.2;
+      }, 0),
+
+      totalTTC: details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const discountedPriceTTC = Math.max(
+          0,
+          unitPrice * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
+        );
+
+        return acc + discountedPriceTTC * quantity;
+      }, 0),
     },
+
     observations: `${details?.workDescription ? details?.workDescription : ""}`,
   };
 
