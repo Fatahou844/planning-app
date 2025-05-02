@@ -1,9 +1,10 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
+import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
@@ -17,25 +18,16 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     website: "www.garagefatahou.com",
     userId: user?.uid,
   });
+  const axios = useAxios();
 
-  // useEffect(() => {
-  //   const fetchGarageInfo = async () => {
-  //     if (!user) return;
+  useEffect(() => {
+    const fetchGarageInfo = async () => {
+      const response = await axios.get("/garages/1");
+      setCompanyInfo(response.data.data);
+    };
 
-  //     const q = query(
-  //       collection(db, "garages"),
-  //       where("userId", "==", user.uid)
-  //     );
-  //     const querySnapshot = await getDocs(q);
-
-  //     if (!querySnapshot.empty) {
-  //       const garageData = querySnapshot.docs[0].data();
-  //       setCompanyInfo(garageData);
-  //     }
-  //   };
-
-  //   fetchGarageInfo();
-  // }, [, user]);
+    fetchGarageInfo();
+  }, [, user]);
 
   const calculateLineTotal = (detail) => {
     let discount = 0;

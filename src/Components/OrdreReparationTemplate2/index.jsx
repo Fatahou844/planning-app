@@ -1,9 +1,10 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
+import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const OrdreReparationTemplate2 = ({
   editedEvent,
@@ -12,7 +13,9 @@ const OrdreReparationTemplate2 = ({
 }) => {
   const { Client, Vehicle, date, title } = editedEvent;
   const [openOr, setOpenOr] = useState(false);
+
   const [user] = useAuthState(auth);
+  const axios = useAxios();
 
   const [companyInfo, setCompanyInfo] = useState({
     name: "Fatah Garage",
@@ -23,25 +26,14 @@ const OrdreReparationTemplate2 = ({
     userId: user?.uid,
   });
 
-  // useEffect(() => {
-  //   const fetchGarageInfo = async () => {
-  //     if (!user) return;
+  useEffect(() => {
+    const fetchGarageInfo = async () => {
+      const response = await axios.get("/garages/1");
+      setCompanyInfo(response.data.data);
+    };
 
-  //     const q = query(
-  //       collection(db, "garages"),
-  //       where("userId", "==", user.uid)
-  //     );
-  //     const querySnapshot = await getDocs(q);
-
-  //     if (!querySnapshot.empty) {
-  //       const garageData = querySnapshot.docs[0].data();
-  //       setCompanyInfo(garageData);
-  //     }
-  //   };
-
-  //   fetchGarageInfo();
-  // }, [, user]);
-
+    fetchGarageInfo();
+  }, [, user]);
   const invoiceData = {
     orderNumber: title ? title : "",
     companyInfo: {

@@ -1522,11 +1522,11 @@ function DocModal({
               </Button>
               <ReservationTemplate2
                 editedEvent={editedEvent}
-                details={details}
+                details={details || []}
               />{" "}
               <InvoiceTemplate
                 editedEvent={editedEvent}
-                details={details}
+                details={details || []}
                 onInvoiceExecuted={handleChildInvoice}
                 categories={categories}
                 closeEventModal={closeEventModal}

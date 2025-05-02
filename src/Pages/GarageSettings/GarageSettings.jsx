@@ -61,6 +61,9 @@ const GarageSettings = () => {
       try {
         const response = await axios.get("/categories");
 
+        const responseGarage = await axios.get("/garages/1");
+        if (responseGarage.data) setGarageInfo(responseGarage.data.data);
+
         // Récupérer les données
         const categoriesData = response.data;
 
@@ -249,11 +252,19 @@ const GarageSettings = () => {
                 Seul l'administrateur peut modifier
               </Alert>
 
-              <TextField label="Nom du garage" fullWidth />
-              <TextField label="Site web" fullWidth />
-              <TextField label="Téléphone" fullWidth />
-              <TextField label="Email" fullWidth />
-              <TextField label="Adresse" fullWidth />
+              <TextField
+                placeholder="Nom du garage"
+                fullWidth
+                value={garageInfo.name}
+              />
+              <TextField
+                placeholder="Site web"
+                fullWidth
+                value={garageInfo.website}
+              />
+              <TextField fullWidth value={garageInfo.phone} />
+              <TextField fullWidth value={garageInfo.email} />
+              <TextField fullWidth value={garageInfo.address} />
               <Button variant="contained" component="label">
                 Upload Logo
                 <input hidden type="file" />
@@ -279,8 +290,18 @@ const GarageSettings = () => {
                 Seul l'administrateur peut modifier
               </Alert>
 
-              <TextField label="Note" fullWidth multiline rows={2} />
-              <TextField label="Description" fullWidth multiline rows={4} />
+              <TextField
+                placeHolder="Validité du devis en jours"
+                fullWidth
+                value={garageInfo.dayValidityQuote}
+              />
+              <TextField
+                placeHolder="Note légale"
+                fullWidth
+                multiline
+                rows={4}
+                value={garageInfo.noteLegal}
+              />
               <Box textAlign="right" mt={2}>
                 <Button
                   variant="contained"
