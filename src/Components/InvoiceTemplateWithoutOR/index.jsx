@@ -83,7 +83,7 @@ const InvoiceTemplateWithoutOR = ({
       ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
-    items: NewEvent?.Details.map((item) => ({
+    items: details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
@@ -101,7 +101,7 @@ const InvoiceTemplateWithoutOR = ({
     })),
 
     totals: {
-      totalHT: NewEvent?.Details.reduce((acc, item) => {
+      totalHT: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
         const discountAmount = parseFloat(item.discountAmount) || 0;
@@ -117,7 +117,7 @@ const InvoiceTemplateWithoutOR = ({
         return acc + discountedPriceHT * quantity;
       }, 0),
 
-      tva: NewEvent?.Details.reduce((acc, item) => {
+      tva: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
         const discountAmount = parseFloat(item.discountAmount) || 0;
@@ -133,7 +133,7 @@ const InvoiceTemplateWithoutOR = ({
         return acc + discountedPriceHT * quantity * 0.2;
       }, 0),
 
-      totalTTC: NewEvent?.Details.reduce((acc, item) => {
+      totalTTC: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
         const discountAmount = parseFloat(item.discountAmount) || 0;
@@ -149,11 +149,7 @@ const InvoiceTemplateWithoutOR = ({
       }, 0),
     },
 
-    observations: `${
-      NewEvent?.details?.workDescription
-        ? NewEvent?.details?.workDescription
-        : ""
-    }`,
+    observations: `${details?.workDescription ? details?.workDescription : ""}`,
   };
 
   const documentDefinition = {

@@ -1,8 +1,7 @@
 import { Button } from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { auth } from "../../hooks/firebaseConfig";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const OrdreReparationTemplate = ({
   editedEvent,
@@ -10,37 +9,37 @@ const OrdreReparationTemplate = ({
   onInvoiceExecuted,
   closeNotification,
 }) => {
-  const { person, vehicule, date, title } = editedEvent;
+  const { Client, Vehicle, date, title } = editedEvent;
   const [openOr, setOpenOr] = useState(false);
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    website: "",
+    name: "Fatah Garage",
+    address: "78 Rue Freetown France",
+    phone: "06 09 08 77 88",
+    email: "contactgaragefatahou.com",
+    website: "www.garagefatahou.com",
     userId: user?.uid,
   });
 
-  useEffect(() => {
-    const fetchGarageInfo = async () => {
-      if (!user) return;
+  // useEffect(() => {
+  //   const fetchGarageInfo = async () => {
+  //     if (!user) return;
 
-      const q = query(
-        collection(db, "garages"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+  //     const q = query(
+  //       collection(db, "garages"),
+  //       where("userId", "==", user.uid)
+  //     );
+  //     const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const garageData = querySnapshot.docs[0].data();
-        setCompanyInfo(garageData);
-      }
-    };
+  //     if (!querySnapshot.empty) {
+  //       const garageData = querySnapshot.docs[0].data();
+  //       setCompanyInfo(garageData);
+  //     }
+  //   };
 
-    fetchGarageInfo();
-  }, [, user]);
+  //   fetchGarageInfo();
+  // }, [, user]);
   const invoiceData = {
     orderNumber: title ? title : "",
     companyInfo: {
@@ -50,23 +49,23 @@ const OrdreReparationTemplate = ({
       email: companyInfo?.email,
     },
     vehicle: {
-      model: vehicule?.model ? vehicule.model : "",
+      model: Vehicle?.model ? Vehicle.model : "",
       motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: vehicule?.vin ? vehicule.vin : "",
-      km: vehicule?.kms ? vehicule.kms : "",
-      color: vehicule?.color ? vehicule.color : "",
-      licensePlate: vehicule?.licensePlate ? vehicule.licensePlate : "",
+      vin: Vehicle?.vin ? Vehicle.vin : "",
+      km: Vehicle?.mileage ? Vehicle.mileage : "",
+      color: Vehicle?.color ? Vehicle.color : "",
+      licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
     },
     client: {
-      name: `${person?.firstName ? person.firstName : ""} ${
-        person?.lastName ? person.lastName : ""
+      name: `${Client?.firstName ? Client.firstName : ""} ${
+        Client?.lastName ? Client.lastName : ""
       }`,
-      adresse: `${person?.adresse ? person?.adresse : ""} ${
-        person?.postale ? person.postale : ""
+      adresse: `${Client?.address ? Client?.address : ""} ${
+        Client?.postalCode ? Client.postalCode : ""
       }`, // Si une adresse client est disponible, l'ajouter ici
-      phone: person?.phone ? person.phone : "",
-      email: person?.email ? person.email : "",
-      ville: person?.ville ? person.ville : "",
+      phone: Client?.phone ? Client.phone : "",
+      email: Client?.email ? Client.email : "",
+      ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
     },
     items: details.map((item) => ({
@@ -85,59 +84,57 @@ const OrdreReparationTemplate = ({
         item.discountAmount -
         (item.unitPrice * item.discountPercent) / 120,
     })),
-    // totals: {
-    //   // Total HT
-    //   totalHT: details.reduce(
-    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity,
-    //     0
-    //   ),
-    //   // TVA (20% du total HT)
-    //   tva: details.reduce(
-    //     (acc, item) => acc + (item.unitPrice / 1.2) * item.quantity * 0.2,
-    //     0
-    //   ),
-    //   // Total TTC
-    //   totalTTC: details.reduce(
-    //     (acc, item) => acc + item.unitPrice * item.quantity,
-    //     0
-    //   ),
-    // },
+
     totals: {
-      // Total HT avec remises
       totalHT: details.reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceHT * item.quantity;
+
+        return acc + discountedPriceHT * quantity;
       }, 0),
-      // TVA (20% du total HT avec remises)
+
       tva: details.reduce((acc, item) => {
-        const unitPriceHT = item.unitPrice / 1.2;
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
+        const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
-          unitPriceHT * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPriceHT * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceHT * item.quantity * 0.2;
+
+        return acc + discountedPriceHT * quantity * 0.2;
       }, 0),
-      // Total TTC avec remises
+
       totalTTC: details.reduce((acc, item) => {
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        const discountPercent = parseFloat(item.discountPercent) || 0;
+        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const quantity = parseFloat(item.quantity) || 1;
+
         const discountedPriceTTC = Math.max(
           0,
-          item.unitPrice * (1 - item.discountPercent / 100) -
-            item.discountAmount / item.quantity
+          unitPrice * (1 - discountPercent / 100) -
+            (discountAmount / quantity || 0)
         );
-        return acc + discountedPriceTTC * item.quantity;
+
+        return acc + discountedPriceTTC * quantity;
       }, 0),
     },
-    observations: `${
-      editedEvent?.details?.workDescription
-        ? editedEvent?.details?.workDescription
-        : ""
-    }`,
+
+    observations: `${details?.workDescription ? details?.workDescription : ""}`,
   };
 
   const documentDefinition = {

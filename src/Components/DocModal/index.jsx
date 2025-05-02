@@ -1864,6 +1864,7 @@ function DocModal({
           open={isModalOpen}
           onClose={handleClose}
           editedEvent={editedEvent}
+          Details={details}
           setEditedEvent={handleEditedEventChange}
           categories={categories}
           onEventTriggered={handleEventFromChild}

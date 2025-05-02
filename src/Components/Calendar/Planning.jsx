@@ -1159,7 +1159,7 @@ const Planning = () => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
-    setLoading(true);
+    // setLoading(true);
     const fetchEvents = async () => {
       try {
         const response = await axios.get(`/documents-garage/order/1/details`);
@@ -1172,6 +1172,8 @@ const Planning = () => {
         );
 
         setDataEvents(filteredEvents);
+
+        console.log("eventsData", filteredEvents);
       } catch (error) {
         console.error("Erreur lors de la récupération des événements :", error);
       }

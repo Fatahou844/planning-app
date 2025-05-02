@@ -1,9 +1,8 @@
 import { Button } from "@mui/material";
 
-import { collection, getDocs, query, where } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../../hooks/firebaseConfig";
+import { auth } from "../../hooks/firebaseConfig";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const ReservationTemplate = ({
   editedEvent,
@@ -15,32 +14,32 @@ const ReservationTemplate = ({
   const [user] = useAuthState(auth);
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    website: "",
+    name: "Fatah Garage",
+    address: "78 Rue Freetown France",
+    phone: "06 09 08 77 88",
+    email: "contactgaragefatahou.com",
+    website: "www.garagefatahou.com",
     userId: user?.uid,
   });
 
-  useEffect(() => {
-    const fetchGarageInfo = async () => {
-      if (!user) return;
+  // useEffect(() => {
+  //   const fetchGarageInfo = async () => {
+  //     if (!user) return;
 
-      const q = query(
-        collection(db, "garages"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+  //     const q = query(
+  //       collection(db, "garages"),
+  //       where("userId", "==", user.uid)
+  //     );
+  //     const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const garageData = querySnapshot.docs[0].data();
-        setCompanyInfo(garageData);
-      }
-    };
+  //     if (!querySnapshot.empty) {
+  //       const garageData = querySnapshot.docs[0].data();
+  //       setCompanyInfo(garageData);
+  //     }
+  //   };
 
-    fetchGarageInfo();
-  }, [, user]);
+  //   fetchGarageInfo();
+  // }, [, user]);
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -112,11 +111,7 @@ const ReservationTemplate = ({
         0
       ),
     },
-    observations: `${
-      editedEvent?.details?.workDescription
-        ? editedEvent?.details?.workDescription
-        : ""
-    }`,
+    observations: `${details?.workDescription ? details?.workDescription : ""}`,
   };
 
   const documentDefinition = {

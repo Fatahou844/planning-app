@@ -26,6 +26,7 @@ function AddOrdreReparationModal({
   open,
   onClose,
   editedEvent,
+  Details,
   setEditedEvent,
   collectionName,
   categories,
@@ -34,7 +35,7 @@ function AddOrdreReparationModal({
   closeDocumentModal,
   onNotificationSuccess,
 }) {
-  const [details, setDetails] = useState([]);
+  const [details, setDetails] = useState(Details || []);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
   const user = { id: 1 };
 
@@ -71,7 +72,7 @@ function AddOrdreReparationModal({
     if (editedEvent && collectionNameOpen == "reservations") {
       const fetchDetails = async () => {
         try {
-          setDetails(editedEvent.Details);
+          setDetails(Details);
         } catch (error) {
           console.error("Erreur lors de la récupération des détails :", error);
         }
@@ -777,7 +778,8 @@ function AddOrdreReparationModal({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {details.length > 0 &&
+                      {details &&
+                        details.length > 0 &&
                         details.map((detail, index) => (
                           <TableRow key={index}>
                             <TableCell>
