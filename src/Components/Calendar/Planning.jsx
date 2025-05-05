@@ -124,7 +124,7 @@ const CurrentTimeLine = ({ currentHour }) => {
 
 const Planning = () => {
   const axios = useAxios();
-
+  const today = dayjs();
   const [events, setEvents] = useState(eventsData);
   const [dataEvents, setDataEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState({
@@ -1006,7 +1006,11 @@ const Planning = () => {
       console.log("Résultats combinés :", uniqueResults);
 
       // Mettre à jour l'état avec les résultats
-      setDataEventsAll(uniqueResults);
+      setDataEventsAll(
+        uniqueResults.filter((item) =>
+          dayjs(item.createdAt).isSame(today, "day")
+        )
+      );
       setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
@@ -1083,7 +1087,11 @@ const Planning = () => {
       console.log("Résultats combinés :", uniqueResults);
 
       // Mettre à jour l'état avec les résultats
-      setDataEventsAll(uniqueResults);
+      setDataEventsAll(
+        uniqueResults.filter((item) =>
+          dayjs(item.createdAt).isSame(today, "day")
+        )
+      );
       // setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);

@@ -17,6 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dayjs from "dayjs"; // ou luxon selon ta préférence
 import React, { useState } from "react";
 import Notification from "../../Components/Notification";
 import "../../Styles/style.css";
@@ -88,10 +89,22 @@ function ManageClients() {
           }
 
           // Ajouter le nom de la collection à chaque objet dans la réponse
-          const filtResults = response.data.data.map((item) => ({
+          //   const filtResults = response.data.data.map((item) => ({
+          //     ...item,
+          //     collectionName: collectionKey, // Ajouter le nom de la collection
+          //   }));
+
+          let filtResults = response.data.data.map((item) => ({
             ...item,
-            collectionName: collectionKey, // Ajouter le nom de la collection
+            collectionName: collectionKey,
           }));
+
+          if (collectionKey === "reservations") {
+            const today = dayjs();
+            filtResults = filtResults.filter((item) =>
+              dayjs(item.createdAt).isSame(today, "day")
+            );
+          }
 
           // Filtrer les résultats en fonction du mot-clé
           const filteredResults = filtResults.filter((item) => {
