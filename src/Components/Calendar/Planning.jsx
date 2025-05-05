@@ -172,6 +172,32 @@ const Planning = () => {
   useEffect(() => {
     handleSearchClickFull();
   }, [facture]);
+
+  const [garageInfo, setGarageInfo] = useState({
+    name: "",
+    website: "",
+    phone: "",
+    email: "",
+    address: "",
+    dayValidityQuote: "",
+    noteLegal: "",
+    logo: null,
+  });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const responseGarage = await axios.get("/garages/1");
+        if (responseGarage.data) {
+          setGarageInfo(responseGarage.data.data);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des catégories :", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   // const handleDateChange = (e) => {
   //   setSelectedDate(e.target.value); // Met à jour l'état avec la date sélectionnée
   // };
@@ -710,7 +736,7 @@ const Planning = () => {
         categoryId: event.category.id,
         clientId: Client.id,
         vehicleId: Vehicle.id,
-        workDescription: event.workDescription,
+        notes: event.notes,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
@@ -726,7 +752,7 @@ const Planning = () => {
         categoryId: event.category.id,
         clientId: Client.id,
         vehicleId: Vehicle.id,
-        workDescription: event.workDescription,
+        notes: event.notes,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
@@ -761,7 +787,7 @@ const Planning = () => {
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
-          workDescription: event.workDescription,
+          notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
@@ -772,7 +798,7 @@ const Planning = () => {
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
-          workDescription: event.workDescription,
+          notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
@@ -783,7 +809,7 @@ const Planning = () => {
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
-          workDescription: event.workDescription,
+          notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
@@ -792,6 +818,7 @@ const Planning = () => {
 
       setSelectedEvent({
         date: event.date,
+        notes: event.notes,
 
         clientId: Client.id,
         vehicleId: Vehicle.id,
@@ -806,7 +833,7 @@ const Planning = () => {
           postalCode: Client.postalCode,
           city: Client.city,
           phone: Client.phone,
-          email: Client.email
+          email: Client.email,
         },
         Vehicle: {
           mileage: Vehicle.mileage,
@@ -1136,7 +1163,7 @@ const Planning = () => {
           color: updatedEvent.Vehicle.color || "",
         },
         details: {
-          workDescription: updatedEvent.details.workDescription || "",
+          notes: updatedEvent.details.notes || "",
           price: updatedEvent?.details?.price || 0, // Assurez-vous que le prix est un nombre valide
         },
         category: {
@@ -1712,7 +1739,7 @@ const Planning = () => {
           {/* 🔵 Logo à droite */}
           <Box
             component="img"
-            src={logoGarage} // Vérifie le bon chemin
+            src={garageInfo.logo || logoGarage} // Vérifie le bon chemin
             alt="Logo"
             sx={{
               height: 150,
@@ -2286,8 +2313,8 @@ const Planning = () => {
 
                         <TextField
                           label="Notes"
-                          name="workDescription"
-                          value={newEvent.workDescription}
+                          name="notes"
+                          value={newEvent.notes}
                           onChange={handleInputChange}
                           fullWidth
                           margin="normal"

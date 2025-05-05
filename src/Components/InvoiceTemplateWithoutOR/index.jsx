@@ -140,7 +140,7 @@ const InvoiceTemplateWithoutOR = ({
       }, 0),
     },
 
-    observations: `${details?.workDescription ? details?.workDescription : ""}`,
+    observations: `${NewEvent?.notes ? NewEvent?.notes : ""}`,
   };
 
   const documentDefinition = {
@@ -413,7 +413,7 @@ const InvoiceTemplateWithoutOR = ({
 
       // Paragraphe
       {
-        text: "Je suis informé(e) des conditions générales de réparations figurant au verso et les acceptes sans réserve. Conformément à la législation en vigueur, le client a la possibilité de s'inscrire sur la liste d'opposition au démarchage téléphonique à l'adresse suivante : https//www.bloctel.gouv.fr/",
+        text: companyInfo.noteLegal,
         style: "paragraph",
         alignment: "justify",
       },

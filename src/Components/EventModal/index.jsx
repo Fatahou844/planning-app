@@ -210,7 +210,7 @@ function EventDialog({
           categoryId: editedEvent?.Category?.id,
           clientId: editedEvent.clientId,
           vehicleId: editedEvent.vehicleId,
-          workDescription: editedEvent.workDescription,
+          notes: editedEvent.notes,
           garageId: 1,
         };
         // 1. Mettre à jour l'événement principal (order)
@@ -867,8 +867,8 @@ function EventDialog({
 
                 <TextField
                   label="Travaux"
-                  name="details.workDescription"
-                  value={editedEvent?.workDescription}
+                  name="details.notes"
+                  value={editedEvent?.notes}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"

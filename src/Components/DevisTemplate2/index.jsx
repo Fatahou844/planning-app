@@ -28,6 +28,11 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
 
     fetchGarageInfo();
   }, [, user]);
+  const addDays = (dateString, days) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return date.toLocaleDateString("fr-FR"); // ou retourne l'objet `date` directement si besoin
+  };
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -45,7 +50,7 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     return detail.quantity * detail.unitPrice - discount;
   };
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: editedEvent ? editedEvent.id : "",
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,
@@ -138,7 +143,7 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       }, 0),
     },
 
-    observations: `${details?.workDescription ? details?.workDescription : ""}`,
+    observations: `${editedEvent?.notes ? editedEvent?.notes : ""}`,
   };
 
   const documentDefinition = {
@@ -411,7 +416,7 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
 
       // Paragraphe
       {
-        text: "Je suis informé(e) des conditions générales de réparations figurant au verso et les acceptes sans réserve. Conformément à la législation en vigueur, le client a la possibilité de s'inscrire sur la liste d'opposition au démarchage téléphonique à l'adresse suivante : https//www.bloctel.gouv.fr/",
+        text: companyInfo.noteLegal,
         style: "paragraph",
         alignment: "justify",
       },
@@ -423,7 +428,10 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
           body: [
             [
               {
-                text: `Devis valable jusqu'à 10 janvier 2025`,
+                text: `Devis valable jusqu'à ${addDays(
+                  editedEvent.createdAt,
+                  10
+                )}`,
                 style: "signature",
                 alignment: "left",
               },
@@ -494,7 +502,7 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       },
       tableHeader: {
         bold: true,
-        fillColor: "#00000",
+
         alignment: "center",
         padding: 5,
       },

@@ -1,7 +1,8 @@
 import { Button } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
+import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 const OrdreReparationTemplate = ({
   editedEvent,
@@ -12,6 +13,7 @@ const OrdreReparationTemplate = ({
   const { Client, Vehicle, date, title } = editedEvent;
   const [openOr, setOpenOr] = useState(false);
   const [user] = useAuthState(auth);
+  const axios = useAxios();
 
   const [companyInfo, setCompanyInfo] = useState({
     name: "Fatah Garage",
@@ -22,6 +24,14 @@ const OrdreReparationTemplate = ({
     userId: user?.uid,
   });
 
+  useEffect(() => {
+    const fetchGarageInfo = async () => {
+      const response = await axios.get("/garages/1");
+      setCompanyInfo(response.data.data);
+    };
+
+    fetchGarageInfo();
+  }, [, user]);
   // useEffect(() => {
   //   const fetchGarageInfo = async () => {
   //     if (!user) return;
@@ -134,7 +144,7 @@ const OrdreReparationTemplate = ({
       }, 0),
     },
 
-    observations: `${details?.workDescription ? details?.workDescription : ""}`,
+    observations: `${editedEvent?.notes ? editedEvent?.notes : ""}`,
   };
 
   const documentDefinition = {
@@ -403,7 +413,8 @@ const OrdreReparationTemplate = ({
 
       // Paragraphe
       {
-        text: "Je suis informé(e) des conditions générales de réparations figurant au verso et les acceptes sans réserve. Conformément à la législation en vigueur, le client a la possibilité de s'inscrire sur la liste d'opposition au démarchage téléphonique à l'adresse suivante : https//www.bloctel.gouv.fr/",
+        text: companyInfo.noteLegal,
+
         style: "paragraph",
         alignment: "justify",
       },

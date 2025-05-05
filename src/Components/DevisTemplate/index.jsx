@@ -1,9 +1,9 @@
 import { Button } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
-import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 import { useAxios } from "../../utils/hook/useAxios";
+import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
 const DevisTemplate = ({
   editedEvent,
@@ -24,7 +24,7 @@ const DevisTemplate = ({
     website: "www.garagefatahou.com",
     userId: user?.uid,
   });
- useEffect(() => {
+  useEffect(() => {
     const fetchGarageInfo = async () => {
       const response = await axios.get("/garages/1");
       setCompanyInfo(response.data.data);
@@ -32,23 +32,13 @@ const DevisTemplate = ({
 
     fetchGarageInfo();
   }, [, user]);
-  const calculateLineTotal = (detail) => {
-    let discount = 0;
-
-    if (detail.discountPercent > 0) {
-      // Priorité au pourcentage
-      discount =
-        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
-      // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
-    }
-
-    // Calcul du total après remise
-    return detail.quantity * detail.unitPrice - discount;
+  const addDays = (dateString, days) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return date.toLocaleDateString("fr-FR"); // ou retourne l'objet `date` directement si besoin
   };
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: editedEvent ? editedEvent.id : "",
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,
@@ -141,7 +131,7 @@ const DevisTemplate = ({
       }, 0),
     },
 
-    observations: `${details?.workDescription ? details?.workDescription : ""}`,
+    observations: `${editedEvent?.notes ? editedEvent?.notes : ""}`,
   };
 
   const documentDefinition = {
@@ -414,7 +404,7 @@ const DevisTemplate = ({
 
       // Paragraphe
       {
-        text: "Je suis informé(e) des conditions générales de réparations figurant au verso et les acceptes sans réserve. Conformément à la législation en vigueur, le client a la possibilité de s'inscrire sur la liste d'opposition au démarchage téléphonique à l'adresse suivante : https//www.bloctel.gouv.fr/",
+        text: companyInfo.noteLegal,
         style: "paragraph",
         alignment: "justify",
       },
@@ -426,7 +416,10 @@ const DevisTemplate = ({
           body: [
             [
               {
-                text: `Devis valable jusqu'à 10 janvier 2025`,
+                text: `Devis valable jusqu'à ${addDays(
+                  editedEvent.createdAt,
+                  10
+                )}`,
                 style: "signature",
                 alignment: "left",
               },

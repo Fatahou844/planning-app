@@ -24,6 +24,7 @@ import {
 import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
+import ManageClients from "./Pages/ManageClients/ManageClients";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
@@ -302,6 +303,11 @@ const App = () => {
             <Route
               path="/planning/categories"
               element={<PrivateRoute Component={Dashboard} />}
+            />
+
+            <Route
+              path="/clients"
+              element={<PrivateRoute Component={ManageClients} />}
             />
 
             <Route

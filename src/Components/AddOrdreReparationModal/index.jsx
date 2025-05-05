@@ -294,7 +294,7 @@ function AddOrdreReparationModal({
         categoryId: event.category.id,
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
-        workDescription: event.workDescription,
+        notes: event.notes,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
@@ -968,12 +968,16 @@ function AddOrdreReparationModal({
                       <TableRow>
                         <TableCell colSpan={4}></TableCell>
                         <TableCell>Total TTC :</TableCell>
-                        <TableCell>{totalTTC.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {totalTTC ? totalTTC.toFixed(2) : 0.0}
+                        </TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell colSpan={4}></TableCell>
                         <TableCell>Total HT :</TableCell>
-                        <TableCell>{totalHT.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {totalHT ? totalHT.toFixed(2) : 0.0}
+                        </TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell colSpan={4}></TableCell>
@@ -1015,8 +1019,8 @@ function AddOrdreReparationModal({
 
                   <TextField
                     label="Notes"
-                    name="workDescription"
-                    value={editedEvent.workDescription}
+                    name="notes"
+                    value={editedEvent.notes}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"

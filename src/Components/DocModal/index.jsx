@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -749,11 +750,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -772,11 +769,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -795,11 +788,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -818,11 +807,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -841,11 +826,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -864,11 +845,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -887,11 +864,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -914,11 +887,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -936,11 +905,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -958,11 +923,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -980,11 +941,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -1002,11 +959,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -1024,11 +977,7 @@ function DocModal({
                   }}
                   disabled={
                     editedEvent?.createdAt &&
-                    typeof editedEvent.createdAt.toDate === "function" &&
-                    dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                      dayjs(),
-                      "day"
-                    ) &&
+                    dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                     collectionName === "factures"
                   }
                 />
@@ -1121,9 +1070,7 @@ function DocModal({
                             }}
                             disabled={
                               editedEvent?.createdAt &&
-                              typeof editedEvent.createdAt.toDate ===
-                                "function" &&
-                              dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(editedEvent.createdAt).isBefore(
                                 dayjs(),
                                 "day"
                               ) &&
@@ -1165,9 +1112,7 @@ function DocModal({
                             }}
                             disabled={
                               editedEvent?.createdAt &&
-                              typeof editedEvent.createdAt.toDate ===
-                                "function" &&
-                              dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(editedEvent.createdAt).isBefore(
                                 dayjs(),
                                 "day"
                               ) &&
@@ -1235,9 +1180,7 @@ function DocModal({
                             }}
                             disabled={
                               editedEvent?.createdAt &&
-                              typeof editedEvent.createdAt.toDate ===
-                                "function" &&
-                              dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(editedEvent.createdAt).isBefore(
                                 dayjs(),
                                 "day"
                               ) &&
@@ -1254,9 +1197,7 @@ function DocModal({
                             onClick={() => removeDetailRow(index)}
                             disabled={
                               editedEvent?.createdAt &&
-                              typeof editedEvent.createdAt.toDate ===
-                                "function" &&
-                              dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(editedEvent.createdAt).isBefore(
                                 dayjs(),
                                 "day"
                               ) &&
@@ -1270,6 +1211,9 @@ function DocModal({
                     ))}
                 </TableBody>
               </Table>
+              <Alert severity="info">
+                Toutes les nouvelles factures ne sont plus modifiables après minuit.
+              </Alert>
             </TableContainer>
             <Box
               sx={{
@@ -1286,11 +1230,7 @@ function DocModal({
                 sx={{ marginTop: 2 }}
                 disabled={
                   editedEvent?.createdAt &&
-                  typeof editedEvent.createdAt.toDate === "function" &&
-                  dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                    dayjs(),
-                    "day"
-                  ) &&
+                  dayjs(editedEvent.createdAt).isBefore(dayjs(), "day") &&
                   collectionName === "factures"
                 }
               >
@@ -1667,11 +1607,7 @@ function DocModal({
                 variant="contained"
                 disabled={
                   editedEvent?.createdAt &&
-                  typeof editedEvent.createdAt.toDate === "function" &&
-                  dayjs(editedEvent?.createdAt?.toDate()).isBefore(
-                    dayjs(),
-                    "day"
-                  )
+                  dayjs(editedEvent.createdAt).isBefore(dayjs(), "day")
                 }
               >
                 Modifier

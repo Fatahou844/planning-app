@@ -36,6 +36,8 @@ const GarageSettings = () => {
     phone: "",
     email: "",
     address: "",
+    dayValidityQuote: "",
+    noteLegal: "",
     logo: null,
   });
 
@@ -54,6 +56,9 @@ const GarageSettings = () => {
   const [categories, setCategories] = useState([
     { name: "Vidange", color: "#1976d2", type: "system", garageId: null },
   ]);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [imageProfile, setImageProfile] = useState(null);
   const axios = useAxios();
 
   useEffect(() => {
@@ -62,8 +67,11 @@ const GarageSettings = () => {
         const response = await axios.get("/categories");
 
         const responseGarage = await axios.get("/garages/1");
-        if (responseGarage.data) setGarageInfo(responseGarage.data.data);
+        if (responseGarage.data) {
+          setGarageInfo(responseGarage.data.data);
 
+          setImageProfile(responseGarage.data.data.logo);
+        }
         // Récupérer les données
         const categoriesData = response.data;
 
@@ -237,6 +245,63 @@ const GarageSettings = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const previewImageUrl = URL.createObjectURL(file);
+      setPreviewImage(previewImageUrl);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "VeritaTrust_x2023Upload_preset_name");
+
+      fetch("https://api.cloudinary.com/v1_1/dnbpmsofq/image/upload", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          //.log("Success:", result);
+          setImageUrl(result.url);
+        })
+        .catch((error) => {
+          //.error("Error:", error);
+        });
+
+      //.log(imageUrl);
+    }
+  };
+
+  // Fonction générique pour les champs texte
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setGarageInfo((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const response = await axios.put("/garages/1", {
+        name: garageInfo.name,
+        website: garageInfo.website,
+        phone: garageInfo.phone,
+        email: garageInfo.email,
+        dayValidityQuote: garageInfo.dayValidityQuote,
+        noteLegal: garageInfo.noteLegal,
+        logo: imageUrl,
+      });
+
+      // Tu peux ajouter une notification ici
+      console.log("Garage enregistré :", response.data);
+      alert("Enregistré avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement :", error);
+      alert("Erreur lors de l'enregistrement !");
+    }
+  };
+
   return (
     <Box p={4}>
       <Typography variant="h4" gutterBottom sx={{ px: 3 }}>
@@ -253,28 +318,64 @@ const GarageSettings = () => {
               </Alert>
 
               <TextField
+                name="name"
                 placeholder="Nom du garage"
                 fullWidth
                 value={garageInfo.name}
+                onChange={handleChange}
               />
               <TextField
+                name="website"
                 placeholder="Site web"
                 fullWidth
                 value={garageInfo.website}
+                onChange={handleChange}
               />
-              <TextField fullWidth value={garageInfo.phone} />
-              <TextField fullWidth value={garageInfo.email} />
-              <TextField fullWidth value={garageInfo.address} />
-              <Button variant="contained" component="label">
-                Upload Logo
-                <input hidden type="file" />
-              </Button>
+              <TextField
+                name="phone"
+                fullWidth
+                value={garageInfo.phone}
+                onChange={handleChange}
+              />
+              <TextField
+                name="email"
+                fullWidth
+                value={garageInfo.email}
+                onChange={handleChange}
+              />
+              <TextField
+                name="address"
+                fullWidth
+                value={garageInfo.address}
+                onChange={handleChange}
+              />
+
+              <div className="col-md-3 mb-3">
+                <div className="userpicture">
+                  <img
+                    className="user-profil-avatar"
+                    src={imageUrl ? imageUrl : imageProfile}
+                    alt="user-avatar"
+                    style={{ width: "300px" }}
+                  />
+                  <label className="add-visual" id="userpicture">
+                    <input
+                      name="userpicture"
+                      accept="image/jpeg, image/webp, image/png"
+                      type="file"
+                      className="d-none"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                </div>
+              </div>
             </Stack>
             <Box textAlign="right" mt={2}>
               <Button
                 variant="contained"
                 color="primary"
                 sx={{ width: "100%" }}
+                onClick={handleSave}
               >
                 Enregistrer les modifications
               </Button>
@@ -291,22 +392,27 @@ const GarageSettings = () => {
               </Alert>
 
               <TextField
+                name="dayValidityQuote"
                 placeHolder="Validité du devis en jours"
                 fullWidth
                 value={garageInfo.dayValidityQuote}
+                onChange={handleChange}
               />
               <TextField
                 placeHolder="Note légale"
                 fullWidth
                 multiline
                 rows={4}
+                name="noteLegal"
                 value={garageInfo.noteLegal}
+                onChange={handleChange}
               />
               <Box textAlign="right" mt={2}>
                 <Button
                   variant="contained"
                   color="primary"
                   sx={{ width: "100%" }}
+                  onClick={handleSave}
                 >
                   Enregistrer les modifications
                 </Button>
