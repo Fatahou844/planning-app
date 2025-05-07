@@ -57,6 +57,15 @@ const EmailSearch = ({ onSelectClient, Client }) => {
     }
   };
 
+    function getCurrentUser() {
+      const storedUser = localStorage.getItem("me");
+      if (storedUser) {
+        return JSON.parse(storedUser);
+      }
+      return null;
+    }
+
+
   // ✏️ Gérer les champs du formulaire de création
   const handleNewClientChange = (e) => {
     const { name, value } = e.target;
@@ -76,7 +85,7 @@ const EmailSearch = ({ onSelectClient, Client }) => {
 
   const clientData = {
     ...newClient,
-    garageId: 1, // Assurez-vous que garageId est défini dans le composant
+    garageId: getCurrentUser().garageId, // Assurez-vous que garageId est défini dans le composant
   };
 
   // 📌 Sauvegarde d'un nouveau client

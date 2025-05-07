@@ -176,6 +176,14 @@ function DocModal({
     setEditedEvent((prev) => ({ ...prev, finDate: value }));
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -280,7 +288,7 @@ function DocModal({
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
         workDescription: editedEvent.workDescription,
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
       };
 
       // 1. Mettre à jour le document principal
@@ -375,7 +383,7 @@ function DocModal({
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
         isClosed: false,
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
       });
 
       const newReservation = response.data;
@@ -564,7 +572,9 @@ function DocModal({
     const fetchEvents = async () => {
       try {
         // Utilisation de l'API pour récupérer les événements par userId et date
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 
@@ -1212,7 +1222,8 @@ function DocModal({
                 </TableBody>
               </Table>
               <Alert severity="info">
-                Toutes les nouvelles factures ne sont plus modifiables après minuit.
+                Toutes les nouvelles factures ne sont plus modifiables après
+                minuit.
               </Alert>
             </TableContainer>
             <Box

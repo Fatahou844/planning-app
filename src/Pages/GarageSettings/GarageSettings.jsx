@@ -64,9 +64,13 @@ const GarageSettings = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("/categories");
+        const response = await axios.get(
+          "/categories/garage/" + getCurrentUser().garageId
+        );
 
-        const responseGarage = await axios.get("/garages/1");
+        const responseGarage = await axios.get(
+          "/garages/" + getCurrentUser().garageId
+        );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);
 
@@ -116,13 +120,21 @@ const GarageSettings = () => {
     setUsers(newUsers);
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const handleAddCategory = () => {
     setCategories([
       ...categories,
       {
         name: "",
         color: "#000000",
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
         type: "company",
         isNew: true,
       },
@@ -236,7 +248,9 @@ const GarageSettings = () => {
       ]);
 
       // 5. Recharger la liste complète après enregistrement
-      const res = await axios.get("/categories");
+      const res = await axios.get(
+        "/categories/garage/" + getCurrentUser().garageId
+      );
 
       setCategories(res.data.data);
       console.log("✅ Catégories sauvegardées avec succès !");
@@ -283,15 +297,18 @@ const GarageSettings = () => {
 
   const handleSave = async () => {
     try {
-      const response = await axios.put("/garages/1", {
-        name: garageInfo.name,
-        website: garageInfo.website,
-        phone: garageInfo.phone,
-        email: garageInfo.email,
-        dayValidityQuote: garageInfo.dayValidityQuote,
-        noteLegal: garageInfo.noteLegal,
-        logo: imageUrl,
-      });
+      const response = await axios.put(
+        "/garages/" + getCurrentUser().garageId,
+        {
+          name: garageInfo.name,
+          website: garageInfo.website,
+          phone: garageInfo.phone,
+          email: garageInfo.email,
+          dayValidityQuote: garageInfo.dayValidityQuote,
+          noteLegal: garageInfo.noteLegal,
+          logo: imageUrl,
+        }
+      );
 
       // Tu peux ajouter une notification ici
       console.log("Garage enregistré :", response.data);

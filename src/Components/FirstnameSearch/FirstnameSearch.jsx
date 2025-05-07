@@ -83,9 +83,17 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
     setIsFormInvalid(isInvalid);
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const clientData = {
     ...newClient,
-    garageId: 1, // Assurez-vous que garageId est défini dans le composant
+    garageId: getCurrentUser().garageId, // Assurez-vous que garageId est défini dans le composant
   };
 
   // 📌 Sauvegarde d'un nouveau client

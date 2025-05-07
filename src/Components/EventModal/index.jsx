@@ -198,6 +198,14 @@ function EventDialog({
     });
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const handleSave = async () => {
     if (editedEvent?.id) {
       try {
@@ -211,7 +219,7 @@ function EventDialog({
           clientId: editedEvent.clientId,
           vehicleId: editedEvent.vehicleId,
           notes: editedEvent.notes,
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         };
         // 1. Mettre à jour l'événement principal (order)
         await axios.put(`/orders/${editedEvent.id}`, order);

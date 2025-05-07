@@ -279,6 +279,14 @@ function AddOrdreReparationModal({
     return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const addSingleEvent = async (event, newOrderNumber, nextDay) => {
     try {
       console.log("ORDRE DE REPARATION", event);
@@ -298,7 +306,7 @@ function AddOrdreReparationModal({
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
       });
 
       console.log("eventRef", event);
@@ -474,7 +482,9 @@ function AddOrdreReparationModal({
 
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 

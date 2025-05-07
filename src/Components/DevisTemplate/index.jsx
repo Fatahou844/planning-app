@@ -24,9 +24,18 @@ const DevisTemplate = ({
     website: "www.garagefatahou.com",
     userId: user?.uid,
   });
+
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   useEffect(() => {
     const fetchGarageInfo = async () => {
-      const response = await axios.get("/garages/1");
+      const response = await axios.get("/garages/" + getCurrentUser().garageId);
       setCompanyInfo(response.data.data);
     };
 

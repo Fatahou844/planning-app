@@ -260,7 +260,7 @@ function DocumentModal({
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
         isClosed: false,
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
       });
 
       const newReservation = response.data;
@@ -440,6 +440,13 @@ function DocumentModal({
       closeEventModal();
     }
   };
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -447,7 +454,9 @@ function DocumentModal({
     const fetchEvents = async () => {
       try {
         // Utilisation de l'API pour récupérer les événements par userId et date
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 

@@ -1,6 +1,7 @@
-import AddIcon from "@mui/icons-material/Add"; // Icone de plus pour le bouton flottant
+import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
 import {
   Box,
   Button,
@@ -154,6 +155,14 @@ const Planning = () => {
   const [categories, setCategories] = useState([]);
   const user = { id: 1 };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -187,7 +196,9 @@ const Planning = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const responseGarage = await axios.get("/garages/1");
+        const responseGarage = await axios.get(
+          "/garages/" + getCurrentUser().garageId
+        );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);
         }
@@ -206,7 +217,9 @@ const Planning = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("/categories");
+        const response = await axios.get(
+          "/categories/garage/" + getCurrentUser().garageId
+        );
 
         // Récupérer les données
         const categoriesData = response.data;
@@ -232,7 +245,9 @@ const Planning = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 
@@ -433,7 +448,9 @@ const Planning = () => {
 
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 
@@ -740,7 +757,7 @@ const Planning = () => {
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
       });
 
       setSelectedEvent({
@@ -756,7 +773,7 @@ const Planning = () => {
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
         Client: {
           name: Client.name,
           firstName: Client.firstName,
@@ -791,7 +808,7 @@ const Planning = () => {
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         });
       else if (collectionName == "facture")
         response = await axios.post("/invoices", {
@@ -802,7 +819,7 @@ const Planning = () => {
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         });
       else if (collectionName == "reservation")
         response = await axios.post("/reservations", {
@@ -813,7 +830,7 @@ const Planning = () => {
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         });
 
       setSelectedEvent({
@@ -825,7 +842,7 @@ const Planning = () => {
 
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
-        garageId: 1,
+        garageId: getCurrentUser().garageId,
         Client: {
           name: Client.name,
           firstName: Client.firstName,
@@ -951,7 +968,9 @@ const Planning = () => {
       // Préparer les requêtes pour chaque collection
       const collectionPromises = Object.entries(collections).map(
         async ([collectionKey, apiEndpoint]) => {
-          const url = `/documents-garage/${apiEndpoint}/1/details`;
+          const url = `/documents-garage/${apiEndpoint}/${
+            getCurrentUser().garageId
+          }/details`;
 
           // Effectuer la requête GET
           const response = await axios.get(url);
@@ -1032,7 +1051,9 @@ const Planning = () => {
       // Préparer les requêtes pour chaque collection
       const collectionPromises = Object.entries(collections).map(
         async ([collectionKey, apiEndpoint]) => {
-          const url = `/documents-garage/${apiEndpoint}/1/details`;
+          const url = `/documents-garage/${apiEndpoint}/${
+            getCurrentUser().garageId
+          }/details`;
 
           // Effectuer la requête GET
           const response = await axios.get(url);
@@ -1191,7 +1212,9 @@ const Planning = () => {
 
       const fetchEvents = async () => {
         try {
-          const response = await axios.get(`/documents-garage/order/1/details`);
+          const response = await axios.get(
+            `/documents-garage/order/${getCurrentUser().garageId}/details`
+          );
 
           const eventsData = response.data.data;
 
@@ -1228,7 +1251,9 @@ const Planning = () => {
     // setLoading(true);
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 
@@ -1370,7 +1395,9 @@ const Planning = () => {
   const handleEventFromChild = () => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 
@@ -1553,6 +1580,17 @@ const Planning = () => {
   const handleSelectVehicle = (vehicle) => {
     setVehicle(vehicle);
     console.log("Vehicule sélectionné :", vehicle);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("/logout"); // pour envoyer les cookies
+      document.cookie =
+        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/"; // redirection après logout
+    } catch (error) {
+      console.error("Erreur de déconnexion :", error);
+    }
   };
 
   return (
@@ -1847,7 +1885,7 @@ const Planning = () => {
             >
               <AddIcon />
             </Fab>
-            {/* <Fab
+            <Fab
               color="seconday"
               aria-label="add"
               sx={{
@@ -1861,9 +1899,10 @@ const Planning = () => {
                 padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
                 borderRadius: "8px", // Optionnel : ajoute un bord arrondi
               }}
+              onClick={handleLogout}
             >
-              <SettingsIcon />
-            </Fab> */}
+              <LogoutIcon />
+            </Fab>
 
             {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
 

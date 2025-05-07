@@ -511,6 +511,14 @@ const InvoiceTemplate = ({
     }
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   const handleCloseOr = () => setOpenOr(false);
   const addSingleReservation = async (
     event,
@@ -528,7 +536,7 @@ const InvoiceTemplate = ({
           workDescription: event.workDescription,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         });
       else if (collectionName == "facture")
         response = await axios.post("/invoices", {
@@ -538,7 +546,7 @@ const InvoiceTemplate = ({
           workDescription: event.workDescription,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         });
       else if (collectionName == "reservation")
         response = await axios.post("/reservations", {
@@ -548,7 +556,7 @@ const InvoiceTemplate = ({
           workDescription: event.workDescription,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
-          garageId: 1,
+          garageId: getCurrentUser().garageId,
         });
 
       return response.data; // Retourner la référence du document

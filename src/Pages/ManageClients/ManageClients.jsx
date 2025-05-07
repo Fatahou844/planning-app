@@ -63,6 +63,14 @@ function ManageClients() {
     setSearchQuery(e.target.value);
   };
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   async function handleSearchClick() {
     const keyword = searchQuery.trim().toLowerCase();
 
@@ -78,7 +86,9 @@ function ManageClients() {
       // Préparer les requêtes pour chaque collection
       const collectionPromises = Object.entries(collections).map(
         async ([collectionKey, apiEndpoint]) => {
-          const url = `/documents-garage/${apiEndpoint}/1/details`;
+          const url = `/documents-garage/${apiEndpoint}/${
+            getCurrentUser().garageId
+          }/details`;
 
           // Effectuer la requête GET
           const response = await axios.get(url);
@@ -162,7 +172,9 @@ function ManageClients() {
     // setLoading(true);
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`/documents-garage/order/1/details`);
+        const response = await axios.get(
+          `/documents-garage/order/${getCurrentUser().garageId}/details`
+        );
 
         const eventsData = response.data.data;
 
