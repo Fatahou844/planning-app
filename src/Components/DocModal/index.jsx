@@ -47,7 +47,7 @@ function DocModal({
   onNotificationSuccess,
   onSearchAfterDevisResa,
 }) {
-  const [details, setDetails] = useState([]);
+  const [details, setDetails] = useState(editedEvent.Details || []);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
   const [user] = useAuthState(auth);
   const [events, setEvents] = useState([]);
@@ -382,6 +382,7 @@ function DocModal({
         date: editedEvent.date,
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
+        notes: editedEvent.notes,
         isClosed: false,
         garageId: getCurrentUser().garageId,
       });

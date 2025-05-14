@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -59,7 +59,7 @@ const OrdreReparationTemplate = ({
   //   fetchGarageInfo();
   // }, [, user]);
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: editedEvent ? editedEvent.id : "",
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,

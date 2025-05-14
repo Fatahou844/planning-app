@@ -21,6 +21,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
+import UserSearch from "../UserSearch/UserSearch";
 
 function AddOrdreReparationModal({
   open,
@@ -46,6 +47,26 @@ function AddOrdreReparationModal({
 
   const [invoiceExecuted, setInvoiceExecuted] = useState(false);
 
+  const [Operator, setOperator] = useState({
+    name: "",
+    firstName: "",
+    email: "",
+  });
+  const handleSelectOperator = (operator) => {
+    setOperator(operator);
+    console.log("operator sélectionné :", operator);
+  };
+
+  const [Receptor, setReceptor] = useState({
+    name: "",
+    firstName: "",
+    email: "",
+  });
+  const handleSelectReceptor = (receptor) => {
+    setReceptor(receptor);
+    console.log("receptor sélectionné :", receptor);
+  };
+
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
   };
@@ -70,6 +91,17 @@ function AddOrdreReparationModal({
 
   useEffect(() => {
     if (editedEvent && collectionNameOpen == "reservations") {
+      const fetchDetails = async () => {
+        try {
+          setDetails(Details);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des détails :", error);
+        }
+      };
+
+      fetchDetails();
+    }
+    if (editedEvent && collectionNameOpen == "devis") {
       const fetchDetails = async () => {
         try {
           setDetails(Details);
@@ -1083,33 +1115,18 @@ function AddOrdreReparationModal({
                       marginBottom: "0.9rem",
                     }}
                   >
-                    <TextField
-                      label="Opérateur"
-                      name="operator"
-                      value={editedEvent.operator}
-                      onChange={handleChange}
-                      fullWidth
-                      margin="normal"
-                      size="small"
-                      sx={{
-                        "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                        "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      }}
-                    />
-
-                    <TextField
-                      label="Réceptionnaire"
-                      name="receptor"
-                      value={editedEvent.receptor}
-                      onChange={handleChange}
-                      fullWidth
-                      margin="normal"
-                      size="small"
-                      sx={{
-                        "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                        "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                      }}
-                    />
+                    <UserSearch
+                      onSelectUser={handleSelectOperator}
+                      Users={Operator}
+                      garageId={getCurrentUser().garageId}
+                      NameAttribute="Opérateur"
+                    ></UserSearch>
+                    <UserSearch
+                      onSelectUser={handleSelectReceptor}
+                      Users={Receptor}
+                      garageId={getCurrentUser().garageId}
+                      NameAttribute="Récepteur"
+                    ></UserSearch>
                   </Box>
 
                   <Grid container spacing={2}>

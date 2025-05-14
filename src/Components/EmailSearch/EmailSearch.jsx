@@ -57,14 +57,13 @@ const EmailSearch = ({ onSelectClient, Client }) => {
     }
   };
 
-    function getCurrentUser() {
-      const storedUser = localStorage.getItem("me");
-      if (storedUser) {
-        return JSON.parse(storedUser);
-      }
-      return null;
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
     }
-
+    return null;
+  }
 
   // ✏️ Gérer les champs du formulaire de création
   const handleNewClientChange = (e) => {
@@ -158,7 +157,7 @@ const EmailSearch = ({ onSelectClient, Client }) => {
         )}
         renderOption={(props, option) => (
           <li {...props} key={option.id}>
-            {option.name} {option.firstName} - {option.email}
+            {option.name} {option.firstName} ( {option.email}: {option.city} )
           </li>
         )}
       />

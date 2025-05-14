@@ -2,6 +2,7 @@
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
 import Chip from "@mui/material/Chip";
 import { useAxios } from "../../utils/hook/useAxios";
 
@@ -15,6 +16,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Fab,
   FormControl,
   Grid,
   IconButton,
@@ -26,7 +28,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SketchPicker } from "react-color";
 
 const GarageSettings = () => {
@@ -306,7 +308,8 @@ const GarageSettings = () => {
           email: garageInfo.email,
           dayValidityQuote: garageInfo.dayValidityQuote,
           noteLegal: garageInfo.noteLegal,
-          logo: imageUrl,
+          logo: garageInfo.logo || imageUrl,
+          address: garageInfo.address,
         }
       );
 
@@ -316,6 +319,17 @@ const GarageSettings = () => {
     } catch (error) {
       console.error("Erreur lors de l'enregistrement :", error);
       alert("Erreur lors de l'enregistrement !");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("/logout"); // pour envoyer les cookies
+      document.cookie =
+        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/"; // redirection après logout
+    } catch (error) {
+      console.error("Erreur de déconnexion :", error);
     }
   };
 
@@ -699,6 +713,24 @@ const GarageSettings = () => {
               </Box>
             </CardContent>
           </Card>
+          <Fab
+            color="seconday"
+            aria-label="add"
+            sx={{
+              position: "fixed",
+              bottom: 16,
+              right: 16,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
+              padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+              borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+            }}
+            onClick={handleLogout}
+          >
+            <LogoutIcon />
+          </Fab>
         </Grid>
       </Grid>
     </Box>

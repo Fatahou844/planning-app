@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -23,22 +23,22 @@ const InvoiceTemplateWithoutOR = ({
   });
   const axios = useAxios();
 
-    function getCurrentUser() {
-      const storedUser = localStorage.getItem("me");
-      if (storedUser) {
-        return JSON.parse(storedUser);
-      }
-      return null;
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
     }
-  
-    useEffect(() => {
-      const fetchGarageInfo = async () => {
-        const response = await axios.get("/garages/" + getCurrentUser().garageId);
-        setCompanyInfo(response.data.data);
-      };
-  
-      fetchGarageInfo();
-    }, [, user]);
+    return null;
+  }
+
+  useEffect(() => {
+    const fetchGarageInfo = async () => {
+      const response = await axios.get("/garages/" + getCurrentUser().garageId);
+      setCompanyInfo(response.data.data);
+    };
+
+    fetchGarageInfo();
+  }, [, user]);
   const calculateLineTotal = (detail) => {
     let discount = 0;
 
@@ -55,7 +55,7 @@ const InvoiceTemplateWithoutOR = ({
     return detail.quantity * detail.unitPrice - discount;
   };
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: NewEvent ? NewEvent.id : "",
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,

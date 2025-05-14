@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 const axiosContext = createContext();
 const BASE_URL_API = "https://api.zpdigital.fr";

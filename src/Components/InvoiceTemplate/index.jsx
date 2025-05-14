@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Box, Modal, Typography } from "@mui/material";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -88,7 +88,7 @@ const InvoiceTemplate = ({
         0
       ),
     },
-    observations: `${editedEvent.workDescription}`,
+    observations: `${editedEvent.notes}`,
   };
 
   const documentDefinition = {
@@ -533,7 +533,7 @@ const InvoiceTemplate = ({
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
-          workDescription: event.workDescription,
+          notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           garageId: getCurrentUser().garageId,
@@ -543,7 +543,7 @@ const InvoiceTemplate = ({
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
-          workDescription: event.workDescription,
+          notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           garageId: getCurrentUser().garageId,
@@ -553,7 +553,7 @@ const InvoiceTemplate = ({
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
-          workDescription: event.workDescription,
+          notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           garageId: getCurrentUser().garageId,

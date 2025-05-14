@@ -111,15 +111,23 @@ function EventDialog({
     }
   }, [invoiceExecuted, facture]);
 
+  const [operator, setOperator] = useState({});
+  const [receptionist, setReceptionist] = useState({});
+
   useEffect(() => {
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
           setDetails(editedEvent.Details);
-          console.log(
-            "++++++++++++++++detailsData++++++++++++++",
-            editedEvent.Details
+
+          const operator = await axios.get(
+            `/users/userid/${editedEvent.operatorId}`
           );
+          const receptionist = await axios.get(
+            `/users/userid/${editedEvent.receptionistId}`
+          );
+          setReceptionist(receptionist.data);
+          setOperator(operator.data);
         } catch (error) {
           console.error("Erreur lors de la récupération des détails :", error);
         }
@@ -875,7 +883,7 @@ function EventDialog({
 
                 <TextField
                   label="Travaux"
-                  name="details.notes"
+                  name="notes"
                   value={editedEvent?.notes}
                   onChange={handleChange}
                   fullWidth
@@ -891,7 +899,7 @@ function EventDialog({
                   name="details.price"
                   type="number"
                   value={editedEvent?.price}
-                  placeholder="Prix"
+                  label="Prix"
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
@@ -933,7 +941,7 @@ function EventDialog({
                   <TextField
                     label="Opérateur"
                     name="operator"
-                    value={editedEvent.operator}
+                    value={operator.name}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
@@ -947,7 +955,7 @@ function EventDialog({
                   <TextField
                     label="Réceptionnaire"
                     name="receptor"
-                    value={editedEvent.receptor}
+                    value={receptionist.name}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
@@ -996,7 +1004,7 @@ function EventDialog({
                   <Grid item xs={6}>
                     <TextField
                       name="startTime"
-                      placeholder="HHMM (ex: 0700)"
+                      label="HHMM (ex: 0700)"
                       value={`${editedEvent.startHour || ""}${
                         editedEvent.startMinute || ""
                       }`}
@@ -1016,7 +1024,7 @@ function EventDialog({
                   <Grid item xs={6}>
                     <TextField
                       name="endTime"
-                      placeholder="HHMM (ex: 1900)"
+                      label="HHMM (ex: 1900)"
                       value={`${editedEvent.endHour || ""}${
                         editedEvent.endMinute || ""
                       }`}

@@ -167,7 +167,7 @@ const ClientSearch = ({ onSelectClient, Client }) => {
         )}
         renderOption={(props, option) => (
           <li {...props} key={option.id}>
-            {option.name} {option.firstName} - {option.email}
+            {option.name} {option.firstName} ( {option.email}: {option.city} )
           </li>
         )}
       />

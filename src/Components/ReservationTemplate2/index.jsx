@@ -1,7 +1,7 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -53,7 +53,7 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
   };
 
   const invoiceData = {
-    orderNumber: title ? title : "",
+    orderNumber: editedEvent ? editedEvent.id : "",
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,

@@ -46,6 +46,7 @@ import { useAxios } from "../../utils/hook/useAxios";
 import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
+import UserSearch from "../UserSearch/UserSearch";
 
 const Timeline = () => (
   <Box
@@ -758,6 +759,8 @@ const Planning = () => {
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
         garageId: getCurrentUser().garageId,
+        operatorId: Operator.id,
+        receptionistId: Receptor.id,
       });
 
       setSelectedEvent({
@@ -769,11 +772,14 @@ const Planning = () => {
         categoryId: event.category.id,
         clientId: Client.id,
         vehicleId: Vehicle.id,
+        operatorId: Operator.id,
+        receptionistId: Receptor.id,
         notes: event.notes,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
         garageId: getCurrentUser().garageId,
+
         Client: {
           name: Client.name,
           firstName: Client.firstName,
@@ -839,6 +845,8 @@ const Planning = () => {
 
         clientId: Client.id,
         vehicleId: Vehicle.id,
+        operatorId: Operator.id,
+        receptionistId: Receptor.id,
 
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
@@ -1568,6 +1576,26 @@ const Planning = () => {
     console.log("Client sélectionné :", client);
   };
 
+  const [Operator, setOperator] = useState({
+    name: "",
+    firstName: "",
+    email: "",
+  });
+  const handleSelectOperator = (operator) => {
+    setOperator(operator);
+    console.log("operator sélectionné :", operator);
+  };
+
+  const [Receptor, setReceptor] = useState({
+    name: "",
+    firstName: "",
+    email: "",
+  });
+  const handleSelectReceptor = (receptor) => {
+    setReceptor(receptor);
+    console.log("receptor sélectionné :", receptor);
+  };
+
   const [Vehicle, setVehicle] = useState({
     plateNumber: "",
     vin: "",
@@ -1954,7 +1982,7 @@ const Planning = () => {
                       />
 
                       <TextField
-                        label="Adresse"
+                        placeholder="Adresse"
                         name="adresse"
                         value={Client.address}
                         onChange={handleInputChange}
@@ -1968,7 +1996,7 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="Code postal"
+                        placeholder="Code postal"
                         name="postale"
                         value={Client.postalCode}
                         onChange={handleInputChange}
@@ -1982,7 +2010,7 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="Ville"
+                        placeholder="Ville"
                         name="ville"
                         value={Client.city}
                         onChange={handleInputChange}
@@ -2021,7 +2049,7 @@ const Planning = () => {
                         Client={Client}
                       />
                       <TextField
-                        label="VIN"
+                        placeholder="VIN"
                         name="vin"
                         value={Vehicle.vin}
                         onChange={handleInputChange}
@@ -2035,7 +2063,7 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="Modèle"
+                        placeholder="Modèle"
                         name="model"
                         value={Vehicle.model}
                         onChange={handleInputChange}
@@ -2049,7 +2077,7 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="Couleur"
+                        placeholder="Couleur"
                         name="color"
                         value={Vehicle.color}
                         onChange={handleInputChange}
@@ -2063,7 +2091,7 @@ const Planning = () => {
                         }}
                       />
                       <TextField
-                        label="kilométrage"
+                        placeholder="kilométrage"
                         name="kms"
                         value={Vehicle.mileage}
                         onChange={handleInputChange}
@@ -2412,35 +2440,21 @@ const Planning = () => {
                             display: "flex",
                             gap: "1rem", // Espacement entre les champs
                             marginBottom: "0.9rem",
+                            marginTop: "1.1rem",
                           }}
                         >
-                          <TextField
-                            label="Opérateur"
-                            name="operator"
-                            value={newEvent.operator}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            size="small"
-                            sx={{
-                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                            }}
-                          />
-
-                          <TextField
-                            label="Réceptionnaire"
-                            name="receptor"
-                            value={newEvent.receptor}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="normal"
-                            size="small"
-                            sx={{
-                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                            }}
-                          />
+                          <UserSearch
+                            onSelectUser={handleSelectOperator}
+                            Users={Operator}
+                            garageId={getCurrentUser().garageId}
+                            NameAttribute="Opérateur"
+                          ></UserSearch>
+                          <UserSearch
+                            onSelectUser={handleSelectReceptor}
+                            Users={Receptor}
+                            garageId={getCurrentUser().garageId}
+                            NameAttribute="Récepteur"
+                          ></UserSearch>
                         </Box>
 
                         <Grid container spacing={2}>

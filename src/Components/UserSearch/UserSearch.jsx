@@ -11,75 +11,63 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 
-const FirstnameSearch = ({ onSelectClient, Client }) => {
+const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
   const [inputValue, setInputValue] = useState(""); // Valeur tapée
-  const [clients, setClients] = useState([]); // Liste des clients suggérés
-  const [selectedClient, setSelectedClient] = useState(null); // Client sélectionné
+  const [Userss, setUserss] = useState([]); // Liste des Userss suggérés
+  const [selectedUsers, setSelectedUsers] = useState(null); // Users sélectionné
   const [openDialog, setOpenDialog] = useState(false); // Fenêtre de création
-  const [newClient, setNewClient] = useState({
+  const [newUsers, setNewUsers] = useState({
     name: "",
     firstName: "",
     email: "",
-    phone: "",
   });
   const [errors, setErrors] = useState({
-    phone: "",
     email: "",
   });
   const [isFormInvalid, setIsFormInvalid] = useState(false);
-
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
-
-  const validatePhone = (phone) => {
-    const regex = /^\+?[0-9\s\-]{7,15}$/; // Accepte les formats avec +, espace, tirets
-    return regex.test(phone);
-  };
   const axios = useAxios();
 
-  // 🔍 Recherche automatique des clients
+  // 🔍 Recherche automatique des Userss
   useEffect(() => {
     if (inputValue.length > 1) {
       axios
-        .get(`/clients/search/firstname?firstName=${inputValue}`)
-        .then((res) => setClients(res.data))
+        .get(`/users/search?firstName=${inputValue}&garageId=${garageId}`)
+        .then((res) => setUserss(res.data))
         .catch((err) => console.error(err));
     } else {
-      setClients([]);
+      setUserss([]);
     }
   }, [inputValue]);
 
   useEffect(() => {
-    if (Client) {
-      setSelectedClient(Client);
-      onSelectClient(Client);
+    if (Users) {
+      setSelectedUsers(Users);
+      onSelectUser(Users);
     }
-  }, [Client]);
+  }, [Users]);
 
-  // ✏️ Gérer la sélection du client
-  const handleSelectClient = (event, value) => {
+  // ✏️ Gérer la sélection du Users
+  const handleSelectUsers = (event, value) => {
     if (value && value.id) {
-      setSelectedClient(value);
-      onSelectClient(value);
+      setSelectedUsers(value);
+      onSelectUser(value);
     }
   };
 
   // ✏️ Gérer les champs du formulaire de création
-  const handleNewClientChange = (e) => {
+  const handleNewUsersChange = (e) => {
     const { name, value } = e.target;
-    // Nouvelle valeur du client mise à jour localement
-    const updatedClient = { ...newClient, [name]: value };
+    // Nouvelle valeur du Users mise à jour localement
+    const updatedUsers = { ...newUsers, [name]: value };
 
-    setNewClient(updatedClient);
+    setNewUsers(updatedUsers);
 
     // Reset de l'erreur pour ce champ
     setErrors((prev) => ({ ...prev, [name]: "" }));
 
     // Recalcul de la validité du formulaire
     const hasErrors = Object.values(errors).some((err) => err !== "");
-    const isInvalid = !updatedClient.phone || !updatedClient.email || hasErrors;
+    const isInvalid = !updatedUsers.email || hasErrors;
     setIsFormInvalid(isInvalid);
   };
 
@@ -91,18 +79,18 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
     return null;
   }
 
-  const clientData = {
-    ...newClient,
+  const UsersData = {
+    ...newUsers,
     garageId: getCurrentUser().garageId, // Assurez-vous que garageId est défini dans le composant
   };
 
-  // 📌 Sauvegarde d'un nouveau client
-  const handleCreateClient = () => {
+  // 📌 Sauvegarde d'un nouveau Users
+  const handleCreateUsers = () => {
     axios
-      .post("/clients", clientData)
+      .post("/users", UsersData)
       .then((res) => {
-        setSelectedClient(res.data);
-        onSelectClient(res.data);
+        setSelectedUsers(res.data);
+        onSelectUser(res.data);
         setOpenDialog(false);
         setInputValue(""); // Réinitialiser la recherche
       })
@@ -121,35 +109,31 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
       error = "Email invalide";
     }
 
-    if (name === "phone" && value && !/^\+?[0-9\s\-]{7,15}$/.test(value)) {
-      error = "Téléphone invalide";
-    }
-
     setErrors((prev) => ({ ...prev, [name]: error }));
 
     // Recalcule si le form devient invalide
     const hasErrors = Object.values({ ...errors, [name]: error }).some(
       (err) => err !== ""
     );
-    const isInvalid = !newClient.phone || !newClient.email || hasErrors;
+    const isInvalid = !newUsers.email || hasErrors;
     setIsFormInvalid(isInvalid);
   };
 
   return (
-    <Box>
+    <Box sx={{ width: "100%" }}>
       {/* Zone de recherche */}
       <Autocomplete
-        options={clients}
+        options={Userss}
         getOptionLabel={(option) => option.firstName}
-        value={selectedClient}
-        onChange={handleSelectClient}
+        value={selectedUsers}
+        onChange={handleSelectUsers}
         inputValue={inputValue}
         onInputChange={(event, newValue) => setInputValue(newValue)}
         freeSolo
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Prénom"
+            label={NameAttribute}
             variant="outlined"
             fullWidth
             size="small"
@@ -162,13 +146,13 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
         )}
         renderOption={(props, option) => (
           <li {...props} key={option.id}>
-            {option.name} {option.firstName} ( {option.email}: {option.city} )
+            {option.name} {option.firstName} - {option.email}
           </li>
         )}
       />
 
       {/* Si aucune suggestion n'existe, afficher le bouton pour créer */}
-      {inputValue.length > 1 && clients.length === 0 && (
+      {inputValue.length > 1 && Userss.length === 0 && (
         <Button
           variant="contained"
           color="primary"
@@ -176,20 +160,20 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
           onClick={() => setOpenDialog(true)}
           style={{ marginTop: "10px" }}
         >
-          + Ajouter un nouveau client
+          + Ajouter un nouveau utilisateur
         </Button>
       )}
 
-      {/* Fenêtre de création de client */}
+      {/* Fenêtre de création de Users */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Ajouter un nouveau client</DialogTitle>
+        <DialogTitle>Ajouter un nouveau utilisateur</DialogTitle>
         <DialogContent>
           <TextField
             name="name"
             label="Nom"
             fullWidth
             margin="normal"
-            onChange={handleNewClientChange}
+            onChange={handleNewUsersChange}
             size="small"
           />
           <TextField
@@ -197,61 +181,25 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
             label="Prénom"
             fullWidth
             margin="normal"
-            onChange={handleNewClientChange}
+            onChange={handleNewUsersChange}
             size="small"
-          />
-
-          <TextField
-            name="phone"
-            label="Téléphone"
-            fullWidth
-            margin="normal"
-            onChange={handleNewClientChange}
-            size="small"
-            onBlur={handleBlur}
-            error={!!errors.phone}
-            helperText={errors.phone}
           />
           <TextField
             name="email"
             label="Email"
             fullWidth
             margin="normal"
-            onChange={handleNewClientChange}
+            onChange={handleNewUsersChange}
             size="small"
             onBlur={handleBlur}
             error={!!errors.email}
             helperText={errors.email}
           />
-          <TextField
-            name="address"
-            label="Adresse"
-            fullWidth
-            margin="normal"
-            onChange={handleNewClientChange}
-            size="small"
-          />
-          <TextField
-            name="postalCode"
-            label="Code postal"
-            fullWidth
-            margin="normal"
-            onChange={handleNewClientChange}
-            size="small"
-          />
-          <TextField
-            name="city"
-            label="Ville"
-            fullWidth
-            margin="normal"
-            onChange={handleNewClientChange}
-            size="small"
-          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
           <Button
-            onClick={handleCreateClient}
+            onClick={handleCreateUsers}
             variant="contained"
             color="primary"
             disabled={isFormInvalid}
@@ -264,4 +212,4 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
   );
 };
 
-export default FirstnameSearch;
+export default UserSearch;

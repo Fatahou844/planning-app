@@ -42,7 +42,7 @@ function DocumentModal({
   displayNotification,
   onFactureReceive,
 }) {
-  const [details, setDetails] = useState([]);
+  const [details, setDetails] = useState(editedEvent.Details || []);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
   const [user] = useAuthState(auth);
   const [events, setEvents] = useState([]);
@@ -1344,6 +1344,7 @@ function DocumentModal({
           open={isModalOpen}
           onClose={handleClose}
           editedEvent={editedEvent}
+          Details={details}
           setEditedEvent={handleEditedEventChange}
           categories={categories}
           onEventTriggered={handleEventFromChild}
