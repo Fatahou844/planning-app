@@ -30,7 +30,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
 import { doc, updateDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import eventsData from "../../data/eventsData.json";
@@ -331,7 +331,7 @@ const Planning = () => {
     // const lastOrderNumber = await getLastOrderNumberForUser(userId);
     const newOrderNumber = 1000;
 
-    if (isMultiDay && startDate.getTime() !== endDate.getTime()) {
+    if (startDate.getTime() !== endDate.getTime()) {
       // Cas où les événements couvrent plusieurs jours
 
       // Ajout du premier événement pour la date de début
@@ -764,6 +764,7 @@ const Planning = () => {
       });
 
       setSelectedEvent({
+        id: order.data.id,
         date: event.date,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
@@ -840,6 +841,7 @@ const Planning = () => {
         });
 
       setSelectedEvent({
+        id: response.data.id,
         date: event.date,
         notes: event.notes,
 
@@ -1547,8 +1549,14 @@ const Planning = () => {
     }
   };
 
-  const handleOnNotficationSuccess = () => {
+  const [newOrder, setNewOrder] = useState({});
+
+  const handleOnNotficationSuccess = (valeur) => {
     setModalOpen(false);
+    setNewOrder(valeur);
+
+    setSelectedEvent({ ...selectedEvent, id: valeur.id });
+
     setNotification({
       open: true,
       message: "Votre  OR a été crée ",

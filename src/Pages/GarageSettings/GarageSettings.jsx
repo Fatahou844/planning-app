@@ -308,7 +308,7 @@ const GarageSettings = () => {
           email: garageInfo.email,
           dayValidityQuote: garageInfo.dayValidityQuote,
           noteLegal: garageInfo.noteLegal,
-          logo: garageInfo.logo || imageUrl,
+          logo: imageUrl || garageInfo.logo,
           address: garageInfo.address,
         }
       );

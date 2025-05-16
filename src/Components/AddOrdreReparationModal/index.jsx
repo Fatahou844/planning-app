@@ -17,9 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
 import UserSearch from "../UserSearch/UserSearch";
 
@@ -293,23 +291,6 @@ function AddOrdreReparationModal({
       );
     }
   };
-  const getLastOrderNumberForUser = async (userId) => {
-    const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return docSnap.data().lastOrderNumber; // Récupère le dernier numéro
-    } else {
-      // Si le document n'existe pas encore, on commence à 00000 pour cet utilisateur
-      return 0;
-    }
-  };
-
-  // Fonction pour générer un numéro de commande formaté à 5 chiffres
-  const generateOrderNumber = (lastOrderNumber) => {
-    const newOrderNumber = lastOrderNumber + 1;
-    return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
-  };
 
   function getCurrentUser() {
     const storedUser = localStorage.getItem("me");
@@ -380,23 +361,17 @@ function AddOrdreReparationModal({
     }
   };
 
-  const addEvent = async (isMultiDay = false) => {
-    // Ajout du paramètre isMultiDay
-    // if (!user) {
-    //   console.error("User not authenticated");
-    //   return; // Sortir si l'utilisateur n'est pas connecté
-    // }
+  const [newOrder, setNewOrder] = useState({});
 
+  const addEvent = async (isMultiDay = false) => {
     const updatedEvents = [...events]; // Crée une copie de l'array events
     const startDate = new Date(editedEvent.date); // Date de début
     const endDate = new Date(finDate); // Date de fin
     const userId = user.id; // UID de l'utilisateur connecté
-
-    // Générer le numéro de commande une seule fois pour l'événement (ou son ensemble)
     // const lastOrderNumber = await getLastOrderNumberForUser(userId);
     const newOrderNumber = 10000;
 
-    if (isMultiDay && startDate.getTime() !== endDate.getTime()) {
+    if (startDate.getTime() !== endDate.getTime()) {
       // Cas où les événements couvrent plusieurs jours
 
       // Ajout du premier événement pour la date de début
@@ -423,6 +398,8 @@ function AddOrdreReparationModal({
           detail.discountAmount?.toString().trim()
         );
       });
+
+      setNewOrder(singleEventDocRef);
 
       if (IsvalidDetails.length)
         await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
@@ -505,6 +482,8 @@ function AddOrdreReparationModal({
 
       if (validDetails.length)
         await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+
+      setNewOrder(singleEventDocRef);
     }
 
     // Mettre à jour le dernier numéro de commande utilisé pour cet utilisateur
@@ -538,7 +517,7 @@ function AddOrdreReparationModal({
     resetForm();
     setIsModalOpen(false); // Fermer le modal
     if (onNotificationSuccess) {
-      onNotificationSuccess();
+      onNotificationSuccess(newOrder);
       console.log("OR reçue dans DocumentModal onNotificationSuccess :");
     } else {
       console.error(

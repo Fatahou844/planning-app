@@ -287,7 +287,7 @@ function DocModal({
         categoryId: editedEvent?.Category?.id,
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
-        workDescription: editedEvent.workDescription,
+        notes: editedEvent.notes,
         garageId: getCurrentUser().garageId,
       };
 
@@ -679,9 +679,13 @@ function DocModal({
     }
   };
 
-  const handleORCReated = () => {
+  const [newOrder, setNewOrder] = useState({});
+
+  const handleORCReated = (valeur) => {
     if (onNotificationSuccess) {
-      onNotificationSuccess();
+      onNotificationSuccess(valeur);
+      setNewOrder(valeur);
+
       console.log("OR reçue dans DocumentModal handleORCReated :");
     } // Envoie la facture au Grand-parent (Planning)
     else {
@@ -709,7 +713,7 @@ function DocModal({
         <Notification
           message={notification.message}
           handleClose={handleClosePopup}
-          dataEvent={editedEvent}
+          dataEvent={{ ...editedEvent, id: newOrder.id }}
           collectionName={collectionName}
           dataDetails={details}
         />
@@ -1273,8 +1277,8 @@ function DocModal({
 
                 <TextField
                   label="Travaux"
-                  name="details.workDescription"
-                  value={editedEvent.details?.workDescription}
+                  name="notes"
+                  value={editedEvent?.notes}
                   onChange={handleChange}
                   fullWidth
                   margin="normal"
