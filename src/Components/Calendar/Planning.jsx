@@ -13,11 +13,14 @@ import {
   DialogContent,
   DialogTitle,
   Fab,
+  FormControl,
   Grid,
   IconButton,
+  InputLabel,
   MenuItem,
   Modal,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -473,6 +476,33 @@ const Planning = () => {
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
+    SetClient({
+      name: "",
+      firstName: "",
+      address: "",
+      email: "",
+      phone: "",
+      postalCode: "",
+      city: "",
+    });
+    setVehicle({
+      plateNumber: "",
+      vin: "",
+      model: "",
+      color: "",
+      mileage: "",
+      lastCheck: "",
+    });
+    setOperator({
+      name: "",
+      firstName: "",
+      email: "",
+    });
+    setReceptor({
+      name: "",
+      firstName: "",
+      email: "",
+    });
   };
 
   const addReservation = async () => {
@@ -520,6 +550,33 @@ const Planning = () => {
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
+    SetClient({
+      name: "",
+      firstName: "",
+      address: "",
+      email: "",
+      phone: "",
+      postalCode: "",
+      city: "",
+    });
+    setVehicle({
+      plateNumber: "",
+      vin: "",
+      model: "",
+      color: "",
+      mileage: "",
+      lastCheck: "",
+    });
+    setOperator({
+      name: "",
+      firstName: "",
+      email: "",
+    });
+    setReceptor({
+      name: "",
+      firstName: "",
+      email: "",
+    });
   };
 
   const addDevis = async () => {
@@ -565,6 +622,33 @@ const Planning = () => {
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
+    SetClient({
+      name: "",
+      firstName: "",
+      address: "",
+      email: "",
+      phone: "",
+      postalCode: "",
+      city: "",
+    });
+    setVehicle({
+      plateNumber: "",
+      vin: "",
+      model: "",
+      color: "",
+      mileage: "",
+      lastCheck: "",
+    });
+    setOperator({
+      name: "",
+      firstName: "",
+      email: "",
+    });
+    setReceptor({
+      name: "",
+      firstName: "",
+      email: "",
+    });
   };
 
   const addFacture = async () => {
@@ -611,6 +695,34 @@ const Planning = () => {
 
     resetForm();
     setIsModalOpen(false); // Fermer le modal
+    SetClient({
+      name: "",
+      firstName: "",
+      address: "",
+      email: "",
+      phone: "",
+      postalCode: "",
+      city: "",
+    });
+    setVehicle({
+      plateNumber: "",
+      vin: "",
+      model: "",
+      color: "",
+      mileage: "",
+      lastCheck: "",
+    });
+    setOperator({
+      name: "",
+      firstName: "",
+      email: "",
+    });
+
+    setReceptor({
+      name: "",
+      firstName: "",
+      email: "",
+    });
   };
 
   const addEventDetails = async (eventId, details) => {
@@ -1247,6 +1359,33 @@ const Planning = () => {
       fetchEvents();
 
       setIsModalOpen(false); // Fermer le modal
+      SetClient({
+        name: "",
+        firstName: "",
+        address: "",
+        email: "",
+        phone: "",
+        postalCode: "",
+        city: "",
+      });
+      setVehicle({
+        plateNumber: "",
+        vin: "",
+        model: "",
+        color: "",
+        mileage: "",
+        lastCheck: "",
+      });
+      setOperator({
+        name: "",
+        firstName: "",
+        email: "",
+      });
+      setReceptor({
+        name: "",
+        firstName: "",
+        email: "",
+      });
 
       // fetchEvents(); // Appeler la fonction au montage du composant
       handleModalClose(); // Ferme le modal après la sauvegarde
@@ -1629,6 +1768,25 @@ const Planning = () => {
     }
   };
 
+  const [searchQueryInterior, setSearchQueryInterior] = useState("");
+  const [documentFilter, setDocumentFilter] = useState("all");
+
+  const filteredEvents = dataEventsAll.filter((event) => {
+    const matchesDocument =
+      documentFilter === "all" || event.collectionName === documentFilter;
+
+    const searchLower = searchQueryInterior.toLowerCase();
+
+    const matchesSearch =
+      event.Client.name?.toLowerCase().includes(searchLower) ||
+      event.Client.firstName?.toLowerCase().includes(searchLower) ||
+      event.Client.email?.toLowerCase().includes(searchLower) ||
+      event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+      event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+    return matchesDocument && matchesSearch;
+  });
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
@@ -1944,7 +2102,36 @@ const Planning = () => {
 
             <Dialog
               open={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
+              onClose={() => {
+                setIsModalOpen(false);
+                SetClient({
+                  name: "",
+                  firstName: "",
+                  address: "",
+                  email: "",
+                  phone: "",
+                  postalCode: "",
+                  city: "",
+                });
+                setVehicle({
+                  plateNumber: "",
+                  vin: "",
+                  model: "",
+                  color: "",
+                  mileage: "",
+                  lastCheck: "",
+                });
+                setOperator({
+                  name: "",
+                  firstName: "",
+                  email: "",
+                });
+                setReceptor({
+                  name: "",
+                  firstName: "",
+                  email: "",
+                });
+              }}
               PaperProps={{
                 style: {
                   width: "1200px", // Remplacez par la largeur souhaitée
@@ -2870,6 +3057,33 @@ const Planning = () => {
                         color="primary"
                         onClick={() => {
                           setIsModalOpen(false);
+                          SetClient({
+                            name: "",
+                            firstName: "",
+                            address: "",
+                            email: "",
+                            phone: "",
+                            postalCode: "",
+                            city: "",
+                          });
+                          setVehicle({
+                            plateNumber: "",
+                            vin: "",
+                            model: "",
+                            color: "",
+                            mileage: "",
+                            lastCheck: "",
+                          });
+                          setOperator({
+                            name: "",
+                            firstName: "",
+                            email: "",
+                          });
+                          setReceptor({
+                            name: "",
+                            firstName: "",
+                            email: "",
+                          });
                         }}
                       >
                         SORTIR
@@ -3118,6 +3332,40 @@ const Planning = () => {
       >
         <DialogTitle>Résultats de la recherche</DialogTitle>
         <DialogContent>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+            mt={2}
+          >
+            <TextField
+              label="Recherche"
+              variant="outlined"
+              size="small"
+              value={searchQueryInterior}
+              onChange={(e) => setSearchQueryInterior(e.target.value)}
+              placeholder="Nom, Prénom, Email, Marque, Modèle"
+              style={{ marginRight: 16, flexGrow: 1 }}
+            />
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Type de document</InputLabel>
+              <Select
+                value={documentFilter}
+                onChange={(e) => setDocumentFilter(e.target.value)}
+                label="Type de document"
+                style={{ minWidth: 200 }}
+              >
+                <MenuItem value="all">Tous</MenuItem>
+                <MenuItem value="events">O.R</MenuItem>
+                <MenuItem value="reservations">Reservations</MenuItem>
+                <MenuItem value="devis">Devis</MenuItem>
+                <MenuItem value="factures">Factures</MenuItem>
+                {/* Ajoute d'autres types si nécessaire */}
+              </Select>
+            </FormControl>
+          </Box>
+
           {dataEventsAll.length === 0 ? (
             <Typography>Aucun événement trouvé.</Typography>
           ) : (
@@ -3137,7 +3385,7 @@ const Planning = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {dataEventsAll.map((event) => (
+                  {filteredEvents.map((event) => (
                     <TableRow
                       key={event.id}
                       hover

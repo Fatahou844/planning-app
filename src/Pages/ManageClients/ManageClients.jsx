@@ -9,7 +9,11 @@ import {
   DialogContent,
   DialogTitle,
   Fab,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -20,6 +24,7 @@ import {
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
+import moment from "moment";
 import { useEffect, useState } from "react";
 import DocModal from "../../Components/DocModal";
 import DocumentModal from "../../Components/DocumentModal";
@@ -510,6 +515,33 @@ function ManageClients() {
     handleSearchClickFull();
   }, [facture]);
 
+  const [searchQueryInterior, setSearchQueryInterior] = useState("");
+  const [documentFilter, setDocumentFilter] = useState("all");
+  const [dateMin, setDateMin] = useState(null); // ou new Date()
+  const [dateMax, setDateMax] = useState(null);
+
+  const filteredEvents = dataEventsAll.filter((event) => {
+    const matchesDocument =
+      documentFilter === "all" || event.collectionName === documentFilter;
+
+    const searchLower = searchQueryInterior.toLowerCase();
+
+    const matchesSearch =
+      event.Client.name?.toLowerCase().includes(searchLower) ||
+      event.Client.firstName?.toLowerCase().includes(searchLower) ||
+      event.Client.email?.toLowerCase().includes(searchLower) ||
+      event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+      event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+    const eventDate = new Date(event.createdAt); // ou event.createdAt
+
+    const matchesDate =
+      (!dateMin || eventDate >= new Date(dateMin)) &&
+      (!dateMax || eventDate <= new Date(dateMax));
+
+    return matchesDocument && matchesSearch && matchesDate;
+  });
+
   return (
     <div className="app-container">
       <div className="main-content">
@@ -600,6 +632,56 @@ function ManageClients() {
       >
         <DialogTitle>Résultats de la recherche</DialogTitle>
         <DialogContent>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+            mt={2}
+          >
+            <TextField
+              label="Recherche"
+              variant="outlined"
+              size="small"
+              value={searchQueryInterior}
+              onChange={(e) => setSearchQueryInterior(e.target.value)}
+              placeholder="Nom, Prénom, Email, Marque, Modèle"
+              style={{ marginRight: 16, flexGrow: 1 }}
+            />
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Type de document</InputLabel>
+              <Select
+                value={documentFilter}
+                onChange={(e) => setDocumentFilter(e.target.value)}
+                label="Type de document"
+                style={{ minWidth: 200 }}
+              >
+                <MenuItem value="all">Tous</MenuItem>
+                <MenuItem value="events">O.R</MenuItem>
+                <MenuItem value="reservations">Reservations</MenuItem>
+                <MenuItem value="devis">Devis</MenuItem>
+                <MenuItem value="factures">Factures</MenuItem>
+                {/* Ajoute d'autres types si nécessaire */}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Date min"
+              type="date"
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              value={dateMin || ""}
+              onChange={(e) => setDateMin(e.target.value)}
+            />
+
+            <TextField
+              label="Date max"
+              type="date"
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              value={dateMax || ""}
+              onChange={(e) => setDateMax(e.target.value)}
+            />
+          </Box>
           {dataEventsAll.length === 0 ? (
             <Typography>Aucun événement trouvé.</Typography>
           ) : (
@@ -608,6 +690,7 @@ function ManageClients() {
                 <TableHead>
                   <TableRow>
                     <TableCell>N°</TableCell>
+                    <TableCell>Date</TableCell>
                     <TableCell>Nom</TableCell>
                     <TableCell>Prénom</TableCell>
 
@@ -619,7 +702,7 @@ function ManageClients() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {dataEventsAll.map((event) => (
+                  {filteredEvents.map((event) => (
                     <TableRow
                       key={event.id}
                       hover
@@ -635,6 +718,9 @@ function ManageClients() {
                       style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
                     >
                       <TableCell>{event.id}</TableCell>
+                      <TableCell>
+                        {moment(event.createdAt).calendar()}
+                      </TableCell>
                       <TableCell>{event.Client.name}</TableCell>
                       <TableCell>{event.Client.firstName}</TableCell>
 
