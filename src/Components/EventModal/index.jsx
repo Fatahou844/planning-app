@@ -35,7 +35,6 @@ function EventDialog({
   onFactureReceive,
 }) {
   const [details, setDetails] = useState([]);
-  const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
   const [facture, setFacture] = useState(null);
   const axios = useAxios();
 
@@ -116,6 +115,10 @@ function EventDialog({
 
   useEffect(() => {
     if (editedEvent) {
+      console.log(
+        "*****************************editedEvent********************",
+        editedEvent
+      );
       const fetchDetails = async () => {
         try {
           setDetails(editedEvent.Details);
@@ -138,11 +141,6 @@ function EventDialog({
   }, [editedEvent.id]);
 
   // Handle input change for end date
-  const handleChangeFinDate = (e) => {
-    const value = e.target.value;
-    setFinDate(value);
-    setEditedEvent((prev) => ({ ...prev, finDate: value }));
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -219,6 +217,7 @@ function EventDialog({
       try {
         const order = {
           date: editedEvent.date,
+          endDate: editedEvent.endDate,
           startHour: parseInt(editedEvent.startHour),
           startMinute: parseInt(editedEvent.startMinute),
           endHour: parseInt(editedEvent.endHour),
@@ -986,10 +985,12 @@ function EventDialog({
                 />
                 <Typography variant="body1">Date de fin</Typography>
                 <TextField
-                  name="finDate"
+                  name="endDate"
                   type="date"
-                  value={finDate}
-                  onChange={handleChangeFinDate}
+                  value={editedEvent?.endDate? new Date(editedEvent?.endDate)
+                    ?.toISOString()
+                    ?.slice(0, 10):""}
+                  onChange={handleChange}
                   fullWidth
                   margin="normal"
                   required

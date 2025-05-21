@@ -308,6 +308,7 @@ function AddOrdreReparationModal({
 
       const order = await axios.post("/orders", {
         date: event.date,
+        endDate: finDate,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
@@ -320,6 +321,8 @@ function AddOrdreReparationModal({
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
         garageId: getCurrentUser().garageId,
+        operatorId: Operator.id,
+        receptionistId: Receptor.id,
       });
 
       console.log("eventRef", event);
@@ -371,93 +374,95 @@ function AddOrdreReparationModal({
     // const lastOrderNumber = await getLastOrderNumberForUser(userId);
     const newOrderNumber = 10000;
 
-    if (startDate.getTime() !== endDate.getTime()) {
-      // Cas où les événements couvrent plusieurs jours
+    // if (startDate.getTime() !== endDate.getTime()) {
+    //   // Cas où les événements couvrent plusieurs jours
 
-      // Ajout du premier événement pour la date de début
-      const firstEventEndHour = 19; // Heure de fin de la journée
-      const firstEventEndMinute = 0; // Fin de la journée à 18:00
-      const firstEvent = {
-        ...editedEvent,
-        endHour: firstEventEndHour,
-        endMinute: firstEventEndMinute,
-        userId: userId,
-        title: newOrderNumber, // Utiliser le même numéro de commande
-      };
-      const singleEventDocRef = await addSingleEvent(
-        firstEvent,
-        newOrderNumber,
-        true
-      ); // Ajout à Firestore
-      const IsvalidDetails = details.filter((detail) => {
-        return (
-          detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
-        );
-      });
+    //   // Ajout du premier événement pour la date de début
+    //   const firstEventEndHour = 19; // Heure de fin de la journée
+    //   const firstEventEndMinute = 0; // Fin de la journée à 18:00
+    //   const firstEvent = {
+    //     ...editedEvent,
+    //     endHour: firstEventEndHour,
+    //     endMinute: firstEventEndMinute,
+    //     userId: userId,
+    //     title: newOrderNumber, // Utiliser le même numéro de commande
+    //   };
+    //   const singleEventDocRef = await addSingleEvent(
+    //     firstEvent,
+    //     newOrderNumber,
+    //     true
+    //   ); // Ajout à Firestore
+    //   const IsvalidDetails = details.filter((detail) => {
+    //     return (
+    //       detail.label?.trim() ||
+    //       detail.quantity?.toString().trim() ||
+    //       detail.unitPrice?.toString().trim() ||
+    //       detail.discountPercent?.toString().trim() ||
+    //       detail.discountAmount?.toString().trim()
+    //     );
+    //   });
 
-      setNewOrder(singleEventDocRef);
+    //   setNewOrder(singleEventDocRef);
 
-      if (IsvalidDetails.length)
-        await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+    //   if (IsvalidDetails.length)
+    //     await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
 
-      // Ajout des événements pour les jours intermédiaires (si applicable)
-      let currentDate = new Date(startDate);
-      currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
-      while (currentDate < endDate) {
-        const dailyEvent = {
-          ...editedEvent,
-          date: formatDate(currentDate),
-          startHour: 7,
-          startMinute: 0,
-          endHour: 19,
-          endMinute: 0,
-          userId: userId,
-          title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
-        };
-        const singleEventDocRef = await addSingleEvent(
-          dailyEvent,
-          newOrderNumber,
-          true
-        ); // Ajout à Firestore
-        if (IsvalidDetails.length)
-          await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
-        currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
-      }
+    //   // Ajout des événements pour les jours intermédiaires (si applicable)
+    //   let currentDate = new Date(startDate);
+    //   currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
+    //   while (currentDate < endDate) {
+    //     const dailyEvent = {
+    //       ...editedEvent,
+    //       date: formatDate(currentDate),
+    //       startHour: 7,
+    //       startMinute: 0,
+    //       endHour: 19,
+    //       endMinute: 0,
+    //       userId: userId,
+    //       title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
+    //     };
+    //     const singleEventDocRef = await addSingleEvent(
+    //       dailyEvent,
+    //       newOrderNumber,
+    //       true
+    //     ); // Ajout à Firestore
+    //     if (IsvalidDetails.length)
+    //       await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+    //     currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
+    //   }
 
-      // Ajout du dernier événement pour la date de fin
-      const lastEvent = {
-        ...editedEvent,
-        date: finDate,
-        startHour: 7,
-        startMinute: 0,
-        endHour: parseInt(editedEvent.endHour), // Heure réelle de fin
-        endMinute: parseInt(editedEvent.endMinute),
-        userId: userId,
-        title: newOrderNumber, // Utiliser le même numéro de commande
-        nextDay: false,
-      };
-      const lastEventDocRef = await addSingleEvent(
-        lastEvent,
-        newOrderNumber,
-        false
-      ); // Ajout à Firestore
+    //   // Ajout du dernier événement pour la date de fin
+    //   const lastEvent = {
+    //     ...editedEvent,
+    //     date: finDate,
+    //     startHour: 7,
+    //     startMinute: 0,
+    //     endHour: parseInt(editedEvent.endHour), // Heure réelle de fin
+    //     endMinute: parseInt(editedEvent.endMinute),
+    //     userId: userId,
+    //     title: newOrderNumber, // Utiliser le même numéro de commande
+    //     nextDay: false,
+    //   };
+    //   const lastEventDocRef = await addSingleEvent(
+    //     lastEvent,
+    //     newOrderNumber,
+    //     false
+    //   ); // Ajout à Firestore
 
-      const validDetails = details.filter((detail) => {
-        return (
-          detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
-        );
-      });
-      if (validDetails.length)
-        await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
-    } else {
+    //   const validDetails = details.filter((detail) => {
+    //     return (
+    //       detail.label?.trim() ||
+    //       detail.quantity?.toString().trim() ||
+    //       detail.unitPrice?.toString().trim() ||
+    //       detail.discountPercent?.toString().trim() ||
+    //       detail.discountAmount?.toString().trim()
+    //     );
+    //   });
+    //   if (validDetails.length)
+    //     await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
+    // } else
+
+    {
       // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
         ...editedEvent,

@@ -246,6 +246,33 @@ const Planning = () => {
     fetchCategories();
   }, []);
 
+  // useEffect(() => {
+  //   const fetchEvents = async () => {
+  //     try {
+  //       const response = await axios.get(
+  //         `/documents-garage/order/${getCurrentUser().garageId}/details`
+  //       );
+
+  //       const eventsData = response.data.data;
+
+  //       // Filtrer les événements si nécessaire
+  //       const filteredEvents = eventsData.filter(
+  //         (event) => event.date === selectedDate && !event.isClosed
+  //       );
+
+  //       setDataEvents(filteredEvents);
+
+  //       console.log("eventsData", filteredEvents);
+  //     } catch (error) {
+  //       console.error("Erreur lors de la récupération des événements :", error);
+  //     }
+  //   };
+
+  //   fetchEvents();
+  // }, [selectedDate, facture]); // Dépendances pour recharger les données
+
+  const [selectedNewEvents, setSelectedNewEvents] = useState([]);
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -254,30 +281,104 @@ const Planning = () => {
         );
 
         const eventsData = response.data.data;
+        setSelectedNewEvents(response.data.data);
 
-        // Filtrer les événements si nécessaire
-        const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
-        );
+        const filteredEvents = eventsData
+          .filter((event) => {
+            if (event.isClosed) return false;
+
+            const startDate = new Date(event.date);
+            const endDate = new Date(event.endDate);
+            const current = new Date(selectedDate);
+
+            // Normaliser les dates à 00:00 pour la comparaison
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            current.setHours(0, 0, 0, 0);
+
+            return current >= startDate && current <= endDate;
+          })
+          .map((event) => {
+            const current = new Date(selectedDate);
+            const isStartDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.date).setHours(0, 0, 0, 0);
+            const isEndDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.endDate).setHours(0, 0, 0, 0);
+
+            let startHour = 7;
+            let startMinute = 0;
+            let endHour = 19;
+            let endMinute = 0;
+            let nextDay = true;
+
+            if (isStartDay) {
+              startHour = event.startHour;
+              startMinute = event.startMinute;
+            }
+
+            if (isEndDay) {
+              endHour = event.endHour;
+              endMinute = event.endMinute;
+              nextDay = false;
+            }
+
+            return {
+              ...event,
+              startHour,
+              startMinute,
+              endHour,
+              endMinute,
+              nextDay,
+            };
+          });
 
         setDataEvents(filteredEvents);
-
-        console.log("eventsData", filteredEvents);
+        console.log("filteredEvents", filteredEvents);
       } catch (error) {
         console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
     fetchEvents();
-  }, [selectedDate, facture]); // Dépendances pour recharger les données
+  }, [selectedDate, facture]);
 
   const currentHour = new Date().getHours();
 
+  // const handleEventClick = (event) => {
+  //   console.log("EVENT CURRENT", event);
+  //   setSelectedEvent(event);
+  //   setModalOpen(true);
+  // };
+
   const handleEventClick = (event) => {
-    console.log("EVENT CURRENT", event);
-    setSelectedEvent(event);
+    // Trouver l'original dans selectedNewEvents
+    const originalEvent = selectedNewEvents.find((e) => e.id === event.id);
+
+    if (originalEvent) {
+      // Remplacer les heures dans une copie de l'objet
+      const enrichedEvent = {
+        ...event,
+        startHour: originalEvent.startHour,
+        startMinute: originalEvent.startMinute,
+        endHour: originalEvent.endHour,
+        endMinute: originalEvent.endMinute,
+        endDate: originalEvent.endDate,
+      };
+
+      console.log("🛠️ Event enrichi :", enrichedEvent);
+
+      // Utilise enrichedEvent à la place de event
+      // Par exemple, ouvrir une modal, ou setter dans un state
+      setSelectedEvent(enrichedEvent);
+    } else {
+      console.warn("⚠️ Aucune correspondance trouvée dans selectedNewEvents.");
+      setSelectedEvent(event);
+    }
     setModalOpen(true);
   };
+
   const handleModalClose = () => {
     setModalOpen(false);
     console.log("FERMETURE");
@@ -334,91 +435,95 @@ const Planning = () => {
     // const lastOrderNumber = await getLastOrderNumberForUser(userId);
     const newOrderNumber = 1000;
 
-    if (startDate.getTime() !== endDate.getTime()) {
-      // Cas où les événements couvrent plusieurs jours
+    // if (startDate.getTime() !== endDate.getTime()) {
+    //   // Cas où les événements couvrent plusieurs jours
 
-      // Ajout du premier événement pour la date de début
-      const firstEventEndHour = 19; // Heure de fin de la journée
-      const firstEventEndMinute = 0; // Fin de la journée à 18:00
-      const firstEvent = {
-        ...newEvent,
-        endHour: firstEventEndHour,
-        endMinute: firstEventEndMinute,
-        userId: userId,
-        title: newOrderNumber, // Utiliser le même numéro de commande
-      };
-      const singleEventDocRef = await addSingleEvent(
-        firstEvent,
-        newOrderNumber,
-        true
-      ); // Ajout à Firestore
-      const IsvalidDetails = details.filter((detail) => {
-        return (
-          detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
-        );
-      });
+    //   // Ajout du premier événement pour la date de début
+    //   const firstEventEndHour = 19; // Heure de fin de la journée
+    //   const firstEventEndMinute = 0; // Fin de la journée à 18:00
+    //   const firstEvent = {
+    //     ...newEvent,
+    //     endHour: firstEventEndHour,
+    //     endMinute: firstEventEndMinute,
+    //     userId: userId,
+    //     title: newOrderNumber, // Utiliser le même numéro de commande
+    //   };
+    //   const singleEventDocRef = await addSingleEvent(
+    //     firstEvent,
+    //     newOrderNumber,
+    //     true
+    //   ); // Ajout à Firestore
+    //   const IsvalidDetails = details.filter((detail) => {
+    //     return (
+    //       detail.label?.trim() ||
+    //       detail.quantity?.toString().trim() ||
+    //       detail.unitPrice?.toString().trim() ||
+    //       detail.discountPercent?.toString().trim() ||
+    //       detail.discountAmount?.toString().trim()
+    //     );
+    //   });
 
-      if (IsvalidDetails.length)
-        await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+    //   if (IsvalidDetails.length)
+    //     await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
 
-      // Ajout des événements pour les jours intermédiaires (si applicable)
-      let currentDate = new Date(startDate);
-      currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
-      while (currentDate < endDate) {
-        const dailyEvent = {
-          ...newEvent,
-          date: formatDate(currentDate),
-          startHour: 7,
-          startMinute: 0,
-          endHour: 19,
-          endMinute: 0,
-          userId: userId,
-          title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
-        };
-        const singleEventDocRef = await addSingleEvent(
-          dailyEvent,
-          newOrderNumber,
-          true
-        ); // Ajout à Firestore
-        if (IsvalidDetails.length)
-          await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
-        currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
-      }
+    //   // Ajout des événements pour les jours intermédiaires (si applicable)
+    //   let currentDate = new Date(startDate);
+    //   currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
+    //   while (currentDate < endDate) {
+    //     const dailyEvent = {
+    //       ...newEvent,
+    //       date: formatDate(currentDate),
+    //       startHour: 7,
+    //       startMinute: 0,
+    //       endHour: 19,
+    //       endMinute: 0,
+    //       userId: userId,
+    //       title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
+    //     };
+    //     const singleEventDocRef = await addSingleEvent(
+    //       dailyEvent,
+    //       newOrderNumber,
+    //       true
+    //     ); // Ajout à Firestore
+    //     if (IsvalidDetails.length)
+    //       await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
+    //     currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
+    //   }
 
-      // Ajout du dernier événement pour la date de fin
-      const lastEvent = {
-        ...newEvent,
-        date: finDate,
-        startHour: 7,
-        startMinute: 0,
-        endHour: parseInt(newEvent.endHour), // Heure réelle de fin
-        endMinute: parseInt(newEvent.endMinute),
-        userId: userId,
-        title: newOrderNumber, // Utiliser le même numéro de commande
-        nextDay: false,
-      };
-      const lastEventDocRef = await addSingleEvent(
-        lastEvent,
-        newOrderNumber,
-        false
-      ); // Ajout à Firestore
+    //   // Ajout du dernier événement pour la date de fin
+    //   const lastEvent = {
+    //     ...newEvent,
+    //     date: finDate,
+    //     startHour: 7,
+    //     startMinute: 0,
+    //     endHour: parseInt(newEvent.endHour), // Heure réelle de fin
+    //     endMinute: parseInt(newEvent.endMinute),
+    //     userId: userId,
+    //     title: newOrderNumber, // Utiliser le même numéro de commande
+    //     nextDay: false,
+    //   };
+    //   const lastEventDocRef = await addSingleEvent(
+    //     lastEvent,
+    //     newOrderNumber,
+    //     false
+    //   ); // Ajout à Firestore
 
-      const validDetails = details.filter((detail) => {
-        return (
-          detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
-        );
-      });
-      if (validDetails.length)
-        await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
-    } else {
+    //   const validDetails = details.filter((detail) => {
+    //     return (
+    //       detail.label?.trim() ||
+    //       detail.quantity?.toString().trim() ||
+    //       detail.unitPrice?.toString().trim() ||
+    //       detail.discountPercent?.toString().trim() ||
+    //       detail.discountAmount?.toString().trim()
+    //     );
+    //   });
+    //   if (validDetails.length)
+    //     await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
+    // }
+
+    // else
+
+    {
       // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
         ...newEvent,
@@ -457,11 +562,57 @@ const Planning = () => {
         );
 
         const eventsData = response.data.data;
+        setSelectedNewEvents(response.data.data);
+        const filteredEvents = eventsData
+          .filter((event) => {
+            if (event.isClosed) return false;
 
-        // Filtrer les événements si nécessaire
-        const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
-        );
+            const startDate = new Date(event.date);
+            const endDate = new Date(event.endDate);
+            const current = new Date(selectedDate);
+
+            // Normaliser les dates à 00:00 pour la comparaison
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            current.setHours(0, 0, 0, 0);
+
+            return current >= startDate && current <= endDate;
+          })
+          .map((event) => {
+            const current = new Date(selectedDate);
+            const isStartDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.date).setHours(0, 0, 0, 0);
+            const isEndDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.endDate).setHours(0, 0, 0, 0);
+
+            let startHour = 7;
+            let startMinute = 0;
+            let endHour = 19;
+            let endMinute = 0;
+            let nextDay = true;
+
+            if (isStartDay) {
+              startHour = event.startHour;
+              startMinute = event.startMinute;
+            }
+
+            if (isEndDay) {
+              endHour = event.endHour;
+              endMinute = event.endMinute;
+              nextDay = false;
+            }
+
+            return {
+              ...event,
+              startHour,
+              startMinute,
+              endHour,
+              endMinute,
+              nextDay,
+            };
+          });
 
         setDataEvents(filteredEvents);
 
@@ -859,6 +1010,7 @@ const Planning = () => {
     try {
       const order = await axios.post("/orders", {
         date: event.date,
+        endDate: finDate,
         startHour: parseInt(event.startHour),
         startMinute: parseInt(event.startMinute),
         endHour: parseInt(event.endHour),
@@ -878,10 +1030,11 @@ const Planning = () => {
       setSelectedEvent({
         id: order.data.id,
         date: event.date,
-        startHour: parseInt(event.startHour),
-        startMinute: parseInt(event.startMinute),
-        endHour: parseInt(event.endHour),
-        endMinute: parseInt(event.endMinute),
+        endDate: order.data.endDate,
+        startHour: parseInt(order.data.startHour),
+        startMinute: parseInt(order.data.startMinute),
+        endHour: parseInt(order.data.endHour),
+        endMinute: parseInt(order.data.endMinute),
         categoryId: event.category.id,
         clientId: Client.id,
         vehicleId: Vehicle.id,
@@ -955,6 +1108,7 @@ const Planning = () => {
       setSelectedEvent({
         id: response.data.id,
         date: event.date,
+
         notes: event.notes,
 
         clientId: Client.id,
@@ -1339,11 +1493,58 @@ const Planning = () => {
           );
 
           const eventsData = response.data.data;
+          setSelectedNewEvents(response.data.data);
 
-          // Filtrer les événements si nécessaire
-          const filteredEvents = eventsData.filter(
-            (event) => event.date === selectedDate && !event.isClosed
-          );
+          const filteredEvents = eventsData
+            .filter((event) => {
+              if (event.isClosed) return false;
+
+              const startDate = new Date(event.date);
+              const endDate = new Date(event.endDate);
+              const current = new Date(selectedDate);
+
+              // Normaliser les dates à 00:00 pour la comparaison
+              startDate.setHours(0, 0, 0, 0);
+              endDate.setHours(0, 0, 0, 0);
+              current.setHours(0, 0, 0, 0);
+
+              return current >= startDate && current <= endDate;
+            })
+            .map((event) => {
+              const current = new Date(selectedDate);
+              const isStartDay =
+                new Date(selectedDate).setHours(0, 0, 0, 0) ===
+                new Date(event.date).setHours(0, 0, 0, 0);
+              const isEndDay =
+                new Date(selectedDate).setHours(0, 0, 0, 0) ===
+                new Date(event.endDate).setHours(0, 0, 0, 0);
+
+              let startHour = 7;
+              let startMinute = 0;
+              let endHour = 19;
+              let endMinute = 0;
+              let nextDay = true;
+
+              if (isStartDay) {
+                startHour = event.startHour;
+                startMinute = event.startMinute;
+              }
+
+              if (isEndDay) {
+                endHour = event.endHour;
+                endMinute = event.endMinute;
+                nextDay = false;
+              }
+
+              return {
+                ...event,
+                startHour,
+                startMinute,
+                endHour,
+                endMinute,
+                nextDay,
+              };
+            });
 
           setDataEvents(filteredEvents);
 
@@ -1405,11 +1606,58 @@ const Planning = () => {
         );
 
         const eventsData = response.data.data;
+        setSelectedNewEvents(response.data.data);
 
-        // Filtrer les événements si nécessaire
-        const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
-        );
+        const filteredEvents = eventsData
+          .filter((event) => {
+            if (event.isClosed) return false;
+
+            const startDate = new Date(event.date);
+            const endDate = new Date(event.endDate);
+            const current = new Date(selectedDate);
+
+            // Normaliser les dates à 00:00 pour la comparaison
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            current.setHours(0, 0, 0, 0);
+
+            return current >= startDate && current <= endDate;
+          })
+          .map((event) => {
+            const current = new Date(selectedDate);
+            const isStartDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.date).setHours(0, 0, 0, 0);
+            const isEndDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.endDate).setHours(0, 0, 0, 0);
+
+            let startHour = 7;
+            let startMinute = 0;
+            let endHour = 19;
+            let endMinute = 0;
+            let nextDay = true;
+
+            if (isStartDay) {
+              startHour = event.startHour;
+              startMinute = event.startMinute;
+            }
+
+            if (isEndDay) {
+              endHour = event.endHour;
+              endMinute = event.endMinute;
+              nextDay = false;
+            }
+
+            return {
+              ...event,
+              startHour,
+              startMinute,
+              endHour,
+              endMinute,
+              nextDay,
+            };
+          });
 
         setDataEvents(filteredEvents);
 
@@ -1549,11 +1797,58 @@ const Planning = () => {
         );
 
         const eventsData = response.data.data;
+        setSelectedNewEvents(response.data.data);
 
-        // Filtrer les événements si nécessaire
-        const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
-        );
+        const filteredEvents = eventsData
+          .filter((event) => {
+            if (event.isClosed) return false;
+
+            const startDate = new Date(event.date);
+            const endDate = new Date(event.endDate);
+            const current = new Date(selectedDate);
+
+            // Normaliser les dates à 00:00 pour la comparaison
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            current.setHours(0, 0, 0, 0);
+
+            return current >= startDate && current <= endDate;
+          })
+          .map((event) => {
+            const current = new Date(selectedDate);
+            const isStartDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.date).setHours(0, 0, 0, 0);
+            const isEndDay =
+              new Date(selectedDate).setHours(0, 0, 0, 0) ===
+              new Date(event.endDate).setHours(0, 0, 0, 0);
+
+            let startHour = 7;
+            let startMinute = 0;
+            let endHour = 19;
+            let endMinute = 0;
+            let nextDay = true;
+
+            if (isStartDay) {
+              startHour = event.startHour;
+              startMinute = event.startMinute;
+            }
+
+            if (isEndDay) {
+              endHour = event.endHour;
+              endMinute = event.endMinute;
+              nextDay = false;
+            }
+
+            return {
+              ...event,
+              startHour,
+              startMinute,
+              endHour,
+              endMinute,
+              nextDay,
+            };
+          });
 
         setDataEvents(filteredEvents);
 
