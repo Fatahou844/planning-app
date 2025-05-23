@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 const garagesMock = [
   { label: "Garage Auto Pro", id: 1 },
@@ -50,10 +50,17 @@ export default function AuthPages() {
         password: form.password,
       });
     } else {
-      await axios.post("/login", {
+      const userToken = await axios.post("/login", {
         email: form.email,
         password: form.password,
       });
+
+      if(userToken.data.token)
+      {
+        window.location.href = "/planning/categories";
+      }
+
+
     }
 
     if (isSignUp && (!form.firstName || !form.lastName || !form.garage)) {
@@ -74,12 +81,12 @@ export default function AuthPages() {
           {isSignUp ? "Créer un compte" : "Connexion à l'espace garage"}
         </Typography>
 
-        <Alert severity="info" sx={{ mb: 2 }}>
+        {/* <Alert severity="info" sx={{ mb: 2 }}>
           Lorem ipsum dolor sit amet consectetur, adipisicing elit. Iusto velit
           fuga quos possimus, nemo alias quam maxime animi aliquam architecto
           eveniet pariatur dolorem vero, nobis maiores asperiores iure amet
           harum.
-        </Alert>
+        </Alert> */}
 
         {alertMessage && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -147,9 +154,7 @@ export default function AuthPages() {
             {isSignUp ? "S'inscrire" : "Se connecter"}
           </Button>
 
-          <Button onClick={() => setIsSignUp(!isSignUp)} color="secondary">
-            {isSignUp ? "Déjà un compte ? Se connecter" : "Créer un compte"}
-          </Button>
+        
         </Stack>
       </Box>
     </Container>
