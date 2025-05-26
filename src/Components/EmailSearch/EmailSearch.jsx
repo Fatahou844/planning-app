@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 
 const EmailSearch = ({ onSelectClient, Client }) => {
@@ -34,7 +34,11 @@ const EmailSearch = ({ onSelectClient, Client }) => {
   useEffect(() => {
     if (inputValue.length > 1) {
       axios
-        .get(`/clients/search/email?email=${inputValue}`)
+        .get(
+          `/clients/search/email/${
+            getCurrentUser().garageId
+          }?email=${inputValue}`
+        )
         .then((res) => setClients(res.data))
         .catch((err) => console.error(err));
     } else {

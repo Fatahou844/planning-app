@@ -719,7 +719,7 @@ function ManageClients() {
                     >
                       <TableCell>{event.id}</TableCell>
                       <TableCell>
-                        {moment(event.createdAt).calendar()}
+                        {moment(event.createdAt).format('DD/MM/YYYY')}
                       </TableCell>
                       <TableCell>{event.Client.name}</TableCell>
                       <TableCell>{event.Client.firstName}</TableCell>

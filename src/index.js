@@ -12,7 +12,8 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import {
   Route,
@@ -29,7 +30,6 @@ import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
-
 const tabLabels = [
   { label: "Planning", path: "/planning/categories" },
   { label: "Clients", path: "/clients" },
@@ -41,6 +41,8 @@ const tabLabels = [
   { label: "Marketing", path: "/marketing" },
   { label: "Paramètres", path: "/parametres" },
 ];
+const BASE_URL_API = "https://api.zpdigital.fr";
+//const BASE_URL_API = "http://localhost:4001";
 
 const DashboardTabs = () => {
   const navigate = useNavigate();
@@ -53,93 +55,98 @@ const DashboardTabs = () => {
     navigate(tabLabels[newValue].path);
   };
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    const authToken = getCookie("jwtToken");
+
+    const config = {
+      withCredentials: true, // TRÈS IMPORTANT
+
+      headers: {
+        Authorization: `Bearer ${authToken}`, // Utilisation de Bearer pour les jetons JWT
+        // Si vous utilisez un autre type d'autorisation, ajustez cette ligne en conséquence
+      },
+    };
+
+    const fetchAuthStatus = async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL_API}/v1/auth/check-auth`,
+          config
+        );
+        setIsAuthenticated(res.data.isAuthenticated);
+        const response = await axios.get(`${BASE_URL_API}/v1`, config);
+        var jsonString = JSON.stringify(response.data);
+        console.log("ENREGISTREMENT DES DONNES USERS");
+        localStorage.setItem("me", jsonString);
+
+        if (window.localStorage.getItem("me")) {
+          const retrievedObject = JSON.parse(window.localStorage.getItem("me"));
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Error fetching authentication status:", error);
+      }
+    };
+
+    fetchAuthStatus();
+  }, [, isAuthenticated]);
+
   return (
-    // <Container
-    //   maxWidth="xl"
-    //   sx={{
-    //     position: "fixed",
-    //     top: 0,
-    //     left: "50%",
-    //     transform: "translateX(-50%)", // Centre horizontalement
-    //     width: "80vw", // Ajuste la largeur pour un meilleur rendu
-    //     bgcolor: "background.paper",
-    //     boxShadow: 3,
-    //     borderRadius: 2,
-    //     zIndex: 999, // Toujours au-dessus
-    //     marginBottom: "20px", // Marge en bas pour l'espacement
-    //     p: 1,
-    //     paddingTop: "0px",
-    //     paddingBottom: "0px",
-    //   }}
-    // >
-    //   <Box
-    //     sx={{
-    //       width: "100%",
-    //     }}
-    //   >
-    //     <Tabs
-    //       value={activeTab !== -1 ? activeTab : 0}
-    //       onChange={handleChange}
-    //       variant="fullWidth"
-    //       textColor="primary"
-    //       indicatorColor="primary"
-    //     >
-    //       {tabLabels.map((tab, index) => (
-    //         <Tab
-    //           key={index}
-    //           label={tab.label}
-    //           sx={{
-    //             paddingTop: "0px",
-    //             paddingBottom: "0px",
-    //           }}
-    //         />
-    //       ))}
-    //     </Tabs>
-    //   </Box>
-    // </Container>
-    <Container
-      maxWidth="xl"
-      sx={{
-        position: "fixed",
-        top: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "80vw",
-        bgcolor: "background.paper",
-        boxShadow: 3,
-        borderRadius: 2,
-        zIndex: 999,
-        p: 0, // Suppression du padding
-      }}
-    >
-      <Box sx={{ width: "100%" }}>
-        <Tabs
-          value={activeTab !== -1 ? activeTab : 0}
-          onChange={handleChange}
-          variant="fullWidth"
-          textColor="primary"
-          indicatorColor="primary"
+    <>
+      {isAuthenticated && (
+        <Container
+          maxWidth="xl"
           sx={{
-            minHeight: "24px", // Hauteur ultra-mince
-            height: "24px",
+            position: "fixed",
+            top: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "80vw",
+            bgcolor: "background.paper",
+            boxShadow: 3,
+            borderRadius: 2,
+            zIndex: 999,
+            p: 0, // Suppression du padding
           }}
         >
-          {tabLabels.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab.label}
+          <Box sx={{ width: "100%" }}>
+            <Tabs
+              value={activeTab !== -1 ? activeTab : 0}
+              onChange={handleChange}
+              variant="fullWidth"
+              textColor="primary"
+              indicatorColor="primary"
               sx={{
-                minHeight: "24px", // Onglets aussi minces que possible
+                minHeight: "24px", // Hauteur ultra-mince
                 height: "24px",
-                padding: "2px 6px", // Réduction du padding
-                fontSize: "0.7rem", // Texte plus petit
-                lineHeight: "1", // Compactage du texte
               }}
-            />
-          ))}
-        </Tabs>
-      </Box>
-    </Container>
+            >
+              {tabLabels.map((tab, index) => (
+                <Tab
+                  key={index}
+                  label={tab.label}
+                  sx={{
+                    minHeight: "24px", // Onglets aussi minces que possible
+                    height: "24px",
+                    padding: "2px 6px", // Réduction du padding
+                    fontSize: "0.7rem", // Texte plus petit
+                    lineHeight: "1", // Compactage du texte
+                  }}
+                />
+              ))}
+            </Tabs>
+          </Box>
+        </Container>
+      )}
+    </>
   );
 };
 
@@ -208,80 +215,128 @@ const DashboardTabs = () => {
 const ActivitySidebar = () => {
   const [open, setOpen] = useState(false);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    const authToken = getCookie("jwtToken");
+
+    const config = {
+      withCredentials: true, // TRÈS IMPORTANT
+
+      headers: {
+        Authorization: `Bearer ${authToken}`, // Utilisation de Bearer pour les jetons JWT
+        // Si vous utilisez un autre type d'autorisation, ajustez cette ligne en conséquence
+      },
+    };
+
+    const fetchAuthStatus = async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL_API}/v1/auth/check-auth`,
+          config
+        );
+        setIsAuthenticated(res.data.isAuthenticated);
+        const response = await axios.get(`${BASE_URL_API}/v1`, config);
+        var jsonString = JSON.stringify(response.data);
+        console.log("ENREGISTREMENT DES DONNES USERS");
+        localStorage.setItem("me", jsonString);
+
+        if (window.localStorage.getItem("me")) {
+          const retrievedObject = JSON.parse(window.localStorage.getItem("me"));
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Error fetching authentication status:", error);
+      }
+    };
+
+    fetchAuthStatus();
+  }, [, isAuthenticated]);
+
   return (
-    <Drawer
-      anchor="left"
-      open={open}
-      variant="permanent"
-      onClick={() => setOpen(!open)}
-      sx={{
-        position: "fixed",
-        height: "100vh",
-        width: open ? 250 : 40,
-        flexShrink: 0,
-        zIndex: 1300,
-        "& .MuiDrawer-paper": {
-          width: open ? 250 : 40,
-          height: "100vh",
-          transition: "width 0.3s",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "space-between",
-          cursor: "pointer",
-          position: "fixed",
-          zIndex: 1300,
-        },
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          height: "100%",
-          position: "relative",
-        }}
-      >
-        {open ? (
-          <List sx={{ flexGrow: 1, width: "100%" }}>
-            <ListItem button>
-              <ListItemText primary="Historique 1" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Historique 2" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Historique 3" />
-            </ListItem>
-          </List>
-        ) : (
-          <Typography
-            variant="body2"
-            sx={{
-              transform: "rotate(-90deg)",
-              whiteSpace: "nowrap",
-              position: "absolute",
-              top: "50%",
-              left: 5,
-            }}
-          >
-            Activité
-          </Typography>
-        )}
-        <IconButton
-          sx={{ position: "absolute", bottom: 10 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen(!open);
+    <>
+      {isAuthenticated && (
+        <Drawer
+          anchor="left"
+          open={open}
+          variant="permanent"
+          onClick={() => setOpen(!open)}
+          sx={{
+            position: "fixed",
+            height: "100vh",
+            width: open ? 250 : 40,
+            flexShrink: 0,
+            zIndex: 1300,
+            "& .MuiDrawer-paper": {
+              width: open ? 250 : 40,
+              height: "100vh",
+              transition: "width 0.3s",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              position: "fixed",
+              zIndex: 1300,
+            },
           }}
         >
-          {open ? <ArrowBackIosIcon /> : <ArrowForwardIosIcon />}
-        </IconButton>
-      </Box>
-    </Drawer>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width: "100%",
+              height: "100%",
+              position: "relative",
+            }}
+          >
+            {open ? (
+              <List sx={{ flexGrow: 1, width: "100%" }}>
+                <ListItem button>
+                  <ListItemText primary="Historique 1" />
+                </ListItem>
+                <ListItem button>
+                  <ListItemText primary="Historique 2" />
+                </ListItem>
+                <ListItem button>
+                  <ListItemText primary="Historique 3" />
+                </ListItem>
+              </List>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{
+                  transform: "rotate(-90deg)",
+                  whiteSpace: "nowrap",
+                  position: "absolute",
+                  top: "50%",
+                  left: 5,
+                }}
+              >
+                Activité
+              </Typography>
+            )}
+            <IconButton
+              sx={{ position: "absolute", bottom: 10 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(!open);
+              }}
+            >
+              {open ? <ArrowBackIosIcon /> : <ArrowForwardIosIcon />}
+            </IconButton>
+          </Box>
+        </Drawer>
+      )}
+    </>
   );
 };
 

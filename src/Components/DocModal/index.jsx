@@ -685,6 +685,10 @@ function DocModal({
     if (onNotificationSuccess) {
       onNotificationSuccess(valeur);
       setNewOrder(valeur);
+      console.log(
+        "DocModal file: ***********************################################************************* NEWORDER **********************#####################********************",
+        valeur
+      );
 
       console.log("OR reçue dans DocumentModal handleORCReated :");
     } // Envoie la facture au Grand-parent (Planning)

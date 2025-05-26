@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 
 const FirstnameSearch = ({ onSelectClient, Client }) => {
@@ -43,7 +43,11 @@ const FirstnameSearch = ({ onSelectClient, Client }) => {
   useEffect(() => {
     if (inputValue.length > 1) {
       axios
-        .get(`/clients/search/firstname?firstName=${inputValue}`)
+        .get(
+          `/clients/search/firstname/${
+            getCurrentUser().garageId
+          }?firstName=${inputValue}`
+        )
         .then((res) => setClients(res.data))
         .catch((err) => console.error(err));
     } else {

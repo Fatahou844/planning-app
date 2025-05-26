@@ -1975,10 +1975,6 @@ const Planning = () => {
       setModalOpen3(true);
       setFacture(factureData?.data);
 
-      console.log(
-        "##############################Facture reçue du child: #################################################",
-        factureData.data
-      );
       handleOpenNotif("Facture");
     }
   };
@@ -1989,7 +1985,12 @@ const Planning = () => {
     setModalOpen(false);
     setNewOrder(valeur);
 
-    setSelectedEvent({ ...selectedEvent, id: valeur.id });
+    setSelectedEvent({ ...selectedEvent, id: 600 });
+
+    console.log(
+      "*************************************** handleOnNotficationSuccess ******************************** ",
+      valeur
+    );
 
     setNotification({
       open: true,
@@ -2124,7 +2125,7 @@ const Planning = () => {
           categories={categories}
           onFactureReceive={handleFactureReceived}
           onDelete={handleSearchClickFull}
-          onNotificationSuccess={handleOnNotficationSuccess}
+          onNotificationSuccess={(valeur) => handleOnNotficationSuccess(valeur)}
           onSearchAfterDevisResa={handleSearchClickFull}
         />
       )}
