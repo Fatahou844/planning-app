@@ -32,7 +32,11 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
     if (inputValue.length > 1) {
       axios
         .get(`/users/search?firstName=${inputValue}&garageId=${garageId}`)
-        .then((res) => setUserss(res.data))
+        .then((res) => {
+          setUserss(res.data);
+          console.log("inputValue:", inputValue);
+          console.log("résultat API:", res.data);
+        })
         .catch((err) => console.error(err));
     } else {
       setUserss([]);
@@ -124,7 +128,9 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
       {/* Zone de recherche */}
       <Autocomplete
         options={Userss}
-        getOptionLabel={(option) => option.firstName}
+        getOptionLabel={(option) =>
+          `${option.firstName || ""} ${option.name || ""}`.trim()
+        }
         value={selectedUsers}
         onChange={handleSelectUsers}
         inputValue={inputValue}
