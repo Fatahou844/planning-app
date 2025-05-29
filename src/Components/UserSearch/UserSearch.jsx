@@ -55,6 +55,7 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
     if (value && value.id) {
       setSelectedUsers(value);
       onSelectUser(value);
+      setInputValue("");
     }
   };
 
@@ -71,7 +72,7 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
 
     // Recalcul de la validité du formulaire
     const hasErrors = Object.values(errors).some((err) => err !== "");
-    const isInvalid = !updatedUsers.email || hasErrors;
+    const isInvalid = hasErrors;
     setIsFormInvalid(isInvalid);
   };
 
@@ -101,28 +102,6 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
       .catch((err) => console.error(err));
   };
 
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    let error = "";
-
-    if (
-      name === "email" &&
-      value &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-    ) {
-      error = "Email invalide";
-    }
-
-    setErrors((prev) => ({ ...prev, [name]: error }));
-
-    // Recalcule si le form devient invalide
-    const hasErrors = Object.values({ ...errors, [name]: error }).some(
-      (err) => err !== ""
-    );
-    const isInvalid = !newUsers.email || hasErrors;
-    setIsFormInvalid(isInvalid);
-  };
-
   return (
     <Box sx={{ width: "100%" }}>
       {/* Zone de recherche */}
@@ -134,7 +113,10 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
         value={selectedUsers}
         onChange={handleSelectUsers}
         inputValue={inputValue}
-        onInputChange={(event, newValue) => setInputValue(newValue)}
+        onInputChange={(event, newValue) => {
+          setInputValue(newValue);
+          setSelectedUsers(null);
+        }}
         freeSolo
         renderInput={(params) => (
           <TextField
@@ -158,7 +140,7 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
       />
 
       {/* Si aucune suggestion n'existe, afficher le bouton pour créer */}
-      {inputValue.length > 1 && Userss.length === 0 && (
+      {inputValue.length > 1 && Userss.length == 0 && !selectedUsers && (
         <Button
           variant="contained"
           color="primary"
@@ -189,17 +171,6 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
             margin="normal"
             onChange={handleNewUsersChange}
             size="small"
-          />
-          <TextField
-            name="email"
-            label="Email"
-            fullWidth
-            margin="normal"
-            onChange={handleNewUsersChange}
-            size="small"
-            onBlur={handleBlur}
-            error={!!errors.email}
-            helperText={errors.email}
           />
         </DialogContent>
         <DialogActions>
