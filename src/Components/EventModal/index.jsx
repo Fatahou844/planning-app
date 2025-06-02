@@ -36,6 +36,19 @@ function EventDialog({
 }) {
   const [details, setDetails] = useState([]);
   const [facture, setFacture] = useState(null);
+  const [vehicleUpdated, setVehicleUpdated] = useState(false);
+
+  const [Vehicle, setVehicle] = useState(editedEvent?.Vehicle);
+
+  const handleVehicleChange = (e) => {
+    const { name, value } = e.target;
+    setVehicle((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setVehicleUpdated(true);
+  };
+
   const axios = useAxios();
 
   console.log("Parent : Reçoit onFactureReceive", onFactureReceive);
@@ -135,6 +148,7 @@ function EventDialog({
           console.error("Erreur lors de la récupération des détails :", error);
         }
       };
+      setVehicle(editedEvent?.Vehicle);
 
       fetchDetails();
     }
@@ -246,6 +260,18 @@ function EventDialog({
               orderId: editedEvent.id, // Lier le nouveau détail à l'order
               documentType: "Order",
             });
+          }
+        }
+
+        if (vehicleUpdated) {
+          try {
+            await axios.put(`/vehicles/${editedEvent.vehicleId}`, {
+              mileage: Vehicle.mileage,
+              lastCheck: Vehicle.lastCheck,
+            });
+            console.log("Véhicule mis à jour avec succès");
+          } catch (err) {
+            console.error("Erreur lors de la mise à jour du véhicule :", err);
           }
         }
 
@@ -631,9 +657,9 @@ function EventDialog({
                 />
                 <TextField
                   label="kilométrage"
-                  name="vehicule.kms"
-                  value={editedEvent.Vehicle?.mileage || ""}
-                  onChange={handleChange}
+                  name="mileage"
+                  value={Vehicle?.mileage || ""}
+                  onChange={handleVehicleChange}
                   fullWidth
                   margin="normal"
                   size="small"
@@ -643,10 +669,10 @@ function EventDialog({
                   }}
                 />
                 <TextField
-                  name="vehicule.controletech"
-                  value={editedEvent.Vehicle?.lastCheck || ""}
+                  name="lastCheck"
+                  value={Vehicle?.lastCheck || ""}
                   type="date"
-                  onChange={handleChange}
+                  onChange={handleVehicleChange}
                   fullWidth
                   margin="normal"
                   size="small"
@@ -987,9 +1013,13 @@ function EventDialog({
                 <TextField
                   name="endDate"
                   type="date"
-                  value={editedEvent?.endDate? new Date(editedEvent?.endDate)
-                    ?.toISOString()
-                    ?.slice(0, 10):""}
+                  value={
+                    editedEvent?.endDate
+                      ? new Date(editedEvent?.endDate)
+                          ?.toISOString()
+                          ?.slice(0, 10)
+                      : ""
+                  }
                   onChange={handleChange}
                   fullWidth
                   margin="normal"

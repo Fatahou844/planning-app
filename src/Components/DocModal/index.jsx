@@ -54,6 +54,17 @@ function DocModal({
   const [selectedDate, setSelectedDate] = useState("");
   const [dataEvents, setDataEvents] = useState([]);
   const [openOrSup, setOpenOrSup] = useState(false);
+  const [vehicleUpdated, setVehicleUpdated] = useState(false);
+
+  const [Vehicle, setVehicle] = useState(editedEvent?.Vehicle);
+  const handleVehicleChange = (e) => {
+    const { name, value } = e.target;
+    setVehicle((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setVehicleUpdated(true);
+  };
   const axios = useAxios();
 
   const handleOpenOrSup = () => setOpenOrSup(true);
@@ -166,6 +177,7 @@ function DocModal({
       };
 
       fetchDetails();
+      setVehicle(editedEvent?.Vehicle);
     }
   }, [editedEvent.id]);
 
@@ -306,6 +318,18 @@ function DocModal({
             documentType: config.documentType,
             [config.foreignKey]: editedEvent.id, // Ajoute dynamiquement orderId/invoiceId/etc.
           });
+        }
+      }
+
+      if (vehicleUpdated) {
+        try {
+          await axios.put(`/vehicles/${editedEvent.vehicleId}`, {
+            mileage: Vehicle.mileage,
+            lastCheck: Vehicle.lastCheck,
+          });
+          console.log("Véhicule mis à jour avec succès");
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour du véhicule :", err);
         }
       }
 
@@ -966,9 +990,9 @@ function DocModal({
                 />
                 <TextField
                   label="kilométrage"
-                  name="vehicule.kms"
-                  value={editedEvent.Vehicle?.mileage || ""}
-                  onChange={handleChange}
+                  name="mileage"
+                  value={Vehicle?.mileage || ""}
+                  onChange={handleVehicleChange}
                   fullWidth
                   margin="normal"
                   size="small"
@@ -983,10 +1007,10 @@ function DocModal({
                   }
                 />
                 <TextField
-                  name="vehicule.controletech"
-                  value={editedEvent.Vehicle?.lastCheck || ""}
+                  name="lastCheck"
+                  value={Vehicle?.lastCheck || ""}
                   type="date"
-                  onChange={handleChange}
+                  onChange={handleVehicleChange}
                   fullWidth
                   margin="normal"
                   size="small"
@@ -1045,9 +1069,7 @@ function DocModal({
                             fullWidth
                             disabled={
                               editedEvent?.createdAt &&
-                              typeof editedEvent.createdAt.toDate ===
-                                "function" &&
-                              dayjs(editedEvent?.createdAt?.toDate()).isBefore(
+                              dayjs(editedEvent.createdAt).isBefore(
                                 dayjs(),
                                 "day"
                               ) &&

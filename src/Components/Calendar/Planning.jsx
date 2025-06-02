@@ -1062,6 +1062,22 @@ const Planning = () => {
         },
       });
 
+      if (
+        originalVehicle &&
+        (originalVehicle.mileage !== Vehicle.mileage ||
+          originalVehicle.lastCheck !== Vehicle.lastCheck)
+      ) {
+        try {
+          await axios.put(`/vehicles/${Vehicle.id}`, {
+            mileage: Vehicle.mileage,
+            lastCheck: Vehicle.lastCheck,
+          });
+          console.log("Véhicule mis à jour avec succès");
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour du véhicule :", err);
+        }
+      }
+
       return order.data; // Retourner la référence du document
     } catch (error) {
       console.error("Error adding event: ", error);
@@ -1137,6 +1153,22 @@ const Planning = () => {
           color: Vehicle.color,
         },
       });
+
+      if (
+        originalVehicle &&
+        (originalVehicle.mileage !== Vehicle.mileage ||
+          originalVehicle.lastCheck !== Vehicle.lastCheck)
+      ) {
+        try {
+          await axios.put(`/vehicles/${Vehicle.id}`, {
+            mileage: Vehicle.mileage,
+            lastCheck: Vehicle.lastCheck,
+          });
+          console.log("Véhicule mis à jour avec succès");
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour du véhicule :", err);
+        }
+      }
 
       return response.data; // Retourner la référence du document
     } catch (error) {
@@ -2048,9 +2080,20 @@ const Planning = () => {
     lastCheck: "",
   });
 
+  const [originalVehicle, setOriginalVehicle] = useState(null);
+
   const handleSelectVehicle = (vehicle) => {
     setVehicle(vehicle);
+    setOriginalVehicle(vehicle);
     console.log("Vehicule sélectionné :", vehicle);
+  };
+
+  const handleVehicleChange = (e) => {
+    const { name, value } = e.target;
+    setVehicle((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleLogout = async () => {
@@ -2583,9 +2626,9 @@ const Planning = () => {
                       />
                       <TextField
                         placeholder="kilométrage"
-                        name="kms"
+                        name="mileage"
                         value={Vehicle.mileage}
-                        onChange={handleInputChange}
+                        onChange={handleVehicleChange}
                         fullWidth
                         margin="normal"
                         size="small"
@@ -2599,10 +2642,10 @@ const Planning = () => {
                         Prochain controle technique
                       </Typography>
                       <TextField
-                        name="controletech"
+                        name="lastCheck"
                         type="date"
                         value={Vehicle.lastCheck}
-                        onChange={handleInputChange}
+                        onChange={handleVehicleChange}
                         fullWidth
                         margin="normal"
                         size="small"

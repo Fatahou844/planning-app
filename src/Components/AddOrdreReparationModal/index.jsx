@@ -44,6 +44,9 @@ function AddOrdreReparationModal({
   const axios = useAxios();
 
   const [invoiceExecuted, setInvoiceExecuted] = useState(false);
+  const [vehicleUpdated, setVehicleUpdated] = useState(false);
+
+  const [Vehicle, setVehicle] = useState(editedEvent?.Vehicle);
 
   const [Operator, setOperator] = useState({
     name: "",
@@ -53,6 +56,15 @@ function AddOrdreReparationModal({
   const handleSelectOperator = (operator) => {
     setOperator(operator);
     console.log("operator sélectionné :", operator);
+  };
+
+  const handleVehicleChange = (e) => {
+    const { name, value } = e.target;
+    setVehicle((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setVehicleUpdated(true);
   };
 
   const [Receptor, setReceptor] = useState({
@@ -110,6 +122,7 @@ function AddOrdreReparationModal({
 
       fetchDetails();
     }
+    setVehicle(editedEvent?.Vehicle);
   }, [, open, editedEvent.id]);
 
   // Handle input change for end date
@@ -354,6 +367,18 @@ function AddOrdreReparationModal({
           );
         }
       };
+
+      if (vehicleUpdated) {
+        try {
+          await axios.put(`/vehicles/${editedEvent.vehicleId}`, {
+            mileage: Vehicle.mileage,
+            lastCheck: Vehicle.lastCheck,
+          });
+          console.log("Véhicule mis à jour avec succès");
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour du véhicule :", err);
+        }
+      }
 
       fetchCloseDevis();
       fetchCloseResa();
@@ -641,9 +666,9 @@ function AddOrdreReparationModal({
                 />
                 <TextField
                   label="kilométrage"
-                  name="vehicule.kms"
-                  value={editedEvent.Vehicle?.mileage}
-                  onChange={handleChange}
+                  name="mileage"
+                  value={Vehicle?.mileage}
+                  onChange={handleVehicleChange}
                   fullWidth
                   margin="normal"
                   size="small"
@@ -657,10 +682,10 @@ function AddOrdreReparationModal({
                   Prochain controle technique
                 </Typography>
                 <TextField
-                  name="vehicule.controletech"
+                  name="lastCheck"
                   type="date"
-                  value={editedEvent.Vehicle?.lastCheck}
-                  onChange={handleChange}
+                  value={Vehicle?.lastCheck}
+                  onChange={handleVehicleChange}
                   fullWidth
                   margin="normal"
                   size="small"
