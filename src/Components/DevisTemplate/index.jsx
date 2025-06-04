@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -426,8 +426,8 @@ const DevisTemplate = ({
             [
               {
                 text: `Devis valable jusqu'à ${addDays(
-                  editedEvent.createdAt,
-                  10
+                  editedEvent.createdAt || new Date().toISOString(),
+                  companyInfo.dayValidityQuote
                 )}`,
                 style: "signature",
                 alignment: "left",

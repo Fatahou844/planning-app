@@ -964,7 +964,7 @@ function EventDialog({
                   }}
                 >
                   <TextField
-                    label="Opérateur"
+                    placeholder="Opérateur"
                     name="operator"
                     value={operator.name}
                     onChange={handleChange}
@@ -978,7 +978,7 @@ function EventDialog({
                     }}
                   />
                   <TextField
-                    label="Réceptionnaire"
+                    placeholder="Réceptionnaire"
                     name="receptor"
                     value={receptionist.name}
                     onChange={handleChange}

@@ -930,11 +930,6 @@ const Planning = () => {
         );
       });
 
-      console.log(
-        "############## validDetails ####################",
-        validDetails
-      );
-
       // Si aucun détail valide, on sort sans erreur
       if (validDetails.length === 0) {
         console.log("Aucun détail valide à enregistrer.");
@@ -1303,11 +1298,6 @@ const Planning = () => {
             );
           });
 
-          console.log(
-            "############  filteredResults ####################",
-            filtResults
-          );
-
           // Appliquer le filtre "isClosed === false" pour toutes sauf factures
           return collectionKey !== "factures"
             ? filteredResults.filter((item) => item.isClosed === false)
@@ -1385,11 +1375,6 @@ const Planning = () => {
               item?.Client?.email?.toLowerCase().includes(keyword)
             );
           });
-
-          console.log(
-            "############  filteredResults ####################",
-            filtResults
-          );
 
           // Appliquer le filtre "isClosed === false" pour toutes sauf factures
           return collectionKey !== "factures"
@@ -1806,10 +1791,6 @@ const Planning = () => {
 
   // Fonction pour mettre à jour l'événement dans l'état local
   const handleEditedEventChange = (updatedEvent) => {
-    console.log(
-      "########### updatedEvent updatedEvent #################",
-      updatedEvent
-    );
     setSelectedEvent(updatedEvent);
   };
 
@@ -3603,8 +3584,7 @@ const Planning = () => {
                                                 fontWeight: "bold",
                                               }}
                                             >
-                                              {event.Client.firstName}{" "}
-                                              {event.Client.lastName}
+                                              {event.Client.name}
                                             </span>
                                             {" • "}
                                             <span

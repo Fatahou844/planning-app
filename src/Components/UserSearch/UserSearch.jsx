@@ -121,7 +121,7 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
         renderInput={(params) => (
           <TextField
             {...params}
-            label={NameAttribute}
+            placeholder={NameAttribute}
             variant="outlined"
             fullWidth
             size="small"
