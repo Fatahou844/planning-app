@@ -15,6 +15,11 @@ import {
   Button,
   Card,
   CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Fab,
   FormControl,
   Grid,
@@ -44,7 +49,7 @@ const GarageSettings = () => {
 
   const [userInfo, setUserInfo] = useState({
     firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     password: "",
   });
@@ -57,6 +62,8 @@ const GarageSettings = () => {
   const [categories, setCategories] = useState([
     { name: "Vidange", color: "#1976d2", type: "system", garageId: null },
   ]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDeleteIndex, setUserToDeleteIndex] = useState(null);
 
   const [userSession, setUserSession] = useState(null);
   const [isAuth, setIsAuth] = useState(false);
@@ -90,6 +97,7 @@ const GarageSettings = () => {
         );
 
         setGarageUsers(responseGarageUsers.data);
+        setUsers(responseGarageUsers.data);
 
         // Mettre à jour les états
         setCategories(categoriesData.data);
@@ -116,26 +124,59 @@ const GarageSettings = () => {
 
   const [users, setUsers] = useState([
     // exemple initial
-    { firstName: "", lastName: "", email: "", role: "employe" },
+    { firstName: "", name: "", email: "", level: "0" },
   ]);
 
   const handleUserChange = (index, field, value) => {
     const newUsers = [...users];
     newUsers[index][field] = value;
+    newUsers[index].isModified = true;
+    console.log("newUsers[index].isModified = true;", newUsers[index]);
     setUsers(newUsers);
   };
 
   const handleAddUser = () => {
     setUsers([
       ...users,
-      { firstName: "", lastName: "", email: "", role: "employe" },
+      { firstName: "", name: "", email: "", level: "0", isNew: true },
     ]);
   };
 
+  // const handleRemoveUser = async (index) => {
+  //   const newUsers = [...users];
+  //   newUsers.splice(index, 1);
+  //   setUsers(newUsers);
+  // };
+
   const handleRemoveUser = async (index) => {
-    const newUsers = [...users];
-    newUsers.splice(index, 1);
-    setUsers(newUsers);
+    const user = users[index];
+
+    const confirmDelete = window.confirm(
+      `Es-tu sûr(e) de vouloir supprimer ${user.firstName || ""} ${
+        user.name || ""
+      } ?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      // S’il s’agit d’un utilisateur déjà enregistré (ayant un id)
+      if (user.id && !user.isNew) {
+        await axios.deleteData(`/users/${user.id}`);
+        console.log("✅ Utilisateur supprimé avec succès !");
+      }
+
+      // Mise à jour locale : suppression de l'élément du tableau
+      const newUsers = [...users];
+      newUsers.splice(index, 1);
+      setUsers(newUsers);
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la suppression de l'utilisateur :",
+        error
+      );
+      alert("Une erreur est survenue lors de la suppression.");
+    }
   };
 
   function getCurrentUser() {
@@ -303,6 +344,84 @@ const GarageSettings = () => {
       window.location.href = "/"; // redirection après logout
     } catch (error) {
       console.error("Erreur de déconnexion :", error);
+    }
+  };
+
+  const handleSaveUsers = async () => {
+    // 1. Séparer les nouveaux utilisateurs et ceux modifiés
+    const newUsers = users.filter((user) => user.isNew);
+    const updatedUsers = users.filter((user) => user.isModified);
+
+    if (newUsers.length === 0 && updatedUsers.length === 0) {
+      console.log("Aucune modification ou nouvel utilisateur à enregistrer.");
+      return;
+    }
+
+    try {
+      // 2. Création des nouveaux utilisateurs (POST)
+      const createPromises = newUsers.map((user) =>
+        axios.post("/users", {
+          firstName: user.firstName.trim(),
+          name: user.name.trim(),
+          email: user.email.trim().toLowerCase(),
+          level: user.level,
+          garageId: getCurrentUser().garageId, // si nécessaire
+        })
+      );
+
+      // 3. Mise à jour des utilisateurs existants (PUT)
+      const updatePromises = updatedUsers.map((user) =>
+        axios.put(`/users/${user.id}`, {
+          firstName: user.firstName?.trim(),
+          name: user.name?.trim(),
+          email: user.email?.trim()?.toLowerCase() || null,
+          level: user.level,
+        })
+      );
+
+      // 4. Exécuter toutes les requêtes en parallèle
+      await Promise.all([...createPromises, ...updatePromises]);
+
+      // 5. Recharger la liste des utilisateurs
+      const res = await axios.get(`/users/garage/${getCurrentUser().garageId}`);
+      setUsers(res.data.data); // Assure-toi que la structure de retour est bien `data.data`
+
+      console.log("✅ Utilisateurs sauvegardés avec succès !");
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la sauvegarde des utilisateurs :",
+        error
+      );
+    }
+  };
+
+  const confirmDeleteUser = (index) => {
+    setUserToDeleteIndex(index);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    const index = userToDeleteIndex;
+    const user = users[index];
+
+    try {
+      if (user.id && !user.isNew) {
+        await axios.deleteData(`/users/${user.id}`);
+        console.log("✅ Utilisateur supprimé avec succès !");
+      }
+
+      const newUsers = [...users];
+      newUsers.splice(index, 1);
+      setUsers(newUsers);
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la suppression de l'utilisateur :",
+        error
+      );
+      alert("Une erreur est survenue lors de la suppression.");
+    } finally {
+      setDeleteDialogOpen(false);
+      setUserToDeleteIndex(null);
     }
   };
 
@@ -634,8 +753,8 @@ const GarageSettings = () => {
                   </Alert>
 
                   <Stack spacing={2}>
-                    {garageUsers &&
-                      garageUsers.map((user, index) => (
+                    {users &&
+                      users.map((user, index) => (
                         <Accordion key={index}>
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Box
@@ -734,7 +853,7 @@ const GarageSettings = () => {
                               </FormControl>
                               <IconButton
                                 color="error"
-                                onClick={() => handleRemoveUser(index)}
+                                onClick={() => confirmDeleteUser(index)}
                                 disabled={!isAuth}
                               >
                                 <DeleteIcon />
@@ -759,6 +878,7 @@ const GarageSettings = () => {
                       color="primary"
                       sx={{ width: "100%" }}
                       disabled={!isAuth}
+                      onClick={handleSaveUsers}
                     >
                       Enregistrer les modifications
                     </Button>
@@ -787,6 +907,34 @@ const GarageSettings = () => {
           </Fab>
         </Grid>
       </Grid>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Suppression d'utilisateur</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Es-tu sûr(e) de vouloir supprimer{" "}
+            <strong>
+              {userToDeleteIndex !== null &&
+                `${users[userToDeleteIndex].firstName} ${users[userToDeleteIndex].name}`}
+            </strong>{" "}
+            ? Cette action est irréversible.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">
+            Annuler
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            variant="contained"
+          >
+            Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

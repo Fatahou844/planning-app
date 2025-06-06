@@ -55,12 +55,9 @@ export default function AuthPages() {
         password: form.password,
       });
 
-      if(userToken.data.token)
-      {
+      if (userToken.data.token) {
         window.location.href = "/planning/categories";
       }
-
-
     }
 
     if (isSignUp && (!form.firstName || !form.lastName || !form.garage)) {
@@ -137,13 +134,13 @@ export default function AuthPages() {
           )}
 
           <TextField
-            label="Adresse e-mail"
+            placeholder="Adresse e-mail"
             fullWidth
             value={form.email}
             onChange={(e) => handleChange("email", e.target.value)}
           />
           <TextField
-            label="Mot de passe"
+            placeholder="Mot de passe"
             type="password"
             fullWidth
             value={form.password}
@@ -153,8 +150,6 @@ export default function AuthPages() {
           <Button variant="contained" onClick={handleSubmit}>
             {isSignUp ? "S'inscrire" : "Se connecter"}
           </Button>
-
-        
         </Stack>
       </Box>
     </Container>

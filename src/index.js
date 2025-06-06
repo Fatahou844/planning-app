@@ -22,6 +22,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import AccountCreationSteps from "./Pages/AccountCreationSteps/AccountCreationSteps";
 import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
@@ -352,6 +353,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<AuthPages />} />
             <Route path="/connexion" element={<AuthPages />} />
+            <Route path="/register" element={<AccountCreationSteps />} />
 
             {/* Routes protégées */}
 
