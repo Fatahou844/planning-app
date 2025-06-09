@@ -36,7 +36,9 @@ const OrdreReparationTemplate2 = ({
 
   useEffect(() => {
     const fetchGarageInfo = async () => {
-      const response = await axios.get("/garages/" + getCurrentUser().garageId);
+      const response = await axios.get(
+        "/garages/userid/" + getCurrentUser().garageId
+      );
       setCompanyInfo(response.data.data);
     };
 

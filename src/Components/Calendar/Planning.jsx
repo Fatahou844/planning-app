@@ -201,7 +201,7 @@ const Planning = () => {
     const fetchCategories = async () => {
       try {
         const responseGarage = await axios.get(
-          "/garages/" + getCurrentUser().garageId
+          "/garages/userid/" + getCurrentUser().garageId
         );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);

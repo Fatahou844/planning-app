@@ -1,5 +1,6 @@
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import LogoutIcon from "@mui/icons-material/Logout";
 import {
   Box,
   Container,
@@ -22,10 +23,13 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import AccountApprove from "./Pages/AccountApprove.jsx/AccountApprove";
 import AccountCreationSteps from "./Pages/AccountCreationSteps/AccountCreationSteps";
+import AccountVerificationSteps from "./Pages/AccountVerificationSteps/AccountVerificationSteps";
 import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
+
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import { ProvideAxios } from "./utils/hook/useAxios";
@@ -99,6 +103,16 @@ const DashboardTabs = () => {
 
     fetchAuthStatus();
   }, [, isAuthenticated]);
+  const handleLogout = async () => {
+    try {
+      await axios.get("/logout"); // pour envoyer les cookies
+      document.cookie =
+        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/"; // redirection après logout
+    } catch (error) {
+      console.error("Erreur de déconnexion :", error);
+    }
+  };
 
   return (
     <>
@@ -143,6 +157,18 @@ const DashboardTabs = () => {
                   }}
                 />
               ))}
+
+              <IconButton
+                sx={{
+                  position: "absolute",
+                  bottom: 60, // plus haut que le bouton de toggle
+
+                  transition: "left 0.3s, transform 0.3s",
+                }}
+                onClick={handleLogout}
+              >
+                <LogoutIcon sx={{ fontSize: 20 }} />
+              </IconButton>
             </Tabs>
           </Box>
         </Container>
@@ -325,6 +351,7 @@ const ActivitySidebar = () => {
                 Activité
               </Typography>
             )}
+
             <IconButton
               sx={{ position: "absolute", bottom: 10 }}
               onClick={(e) => {
@@ -354,6 +381,15 @@ const App = () => {
             <Route path="/" element={<AuthPages />} />
             <Route path="/connexion" element={<AuthPages />} />
             <Route path="/register" element={<AccountCreationSteps />} />
+            <Route
+              path="/account-verification"
+              element={<PrivateRoute Component={AccountVerificationSteps} />}
+            />
+
+            <Route
+              path="/account-approbation"
+              element={<PrivateRoute Component={AccountApprove} />}
+            />
 
             {/* Routes protégées */}
 

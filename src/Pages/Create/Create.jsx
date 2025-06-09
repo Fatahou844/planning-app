@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAxios } from "../../utils/hook/useAxios";
 const garagesMock = [
   { label: "Garage Auto Pro", id: 1 },
@@ -138,6 +139,12 @@ export default function AuthPages() {
             fullWidth
             value={form.email}
             onChange={(e) => handleChange("email", e.target.value)}
+            size="small"
+            sx={{
+              height: "30px",
+              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+            }}
           />
           <TextField
             placeholder="Mot de passe"
@@ -145,11 +152,18 @@ export default function AuthPages() {
             fullWidth
             value={form.password}
             onChange={(e) => handleChange("password", e.target.value)}
+            size="small"
+            sx={{
+              height: "30px",
+              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+            }}
           />
 
           <Button variant="contained" onClick={handleSubmit}>
-            {isSignUp ? "S'inscrire" : "Se connecter"}
+            Se connecter
           </Button>
+          <Link to={"/register"}>Je n'ai pas encore de compte</Link>
         </Stack>
       </Box>
     </Container>

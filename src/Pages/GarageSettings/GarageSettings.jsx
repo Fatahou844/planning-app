@@ -1,11 +1,15 @@
 // export default GarageSettings;
 
 import DeleteIcon from "@mui/icons-material/Delete";
+import EmailIcon from "@mui/icons-material/Email";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
+import VerifiedIcon from "@mui/icons-material/Verified";
 import Chip from "@mui/material/Chip";
 import { useAxios } from "../../utils/hook/useAxios";
 
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import {
   Accordion,
   AccordionDetails,
@@ -30,6 +34,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -82,7 +87,7 @@ const GarageSettings = () => {
         );
 
         const responseGarage = await axios.get(
-          "/garages/" + getCurrentUser().garageId
+          "/garages/userid/" + getCurrentUser().garageId
         );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);
@@ -425,6 +430,38 @@ const GarageSettings = () => {
     }
   };
 
+  const renderStatusIcon = (status) => {
+    switch (status) {
+      case "0":
+        return (
+          <Tooltip title="En attente de vérification email">
+            <EmailIcon color="warning" fontSize="small" />
+          </Tooltip>
+        );
+      case "1":
+        return (
+          <Tooltip title="En attente d’approbation">
+            <HourglassEmptyIcon color="info" fontSize="small" />
+          </Tooltip>
+        );
+      case "2":
+        return (
+          <Tooltip title="Compte validé">
+            <VerifiedIcon color="success" fontSize="small" />
+          </Tooltip>
+        );
+      default:
+        return null;
+    }
+  };
+  const handleApproveUser = (index) => {
+    const updatedUsers = [...users];
+    updatedUsers[index].status = "2"; // ou appel backend ici
+    setUsers(updatedUsers);
+    // Envoie au backend si besoin...
+  };
+  const [statusFilter, setStatusFilter] = useState(""); // "" = pas de filtre
+
   return (
     <Box p={4}>
       <Typography variant="h4" gutterBottom sx={{ px: 3 }}>
@@ -749,28 +786,49 @@ const GarageSettings = () => {
                 <CardContent>
                   <Alert severity="info" sx={{ mb: 2 }}>
                     Attribue un rôle à chaque utilisateur pour gérer leurs
-                    droits d'accès.
+                    droits d'accès. Approuver les nouveaux comptes
                   </Alert>
 
                   <Stack spacing={2}>
+                    <FormControl size="small" sx={{ mb: 2, minWidth: 250 }}>
+                      <InputLabel>Filtrer par statut</InputLabel>
+                      <Select
+                        value={statusFilter}
+                        label="Filtrer par statut"
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                      >
+                        <MenuItem value="">Tous les utilisateurs</MenuItem>
+                        <MenuItem value="0">
+                          En attente de vérification email
+                        </MenuItem>
+                        <MenuItem value="1">En attente d’approbation</MenuItem>
+                        <MenuItem value="2">Validé</MenuItem>
+                      </Select>
+                    </FormControl>
                     {users &&
-                      users.map((user, index) => (
-                        <Accordion key={index}>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "100%",
-                                gap: 2,
-                              }}
-                            >
-                              <Typography>
-                                {user.firstName}{" "}
-                                {user.name || "Nouvel utilisateur"}
-                              </Typography>
-                              <Chip
+                      users
+                        .filter((user) =>
+                          statusFilter === ""
+                            ? true
+                            : user.status === statusFilter
+                        )
+                        .map((user, index) => (
+                          <Accordion key={index}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  width: "100%",
+                                  gap: 2,
+                                }}
+                              >
+                                <Typography>
+                                  {user.firstName}{" "}
+                                  {user.name || "Nouvel utilisateur"}
+                                </Typography>
+                                {/* <Chip
                                 label={
                                   user.level === "2"
                                     ? "Administrateur"
@@ -786,82 +844,121 @@ const GarageSettings = () => {
                                     : "default"
                                 }
                                 size="small"
-                              />
-                            </Box>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                gap: 2,
-                                alignItems: "center",
-                                flexWrap: "wrap",
-                                flexDirection: "row",
-                              }}
-                            >
-                              <TextField
-                                placeholder="Nom"
-                                value={user.name}
-                                onChange={(e) =>
-                                  handleUserChange(
-                                    index,
-                                    "name",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                              <TextField
-                                label="Prénom"
-                                value={user.firstName}
-                                onChange={(e) =>
-                                  handleUserChange(
-                                    index,
-                                    "firstName",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                              <TextField
-                                label="Email"
-                                value={user.email}
-                                onChange={(e) =>
-                                  handleUserChange(
-                                    index,
-                                    "email",
-                                    e.target.value
-                                  )
-                                }
-                                fullWidth
-                              />
-                              <FormControl sx={{ minWidth: 150 }}>
-                                <InputLabel>Rôle</InputLabel>
-                                <Select
-                                  value={user.level}
-                                  label="Rôle"
+                              /> */}
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Chip
+                                    label={
+                                      user.level === "2"
+                                        ? "Administrateur"
+                                        : user.level === "1"
+                                        ? "Technicien"
+                                        : "Employé"
+                                    }
+                                    color={
+                                      user.level === "2"
+                                        ? "error"
+                                        : user.level === "1"
+                                        ? "primary"
+                                        : "default"
+                                    }
+                                    size="small"
+                                  />
+                                  {renderStatusIcon(user.status)}
+                                </Box>
+                              </Box>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 2,
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                  flexDirection: "row",
+                                }}
+                              >
+                                <TextField
+                                  placeholder="Nom"
+                                  value={user.name}
                                   onChange={(e) =>
                                     handleUserChange(
                                       index,
-                                      "level",
+                                      "name",
                                       e.target.value
                                     )
                                   }
+                                />
+                                <TextField
+                                  label="Prénom"
+                                  value={user.firstName}
+                                  onChange={(e) =>
+                                    handleUserChange(
+                                      index,
+                                      "firstName",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                                <TextField
+                                  label="Email"
+                                  value={user.email}
+                                  onChange={(e) =>
+                                    handleUserChange(
+                                      index,
+                                      "email",
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                />
+                                <FormControl sx={{ minWidth: 150 }}>
+                                  <InputLabel>Rôle</InputLabel>
+                                  <Select
+                                    value={user.level}
+                                    label="Rôle"
+                                    onChange={(e) =>
+                                      handleUserChange(
+                                        index,
+                                        "level",
+                                        e.target.value
+                                      )
+                                    }
+                                  >
+                                    <MenuItem value="2">
+                                      Administrateur
+                                    </MenuItem>
+                                    <MenuItem value="1">Technicien</MenuItem>
+                                    <MenuItem value="0">Employé</MenuItem>
+                                  </Select>
+                                </FormControl>
+                                {user.status !== "2" && (
+                                  <Tooltip title="Valider l'utilisateur">
+                                    <IconButton
+                                      color="success"
+                                      onClick={() => handleApproveUser(index)}
+                                      disabled={!isAuth}
+                                    >
+                                      <CheckCircleIcon />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                <IconButton
+                                  color="error"
+                                  onClick={() => confirmDeleteUser(index)}
+                                  disabled={!isAuth}
                                 >
-                                  <MenuItem value="2">Administrateur</MenuItem>
-                                  <MenuItem value="1">Technicien</MenuItem>
-                                  <MenuItem value="0">Employé</MenuItem>
-                                </Select>
-                              </FormControl>
-                              <IconButton
-                                color="error"
-                                onClick={() => confirmDeleteUser(index)}
-                                disabled={!isAuth}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Box>
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
+                            </AccordionDetails>
+                          </Accordion>
+                        ))}
 
                     <Button
                       variant="outlined"

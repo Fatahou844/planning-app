@@ -8,6 +8,7 @@ const PrivateRoute = ({ Component }) => {
   const [role, setRole] = useState("user");
   const BASE_URL_API = "https://api.zpdigital.fr";
   //const BASE_URL_API = "http://localhost:4001";
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     function getCookie(name) {
@@ -40,6 +41,9 @@ const PrivateRoute = ({ Component }) => {
         console.log("ENREGISTREMENT DES DONNES USERS");
         localStorage.setItem("me", jsonString);
 
+        const user = response.data;
+        setUserData(user);
+
         if (window.localStorage.getItem("me")) {
           const retrievedObject = JSON.parse(window.localStorage.getItem("me"));
           setRole(retrievedObject.role);
@@ -58,7 +62,24 @@ const PrivateRoute = ({ Component }) => {
     return <div>Loading...</div>;
   }
 
-  return isAuthenticated ? <Component /> : <Navigate to="/connexion" />;
+  if (isAuthenticated) {
+    const currentPath = window.location.pathname;
+
+    if (userData?.status === "0" && currentPath !== "/account-verification") {
+      return <Navigate to="/account-verification" />;
+    } else if (
+      userData?.status === "1" &&
+      currentPath !== "/account-approbation"
+    ) {
+      return <Navigate to="/account-approbation" />;
+    } else {
+      return <Component />;
+    }
+  }
+
+  return <Navigate to="/connexion" />;
+
+  // return isAuthenticated ? <Component /> : <Navigate to="/connexion" />;
 };
 
 export default PrivateRoute;

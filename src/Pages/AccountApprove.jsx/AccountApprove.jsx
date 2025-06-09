@@ -1,11 +1,11 @@
-import { Box, Button, Paper, TextField, Typography } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { Box, Button, Fab, Paper, TextField, Typography } from "@mui/material";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import CustomStepper from "../../Components/CustomStepper/CustomStepper";
 import GarageSearch from "../../Components/GarageSearch";
 import { useAxios } from "../../utils/hook/useAxios";
 
-export default function AccountCreationSteps({ activeStep = 0 }) {
+export default function AccountApprove({ activeStep = 2 }) {
   const [Garage, SetGarage] = useState({
     name: "",
     address: "",
@@ -14,47 +14,20 @@ export default function AccountCreationSteps({ activeStep = 0 }) {
 
     website: "",
   });
-
+  const axios = useAxios();
   const handleSelectGarage = (Garage) => {
     SetGarage(Garage);
     console.log("Garage sélectionné :", Garage);
   };
 
-  const [formData, setFormData] = useState({
-    name: "",
-    firstName: "",
-    email: "",
-    password: "",
-  });
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const axios = useAxios();
-
-  const handleSubmit = async () => {
-    console.log("Données envoyées :", {
-      ...formData,
-      garageId: Garage.id,
-      status: "0",
-      level: "0",
-    });
-
-    // Tu peux faire un appel API ici avec axios :
-    // axios.post("/api/register", formData).then(...);
-
-    const response = await axios.post("/data/user-data", {
-      ...formData,
-      garageId: Garage.id,
-      status: "0",
-      level: "0",
-    });
-    if (response.data) {
-      window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await axios.get("/logout"); // pour envoyer les cookies
+      document.cookie =
+        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/"; // redirection après logout
+    } catch (error) {
+      console.error("Erreur de déconnexion :", error);
     }
   };
 
@@ -64,7 +37,7 @@ export default function AccountCreationSteps({ activeStep = 0 }) {
         return (
           <Box mt={4} display="flex" flexDirection="column" gap={2}>
             <TextField
-              placeholder="nom"
+              placeholder="Nom"
               fullWidth
               size="small"
               sx={{
@@ -72,9 +45,6 @@ export default function AccountCreationSteps({ activeStep = 0 }) {
                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
               }}
-              value={formData.name}
-              name="name"
-              onChange={handleChange}
             />
             <TextField
               placeholder="Prénom"
@@ -85,9 +55,6 @@ export default function AccountCreationSteps({ activeStep = 0 }) {
                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
               }}
-              value={formData.firstName}
-              name="firstName"
-              onChange={handleChange}
             />
             <TextField
               placeholder="Email"
@@ -99,30 +66,12 @@ export default function AccountCreationSteps({ activeStep = 0 }) {
                 "& .MuiInputBase-root": { fontSize: "0.8rem" },
                 "& .MuiFormLabel-root": { fontSize: "0.8rem" },
               }}
-              value={formData.email}
-              name="email"
-              onChange={handleChange}
             />
-            <TextField
-              placeholder="Mot de passe"
-              type="password"
-              fullWidth
-              size="small"
-              sx={{
-                height: "30px",
-                "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-              }}
-              value={formData.password}
-              name="password"
-              onChange={handleChange}
-            />
-
             <GarageSearch
               onSelectGarage={handleSelectGarage}
               Garage={Garage}
             ></GarageSearch>
-            <Button variant="contained" color="primary" onClick={handleSubmit}>
+            <Button variant="contained" color="primary">
               Créer mon compte
             </Button>
           </Box>
@@ -160,8 +109,25 @@ export default function AccountCreationSteps({ activeStep = 0 }) {
       <CustomStepper activeStep={activeStep} /> {/* ✅ UTILISATION */}
       <Paper square elevation={3} sx={{ p: 4, mt: 4 }}>
         {renderStepContent()}
-        <Link to={"/"}>J'ai déjà un compte</Link>
       </Paper>
+      <Fab
+        color="seconday"
+        aria-label="add"
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
+          padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+          borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+        }}
+        onClick={handleLogout}
+      >
+        <LogoutIcon />
+      </Fab>
     </Box>
   );
 }
