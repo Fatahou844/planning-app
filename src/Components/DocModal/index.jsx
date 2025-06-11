@@ -416,6 +416,18 @@ function DocModal({
 
       console.log("📦 Nouvelle réservation créée :", reservationId);
 
+      if (onNotificationSuccess) {
+        onNotificationSuccess(newReservation);
+        console.log(
+          "Add reservation Component: RESA reçue dans DocModal onNotificationSuccess :",
+          newReservation
+        );
+      } else {
+        console.error(
+          "❌ ERREUR : onNotificationSuccess  est undefined dans le Child ! AddOrdeReparationModal"
+        );
+      }
+
       // 2. Ajouter les détails valides liés à la réservation
       const validDetails = details.filter((detail) => {
         return (
@@ -726,6 +738,7 @@ function DocModal({
   const handleResaCReated = () => {
     if (onNotificationSuccess) {
       //  onNotificationSuccess();
+
       onSearchAfterDevisResa();
       console.log("Resa reçue dans DocumentModal handleResaCReated :");
     } // Envoie la facture au Grand-parent (Planning)

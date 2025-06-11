@@ -1,9 +1,9 @@
 import axios from "axios";
 import { createContext, useContext } from "react";
+import { BASE_URL_API } from "../../config";
 
 const axiosContext = createContext();
-const BASE_URL_API = "https://api.zpdigital.fr";
-//const BASE_URL_API = "http://localhost:4001";
+
 
 const baseUrl = `${BASE_URL_API}/v1`;
 

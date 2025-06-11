@@ -30,6 +30,7 @@ import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 
+import { BASE_URL_API } from "./config";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import { ProvideAxios } from "./utils/hook/useAxios";
@@ -46,8 +47,7 @@ const tabLabels = [
   { label: "Marketing", path: "/marketing" },
   { label: "Paramètres", path: "/parametres" },
 ];
-const BASE_URL_API = "https://api.zpdigital.fr";
-//const BASE_URL_API = "http://localhost:4001";
+
 
 const DashboardTabs = () => {
   const navigate = useNavigate();

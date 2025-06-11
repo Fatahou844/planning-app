@@ -1,13 +1,13 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { BASE_URL_API } from "../../config";
 
 const PrivateRoute = ({ Component }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [role, setRole] = useState("user");
-  const BASE_URL_API = "https://api.zpdigital.fr";
-  //const BASE_URL_API = "http://localhost:4001";
+
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {

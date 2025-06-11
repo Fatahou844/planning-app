@@ -157,7 +157,7 @@ const OrdreReparationTemplate2 = ({
                 alignment: "left",
               },
               {
-                text: `Date de facture : ${new Date().toLocaleDateString()}`,
+                text: `Date: ${new Date().toLocaleDateString()}`,
                 style: "headerInfo",
                 alignment: "right",
               },

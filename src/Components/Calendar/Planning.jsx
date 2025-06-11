@@ -1989,6 +1989,7 @@ const Planning = () => {
       setFacture(factureData?.data);
 
       handleOpenNotif("Facture");
+      setSelectedEvent({ ...selectedEvent, id: factureData?.data.id });
     }
   };
 
@@ -1998,7 +1999,7 @@ const Planning = () => {
     setModalOpen(false);
     setNewOrder(valeur);
 
-    setSelectedEvent({ ...selectedEvent, id: 600 });
+    setSelectedEvent({ ...selectedEvent, id: valeur.id });
 
     console.log(
       "*************************************** handleOnNotficationSuccess ******************************** ",
