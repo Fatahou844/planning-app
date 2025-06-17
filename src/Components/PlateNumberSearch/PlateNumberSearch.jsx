@@ -8,7 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 
 const PlateNumberSearch = ({ onSelectClient, Client }) => {
@@ -30,7 +30,10 @@ const PlateNumberSearch = ({ onSelectClient, Client }) => {
       axios
         .get(`/vehicles/search/plateNumber?plateNumber=${inputValue}`)
         .then((res) => setClients(res.data))
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error(err);
+          setClients([]);
+        });
     } else {
       setClients([]);
     }

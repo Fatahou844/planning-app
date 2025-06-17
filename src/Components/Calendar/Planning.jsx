@@ -1014,6 +1014,7 @@ const Planning = () => {
         clientId: Client.id,
         vehicleId: Vehicle.id,
         notes: event.notes,
+        deposit: deposit,
         isClosed: false,
         userId: event.userId, // UID de l'utilisateur
         nextDay: nextDay,
@@ -1032,6 +1033,7 @@ const Planning = () => {
         endMinute: parseInt(order.data.endMinute),
         categoryId: event.category.id,
         clientId: Client.id,
+        deposit: deposit,
         vehicleId: Vehicle.id,
         operatorId: Operator.id,
         receptionistId: Receptor.id,
@@ -1088,6 +1090,7 @@ const Planning = () => {
           clientId: Client.id,
           vehicleId: Vehicle.id,
           notes: event.notes,
+          deposit: deposit,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
@@ -1099,6 +1102,7 @@ const Planning = () => {
           clientId: Client.id,
           vehicleId: Vehicle.id,
           notes: event.notes,
+          deposit: deposit,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           nextDay: nextDay,
@@ -1109,6 +1113,7 @@ const Planning = () => {
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
+          deposit: deposit,
           notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
@@ -1124,6 +1129,8 @@ const Planning = () => {
 
         clientId: Client.id,
         vehicleId: Vehicle.id,
+        deposit: deposit,
+
         operatorId: Operator.id,
         receptionistId: Receptor.id,
 

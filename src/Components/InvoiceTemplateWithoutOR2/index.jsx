@@ -1,7 +1,7 @@
 import { Button } from "@mui/material";
 
 import { Box, Modal, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -14,7 +14,7 @@ const InvoiceTemplateWithoutOR2 = ({
   closeDocumentModal,
   closeEventModal,
 }) => {
-  const { Client, Vehicle, date } = NewEvent;
+  const { Client, Vehicle, date, deposit } = NewEvent;
   const [user] = useAuthState(auth);
   const axios = useAxios();
 
@@ -62,6 +62,7 @@ const InvoiceTemplateWithoutOR2 = ({
   };
   const invoiceData = {
     orderNumber: NewEvent ? NewEvent.id : "",
+    deposit: deposit,
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,
@@ -75,6 +76,7 @@ const InvoiceTemplateWithoutOR2 = ({
       km: Vehicle?.mileage ? Vehicle.mileage : "",
       color: Vehicle?.color ? Vehicle.color : "",
       licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
+      lastCheck: Vehicle?.lastCheck ? Vehicle?.lastCheck : "",
     },
     client: {
       name: `${Client?.firstName ? Client.firstName : ""} ${
@@ -296,23 +298,27 @@ const InvoiceTemplateWithoutOR2 = ({
                 alignment: "center",
               },
             ],
-            // [
-            //   {
-            //     text: " ",
-            //     style: "companySubheader",
-            //     alignment: "center",
-            //   },
-            //   {
-            //     text: " ",
-            //     style: "vehicleInfo",
-            //     alignment: "center",
-            //   },
-            //   {
-            //     text: `RDV : ${invoiceData.client.rdv}`,
-            //     style: "clientInfo",
-            //     alignment: "center",
-            //   },
-            // ],
+            [
+              {
+                text: " ",
+                style: "companySubheader",
+                alignment: "center",
+              },
+              {
+                text: `Dernier controle technique : ${
+                  invoiceData.vehicle?.lastCheck
+                    ? invoiceData.vehicle?.lastCheck
+                    : ""
+                }`,
+                style: "vehicleInfo",
+                alignment: "center",
+              },
+              {
+                text: " ",
+                style: "clientInfo",
+                alignment: "center",
+              },
+            ],
           ],
         },
         layout: "noBorders",
@@ -384,6 +390,14 @@ const InvoiceTemplateWithoutOR2 = ({
               { text: "Total TTC :", alignment: "right", style: "totalLabel" },
               {
                 text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
+                alignment: "right",
+                style: "totalValue",
+              },
+            ],
+            [
+              { text: "Acompte:", alignment: "right", style: "totalLabel" },
+              {
+                text: `${invoiceData.deposit} €`,
                 alignment: "right",
                 style: "totalValue",
               },

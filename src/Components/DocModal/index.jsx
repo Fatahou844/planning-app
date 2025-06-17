@@ -407,6 +407,7 @@ function DocModal({
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
         notes: editedEvent.notes,
+        deposit:editedEvent?.deposit | 0.0,
         isClosed: false,
         garageId: getCurrentUser().garageId,
       });
@@ -1301,8 +1302,8 @@ function DocModal({
               </Typography>
               <Typography variant="h6">
                 Acompte :{" "}
-                {editedEvent?.details?.acompte
-                  ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
+                {editedEvent?.deposit
+                  ? parseFloat(editedEvent?.deposit).toFixed(2)
                   : "0.00"}{" "}
                 €
               </Typography>

@@ -10,7 +10,7 @@ const OrdreReparationTemplate = ({
   onInvoiceExecuted,
   closeNotification,
 }) => {
-  const { Client, Vehicle, date, title } = editedEvent;
+  const { Client, Vehicle, date, deposit } = editedEvent;
   const [openOr, setOpenOr] = useState(false);
   const [user] = useAuthState(auth);
   const axios = useAxios();
@@ -62,6 +62,7 @@ const OrdreReparationTemplate = ({
   // }, [, user]);
   const invoiceData = {
     orderNumber: editedEvent ? editedEvent.id : "",
+    deposit: deposit,
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,
@@ -75,6 +76,7 @@ const OrdreReparationTemplate = ({
       km: Vehicle?.mileage ? Vehicle.mileage : "",
       color: Vehicle?.color ? Vehicle.color : "",
       licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
+      lastCheck: Vehicle?.lastCheck ? Vehicle?.lastCheck : "",
     },
     client: {
       name: `${Client?.firstName ? Client.firstName : ""} ${
@@ -297,23 +299,27 @@ const OrdreReparationTemplate = ({
                 alignment: "center",
               },
             ],
-            // [
-            //   {
-            //     text: " ",
-            //     style: "companySubheader",
-            //     alignment: "center",
-            //   },
-            //   {
-            //     text: " ",
-            //     style: "vehicleInfo",
-            //     alignment: "center",
-            //   },
-            //   {
-            //     text: `RDV : ${invoiceData.client.rdv}`,
-            //     style: "clientInfo",
-            //     alignment: "center",
-            //   },
-            // ],
+            [
+              {
+                text: " ",
+                style: "companySubheader",
+                alignment: "center",
+              },
+              {
+                text: `Dernier controle technique : ${
+                  invoiceData.vehicle?.lastCheck
+                    ? invoiceData.vehicle?.lastCheck
+                    : ""
+                }`,
+                style: "vehicleInfo",
+                alignment: "center",
+              },
+              {
+                text: " ",
+                style: "clientInfo",
+                alignment: "center",
+              },
+            ],
           ],
         },
         layout: "noBorders",
@@ -381,6 +387,14 @@ const OrdreReparationTemplate = ({
               { text: "Total TTC :", alignment: "right", style: "totalLabel" },
               {
                 text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
+                alignment: "right",
+                style: "totalValue",
+              },
+            ],
+            [
+              { text: "Acompte :", alignment: "right", style: "totalLabel" },
+              {
+                text: `${invoiceData.deposit} €`,
                 alignment: "right",
                 style: "totalValue",
               },

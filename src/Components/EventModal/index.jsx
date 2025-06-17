@@ -893,8 +893,8 @@ function EventDialog({
               </Typography>
               <Typography variant="h6">
                 Acompte :{" "}
-                {editedEvent?.details?.acompte
-                  ? parseFloat(editedEvent?.details?.acompte).toFixed(2)
+                {editedEvent?.deposit
+                  ? parseFloat(editedEvent?.deposit).toFixed(2)
                   : "0.00"}{" "}
                 €
               </Typography>

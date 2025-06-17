@@ -123,6 +123,7 @@ function AddOrdreReparationModal({
       fetchDetails();
     }
     setVehicle(editedEvent?.Vehicle);
+    setDeposit(editedEvent?.deposit);
   }, [, open, editedEvent.id]);
 
   // Handle input change for end date
@@ -262,7 +263,7 @@ function AddOrdreReparationModal({
   else collectName = "facture";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [deposit, setDeposit] = useState(0);
+  const [deposit, setDeposit] = useState(editedEvent?.deposit);
 
   const addEventDetails = async (eventId, details) => {
     try {
@@ -328,6 +329,7 @@ function AddOrdreReparationModal({
         endMinute: parseInt(event.endMinute),
         categoryId: event.category.id,
         clientId: editedEvent.clientId,
+        deposit: deposit,
         vehicleId: editedEvent.vehicleId,
         notes: event.notes,
         isClosed: false,

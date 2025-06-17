@@ -534,6 +534,7 @@ const InvoiceTemplate = ({
           clientId: Client.id,
           vehicleId: Vehicle.id,
           notes: event.notes,
+          deposit: editedEvent?.deposit | 0.0,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           garageId: getCurrentUser().garageId,
@@ -543,6 +544,8 @@ const InvoiceTemplate = ({
           date: event.date,
           clientId: Client.id,
           vehicleId: Vehicle.id,
+          deposit: editedEvent?.deposit | 0.0,
+
           notes: event.notes,
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
@@ -554,6 +557,8 @@ const InvoiceTemplate = ({
           clientId: Client.id,
           vehicleId: Vehicle.id,
           notes: event.notes,
+          deposit: editedEvent?.deposit | 0.0,
+
           isClosed: false,
           userId: event.userId, // UID de l'utilisateur
           garageId: getCurrentUser().garageId,

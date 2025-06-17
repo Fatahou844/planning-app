@@ -37,7 +37,10 @@ const UserSearch = ({ onSelectUser, Users, garageId, NameAttribute }) => {
           console.log("inputValue:", inputValue);
           console.log("résultat API:", res.data);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error(err);
+          setUserss([]);
+        });
     } else {
       setUserss([]);
     }

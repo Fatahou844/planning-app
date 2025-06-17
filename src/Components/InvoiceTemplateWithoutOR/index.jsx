@@ -11,7 +11,7 @@ const InvoiceTemplateWithoutOR = ({
   onInvoiceExecuted,
   closeNotification,
 }) => {
-  const { Client, Vehicle, date, title } = NewEvent;
+  const { Client, Vehicle, date, deposit } = NewEvent;
   const [user] = useAuthState(auth);
   const [companyInfo, setCompanyInfo] = useState({
     name: "Fatah Garage",
@@ -58,6 +58,7 @@ const InvoiceTemplateWithoutOR = ({
   };
   const invoiceData = {
     orderNumber: NewEvent ? NewEvent.id : "",
+    deposit: deposit,
     companyInfo: {
       name: companyInfo?.name,
       address: companyInfo?.address,
@@ -71,6 +72,7 @@ const InvoiceTemplateWithoutOR = ({
       km: Vehicle?.mileage ? Vehicle.mileage : "",
       color: Vehicle?.color ? Vehicle.color : "",
       licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
+      lastCheck: Vehicle?.lastCheck ? Vehicle?.lastCheck : "",
     },
     client: {
       name: `${Client?.firstName ? Client.firstName : ""} ${
@@ -293,23 +295,27 @@ const InvoiceTemplateWithoutOR = ({
                 alignment: "center",
               },
             ],
-            // [
-            //   {
-            //     text: " ",
-            //     style: "companySubheader",
-            //     alignment: "center",
-            //   },
-            //   {
-            //     text: " ",
-            //     style: "vehicleInfo",
-            //     alignment: "center",
-            //   },
-            //   {
-            //     text: `RDV : ${invoiceData.client.rdv}`,
-            //     style: "clientInfo",
-            //     alignment: "center",
-            //   },
-            // ],
+            [
+              {
+                text: " ",
+                style: "companySubheader",
+                alignment: "center",
+              },
+              {
+                text: `Dernier controle technique : ${
+                  invoiceData.vehicle?.lastCheck
+                    ? invoiceData.vehicle?.lastCheck
+                    : ""
+                }`,
+                style: "vehicleInfo",
+                alignment: "center",
+              },
+              {
+                text: " ",
+                style: "clientInfo",
+                alignment: "center",
+              },
+            ],
           ],
         },
         layout: "noBorders",
@@ -381,6 +387,14 @@ const InvoiceTemplateWithoutOR = ({
               { text: "Total TTC :", alignment: "right", style: "totalLabel" },
               {
                 text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
+                alignment: "right",
+                style: "totalValue",
+              },
+            ],
+            [
+              { text: "Acompte :", alignment: "right", style: "totalLabel" },
+              {
+                text: `${invoiceData.deposit} €`,
                 alignment: "right",
                 style: "totalValue",
               },

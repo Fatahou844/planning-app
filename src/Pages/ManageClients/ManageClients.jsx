@@ -148,12 +148,12 @@ function ManageClients() {
             collectionName: collectionKey,
           }));
 
-          if (collectionKey === "reservations") {
-            const today = dayjs();
-            filtResults = filtResults.filter((item) =>
-              dayjs(item.createdAt).isSame(today, "day")
-            );
-          }
+          // if (collectionKey === "reservations") {
+          //   const today = dayjs();
+          //   filtResults = filtResults.filter((item) =>
+          //     dayjs(item.createdAt).isSame(today, "day")
+          //   );
+          // }
 
           // Filtrer les résultats en fonction du mot-clé
           const filteredResults = filtResults.filter((item) => {
@@ -719,7 +719,7 @@ function ManageClients() {
                     >
                       <TableCell>{event.id}</TableCell>
                       <TableCell>
-                        {moment(event.createdAt).format('DD/MM/YYYY')}
+                        {moment(event.createdAt).format("DD/MM/YYYY")}
                       </TableCell>
                       <TableCell>{event.Client.name}</TableCell>
                       <TableCell>{event.Client.firstName}</TableCell>

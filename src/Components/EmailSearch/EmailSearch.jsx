@@ -40,7 +40,10 @@ const EmailSearch = ({ onSelectClient, Client }) => {
           }?email=${inputValue}`
         )
         .then((res) => setClients(res.data))
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error(err);
+          setClients([]);
+        });
     } else {
       setClients([]);
     }
