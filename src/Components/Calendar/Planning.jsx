@@ -1712,44 +1712,86 @@ const Planning = () => {
   ]);
   const [deposit, setDeposit] = useState(0);
 
-  const handleDetailChange = (event, index) => {
-    const { name, value } = event.target; // Extraire le nom et la valeur du champ modifié
-    const updatedDetails = [...details]; // Créer une copie des détails
+  // const handleDetailChange = (event, index) => {
+  //   const { name, value } = event.target; // Extraire le nom et la valeur du champ modifié
+  //   const updatedDetails = [...details]; // Créer une copie des détails
 
-    let normalizedValue = value.trim(); // Nettoyer les espaces inutiles
-    normalizedValue = normalizedValue.replace(",", "."); // Normaliser les décimales
+  //   let normalizedValue = value.trim(); // Nettoyer les espaces inutiles
+  //   normalizedValue = normalizedValue.replace(",", "."); // Normaliser les décimales
+
+  //   if (name === "discountAmount" || name === "discountPercent") {
+  //     // Réinitialiser les deux champs
+  //     updatedDetails[index].discountAmount = "";
+  //     updatedDetails[index].discountPercent = "";
+
+  //     if (normalizedValue.includes("%")) {
+  //       // Si la valeur contient un %, on met à jour le pourcentage
+  //       const percent = parseFloat(normalizedValue.replace("%", ""));
+  //       if (!isNaN(percent)) {
+  //         updatedDetails[index].discountPercent = percent;
+  //       }
+  //     } else if (normalizedValue !== "") {
+  //       // Sinon, c'est un montant
+  //       const amount = parseFloat(normalizedValue);
+  //       if (!isNaN(amount)) {
+  //         updatedDetails[index].discountAmount = amount;
+  //       }
+  //     }
+
+  //     // Stocker la saisie brute dans inputValue (si besoin)
+  //     updatedDetails[index].inputValue = value;
+  //   } else {
+  //     // Autres champs : mise à jour standard
+  //     updatedDetails[index][name] =
+  //       name === "label" ? value || "" : parseFloat(value);
+  //   }
+
+  //   // Mettre à jour l'état avec les nouveaux détails
+  //   setDetails(updatedDetails);
+
+  //   // Recalculer le prix total TTC si nécessaire
+  //   setNewEvent({ ...newEvent, price: totalTTC });
+  // };
+
+  const handleDetailChange = (event, index) => {
+    const { name, value } = event.target;
+    const updatedDetails = [...details];
+
+    let rawValue = value.trim();
+    const normalizedValue = rawValue.replace(",", ".");
 
     if (name === "discountAmount" || name === "discountPercent") {
-      // Réinitialiser les deux champs
+      // (Pas besoin de changer ici, ça marche déjà bien)
       updatedDetails[index].discountAmount = "";
       updatedDetails[index].discountPercent = "";
 
       if (normalizedValue.includes("%")) {
-        // Si la valeur contient un %, on met à jour le pourcentage
         const percent = parseFloat(normalizedValue.replace("%", ""));
         if (!isNaN(percent)) {
           updatedDetails[index].discountPercent = percent;
         }
       } else if (normalizedValue !== "") {
-        // Sinon, c'est un montant
         const amount = parseFloat(normalizedValue);
         if (!isNaN(amount)) {
           updatedDetails[index].discountAmount = amount;
         }
       }
 
-      // Stocker la saisie brute dans inputValue (si besoin)
-      updatedDetails[index].inputValue = value;
+      updatedDetails[index].inputValue = rawValue;
+    } else if (name === "quantity" || name === "unitPrice") {
+      updatedDetails[index][`${name}Input`] = rawValue; // pour afficher ce que tape l’utilisateur
+
+      const numericValue = parseFloat(normalizedValue);
+      if (!isNaN(numericValue)) {
+        updatedDetails[index][name] = numericValue; // la vraie valeur utilisée pour les calculs
+      } else {
+        updatedDetails[index][name] = 0; // ou null si tu préfères
+      }
     } else {
-      // Autres champs : mise à jour standard
-      updatedDetails[index][name] =
-        name === "label" ? value || "" : parseFloat(value);
+      updatedDetails[index][name] = value || "";
     }
 
-    // Mettre à jour l'état avec les nouveaux détails
     setDetails(updatedDetails);
-
-    // Recalculer le prix total TTC si nécessaire
     setNewEvent({ ...newEvent, price: totalTTC });
   };
 
@@ -1775,10 +1817,13 @@ const Planning = () => {
       ...prevDetails,
       {
         label: "",
-        quantity: "",
-        unitPrice: "",
-        discountPercent: "",
+        quantity: 0,
+        quantityInput: "",
+        unitPrice: 0,
+        unitPriceInput: "",
         discountAmount: "",
+        discountPercent: "",
+        inputValue: "",
       },
     ]);
   };
@@ -2707,8 +2752,12 @@ const Planning = () => {
                                 <TableCell>
                                   <TextField
                                     name="quantity"
-                                    type="number"
-                                    value={detail.quantity}
+                                    type="text"
+                                    value={
+                                      detail.quantityInput ??
+                                      detail.quantity ??
+                                      ""
+                                    }
                                     onChange={(e) =>
                                       handleDetailChange(e, index)
                                     }
@@ -2739,8 +2788,12 @@ const Planning = () => {
                                 <TableCell>
                                   <TextField
                                     name="unitPrice"
-                                    type="number"
-                                    value={detail.unitPrice}
+                                    type="text"
+                                    value={
+                                      detail.unitPriceInput ??
+                                      detail.unitPrice ??
+                                      ""
+                                    }
                                     onChange={(e) =>
                                       handleDetailChange(e, index)
                                     }

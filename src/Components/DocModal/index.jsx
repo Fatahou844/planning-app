@@ -170,7 +170,27 @@ function DocModal({
     if (editedEvent) {
       const fetchDetails = async () => {
         try {
-          setDetails(editedEvent.Details);
+          const initialDetails = editedEvent.Details.map((item) => ({
+            ...item,
+            quantityInput: item.quantity?.toString() ?? "",
+            unitPriceInput: item.unitPrice?.toString() ?? "",
+          }));
+
+          const initialDetails2 = initialDetails.map((item) => {
+            let inputValue = "";
+
+            if (item.discountPercent && item.discountPercent !== "") {
+              inputValue = `${item.discountPercent}%`;
+            } else if (item.discountAmount && item.discountAmount !== "") {
+              inputValue = String(item.discountAmount);
+            }
+
+            return {
+              ...item,
+              inputValue,
+            };
+          });
+          setDetails(initialDetails2);
         } catch (error) {
           console.error("Erreur lors de la récupération des détails :", error);
         }
@@ -407,7 +427,7 @@ function DocModal({
         clientId: editedEvent.clientId,
         vehicleId: editedEvent.vehicleId,
         notes: editedEvent.notes,
-        deposit:editedEvent?.deposit | 0.0,
+        deposit: editedEvent?.deposit | 0.0,
         isClosed: false,
         garageId: getCurrentUser().garageId,
       });
@@ -463,9 +483,41 @@ function DocModal({
     }
   };
 
-  const handleDetailChange = (index, field, value) => {
+  const handleDetailChange = (index, field, rawValue) => {
     const updatedDetails = [...details];
-    updatedDetails[index][field] = value;
+
+    const detail = updatedDetails[index];
+
+    const raw = String(rawValue).trim(); // 🔁 conversion propre
+    const normalizedValue = raw.replace(",", ".");
+    // Toujours mettre à jour ce que l'utilisateur tape
+
+    if (field === "quantity" || field === "unitPrice") {
+      updatedDetails[index][`${field}Input`] = raw;
+      const numericValue = parseFloat(normalizedValue);
+      updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
+    } else if (field === "discountInput") {
+      detail.inputValue = raw;
+
+      // Réinitialiser d'abord
+      detail.discountAmount = "";
+      detail.discountPercent = "";
+
+      const cleaned = normalizedValue.replace("%", "");
+      const value = parseFloat(cleaned);
+
+      if (normalizedValue.includes("%") && !isNaN(value)) {
+        detail.discountPercent = value;
+      } else if (!isNaN(value)) {
+        detail.discountAmount = value;
+      }
+
+      // detail.inputValue = raw;
+      // updatedDetails[index].inputValue = value;
+    } else {
+      updatedDetails[index][field] = raw;
+    }
+
     setDetails(updatedDetails);
   };
 
@@ -498,12 +550,14 @@ function DocModal({
     setDetails([
       ...details,
       {
-        // On ne définit pas d’ID pour indiquer qu’il s’agit d’un nouvel élément
         label: "",
         quantity: 0,
+        quantityInput: "",
         unitPrice: 0,
-        discountAmount: 0,
-        discountPercent: 0,
+        unitPriceInput: "",
+        discountAmount: "",
+        discountPercent: "",
+        inputValue: "",
       },
     ]);
   };
@@ -1093,13 +1147,15 @@ function DocModal({
                         </TableCell>
                         <TableCell sx={{ fontSize: "0.8rem" }}>
                           <TextField
-                            type="number"
-                            value={detail.quantity}
+                            type="text"
+                            value={
+                              detail.quantityInput ?? detail.quantity ?? ""
+                            }
                             onChange={(e) =>
                               handleDetailChange(
                                 index,
                                 "quantity",
-                                parseInt(e.target.value, 10)
+                                e.target.value
                               )
                             }
                             size="small"
@@ -1135,13 +1191,15 @@ function DocModal({
                         </TableCell>
                         <TableCell sx={{ fontSize: "0.8rem" }}>
                           <TextField
-                            type="number"
-                            value={detail.unitPrice}
+                            type="text"
+                            value={
+                              detail.unitPriceInput ?? detail.unitPrice ?? ""
+                            }
                             onChange={(e) =>
                               handleDetailChange(
                                 index,
                                 "unitPrice",
-                                parseFloat(e.target.value)
+                                e.target.value
                               )
                             }
                             size="small"
@@ -1178,45 +1236,18 @@ function DocModal({
                         <TableCell sx={{ fontSize: "0.8rem" }}>
                           <TextField
                             type="text" // Permet la saisie libre (montant ou pourcentage)
-                            value={
-                              detail.discountPercent !== ""
-                                ? `${detail.discountPercent}%`
-                                : detail.discountAmount || ""
-                            } // Affiche soit le pourcentage, soit le montant
-                            onChange={(e) => {
-                              const input = e.target.value.trim();
-
-                              let formattedValue = input; // Supprime le symbole %
-                              detail.discountAmount = "";
-                              detail.discountPercent = "";
-
-                              let amount = parseFloat(formattedValue); // Tente de convertir en nombre
-
-                              // Gestion des cas de saisie valides
-                              if (input.includes("%") && !isNaN(amount)) {
-                                // Si l'utilisateur entre un pourcentage
-                                detail.discountPercent = amount; // Met à jour le pourcentage
-                                detail.discountAmount = ""; // Réinitialise le montant
-                              } else if (!isNaN(amount)) {
-                                // Si l'utilisateur entre un montant
-                                detail.discountAmount = amount; // Met à jour le montant
-                                detail.discountPercent = ""; // Réinitialise le pourcentage
-                              } else {
-                                // Si la saisie est invalide
-                                detail.discountAmount = "";
-                                detail.discountPercent = "";
-                              }
-
-                              // Mise à jour de la valeur brute pour affichage
-                              detail.inputValue = input;
-
-                              // Appelle la fonction pour notifier le changement
+                            inputProps={{
+                              inputMode: "decimal",
+                              pattern: "[0-9.,%]*",
+                            }}
+                            value={detail.inputValue || ""} // Affiche ce que l'utilisateur a saisi
+                            onChange={(e) =>
                               handleDetailChange(
                                 index,
-                                "discountAmount",
-                                detail.discountAmount
-                              );
-                            }}
+                                "discountInput",
+                                e.target.value
+                              )
+                            }
                             size="small"
                             fullWidth
                             sx={{

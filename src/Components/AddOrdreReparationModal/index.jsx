@@ -198,15 +198,60 @@ function AddOrdreReparationModal({
     });
   };
 
-  const handleDetailChange = (index, field, value) => {
-    // Vérifiez si l'index existe dans le tableau
-    if (index >= 0 && index < details.length) {
-      const updatedDetails = [...details];
-      updatedDetails[index] = { ...updatedDetails[index], [field]: value }; // Mise à jour propre de l'objet
-      setDetails(updatedDetails);
-    } else {
+  // const handleDetailChange = (index, field, value) => {
+  //   // Vérifiez si l'index existe dans le tableau
+  //   if (index >= 0 && index < details.length) {
+  //     const updatedDetails = [...details];
+  //     updatedDetails[index] = { ...updatedDetails[index], [field]: value }; // Mise à jour propre de l'objet
+  //     setDetails(updatedDetails);
+  //   } else {
+  //     console.error(`Index ${index} hors limites pour le tableau details.`);
+  //   }
+  // };
+  const handleDetailChange = (index, field, rawValue) => {
+    if (index < 0 || index >= details.length) {
       console.error(`Index ${index} hors limites pour le tableau details.`);
+      return;
     }
+
+    const updatedDetails = [...details];
+    const detail = { ...updatedDetails[index] };
+
+    // Normaliser les décimales : remplacer virgule par point
+    let normalizedValue =
+      typeof rawValue === "string" ? rawValue.replace(",", ".") : rawValue;
+
+    // Logique spécifique pour remise (discount)
+    if (field === "discountAmount") {
+      const value = normalizedValue.trim();
+      detail.inputValue = rawValue; // garde la valeur brute pour affichage
+
+      detail.discountAmount = "";
+      detail.discountPercent = "";
+
+      if (value.includes("%")) {
+        const percentage = parseFloat(value.replace("%", ""));
+        if (!isNaN(percentage)) {
+          detail.discountPercent = percentage;
+        }
+      } else {
+        const amount = parseFloat(value);
+        if (!isNaN(amount)) {
+          detail.discountAmount = amount;
+        }
+      }
+    } else if (field === "quantity" || field === "unitPrice") {
+      // Ne pas convertir la valeur à ce moment-là ! Juste stocker le texte tel quel
+      detail[field] = rawValue; // ← garde "1,", "2.5", etc.
+    }
+
+    // Pour les autres champs
+    else {
+      detail[field] = rawValue;
+    }
+
+    updatedDetails[index] = detail;
+    setDetails(updatedDetails);
   };
 
   const removeDetailRow = async (index) => {
@@ -235,19 +280,39 @@ function AddOrdreReparationModal({
   };
 
   const calculateLineTotal = (detail) => {
-    let discount = 0;
+    // let discount = 0;
 
-    if (detail.discountPercent > 0) {
-      // Priorité au pourcentage
-      discount =
-        detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
-      // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+    // if (detail.discountPercent > 0) {
+    //   // Priorité au pourcentage
+    //   discount =
+    //     detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
+    // } else if (detail.discountAmount > 0) {
+    //   // Sinon, utilise le montant fixe
+    //   discount = detail.discountAmount;
+    // }
+
+    // // Calcul du total après remise
+    // return detail.quantity * detail.unitPrice - discount;
+    const quantity = parseFloat(
+      String(detail.quantity || "").replace(",", ".")
+    );
+    const unitPrice = parseFloat(
+      String(detail.unitPrice || "").replace(",", ".")
+    );
+    const discountPercent = detail.discountPercent || 0;
+    const discountAmount = detail.discountAmount || 0;
+
+    if (isNaN(quantity) || isNaN(unitPrice)) return 0;
+
+    let total = quantity * unitPrice;
+
+    if (discountPercent) {
+      total -= (total * discountPercent) / 100;
+    } else if (discountAmount) {
+      total -= discountAmount;
     }
 
-    // Calcul du total après remise
-    return detail.quantity * detail.unitPrice - discount;
+    return total;
   };
   const totalTTC = details?.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
@@ -766,7 +831,7 @@ function AddOrdreReparationModal({
                             <TableCell>
                               <TextField
                                 name="quantity"
-                                type="number"
+                                type="text"
                                 value={detail.quantity}
                                 onChange={(e) =>
                                   handleDetailChange(
@@ -783,26 +848,13 @@ function AddOrdreReparationModal({
                                   "& input": {
                                     textAlign: "center", // Centrer horizontalement
                                   },
-                                  "& input[type=number]": {
-                                    MozAppearance: "textfield", // Pour Firefox
-                                  },
-                                  "& input[type=number]::-webkit-outer-spin-button":
-                                    {
-                                      WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                      margin: 0,
-                                    },
-                                  "& input[type=number]::-webkit-inner-spin-button":
-                                    {
-                                      WebkitAppearance: "none",
-                                      margin: 0,
-                                    },
                                 }}
                               />
                             </TableCell>
                             <TableCell>
                               <TextField
                                 name="unitPrice"
-                                type="number"
+                                type="text"
                                 value={detail.unitPrice}
                                 onChange={(e) =>
                                   handleDetailChange(
@@ -824,19 +876,6 @@ function AddOrdreReparationModal({
                                   "& input": {
                                     textAlign: "center", // Centrer horizontalement
                                   },
-                                  "& input[type=number]": {
-                                    MozAppearance: "textfield", // Pour Firefox
-                                  },
-                                  "& input[type=number]::-webkit-outer-spin-button":
-                                    {
-                                      WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                      margin: 0,
-                                    },
-                                  "& input[type=number]::-webkit-inner-spin-button":
-                                    {
-                                      WebkitAppearance: "none",
-                                      margin: 0,
-                                    },
                                 }}
                               />
                             </TableCell>
@@ -844,50 +883,15 @@ function AddOrdreReparationModal({
                             <TableCell>
                               <TextField
                                 name="discountAmount"
-                                type="text" // Permet la saisie de caractères comme '%'
-                                value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
-                                onChange={(e) => {
-                                  let value = e.target.value.trim(); // Supprime les espaces inutiles
-                                  let formattedValue = value; // Conserve la saisie brute pour affichage
-
-                                  // Uniformise les décimales en remplaçant les virgules par des points
-                                  const normalizedValue = value.replace(
-                                    ",",
-                                    "."
-                                  );
-
-                                  // Réinitialisation des valeurs par défaut
-                                  detail.discountAmount = "";
-                                  detail.discountPercent = "";
-
-                                  if (normalizedValue.includes("%")) {
-                                    // Cas où l'utilisateur entre un pourcentage
-                                    const percentage = parseFloat(
-                                      normalizedValue.replace("%", "")
-                                    );
-                                    if (!isNaN(percentage)) {
-                                      detail.discountPercent = percentage; // Met à jour le pourcentage
-                                      detail.discountAmount = ""; // Réinitialise le montant
-                                    }
-                                  } else if (normalizedValue !== "") {
-                                    // Cas où l'utilisateur entre un montant
-                                    const amount = parseFloat(normalizedValue);
-                                    if (!isNaN(amount)) {
-                                      detail.discountAmount = amount; // Met à jour le montant
-                                      detail.discountPercent = ""; // Réinitialise le pourcentage
-                                    }
-                                  }
-
-                                  // Met à jour l'état de l'inputValue avec la saisie brute
-                                  detail.inputValue = formattedValue;
-
-                                  // Appelle la fonction de gestion des changements
+                                type="text"
+                                value={detail.inputValue || ""}
+                                onChange={(e) =>
                                   handleDetailChange(
                                     index,
                                     "discountAmount",
                                     e.target.value
-                                  );
-                                }}
+                                  )
+                                }
                                 size="small"
                                 sx={{
                                   "& input": {
