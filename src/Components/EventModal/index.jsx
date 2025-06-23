@@ -31,6 +31,7 @@ function EventDialog({
   setEditedEvent,
   handleEventDetailClick,
   categories,
+  users,
   onEventTriggered,
   onFactureReceive,
 }) {
@@ -213,6 +214,14 @@ function EventDialog({
           name: selectedCat.name,
           color: selectedCat.color,
         };
+      } else if (name === "operator") {
+        // Gérer la catégorie
+        const selectedOperator = users.find((user) => user.id === value);
+        updatedEvent.operatorId = selectedOperator.id;
+      } else if (name === "receptionist") {
+        // Gérer la catégorie
+        const selectedRecept = users.find((user) => user.id === value);
+        updatedEvent.receptionistId = selectedRecept.id;
       } else if (name.includes(".")) {
         // Gérer les champs imbriqués (par exemple "address.street")
         const keys = name.split(".");
@@ -258,6 +267,8 @@ function EventDialog({
           endHour: parseInt(editedEvent.endHour),
           endMinute: parseInt(editedEvent.endMinute),
           categoryId: editedEvent?.Category?.id,
+          operatorId: editedEvent?.operatorId,
+          receptionistId: editedEvent?.receptionistId,
           clientId: editedEvent.clientId,
           vehicleId: editedEvent.vehicleId,
           notes: editedEvent.notes,
@@ -1040,33 +1051,69 @@ function EventDialog({
                   }}
                 >
                   <TextField
-                    placeholder="Opérateur"
+                    select
+                    label="Opérateur"
                     name="operator"
-                    value={operator.name}
+                    value={editedEvent?.operatorId}
                     onChange={handleChange}
-                    fullWidth
+                    fullWidthP
                     margin="normal"
+                    required
                     size="small"
                     sx={{
+                      width: "100%",
+
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                     }}
-                  />
+                  >
+                    {users &&
+                      users.map((userGroup, index) => (
+                        <MenuItem
+                          key={index}
+                          value={userGroup.id}
+                          sx={{
+                            fontSize: "0.8rem",
+                            minHeight: "30px",
+                          }}
+                        >
+                          {userGroup.name}
+                        </MenuItem>
+                      ))}
+                  </TextField>
                   <TextField
-                    placeholder="Réceptionnaire"
-                    name="receptor"
-                    value={receptionist.name}
+                    select
+                    label="Réceptionnaire"
+                    name="receptionist"
+                    value={editedEvent?.receptionistId}
                     onChange={handleChange}
-                    fullWidth
+                    fullWidthP
                     margin="normal"
+                    required
                     size="small"
                     sx={{
+                      width: "100%",
+
                       height: "30px",
                       "& .MuiInputBase-root": { fontSize: "0.8rem" },
                       "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                     }}
-                  />
+                  >
+                    {users &&
+                      users.map((userGroup, index) => (
+                        <MenuItem
+                          key={index}
+                          value={userGroup.id}
+                          sx={{
+                            fontSize: "0.8rem",
+                            minHeight: "30px",
+                          }}
+                        >
+                          {userGroup.name}
+                        </MenuItem>
+                      ))}
+                  </TextField>
                 </Box>
 
                 <Typography variant="body1">Date de départ</Typography>

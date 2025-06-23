@@ -476,7 +476,7 @@ const GarageSettings = () => {
       <Grid container spacing={4} sx={{ p: 3 }}>
         {/* Colonne Gauche */}
         <Grid item xs={12} md={6}>
-          <Accordion defaultExpanded>
+          <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6">
                 🛠 Informations générales du garage
@@ -555,7 +555,7 @@ const GarageSettings = () => {
             </AccordionDetails>
           </Accordion>
 
-          <Accordion defaultExpanded>
+          <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6">
                 🧾 Paramètres personnalisés à afficher dans les documents
@@ -600,7 +600,7 @@ const GarageSettings = () => {
 
         {/* Colonne Droite */}
         <Grid item xs={12} md={6}>
-          <Accordion defaultExpanded>
+          <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6">
                 👤 Informations de l'utilisateur connecté
@@ -645,7 +645,7 @@ const GarageSettings = () => {
             </AccordionDetails>
           </Accordion>
 
-          <Accordion defaultExpanded>
+          <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6">
                 🏷️ Gestion des catégories d'ordres de réparation
@@ -775,7 +775,7 @@ const GarageSettings = () => {
             </AccordionDetails>
           </Accordion>
 
-          <Accordion defaultExpanded>
+          <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6">👥 Gestion des utilisateurs"</Typography>
             </AccordionSummary>

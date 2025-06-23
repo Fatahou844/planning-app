@@ -37,6 +37,7 @@ import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
 const tabLabels = [
+  { label: "Ateliers", path: "/ateliers" },
   { label: "Planning", path: "/planning/categories" },
   { label: "Clients", path: "/clients" },
   { label: "Store", path: "/store" },
@@ -47,7 +48,6 @@ const tabLabels = [
   { label: "Marketing", path: "/marketing" },
   { label: "Paramètres", path: "/parametres" },
 ];
-
 
 const DashboardTabs = () => {
   const navigate = useNavigate();

@@ -689,6 +689,7 @@ function ManageClients() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>Document</TableCell>
                     <TableCell>N°</TableCell>
                     <TableCell>Date</TableCell>
                     <TableCell>Nom</TableCell>
@@ -698,7 +699,6 @@ function ManageClients() {
                     <TableCell>Email</TableCell>
 
                     <TableCell>Véhicule</TableCell>
-                    <TableCell>Document</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -717,6 +717,16 @@ function ManageClients() {
                       }}
                       style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
                     >
+                      <TableCell>
+                        <Chip
+                          label={event.collectionName}
+                          color={getBadgeColor(event.collectionName)}
+                          style={{
+                            fontWeight: "bold",
+                            textTransform: "capitalize",
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>{event.id}</TableCell>
                       <TableCell>
                         {moment(event.createdAt).format("DD/MM/YYYY")}
@@ -730,16 +740,6 @@ function ManageClients() {
                       <TableCell>
                         {event.Vehicle.model || ""} -{" "}
                         {event.Vehicle.plateNumber || ""}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.collectionName}
-                          color={getBadgeColor(event.collectionName)}
-                          style={{
-                            fontWeight: "bold",
-                            textTransform: "capitalize",
-                          }}
-                        />
                       </TableCell>
                     </TableRow>
                   ))}

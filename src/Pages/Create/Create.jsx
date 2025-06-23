@@ -1,10 +1,13 @@
 // SignInSignUp.jsx
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
   Alert,
   Autocomplete,
   Box,
   Button,
   Container,
+  IconButton,
+  InputAdornment,
   Stack,
   TextField,
   Typography,
@@ -12,6 +15,7 @@ import {
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAxios } from "../../utils/hook/useAxios";
+
 const garagesMock = [
   { label: "Garage Auto Pro", id: 1 },
   { label: "Garage SpeedX", id: 2 },
@@ -35,6 +39,8 @@ export default function AuthPages() {
   const handleChange = (field, value) => {
     setForm({ ...form, [field]: value });
   };
+  const [showPassword, setShowPassword] = useState(false);
+  const [showUsername, setShowUsername] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.email || !form.password) {
@@ -137,6 +143,7 @@ export default function AuthPages() {
           <TextField
             placeholder="Adresse e-mail"
             fullWidth
+            type={showUsername ? "text" : "password"}
             value={form.email}
             onChange={(e) => handleChange("email", e.target.value)}
             size="small"
@@ -145,10 +152,23 @@ export default function AuthPages() {
               "& .MuiInputBase-root": { fontSize: "0.8rem" },
               "& .MuiFormLabel-root": { fontSize: "0.8rem" },
             }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowUsername((prev) => !prev)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showUsername ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <TextField
             placeholder="Mot de passe"
-            type="password"
+            type={showPassword ? "text" : "password"}
             fullWidth
             value={form.password}
             onChange={(e) => handleChange("password", e.target.value)}
@@ -157,6 +177,19 @@ export default function AuthPages() {
               height: "30px",
               "& .MuiInputBase-root": { fontSize: "0.8rem" },
               "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+            }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
           />
 

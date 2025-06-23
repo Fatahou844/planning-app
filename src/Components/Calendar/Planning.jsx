@@ -157,6 +157,8 @@ const Planning = () => {
     "Climatisation",
   ]);
   const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]);
+
   const user = { id: 1 };
 
   function getCurrentUser() {
@@ -181,6 +183,18 @@ const Planning = () => {
     const formattedDate = today.toISOString().split("T")[0];
     setSelectedDate(formattedDate); // Initialiser le state avec la date d'aujourd'hui
   }, []); // État pour stocker la date sélectionnée  handleSearchClick
+
+  useEffect(() => {
+    if (getCurrentUser().garageId) {
+      axios
+        .get(`/users/garageid/${getCurrentUser().garageId}`)
+        .then((res) => setUsers(res.data))
+        .catch((err) => {
+          console.error("Erreur de chargement des utilisateurs :", err);
+          setUsers([]);
+        });
+    }
+  }, [, getCurrentUser().garageId]);
 
   useEffect(() => {
     handleSearchClickFull();
@@ -1942,6 +1956,25 @@ const Planning = () => {
     }
   };
 
+  // Renvoie 'black' ou 'white' selon la luminosité du fond
+  const getContrastTextColor = (hexColor) => {
+    if (!hexColor) return "#000";
+
+    // Supprimer le hash (#) si présent
+    const hex = hexColor.replace("#", "");
+
+    // Convertir en RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    // Calcul de la luminance perçue
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // Si luminance > 0.6, fond clair → texte noir
+    return luminance > 0.6 ? "#000" : "#fff";
+  };
+
   const [openOr, setOpenOr] = useState(false);
   const [openResa, setOpenResa] = useState(false);
   const [openDevis, setOpenDevis] = useState(false);
@@ -2172,6 +2205,7 @@ const Planning = () => {
           editedEvent={selectedEvent}
           setEditedEvent={handleEditedEventChange}
           categories={categories}
+          users={users}
           handleSave={handleSaveEvent}
           handleEventDetailClick={handleEventDetailClick}
           onEventTriggered={handleEventFromChild}
@@ -2414,6 +2448,9 @@ const Planning = () => {
                     key={category.id}
                     sx={{
                       backgroundColor: getCategoryColor(category),
+                      color: getContrastTextColor(
+                        getCategoryColor(category) || "#05AFC1"
+                      ),
                       marginTop: "16px",
                       borderRadius: "8px",
                       boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
@@ -3021,13 +3058,11 @@ const Planning = () => {
                         >
                           <UserSearch
                             onSelectUser={handleSelectOperator}
-                            Users={Operator}
                             garageId={getCurrentUser().garageId}
                             NameAttribute="Opérateur"
                           ></UserSearch>
                           <UserSearch
                             onSelectUser={handleSelectReceptor}
-                            Users={Receptor}
                             garageId={getCurrentUser().garageId}
                             NameAttribute="Récepteur"
                           ></UserSearch>
@@ -3512,6 +3547,9 @@ const Planning = () => {
                     lines
                   );
 
+                  const backgroundColor = category?.color || "#05AFC1";
+                  const textColor = getContrastTextColor(backgroundColor);
+
                   return (
                     <Droppable droppableId={category.id} key={category.id}>
                       {(provided) => (
@@ -3613,6 +3651,9 @@ const Planning = () => {
                                           border: snapshot.isDragging
                                             ? "2px solid #90caf9"
                                             : "1px solid #90caf9",
+                                          color: getContrastTextColor(
+                                            event.Category?.color || "#05AFC1"
+                                          ),
                                           borderRadius: "10px",
                                           display: "flex",
                                           alignItems: "center",
@@ -3633,7 +3674,10 @@ const Planning = () => {
                                               style={{
                                                 fontWeight: "bold",
                                                 fontSize: "1rem",
-                                                color: "#000",
+                                                color: getContrastTextColor(
+                                                  event.Category?.color ||
+                                                    "#05AFC1"
+                                                ),
                                               }}
                                             >
                                               #{event.id}
@@ -3641,7 +3685,10 @@ const Planning = () => {
                                             {" • "}
                                             <span
                                               style={{
-                                                color: "#1976d2",
+                                                color: getContrastTextColor(
+                                                  event.Category?.color ||
+                                                    "#05AFC1"
+                                                ),
                                                 fontWeight: "bold",
                                               }}
                                             >
@@ -3649,12 +3696,22 @@ const Planning = () => {
                                             </span>
                                             {" • "}
                                             <span
-                                              style={{ color: "textSecondary" }}
+                                              style={{
+                                                color: getContrastTextColor(
+                                                  event.Category?.color ||
+                                                    "#05AFC1"
+                                                ),
+                                              }}
                                             >
                                               {event.Vehicle.plateNumber}
                                             </span>
                                             <span
-                                              style={{ color: "textSecondary" }}
+                                              style={{
+                                                color: getContrastTextColor(
+                                                  event.Category?.color ||
+                                                    "#05AFC1"
+                                                ),
+                                              }}
                                             >
                                               {" "}
                                               {event?.isClosed ? "(Fermé)" : ""}
@@ -3664,7 +3721,10 @@ const Planning = () => {
                                             <ArrowForwardIcon
                                               fontSize="medium"
                                               sx={{
-                                                color: "white",
+                                                color: getContrastTextColor(
+                                                  event.Category?.color ||
+                                                    "#05AFC1"
+                                                ),
                                                 transition:
                                                   "transform 0.3s ease, color 0.3s ease",
                                                 "&:hover": {
@@ -3753,6 +3813,7 @@ const Planning = () => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>Document</TableCell>
                     <TableCell>N°</TableCell>
                     <TableCell>Nom</TableCell>
                     <TableCell>Prénom</TableCell>
@@ -3761,7 +3822,6 @@ const Planning = () => {
                     <TableCell>Email</TableCell>
 
                     <TableCell>Véhicule</TableCell>
-                    <TableCell>Document</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -3780,6 +3840,16 @@ const Planning = () => {
                       }}
                       style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
                     >
+                      <TableCell>
+                        <Chip
+                          label={event.collectionName}
+                          color={getBadgeColor(event.collectionName)}
+                          style={{
+                            fontWeight: "bold",
+                            textTransform: "capitalize",
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>{event.id}</TableCell>
                       <TableCell>{event.Client.name}</TableCell>
                       <TableCell>{event.Client.firstName}</TableCell>
@@ -3790,16 +3860,6 @@ const Planning = () => {
                       <TableCell>
                         {event.Vehicle.model || ""} -{" "}
                         {event.Vehicle.plateNumber || ""}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.collectionName}
-                          color={getBadgeColor(event.collectionName)}
-                          style={{
-                            fontWeight: "bold",
-                            textTransform: "capitalize",
-                          }}
-                        />
                       </TableCell>
                     </TableRow>
                   ))}
