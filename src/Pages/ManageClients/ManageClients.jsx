@@ -1,8 +1,10 @@
 // src/App.js
+import DeleteIcon from "@mui/icons-material/Delete";
 import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
 import {
   Box,
   Button,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -19,6 +21,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Typography,
@@ -148,13 +151,6 @@ function ManageClients() {
             collectionName: collectionKey,
           }));
 
-          // if (collectionKey === "reservations") {
-          //   const today = dayjs();
-          //   filtResults = filtResults.filter((item) =>
-          //     dayjs(item.createdAt).isSame(today, "day")
-          //   );
-          // }
-
           // Filtrer les résultats en fonction du mot-clé
           const filteredResults = filtResults.filter((item) => {
             return (
@@ -195,6 +191,29 @@ function ManageClients() {
 
       // Mettre à jour l'état avec les résultats
       setDataEventsAll(uniqueResults);
+      setFilteredEvents(
+        uniqueResults.filter((event) => {
+          const matchesDocument =
+            documentFilter === "all" || event.collectionName === documentFilter;
+
+          const searchLower = searchQueryInterior.toLowerCase();
+
+          const matchesSearch =
+            event.Client.name?.toLowerCase().includes(searchLower) ||
+            event.Client.firstName?.toLowerCase().includes(searchLower) ||
+            event.Client.email?.toLowerCase().includes(searchLower) ||
+            event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+            event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+          const eventDate = new Date(event.createdAt); // ou event.createdAt
+
+          const matchesDate =
+            (!dateMin || eventDate >= new Date(dateMin)) &&
+            (!dateMax || eventDate <= new Date(dateMax));
+
+          return matchesDocument && matchesSearch && matchesDate;
+        })
+      );
       setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
@@ -520,27 +539,148 @@ function ManageClients() {
   const [dateMin, setDateMin] = useState(null); // ou new Date()
   const [dateMax, setDateMax] = useState(null);
 
-  const filteredEvents = dataEventsAll.filter((event) => {
-    const matchesDocument =
-      documentFilter === "all" || event.collectionName === documentFilter;
+  const [filteredEvents, setFilteredEvents] = useState(
+    dataEventsAll.filter((event) => {
+      const matchesDocument =
+        documentFilter === "all" || event.collectionName === documentFilter;
 
-    const searchLower = searchQueryInterior.toLowerCase();
+      const searchLower = searchQueryInterior.toLowerCase();
 
-    const matchesSearch =
-      event.Client.name?.toLowerCase().includes(searchLower) ||
-      event.Client.firstName?.toLowerCase().includes(searchLower) ||
-      event.Client.email?.toLowerCase().includes(searchLower) ||
-      event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
-      event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+      const matchesSearch =
+        event.Client.name?.toLowerCase().includes(searchLower) ||
+        event.Client.firstName?.toLowerCase().includes(searchLower) ||
+        event.Client.email?.toLowerCase().includes(searchLower) ||
+        event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+        event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
 
-    const eventDate = new Date(event.createdAt); // ou event.createdAt
+      const eventDate = new Date(event.createdAt); // ou event.createdAt
 
-    const matchesDate =
-      (!dateMin || eventDate >= new Date(dateMin)) &&
-      (!dateMax || eventDate <= new Date(dateMax));
+      const matchesDate =
+        (!dateMin || eventDate >= new Date(dateMin)) &&
+        (!dateMax || eventDate <= new Date(dateMax));
 
-    return matchesDocument && matchesSearch && matchesDate;
-  });
+      return matchesDocument && matchesSearch && matchesDate;
+    })
+  );
+
+  // 👉 À l'intérieur de ton composant
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const [selectedItems, setSelectedItems] = useState([]); // [{ id, collectionName }]
+
+  // const handleSelectAllClick = (event) => {
+  //   if (event.target.checked) {
+  //     const newSelectedIds = filteredEvents.map((e) => e.id);
+  //     setSelectedIds(newSelectedIds);
+  //   } else {
+  //     setSelectedIds([]);
+  //     setSelectedCollectNames([]);
+  //   }
+  // };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelected = filteredEvents.map((e) => ({
+        id: e.id,
+        collectionName: e.collectionName, // ⚠️ Assure-toi que chaque event l’a
+      }));
+      setSelectedItems(newSelected);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  // const handleSelectClick = (id) => {
+  //   setSelectedIds((prev) =>
+  //     prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+  //   );
+  // };
+
+  const handleSelectClick = (id, collectionName) => {
+    setSelectedItems((prev) => {
+      const exists = prev.find((item) => item.id === id);
+      if (exists) {
+        return prev.filter((item) => item.id !== id);
+      } else {
+        return [...prev, { id, collectionName }];
+      }
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) {
+      console.warn("Aucun élément sélectionné pour suppression.");
+      return;
+    }
+
+    try {
+      for (const { id, collectionName } of selectedItems) {
+        let url = "";
+        switch (collectionName) {
+          case "events":
+            url = `/orders/${id}`;
+            break;
+          case "factures":
+            url = `/invoices/${id}`;
+            break;
+          case "devis":
+            url = `/quotes/${id}`;
+            break;
+          case "reservations":
+            url = `/reservations/${id}`;
+            break;
+          default:
+            console.error("Collection non supportée :", collectionName);
+            continue;
+        }
+
+        await axios.deleteData(url, {
+          data: { eventId: id },
+        });
+
+        console.log(`✅ ${collectionName} avec l'ID ${id} supprimé.`);
+      }
+
+      const remaining = filteredEvents.filter(
+        (event) => !selectedItems.some((sel) => sel.id === event.id)
+      );
+      setFilteredEvents(remaining);
+      setDataEventsAll(remaining);
+      setSelectedItems([]);
+
+      setNotification({
+        open: true,
+        message: `${selectedItems.length} élément(s) supprimé(s) avec succès`,
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      setNotification({
+        open: true,
+        message: "Erreur lors de la suppression.",
+        severity: "error",
+      });
+    }
+  };
+
+  const isSelected = (id) => selectedIds.includes(id);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Pagination appliquée
+  const paginatedEvents = filteredEvents.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <div className="app-container">
@@ -550,9 +690,10 @@ function ManageClients() {
           sx={{
             flexGrow: 1,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: "flex-start", // ⬅️ aligne les enfants en haut
+            justifyContent: "center", // ⬅️ centre horizontalement
             mx: 3,
+            mt: 5, // marge top pour respirer
           }}
         >
           {selectedEvent && (
@@ -682,6 +823,18 @@ function ManageClients() {
               onChange={(e) => setDateMax(e.target.value)}
             />
           </Box>
+          {selectedItems.length > 0 && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleDeleteSelected}
+              sx={{ mb: 2 }}
+            >
+              Supprimer la sélection ({selectedItems.length})
+            </Button>
+          )}
+
           {dataEventsAll.length === 0 ? (
             <Typography>Aucun événement trouvé.</Typography>
           ) : (
@@ -689,62 +842,101 @@ function ManageClients() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={
+                          selectedItems.length > 0 &&
+                          selectedItems.length === filteredEvents.length
+                        }
+                        indeterminate={
+                          selectedItems.length > 0 &&
+                          selectedItems.length < filteredEvents.length
+                        }
+                        onChange={handleSelectAllClick}
+                      />
+                    </TableCell>
                     <TableCell>Document</TableCell>
                     <TableCell>N°</TableCell>
                     <TableCell>Date</TableCell>
                     <TableCell>Nom</TableCell>
                     <TableCell>Prénom</TableCell>
-
                     <TableCell>Téléphone</TableCell>
                     <TableCell>Email</TableCell>
-
                     <TableCell>Véhicule</TableCell>
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
-                  {filteredEvents.map((event) => (
-                    <TableRow
-                      key={event.id}
-                      hover
-                      onClick={() => {
-                        setSelectedEvent(event); // Met à jour l'événement sélectionné
-                        setCollectionName(event.collectionName);
-                        if (event.collectionName !== "events") {
-                          setModalOpen2(true);
-                          setModalOpen(false);
-                          console.log("modalOpen2 listing", modalOpen2);
-                        } else setModalOpen(true);
-                      }}
-                      style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
-                    >
-                      <TableCell>
-                        <Chip
-                          label={event.collectionName}
-                          color={getBadgeColor(event.collectionName)}
-                          style={{
-                            fontWeight: "bold",
-                            textTransform: "capitalize",
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{event.id}</TableCell>
-                      <TableCell>
-                        {moment(event.createdAt).format("DD/MM/YYYY")}
-                      </TableCell>
-                      <TableCell>{event.Client.name}</TableCell>
-                      <TableCell>{event.Client.firstName}</TableCell>
+                  {paginatedEvents.map((event) => {
+                    const selected = isSelected(event.id);
 
-                      <TableCell>{event.Client.phone || ""}</TableCell>
-                      <TableCell>{event.Client.email}</TableCell>
-
-                      <TableCell>
-                        {event.Vehicle.model || ""} -{" "}
-                        {event.Vehicle.plateNumber || ""}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                    return (
+                      <TableRow
+                        key={event.id}
+                        hover
+                        selected={selected}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setCollectionName(event.collectionName);
+                          if (event.collectionName !== "events") {
+                            setModalOpen2(true);
+                            setModalOpen(false);
+                          } else {
+                            setModalOpen(true);
+                          }
+                        }}
+                      >
+                        <TableCell
+                          padding="checkbox"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            checked={selectedItems.some(
+                              (item) => item.id === event.id
+                            )}
+                            onChange={() =>
+                              handleSelectClick(event.id, event.collectionName)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={event.collectionName}
+                            color={getBadgeColor(event.collectionName)}
+                            style={{
+                              fontWeight: "bold",
+                              textTransform: "capitalize",
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>{event.id}</TableCell>
+                        <TableCell>
+                          {moment(event.createdAt).format("DD/MM/YYYY")}
+                        </TableCell>
+                        <TableCell>{event.Client.name}</TableCell>
+                        <TableCell>{event.Client.firstName}</TableCell>
+                        <TableCell>{event.Client.phone || ""}</TableCell>
+                        <TableCell>{event.Client.email}</TableCell>
+                        <TableCell>
+                          {event.Vehicle.model || ""} -{" "}
+                          {event.Vehicle.plateNumber || ""}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
+
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredEvents.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </TableContainer>
           )}
           <Fab

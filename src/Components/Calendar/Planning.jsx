@@ -50,6 +50,7 @@ import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
+import useAutoLogout from "../../utils/hook/useAutoLogout";
 
 const Timeline = () => (
   <Box
@@ -2173,6 +2174,7 @@ const Planning = () => {
       console.error("Erreur de déconnexion :", error);
     }
   };
+  useAutoLogout(handleLogout); // ⏳ auto logout après 10min inactivité
 
   const [searchQueryInterior, setSearchQueryInterior] = useState("");
   const [documentFilter, setDocumentFilter] = useState("all");
