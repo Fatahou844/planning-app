@@ -109,28 +109,35 @@ const EmailSearch = ({ onSelectClient, Client }) => {
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    let error = "";
+    let newErrors = { ...errors };
 
-    if (
-      name === "email" &&
-      value &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-    ) {
-      error = "Email invalide";
+    if (name === "phone") {
+      if (value.toLowerCase() === "xxx") {
+        delete newErrors.phone; // on accepte "xxx"
+      } else {
+        const isValidPhone = /^\d{10}$/.test(value);
+        if (!isValidPhone) {
+          newErrors.phone = "Numéro invalide";
+        } else {
+          delete newErrors.phone;
+        }
+      }
     }
 
-    if (name === "phone" && value && !/^\+?[0-9\s\-]{7,15}$/.test(value)) {
-      error = "Téléphone invalide";
+    if (name === "email") {
+      if (value.toLowerCase() === "xxx") {
+        delete newErrors.email; // on accepte "xxx"
+      } else {
+        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        if (!isValidEmail) {
+          newErrors.email = "Email invalide";
+        } else {
+          delete newErrors.email;
+        }
+      }
     }
 
-    setErrors((prev) => ({ ...prev, [name]: error }));
-
-    // Recalcule si le form devient invalide
-    const hasErrors = Object.values({ ...errors, [name]: error }).some(
-      (err) => err !== ""
-    );
-    const isInvalid = !newClient.phone || !newClient.email || hasErrors;
-    setIsFormInvalid(isInvalid);
+    setErrors(newErrors);
   };
 
   return (
