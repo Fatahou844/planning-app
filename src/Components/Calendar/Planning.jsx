@@ -17,6 +17,7 @@ import {
   Grid,
   IconButton,
   InputLabel,
+  Menu,
   MenuItem,
   Modal,
   Paper,
@@ -45,12 +46,12 @@ import Notification from "../Notification";
 
 import logoGarage from "../../assets/images/garageLogo.jpg";
 import jumelles from "../../assets/images/jumelles.png";
+import useAutoLogout from "../../utils/hook/useAutoLogout";
 import { useAxios } from "../../utils/hook/useAxios";
 import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
-import useAutoLogout from "../../utils/hook/useAutoLogout";
 
 const Timeline = () => (
   <Box
@@ -172,11 +173,6 @@ const Planning = () => {
 
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(false);
-
-  console.log(
-    "***************************** AXIOS *****************************",
-    axios
-  );
 
   useEffect(() => {
     const today = new Date();
@@ -2195,10 +2191,114 @@ const Planning = () => {
     return matchesDocument && matchesSearch;
   });
 
+  const [contextMenu, setContextMenu] = useState(null); // {mouseX, mouseY, eventData}
+  const [copiedEvent, setCopiedEvent] = useState(null); // pour gérer le copier/coller
+  const [isCut, setIsCut] = useState(false);
+  const handleContextMenu = (event, currentEvent) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+            eventData: currentEvent,
+          }
+        : null
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const handleCopy = () => {
+    setCopiedEvent(contextMenu.eventData);
+    handleCloseContextMenu();
+  };
+
+  const handlePaste = async () => {
+    if (!copiedEvent || !selectedDate) return;
+
+    // Convertir ancienne date de début et de fin en Date
+    const oldStartDate = new Date(copiedEvent.date);
+    const oldEndDate = new Date(copiedEvent.endDate);
+
+    // Calculer le décalage en millisecondes entre les deux
+    const durationMs = oldEndDate.getTime() - oldStartDate.getTime();
+
+    // Créer une nouvelle date de début
+    const newStartDate = new Date(selectedDate);
+    newStartDate.setHours(copiedEvent.startHour);
+    newStartDate.setMinutes(copiedEvent.startMinute);
+    newStartDate.setSeconds(0);
+    newStartDate.setMilliseconds(0);
+
+    // Créer la nouvelle date de fin en ajoutant la durée
+    const newEndDate = new Date(newStartDate.getTime() + durationMs);
+
+    // Préparer la copie à envoyer
+    const payload = {
+      ...copiedEvent,
+
+      date: selectedDate,
+      endDate: newEndDate.toISOString(),
+    };
+
+    try {
+      setLoading(true);
+      const response = await axios.post("/orders", payload);
+      console.log("Rendez-vous collé avec succès", response.data);
+    } catch (error) {
+      console.error("Erreur lors du collage :", error);
+    } finally {
+      setLoading(false);
+    }
+
+    handleCloseContextMenu();
+    handleClose();
+  };
+
+  const handleCut = async (eventToCut) => {
+    // Étape 1 : Copier les données
+    setCopiedEvent(eventToCut);
+    setIsCut(true);
+
+    // Étape 2 : Supprimer visuellement
+    try {
+      await axios.deleteData(`/orders/${eventToCut.id}`);
+      console.log("Rendez-vous coupé (supprimé) :", eventToCut.id);
+    } catch (error) {
+      console.error("Erreur lors du cut :", error);
+    }
+    
+    handleCloseContextMenu();
+    handleClose();
+  };
+  
+
   return (
     <DragDropContext>
       {/* Modal pour ajouter un événement */}
       {/* Header avec Barre de Recherche */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleCopy}>Copier RDV</MenuItem>
+        <MenuItem onClick={() => handleCut(contextMenu.eventData)}>
+          Couper RDV
+        </MenuItem>
+        <MenuItem onClick={handlePaste} disabled={!copiedEvent}>
+          Coller
+        </MenuItem>
+        <MenuItem onClick={handleCopy}>Déposer clé</MenuItem>
+      </Menu>
 
       {selectedEvent && (
         <EventModal
@@ -3535,6 +3635,7 @@ const Planning = () => {
             {loading == false && (
               <Box
                 sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}
+                // onContextMenu={(e) => handleContextMenu(e, copiedEvent)}
               >
                 {" "}
                 {/* Z-index élevé */}
@@ -3637,6 +3738,9 @@ const Planning = () => {
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                         onClick={() => handleEventClick(event)}
+                                        onContextMenu={(e) =>
+                                          handleContextMenu(e, event)
+                                        }
                                         sx={{
                                           gridColumnStart: calculateTimeValue(
                                             event.startHour,

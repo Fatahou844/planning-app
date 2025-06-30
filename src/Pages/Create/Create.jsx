@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAxios } from "../../utils/hook/useAxios";
 
@@ -40,7 +40,7 @@ export default function AuthPages() {
     setForm({ ...form, [field]: value });
   };
   const [showPassword, setShowPassword] = useState(false);
-  const [showUsername, setShowUsername] = useState(false);
+  const [showUsername, setShowUsername] = useState(true);
 
   const handleSubmit = async () => {
     if (!form.email || !form.password) {
@@ -77,6 +77,18 @@ export default function AuthPages() {
       isSignUp ? "Inscription réussie 🎉" : "Connexion réussie ✅"
     );
   };
+  const inputRef = React.useRef();
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const filledValue = inputRef.current?.value || "";
+      if (filledValue && filledValue !== form.email) {
+        handleChange("email", filledValue);
+      }
+    }, 100); // attendre que le navigateur injecte l'email
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <Container maxWidth="sm">
@@ -140,7 +152,7 @@ export default function AuthPages() {
             </>
           )}
 
-          <TextField
+          {/* <TextField
             placeholder="Adresse e-mail"
             fullWidth
             type={showUsername ? "text" : "password"}
@@ -165,7 +177,72 @@ export default function AuthPages() {
                 </InputAdornment>
               ),
             }}
-          />
+          /> */}
+          <Box sx={{ position: "relative", width: "100%" }}>
+            {showUsername ? (
+              <TextField
+                placeholder="Adresse e-mail"
+                fullWidth
+                inputRef={inputRef}
+                type="text"
+                autoComplete="email"
+                value={form.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+                size="small"
+                sx={{
+                  "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                  "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowUsername(false)}
+                        edge="end"
+                        size="small"
+                      >
+                        <VisibilityOff />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "40px",
+                  px: 2,
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  background: "#fff8cc", // même couleur que ton champ email
+                  fontSize: "0.8rem",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.2em",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  position: "relative",
+                }}
+              >
+                {"•".repeat(form.email.length)}
+                <IconButton
+                  onClick={() => setShowUsername(true)}
+                  edge="end"
+                  size="small"
+                  sx={{
+                    position: "absolute",
+                    right: 4,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                >
+                  <Visibility />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+
           <TextField
             placeholder="Mot de passe"
             type={showPassword ? "text" : "password"}
