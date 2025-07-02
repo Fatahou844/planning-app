@@ -140,12 +140,6 @@ function ManageClients() {
             return [];
           }
 
-          // Ajouter le nom de la collection à chaque objet dans la réponse
-          //   const filtResults = response.data.data.map((item) => ({
-          //     ...item,
-          //     collectionName: collectionKey, // Ajouter le nom de la collection
-          //   }));
-
           let filtResults = response.data.data.map((item) => ({
             ...item,
             collectionName: collectionKey,
@@ -213,6 +207,35 @@ function ManageClients() {
 
           return matchesDocument && matchesSearch && matchesDate;
         })
+      );
+
+      const paginatedData = uniqueResults.filter((event) => {
+        const matchesDocument =
+          documentFilter === "all" || event.collectionName === documentFilter;
+
+        const searchLower = searchQueryInterior.toLowerCase();
+
+        const matchesSearch =
+          event.Client.name?.toLowerCase().includes(searchLower) ||
+          event.Client.firstName?.toLowerCase().includes(searchLower) ||
+          event.Client.email?.toLowerCase().includes(searchLower) ||
+          event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+          event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+        const eventDate = new Date(event.createdAt); // ou event.createdAt
+
+        const matchesDate =
+          (!dateMin || eventDate >= new Date(dateMin)) &&
+          (!dateMax || eventDate <= new Date(dateMax));
+
+        return matchesDocument && matchesSearch && matchesDate;
+      });
+
+      setPaginatedEvents(
+        paginatedData.slice(
+          page * rowsPerPage,
+          page * rowsPerPage + rowsPerPage
+        )
       );
       setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
@@ -563,6 +586,10 @@ function ManageClients() {
     })
   );
 
+  useEffect(() => {
+    handleSearchClick();
+  }, [documentFilter]);
+
   // 👉 À l'intérieur de ton composant
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -647,6 +674,9 @@ function ManageClients() {
         (event) => !selectedItems.some((sel) => sel.id === event.id)
       );
       setFilteredEvents(remaining);
+      setPaginatedEvents(
+        remaining.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+      );
       setDataEventsAll(remaining);
       setSelectedItems([]);
 
@@ -677,9 +707,8 @@ function ManageClients() {
   };
 
   // Pagination appliquée
-  const paginatedEvents = filteredEvents.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+  const [paginatedEvents, setPaginatedEvents] = useState(
+    filteredEvents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   );
 
   return (

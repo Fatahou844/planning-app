@@ -446,94 +446,6 @@ const Planning = () => {
     // const lastOrderNumber = await getLastOrderNumberForUser(userId);
     const newOrderNumber = 1000;
 
-    // if (startDate.getTime() !== endDate.getTime()) {
-    //   // Cas où les événements couvrent plusieurs jours
-
-    //   // Ajout du premier événement pour la date de début
-    //   const firstEventEndHour = 19; // Heure de fin de la journée
-    //   const firstEventEndMinute = 0; // Fin de la journée à 18:00
-    //   const firstEvent = {
-    //     ...newEvent,
-    //     endHour: firstEventEndHour,
-    //     endMinute: firstEventEndMinute,
-    //     userId: userId,
-    //     title: newOrderNumber, // Utiliser le même numéro de commande
-    //   };
-    //   const singleEventDocRef = await addSingleEvent(
-    //     firstEvent,
-    //     newOrderNumber,
-    //     true
-    //   ); // Ajout à Firestore
-    //   const IsvalidDetails = details.filter((detail) => {
-    //     return (
-    //       detail.label?.trim() ||
-    //       detail.quantity?.toString().trim() ||
-    //       detail.unitPrice?.toString().trim() ||
-    //       detail.discountPercent?.toString().trim() ||
-    //       detail.discountAmount?.toString().trim()
-    //     );
-    //   });
-
-    //   if (IsvalidDetails.length)
-    //     await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
-
-    //   // Ajout des événements pour les jours intermédiaires (si applicable)
-    //   let currentDate = new Date(startDate);
-    //   currentDate.setDate(currentDate.getDate() + 1); // Premier jour après la date de début
-    //   while (currentDate < endDate) {
-    //     const dailyEvent = {
-    //       ...newEvent,
-    //       date: formatDate(currentDate),
-    //       startHour: 7,
-    //       startMinute: 0,
-    //       endHour: 19,
-    //       endMinute: 0,
-    //       userId: userId,
-    //       title: newOrderNumber, // Utiliser le même numéro de commande pour chaque jour
-    //     };
-    //     const singleEventDocRef = await addSingleEvent(
-    //       dailyEvent,
-    //       newOrderNumber,
-    //       true
-    //     ); // Ajout à Firestore
-    //     if (IsvalidDetails.length)
-    //       await addEventDetails(singleEventDocRef.id, details); // Enregistrer les détails
-    //     currentDate.setDate(currentDate.getDate() + 1); // Incrémenter la date
-    //   }
-
-    //   // Ajout du dernier événement pour la date de fin
-    //   const lastEvent = {
-    //     ...newEvent,
-    //     date: finDate,
-    //     startHour: 7,
-    //     startMinute: 0,
-    //     endHour: parseInt(newEvent.endHour), // Heure réelle de fin
-    //     endMinute: parseInt(newEvent.endMinute),
-    //     userId: userId,
-    //     title: newOrderNumber, // Utiliser le même numéro de commande
-    //     nextDay: false,
-    //   };
-    //   const lastEventDocRef = await addSingleEvent(
-    //     lastEvent,
-    //     newOrderNumber,
-    //     false
-    //   ); // Ajout à Firestore
-
-    //   const validDetails = details.filter((detail) => {
-    //     return (
-    //       detail.label?.trim() ||
-    //       detail.quantity?.toString().trim() ||
-    //       detail.unitPrice?.toString().trim() ||
-    //       detail.discountPercent?.toString().trim() ||
-    //       detail.discountAmount?.toString().trim()
-    //     );
-    //   });
-    //   if (validDetails.length)
-    //     await addEventDetails(lastEventDocRef.id, details); // Enregistrer les détails
-    // }
-
-    // else
-
     {
       // Si l'événement ne couvre qu'une seule journée, ou si isMultiDay est faux
       const singleEvent = {
@@ -2192,10 +2104,13 @@ const Planning = () => {
   });
 
   const [contextMenu, setContextMenu] = useState(null); // {mouseX, mouseY, eventData}
+  const [contextMenuPaste, setContextMenuPaste] = useState(null); // {mouseX, mouseY, eventData}
+
   const [copiedEvent, setCopiedEvent] = useState(null); // pour gérer le copier/coller
   const [isCut, setIsCut] = useState(false);
   const handleContextMenu = (event, currentEvent) => {
     event.preventDefault();
+    event.stopPropagation(); // ✨ Empêche l’événement d’atteindre le box global
     setContextMenu(
       contextMenu === null
         ? {
@@ -2205,10 +2120,31 @@ const Planning = () => {
           }
         : null
     );
+    setContextMenuPaste(null);
+  };
+
+  const handleContextMenuPaste = (event) => {
+    event.preventDefault();
+    setContextMenuPaste(
+      contextMenuPaste === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+          }
+        : null
+    );
+
+    console.log("mouseX: ", event.mouseX);
+    console.log("mouseY: ", event.mouseY);
+    setContextMenu(null); // On ferme le menu interne
   };
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
+  };
+
+  const handleCloseContextMenuPaste = () => {
+    setContextMenuPaste(null);
   };
 
   const handleCopy = () => {
@@ -2248,6 +2184,9 @@ const Planning = () => {
       setLoading(true);
       const response = await axios.post("/orders", payload);
       console.log("Rendez-vous collé avec succès", response.data);
+      if (payload.Details) {
+        addEventDetails(response.data.id, payload.Details);
+      }
     } catch (error) {
       console.error("Erreur lors du collage :", error);
     } finally {
@@ -2255,12 +2194,14 @@ const Planning = () => {
     }
 
     handleCloseContextMenu();
+    handleCloseContextMenuPaste();
     handleClose();
   };
 
   const handleCut = async (eventToCut) => {
     // Étape 1 : Copier les données
     setCopiedEvent(eventToCut);
+    console.log("eventToCut", eventToCut);
     setIsCut(true);
 
     // Étape 2 : Supprimer visuellement
@@ -2270,11 +2211,10 @@ const Planning = () => {
     } catch (error) {
       console.error("Erreur lors du cut :", error);
     }
-    
+
     handleCloseContextMenu();
     handleClose();
   };
-  
 
   return (
     <DragDropContext>
@@ -2290,10 +2230,28 @@ const Planning = () => {
             : undefined
         }
       >
-        <MenuItem onClick={handleCopy}>Copier RDV</MenuItem>
+        {/* <MenuItem onClick={handleCopy}>Copier RDV</MenuItem> */}
         <MenuItem onClick={() => handleCut(contextMenu.eventData)}>
           Couper RDV
         </MenuItem>
+        <MenuItem onClick={handlePaste} disabled={!copiedEvent}>
+          Coller
+        </MenuItem>
+        <MenuItem onClick={handleCopy}>Déposer clé</MenuItem>
+      </Menu>
+
+      <Menu
+        open={contextMenuPaste !== null}
+        onClose={handleCloseContextMenuPaste}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenuPaste !== null
+            ? { top: contextMenuPaste.mouseY, left: contextMenuPaste.mouseX }
+            : undefined
+        }
+      >
+        {/* <MenuItem onClick={handleCopy}>Copier RDV</MenuItem> */}
+
         <MenuItem onClick={handlePaste} disabled={!copiedEvent}>
           Coller
         </MenuItem>
@@ -3624,6 +3582,7 @@ const Planning = () => {
               borderRadius: "8px",
               height: "100%",
             }}
+            onContextMenu={(e) => handleContextMenuPaste(e)}
           >
             {/* Timeline Component */}
             <Timeline />
@@ -3635,7 +3594,7 @@ const Planning = () => {
             {loading == false && (
               <Box
                 sx={{ position: "relative", zIndex: 3, marginTop: "2.8rem" }}
-                // onContextMenu={(e) => handleContextMenu(e, copiedEvent)}
+                onContextMenu={(e) => handleContextMenuPaste(e)}
               >
                 {" "}
                 {/* Z-index élevé */}
