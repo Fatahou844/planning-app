@@ -45,7 +45,8 @@ import EventModal from "../EventModal";
 import Notification from "../Notification";
 
 import logoGarage from "../../assets/images/garageLogo.jpg";
-import jumelles from "../../assets/images/jumelles.png";
+// import jumelles from "../../assets/images/jumelles.png";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import useAutoLogout from "../../utils/hook/useAutoLogout";
 import { useAxios } from "../../utils/hook/useAxios";
 import EmailSearch from "../EmailSearch/EmailSearch";
@@ -53,62 +54,135 @@ import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
 
-const Timeline = () => (
-  <Box
-    sx={{
-      display: "grid",
-      //   justifyContent: "space-between",
-      marginBottom: "1.8rem",
-      height: "100%", // S'assurer que la timeline remplit tout l'espace disponible
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1, // Bas pour laisser les éléments s'afficher au-dessus
-      //  marginLeft: "1.5rem",
-      gridTemplateColumns: "repeat(24,minmax(50px,1fr))",
-    }}
-  >
-    {[...Array(24).keys()].map((halfHour) => (
-      <Box
-        key={halfHour}
-        sx={{
-          flexGrow: 1,
-          textAlign: "left", // Aligner les horaires à gauche du bloc
-          borderRight: "1px solid lightgray",
-          backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
-          position: "relative",
-          height: "100%", // Étendre le fond de chaque élément sur toute la hauteur
-        }}
-      >
-        <Typography
-          variant="caption"
-          sx={{
-            paddingLeft: "0.5rem", // Ajouter un petit espace pour le texte
-            position: "relative",
-            zIndex: 1,
-            marginLeft: "-1.499rem",
-          }}
-        >
-          {/* {7 + Math.floor(halfHour / 2)}:{halfHour % 2 === 0 ? "00" : "30"} */}
-          {(7 + Math.floor(halfHour / 2)).toString().padStart(2, "0")}:
-          {halfHour % 2 === 0 ? "00" : "30"}
-        </Typography>
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
-            zIndex: 0,
-          }}
-        />
-      </Box>
-    ))}
-  </Box>
-);
+const configExample = {
+  startHour: 6,
+  startMinute: 30,
+  endHour: 23,
+  endMinute: 30,
+};
+
+function generateTimeSlots({ startHour, startMinute, endHour, endMinute }) {
+  const start = startHour * 60 + startMinute;
+  const end = endHour * 60 + endMinute;
+  const slots = (end - start) / 30; // +1 pour inclure la dernière demi-heure
+  return Array.from({ length: slots }, (_, index) => start + index * 30);
+}
+
+// const Timeline = () => (
+//   <Box
+//     sx={{
+//       display: "grid",
+//       //   justifyContent: "space-between",
+//       marginBottom: "1.8rem",
+//       height: "100%", // S'assurer que la timeline remplit tout l'espace disponible
+//       position: "absolute",
+//       top: 0,
+//       left: 0,
+//       right: 0,
+//       zIndex: 1, // Bas pour laisser les éléments s'afficher au-dessus
+//       //  marginLeft: "1.5rem",
+//       gridTemplateColumns: "repeat(48,minmax(50px,1fr))",
+//     }}
+//   >
+//     {[...Array(48).keys()].map((halfHour) => (
+//       <Box
+//         key={halfHour}
+//         sx={{
+//           flexGrow: 1,
+//           textAlign: "left", // Aligner les horaires à gauche du bloc
+//           borderRight: "1px solid lightgray",
+//           backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
+//           position: "relative",
+//           height: "100%", // Étendre le fond de chaque élément sur toute la hauteur
+//         }}
+//       >
+//         <Typography
+//           variant="caption"
+//           sx={{
+//             paddingLeft: "0.5rem", // Ajouter un petit espace pour le texte
+//             position: "relative",
+//             zIndex: 1,
+//             marginLeft: "-1.499rem",
+//           }}
+//         >
+//           {/* {7 + Math.floor(halfHour / 2)}:{halfHour % 2 === 0 ? "00" : "30"} */}
+//           {(0 + Math.floor(halfHour / 2)).toString().padStart(2, "0")}:
+//           {halfHour % 2 === 0 ? "00" : "30"}
+//         </Typography>
+//         <Box
+//           sx={{
+//             position: "absolute",
+//             top: 0,
+//             left: 0,
+//             right: 0,
+//             bottom: 0,
+//             backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
+//             zIndex: 0,
+//           }}
+//         />
+//       </Box>
+//     ))}
+//   </Box>
+// );
+
+const Timeline = () => {
+  const timeSlots = generateTimeSlots(configExample);
+
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        marginBottom: "1.8rem",
+        height: "100%",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1,
+        gridTemplateColumns: `repeat(${timeSlots.length}, minmax(50px, 1fr))`,
+      }}
+    >
+      {timeSlots.map((minutes, i) => {
+        const hour = Math.floor(minutes / 60);
+        const minute = minutes % 60;
+        return (
+          <Box
+            key={i}
+            sx={{
+              borderRight: "1px solid lightgray",
+              backgroundColor: i % 2 === 0 ? "#f0f0f0" : "#ffffff",
+              position: "relative",
+              height: "100%",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                paddingLeft: "0.5rem",
+                position: "relative",
+                zIndex: 1,
+                marginLeft: "-1.499rem",
+              }}
+            >
+              {hour.toString().padStart(2, "0")}:{minute === 0 ? "00" : "30"}
+            </Typography>
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: i % 2 === 0 ? "#f0f0f0" : "#ffffff",
+                zIndex: 0,
+              }}
+            />
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
 
 const CurrentTimeLine = ({ currentHour }) => {
   const minutes = new Date().getMinutes();
@@ -362,6 +436,73 @@ const Planning = () => {
   //   setSelectedEvent(event);
   //   setModalOpen(true);
   // };
+
+  const handleRefrechData = async () => {
+    try {
+      const response = await axios.get(
+        `/documents-garage/order/${getCurrentUser().garageId}/details`
+      );
+
+      const eventsData = response.data.data;
+      setSelectedNewEvents(response.data.data);
+
+      const filteredEvents = eventsData
+        .filter((event) => {
+          if (event.isClosed) return false;
+
+          const startDate = new Date(event.date);
+          const endDate = new Date(event.endDate);
+          const current = new Date(selectedDate);
+
+          // Normaliser les dates à 00:00 pour la comparaison
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(0, 0, 0, 0);
+          current.setHours(0, 0, 0, 0);
+
+          return current >= startDate && current <= endDate;
+        })
+        .map((event) => {
+          const current = new Date(selectedDate);
+          const isStartDay =
+            new Date(selectedDate).setHours(0, 0, 0, 0) ===
+            new Date(event.date).setHours(0, 0, 0, 0);
+          const isEndDay =
+            new Date(selectedDate).setHours(0, 0, 0, 0) ===
+            new Date(event.endDate).setHours(0, 0, 0, 0);
+
+          let startHour = 7;
+          let startMinute = 0;
+          let endHour = 19;
+          let endMinute = 0;
+          let nextDay = true;
+
+          if (isStartDay) {
+            startHour = event.startHour;
+            startMinute = event.startMinute;
+          }
+
+          if (isEndDay) {
+            endHour = event.endHour;
+            endMinute = event.endMinute;
+            nextDay = false;
+          }
+
+          return {
+            ...event,
+            startHour,
+            startMinute,
+            endHour,
+            endMinute,
+            nextDay,
+          };
+        });
+
+      setDataEvents(filteredEvents);
+      console.log("filteredEvents", filteredEvents);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des événements :", error);
+    }
+  };
 
   const handleEventClick = (event) => {
     // Trouver l'original dans selectedNewEvents
@@ -1773,8 +1914,30 @@ const Planning = () => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
-  function calculateTimeValue(hour, minute) {
-    return 2 * (hour - 7) + Math.floor(minute / 30) + 1;
+  // function calculateTimeValue(hour, minute) {
+  //   return 2 * (hour - 0) + Math.floor(minute / 30) + 1;
+  // }
+
+  // function calculateTimeValue(hour, minute, config) {
+  //   const totalMinutes = hour * 60 + minute;
+  //   const startMinutes = config.startHour * 60 + config.startMinute;
+  //   return Math.floor((totalMinutes - startMinutes) / 30) + 1;
+  // }
+
+  function calculateTimeValue(hour, minute, config) {
+    const totalMinutes = hour * 60 + minute;
+    const startMinutes = config.startHour * 60 + config.startMinute;
+    const diff = totalMinutes - startMinutes;
+
+    // Sécurise si avant début du planning
+    if (diff < 0) return 1;
+
+    // Vérifie si le temps est aligné sur une demi-heure
+    if (diff % 30 !== 0) {
+      console.warn("Attention : l'heure ne tombe pas pile sur une demi-heure.");
+    }
+
+    return diff / 30 + 1; // ici on n'arrondit pas, on exige demi-heure pile
   }
 
   const handleEventFromChild = () => {
@@ -2177,7 +2340,7 @@ const Planning = () => {
       ...copiedEvent,
 
       date: selectedDate,
-      endDate: newEndDate.toISOString(),
+      endDate: new Date(newEndDate.setUTCHours(0, 0, 0, 0)).toISOString(), //newEndDate.toISOString(),
     };
 
     try {
@@ -2199,10 +2362,29 @@ const Planning = () => {
   };
 
   const handleCut = async (eventToCut) => {
-    // Étape 1 : Copier les données
-    setCopiedEvent(eventToCut);
-    console.log("eventToCut", eventToCut);
-    setIsCut(true);
+    // Étape 0
+    try {
+      const response = await axios.get(`/orders/${eventToCut.id}`);
+
+      // Étape 1 : Copier les données
+      setCopiedEvent({
+        ...eventToCut,
+        startHour: response.data.data.startHour,
+        startMinute: response.data.data.startMinute,
+        endHour: response.data.data.endHour,
+        endMinute: response.data.data.endMinute,
+      });
+      console.log("eventToCut", {
+        ...eventToCut,
+        startHour: response.data.data.startHour,
+        startMinute: response.data.data.startMinute,
+        endHour: response.data.data.endHour,
+        endMinute: response.data.data.endMinute,
+      });
+      setIsCut(true);
+    } catch (error) {
+      console.error("Erreur lors du cut :", error);
+    }
 
     // Étape 2 : Supprimer visuellement
     try {
@@ -2398,7 +2580,7 @@ const Planning = () => {
             </Box>
           </Box>
 
-          <Box
+          {/* <Box
             component="img"
             src={jumelles} // Vérifie le bon chemin
             alt="Jumelle"
@@ -2406,7 +2588,22 @@ const Planning = () => {
               height: 70,
               width: "auto",
             }}
-          />
+
+          /> */}
+          <Tooltip title="Rafraîchir">
+            <IconButton
+              onClick={() => handleRefrechData()} // Ou déclencher une fonction de refetch
+              sx={{
+                height: 70,
+                width: 70,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <RefreshIcon sx={{ fontSize: 32 }} />
+            </IconButton>
+          </Tooltip>
 
           {/* 🔍 Barre de recherche centrée */}
           <Box
@@ -3611,6 +3808,7 @@ const Planning = () => {
 
                   const backgroundColor = category?.color || "#05AFC1";
                   const textColor = getContrastTextColor(backgroundColor);
+                  const timeSlots = generateTimeSlots(configExample); // ← à partager partout
 
                   return (
                     <Droppable droppableId={category.id} key={category.id}>
@@ -3632,8 +3830,7 @@ const Planning = () => {
                               key={`line-${lineIndex}`}
                               sx={{
                                 display: "grid",
-                                gridTemplateColumns:
-                                  "repeat(24,minmax(50px,1fr))",
+                                gridTemplateColumns: `repeat(${timeSlots.length}, minmax(50px, 1fr))`, // ✅ dynamique ici
                                 alignItems: "center",
                                 position: "relative",
                                 height: "50px", // Hauteur de chaque ligne
@@ -3703,11 +3900,13 @@ const Planning = () => {
                                         sx={{
                                           gridColumnStart: calculateTimeValue(
                                             event.startHour,
-                                            event.startMinute
+                                            event.startMinute,
+                                            configExample
                                           ),
                                           gridColumnEnd: calculateTimeValue(
                                             event.endHour,
-                                            event.endMinute
+                                            event.endMinute,
+                                            configExample
                                           ),
 
                                           height: "40px",
