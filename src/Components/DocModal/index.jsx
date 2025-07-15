@@ -35,6 +35,7 @@ function DocModal({
   open,
   onClose,
   editedEvent,
+  orderId,
   setEditedEvent,
   collectionName,
   setCollectionName,
@@ -324,7 +325,7 @@ function DocModal({
       };
 
       // 1. Mettre à jour le document principal
-      await axios.put(`${config.api}/${editedEvent.id}`, DocData);
+      await axios.put(`${config.api}/${orderId}`, DocData);
 
       // 2. Traiter les détails
       for (const detail of details) {
@@ -469,7 +470,7 @@ function DocModal({
       }
 
       // 3. Mettre à jour le devis pour le fermer (isClosed: true)
-      await axios.put(`/quotes/${editedEvent.id}`, {
+      await axios.put(`/quotes/${orderId}`, {
         isClosed: true,
       });
 

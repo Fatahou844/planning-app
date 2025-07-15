@@ -28,6 +28,7 @@ function EventDialog({
   open,
   onClose,
   editedEvent,
+  orderId,
   setEditedEvent,
   handleEventDetailClick,
   categories,
@@ -81,9 +82,9 @@ function EventDialog({
         console.log("Début de la mise à jour des documents...");
 
         const tasks = [
-          { collection: "orders", id: editedEvent.id },
-          { collection: "reservations", id: editedEvent.id },
-          { collection: "devis", id: editedEvent.id },
+          { collection: "orders", id: orderId },
+          { collection: "reservations", id: orderId },
+          { collection: "devis", id: orderId },
         ];
 
         const updateTasks = tasks.map(async (task) => {

@@ -33,6 +33,7 @@ function DocumentModal({
   open,
   onClose,
   editedEvent,
+  orderId,
   setEditedEvent,
   collectionName,
   setCollectionName,

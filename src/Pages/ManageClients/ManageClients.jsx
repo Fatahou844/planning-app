@@ -711,6 +711,16 @@ function ManageClients() {
     filteredEvents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   );
 
+  useEffect(() => {
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    setPaginatedEvents(filteredEvents.slice(startIndex, endIndex));
+  }, [filteredEvents, page, rowsPerPage]);
+
+  useEffect(() => {
+    handleSearchClick();
+  }, [searchQueryInterior]);
+
   return (
     <div className="app-container">
       <div className="main-content">

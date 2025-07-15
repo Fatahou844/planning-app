@@ -28,7 +28,9 @@ const PlateNumberSearch = ({ onSelectClient, Client }) => {
   useEffect(() => {
     if (inputValue.length > 1) {
       axios
-        .get(`/vehicles/search/plateNumber?plateNumber=${inputValue}`)
+        .get(
+          `/vehicles/search/plateNumber?plateNumber=${inputValue}&clientId=${Client.id}`
+        )
         .then((res) => setClients(res.data))
         .catch((err) => {
           console.error(err);
@@ -174,7 +176,7 @@ const PlateNumberSearch = ({ onSelectClient, Client }) => {
           />
           <TextField
             name="lastCheck"
-            label="Code postal"
+            placeholder="Dernière vérification"
             type="date"
             fullWidth
             margin="normal"

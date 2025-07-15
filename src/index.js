@@ -37,7 +37,7 @@ import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
 const tabLabels = [
-  { label: "Ateliers", path: "/ateliers" },
+  { label: "Atelier", path: "/atelier" },
   { label: "Planning", path: "/planning/categories" },
   { label: "Clients", path: "/clients" },
   { label: "Store", path: "/store" },
@@ -285,6 +285,16 @@ const ActivitySidebar = () => {
 
     fetchAuthStatus();
   }, [, isAuthenticated]);
+  const handleLogout = async () => {
+    try {
+      await axios.get(`${BASE_URL_API}/v1/logout`); // pour envoyer les cookies
+      document.cookie =
+        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/"; // redirection après logout
+    } catch (error) {
+      console.error("Erreur de déconnexion :", error);
+    }
+  };
 
   return (
     <>
@@ -307,11 +317,12 @@ const ActivitySidebar = () => {
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
               justifyContent: "space-between",
+              alignItems: "center",
               cursor: "pointer",
               position: "fixed",
               zIndex: 1300,
+              px: 1,
             },
           }}
         >
@@ -320,11 +331,13 @@ const ActivitySidebar = () => {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              width: "100%",
+              justifyContent: "space-between",
               height: "100%",
+              width: "100%",
               position: "relative",
             }}
           >
+            {/* Liste du haut */}
             {open ? (
               <List sx={{ flexGrow: 1, width: "100%" }}>
                 <ListItem button>
@@ -352,15 +365,47 @@ const ActivitySidebar = () => {
               </Typography>
             )}
 
-            <IconButton
-              sx={{ position: "absolute", bottom: 10 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(!open);
-              }}
-            >
-              {open ? <ArrowBackIosIcon /> : <ArrowForwardIosIcon />}
-            </IconButton>
+            {/* Pied de page : déconnexion + toggle */}
+            <Box sx={{ width: "100%", mb: 1 }}>
+              {/* Bouton de déconnexion */}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // 🔒 Appelle ici ta fonction de logout
+                  handleLogout();
+                }}
+                sx={{
+                  color: "red",
+                  mb: 1,
+                  display: "flex",
+                  justifyContent: open ? "flex-start" : "center",
+                  pl: open ? 1 : 0,
+                  width: "100%",
+                }}
+              >
+                <LogoutIcon fontSize="small" />
+                {open && (
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    Déconnexion
+                  </Typography>
+                )}
+              </IconButton>
+
+              {/* Bouton toggle Drawer */}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(!open);
+                }}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "100%",
+                }}
+              >
+                {open ? <ArrowBackIosIcon /> : <ArrowForwardIosIcon />}
+              </IconButton>
+            </Box>
           </Box>
         </Drawer>
       )}

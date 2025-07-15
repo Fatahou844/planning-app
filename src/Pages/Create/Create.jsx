@@ -212,7 +212,7 @@ export default function AuthPages() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  height: "40px",
+                  height: "36px",
                   px: 2,
                   border: "1px solid #ccc",
                   borderRadius: "4px",
@@ -225,14 +225,14 @@ export default function AuthPages() {
                   position: "relative",
                 }}
               >
-                {"•".repeat(form.email.length)}
+                {".".repeat(form.email.length)}
                 <IconButton
                   onClick={() => setShowUsername(true)}
                   edge="end"
                   size="small"
                   sx={{
                     position: "absolute",
-                    right: 4,
+                    right: 13,
                     top: "50%",
                     transform: "translateY(-50%)",
                   }}
@@ -273,7 +273,7 @@ export default function AuthPages() {
           <Button variant="contained" onClick={handleSubmit}>
             Se connecter
           </Button>
-          <Link to={"/register"}>Je n'ai pas encore de compte</Link>
+          <Link to={"/reset-password"}>Mot de passe oublier</Link>
         </Stack>
       </Box>
     </Container>

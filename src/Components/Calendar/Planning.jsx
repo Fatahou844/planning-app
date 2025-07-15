@@ -2445,6 +2445,7 @@ const Planning = () => {
           open={modalOpen}
           onClose={handleModalClose}
           editedEvent={selectedEvent}
+          orderId={selectedEvent.id}
           setEditedEvent={handleEditedEventChange}
           categories={categories}
           users={users}
@@ -2472,6 +2473,7 @@ const Planning = () => {
           open={modalOpen2}
           onClose={handleModalClose2}
           editedEvent={selectedEvent}
+          orderId = {selectedEvent.id}
           setEditedEvent={handleEditedEventChange}
           collectionName={collectionName}
           setCollectionName={setCollectionName}
