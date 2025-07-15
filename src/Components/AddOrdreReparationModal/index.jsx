@@ -409,7 +409,7 @@ function AddOrdreReparationModal({
 
       const fetchCloseDevis = async () => {
         try {
-          await axios.put(`/quotes/${event.id}`, {
+          await axios.put(`/quotes/${event.lastEventId}`, {
             isClosed: true,
           });
           console.log("✅ Devis fermé avec succès.");
@@ -423,7 +423,7 @@ function AddOrdreReparationModal({
 
       const fetchCloseResa = async () => {
         try {
-          await axios.put(`/reservations/${event.id}`, {
+          await axios.put(`/reservations/${event.lastEventId}`, {
             isClosed: true,
           });
           console.log("✅ Réservation fermée avec succès.");

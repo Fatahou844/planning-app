@@ -2146,7 +2146,11 @@ const Planning = () => {
       setFacture(factureData?.data);
 
       handleOpenNotif("Facture");
-      setSelectedEvent({ ...selectedEvent, id: factureData?.data.id });
+      setSelectedEvent({
+        ...selectedEvent,
+        id: factureData?.data.id,
+        lastEventId: selectedEvent.id,
+      });
     }
   };
 
@@ -2156,7 +2160,11 @@ const Planning = () => {
     setModalOpen(false);
     setNewOrder(valeur);
 
-    setSelectedEvent({ ...selectedEvent, id: valeur.id });
+    setSelectedEvent({
+      ...selectedEvent,
+      id: valeur.id,
+      lastEventId: selectedEvent.id,
+    });
 
     console.log(
       "*************************************** handleOnNotficationSuccess ******************************** ",
@@ -2473,7 +2481,7 @@ const Planning = () => {
           open={modalOpen2}
           onClose={handleModalClose2}
           editedEvent={selectedEvent}
-          orderId = {selectedEvent.id}
+          orderId={selectedEvent.id}
           setEditedEvent={handleEditedEventChange}
           collectionName={collectionName}
           setCollectionName={setCollectionName}
@@ -4096,7 +4104,7 @@ const Planning = () => {
                       key={event.id}
                       hover
                       onClick={() => {
-                        setSelectedEvent(event); // Met à jour l'événement sélectionné
+                        setSelectedEvent({ ...event, lastEventId: event.id }); // Met à jour l'événement sélectionné
                         setCollectionName(event.collectionName);
                         if (event.collectionName !== "events") {
                           setModalOpen2(true);

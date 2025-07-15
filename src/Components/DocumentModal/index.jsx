@@ -310,7 +310,7 @@ function DocumentModal({
       }
 
       // 3. Mettre à jour le devis pour le fermer (isClosed: true)
-      await axios.put(`/quotes/${editedEvent.id}`, {
+      await axios.put(`/quotes/${editedEvent.lastEventId}`, {
         isClosed: true,
       });
 

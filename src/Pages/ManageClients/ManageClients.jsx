@@ -916,7 +916,7 @@ function ManageClients() {
                         selected={selected}
                         style={{ cursor: "pointer" }}
                         onClick={() => {
-                          setSelectedEvent(event);
+                          setSelectedEvent({ ...event, lastEventId: event.id }); // Met à jour l'événement sélectionné
                           setCollectionName(event.collectionName);
                           if (event.collectionName !== "events") {
                             setModalOpen2(true);
