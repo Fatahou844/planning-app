@@ -30,9 +30,11 @@ import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import { BASE_URL_API } from "./config";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
+import theme from "./theme";
 import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
@@ -418,46 +420,49 @@ const App = () => {
     <ProvideAxios>
       <UserProvider>
         <Router>
-          <ActivitySidebar />
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <ActivitySidebar />
 
-          <DashboardTabs />
+            <DashboardTabs />
 
-          <Routes>
-            <Route path="/" element={<AuthPages />} />
-            <Route path="/connexion" element={<AuthPages />} />
-            <Route path="/register" element={<AccountCreationSteps />} />
-            <Route
-              path="/account-verification"
-              element={<PrivateRoute Component={AccountVerificationSteps} />}
-            />
+            <Routes>
+              <Route path="/" element={<AuthPages />} />
+              <Route path="/connexion" element={<AuthPages />} />
+              <Route path="/register" element={<AccountCreationSteps />} />
+              <Route
+                path="/account-verification"
+                element={<PrivateRoute Component={AccountVerificationSteps} />}
+              />
 
-            <Route
-              path="/account-approbation"
-              element={<PrivateRoute Component={AccountApprove} />}
-            />
+              <Route
+                path="/account-approbation"
+                element={<PrivateRoute Component={AccountApprove} />}
+              />
 
-            {/* Routes protégées */}
+              {/* Routes protégées */}
 
-            <Route
-              path="/planning/categories"
-              element={<PrivateRoute Component={Dashboard} />}
-            />
+              <Route
+                path="/planning/categories"
+                element={<PrivateRoute Component={Dashboard} />}
+              />
 
-            <Route
-              path="/clients"
-              element={<PrivateRoute Component={ManageClients} />}
-            />
+              <Route
+                path="/clients"
+                element={<PrivateRoute Component={ManageClients} />}
+              />
 
-            <Route
-              path="/planning/customers"
-              element={<PrivateRoute Component={UserDashboard} />}
-            />
+              <Route
+                path="/planning/customers"
+                element={<PrivateRoute Component={UserDashboard} />}
+              />
 
-            <Route
-              path="/parametres"
-              element={<PrivateRoute Component={GarageSettings} />}
-            />
-          </Routes>
+              <Route
+                path="/parametres"
+                element={<PrivateRoute Component={GarageSettings} />}
+              />
+            </Routes>
+          </ThemeProvider>
         </Router>
       </UserProvider>
     </ProvideAxios>

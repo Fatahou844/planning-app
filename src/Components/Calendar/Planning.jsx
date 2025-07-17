@@ -268,7 +268,11 @@ const Planning = () => {
   }, [, getCurrentUser().garageId]);
 
   useEffect(() => {
-    handleSearchClickFull();
+    const run = async () => {
+      await handleSearchClickFull();
+      await handleRefrechData(); // ← assure-toi qu'on attend bien l'exécution
+    };
+    run();
   }, [facture]);
 
   const [garageInfo, setGarageInfo] = useState({
@@ -500,7 +504,10 @@ const Planning = () => {
       setDataEvents(filteredEvents);
       console.log("filteredEvents", filteredEvents);
     } catch (error) {
-      console.error("Erreur lors de la récupération des événements :", error);
+      console.error(
+        "Erreur lors de la récupération des événements après refresh:",
+        error
+      );
     }
   };
 
@@ -2132,6 +2139,10 @@ const Planning = () => {
   // Fonction qui sera appelée par l'enfant pour envoyer la facture
   const handleFactureReceived = (factureData) => {
     setFacture(factureData?.data);
+    console.log(
+      "---------------------------------- Call handleFactureReceived ------------------------------",
+      factureData?.data
+    );
 
     if (factureData) {
       setModalOpen(false);
@@ -2144,6 +2155,7 @@ const Planning = () => {
       setModalOpen2(false);
       setModalOpen3(true);
       setFacture(factureData?.data);
+      handleRefrechData();
 
       handleOpenNotif("Facture");
       setSelectedEvent({
