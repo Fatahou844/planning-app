@@ -47,6 +47,7 @@ import Notification from "../Notification";
 import logoGarage from "../../assets/images/garageLogo.jpg";
 // import jumelles from "../../assets/images/jumelles.png";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { useTheme } from "@mui/material";
 import useAutoLogout from "../../utils/hook/useAutoLogout";
 import { useAxios } from "../../utils/hook/useAxios";
 import EmailSearch from "../EmailSearch/EmailSearch";
@@ -54,12 +55,12 @@ import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
 
-const configExample = {
-  startHour: 6,
-  startMinute: 30,
-  endHour: 23,
-  endMinute: 30,
-};
+// const configExample = {
+//   startHour: 6,
+//   startMinute: 30,
+//   endHour: 23,
+//   endMinute: 30,
+// };
 
 function generateTimeSlots({ startHour, startMinute, endHour, endMinute }) {
   const start = startHour * 60 + startMinute;
@@ -68,66 +69,13 @@ function generateTimeSlots({ startHour, startMinute, endHour, endMinute }) {
   return Array.from({ length: slots }, (_, index) => start + index * 30);
 }
 
-// const Timeline = () => (
-//   <Box
-//     sx={{
-//       display: "grid",
-//       //   justifyContent: "space-between",
-//       marginBottom: "1.8rem",
-//       height: "100%", // S'assurer que la timeline remplit tout l'espace disponible
-//       position: "absolute",
-//       top: 0,
-//       left: 0,
-//       right: 0,
-//       zIndex: 1, // Bas pour laisser les éléments s'afficher au-dessus
-//       //  marginLeft: "1.5rem",
-//       gridTemplateColumns: "repeat(48,minmax(50px,1fr))",
-//     }}
-//   >
-//     {[...Array(48).keys()].map((halfHour) => (
-//       <Box
-//         key={halfHour}
-//         sx={{
-//           flexGrow: 1,
-//           textAlign: "left", // Aligner les horaires à gauche du bloc
-//           borderRight: "1px solid lightgray",
-//           backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
-//           position: "relative",
-//           height: "100%", // Étendre le fond de chaque élément sur toute la hauteur
-//         }}
-//       >
-//         <Typography
-//           variant="caption"
-//           sx={{
-//             paddingLeft: "0.5rem", // Ajouter un petit espace pour le texte
-//             position: "relative",
-//             zIndex: 1,
-//             marginLeft: "-1.499rem",
-//           }}
-//         >
-//           {/* {7 + Math.floor(halfHour / 2)}:{halfHour % 2 === 0 ? "00" : "30"} */}
-//           {(0 + Math.floor(halfHour / 2)).toString().padStart(2, "0")}:
-//           {halfHour % 2 === 0 ? "00" : "30"}
-//         </Typography>
-//         <Box
-//           sx={{
-//             position: "absolute",
-//             top: 0,
-//             left: 0,
-//             right: 0,
-//             bottom: 0,
-//             backgroundColor: halfHour % 2 === 0 ? "#f0f0f0" : "#ffffff",
-//             zIndex: 0,
-//           }}
-//         />
-//       </Box>
-//     ))}
-//   </Box>
-// );
-
-const Timeline = () => {
-  const timeSlots = generateTimeSlots(configExample);
-
+const Timeline = ({ config }) => {
+  const timeSlots = generateTimeSlots(config);
+  console.log(
+    "2.------------------------------ TIMESLOTS CONFIG -------------------------------",
+    config
+  );
+  const theme = useTheme();
   return (
     <Box
       sx={{
@@ -145,12 +93,21 @@ const Timeline = () => {
       {timeSlots.map((minutes, i) => {
         const hour = Math.floor(minutes / 60);
         const minute = minutes % 60;
+        const isEven = i % 2 === 0;
+        const bgColor = isEven
+          ? theme.palette.mode === "light"
+            ? "#f3f4f6" // gris clair pour light
+            : "#1e293b" // bleu foncé pour dark
+          : theme.palette.background.paper;
+
+        const borderColor =
+          theme.palette.mode === "light" ? "#d1d5db" : "#334155"; // Tailwind-inspired
         return (
           <Box
             key={i}
             sx={{
-              borderRight: "1px solid lightgray",
-              backgroundColor: i % 2 === 0 ? "#f0f0f0" : "#ffffff",
+              borderRight: `1px solid ${borderColor}`,
+              backgroundColor: bgColor,
               position: "relative",
               height: "100%",
             }}
@@ -162,6 +119,7 @@ const Timeline = () => {
                 position: "relative",
                 zIndex: 1,
                 marginLeft: "-1.499rem",
+                color: theme.palette.text.secondary,
               }}
             >
               {hour.toString().padStart(2, "0")}:{minute === 0 ? "00" : "30"}
@@ -173,7 +131,12 @@ const Timeline = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: i % 2 === 0 ? "#f0f0f0" : "#ffffff",
+                backgroundColor:
+                  i % 2 === 0
+                    ? theme.palette.mode === "light"
+                      ? "#f3f4f6" // clair (light)
+                      : "#1e293b" // foncé (dark)
+                    : theme.palette.background.paper,
                 zIndex: 0,
               }}
             />
@@ -285,6 +248,12 @@ const Planning = () => {
     noteLegal: "",
     logo: null,
   });
+  const [configExample, setconfigExample] = useState({
+    startHour: 8,
+    startMinute: 0,
+    endHour: 18,
+    endMinute: 0,
+  });
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -294,6 +263,25 @@ const Planning = () => {
         );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);
+          setconfigExample({
+            startHour: responseGarage.data.data.startHourTimeline | 0,
+            startMinute: responseGarage.data.data.startMinTimeline | 0,
+            endHour: responseGarage.data.data.endHourTimeline | 18,
+            endMinute: responseGarage.data.data.endMinTimeline | 0,
+          });
+          console.log(
+            "0.-------------------------------- GARAGE INFO global-----------------------",
+            responseGarage.data.data
+          );
+          console.log(
+            "1.-------------------------------- GARAGE INFO TIMELINE-----------------------",
+            {
+              startHour: responseGarage.data.data.startHourTimeline | 0,
+              startMinute: responseGarage.data.data.startMinTimeline | 0,
+              endHour: responseGarage.data.data.endHourTimeline | 18,
+              endMinute: responseGarage.data.data.endMinTimeline | 0,
+            }
+          );
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des catégories :", error);
@@ -2417,6 +2405,14 @@ const Planning = () => {
     handleCloseContextMenu();
     handleClose();
   };
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const cellStyle = {
+    textAlign: "center",
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
+  };
 
   return (
     <DragDropContext>
@@ -3012,21 +3008,32 @@ const Planning = () => {
                       {/* <Typography variant="h6">
                         Détails de l'événement
                       </Typography> */}
-                      <TableContainer component={Paper}>
+                      <TableContainer
+                        component={Paper}
+                        sx={{
+                          backgroundColor: theme.palette.background.paper,
+                          borderRadius: 2,
+                          boxShadow: isDark
+                            ? "0 0 12px rgba(255, 255, 255, 0.05)"
+                            : "0 0 12px rgba(0, 0, 0, 0.05)",
+                        }}
+                      >
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell style={{ width: "60%" }}>
+                              <TableCell
+                                sx={{
+                                  width: "60%",
+                                  ...cellStyle,
+                                  fontWeight: "bold",
+                                }}
+                              >
                                 Libellé / travaux / articles
                               </TableCell>
-                              <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
-                              >
+                              <TableCell sx={{ width: "10%", ...cellStyle }}>
                                 Quantité
                               </TableCell>
-                              <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
-                              >
+                              <TableCell sx={{ width: "10%", ...cellStyle }}>
                                 Prix Unitaire
                               </TableCell>
                               {/* <TableCell
@@ -3034,19 +3041,13 @@ const Planning = () => {
                               >
                                 Remise %
                               </TableCell> */}
-                              <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
-                              >
+                              <TableCell sx={{ width: "10%", ...cellStyle }}>
                                 Remise
                               </TableCell>
-                              <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
-                              >
+                              <TableCell sx={{ width: "10%", ...cellStyle }}>
                                 Total
                               </TableCell>
-                              <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
-                              >
+                              <TableCell sx={{ width: "10%", ...cellStyle }}>
                                 Action
                               </TableCell>
                             </TableRow>
@@ -3232,13 +3233,21 @@ const Planning = () => {
 
                             <TableRow>
                               <TableCell colSpan={4}></TableCell>
-                              <TableCell>Total TTC :</TableCell>
-                              <TableCell>{totalTTC.toFixed(2)}</TableCell>
+                              <TableCell sx={{ ...cellStyle }}>
+                                Total TTC :
+                              </TableCell>
+                              <TableCell sx={{ ...cellStyle }}>
+                                {totalTTC.toFixed(2)}
+                              </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell colSpan={4}></TableCell>
-                              <TableCell>Total HT :</TableCell>
-                              <TableCell>{totalHT.toFixed(2)}</TableCell>
+                              <TableCell sx={{ ...cellStyle }}>
+                                Total HT :
+                              </TableCell>
+                              <TableCell sx={{ ...cellStyle }}>
+                                {totalHT.toFixed(2)}
+                              </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell colSpan={4}></TableCell>
@@ -3804,7 +3813,7 @@ const Planning = () => {
             onContextMenu={(e) => handleContextMenuPaste(e)}
           >
             {/* Timeline Component */}
-            <Timeline />
+            {configExample && <Timeline config={configExample} />}
             {/* Current Time Indicator */}
             <CurrentTimeLine currentHour={currentHour} />
 

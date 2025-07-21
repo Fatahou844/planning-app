@@ -30,11 +30,11 @@ import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
-import theme from "./theme";
+import { CustomThemeProvider } from "./theme/ThemeProvider";
 import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
@@ -420,8 +420,10 @@ const App = () => {
     <ProvideAxios>
       <UserProvider>
         <Router>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
+          <CustomThemeProvider>
+            <header style={{ padding: "1rem" }}>
+              <ThemeToggle />
+            </header>
             <ActivitySidebar />
 
             <DashboardTabs />
@@ -462,7 +464,7 @@ const App = () => {
                 element={<PrivateRoute Component={GarageSettings} />}
               />
             </Routes>
-          </ThemeProvider>
+          </CustomThemeProvider>{" "}
         </Router>
       </UserProvider>
     </ProvideAxios>

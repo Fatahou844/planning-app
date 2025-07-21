@@ -50,6 +50,10 @@ const GarageSettings = () => {
     dayValidityQuote: "",
     noteLegal: "",
     logo: null,
+    startHourTimeline: 0,
+    endHourTimeline: 0,
+    startMinTimeline: 0,
+    endMinTimeline: 0,
   });
 
   const [userInfo, setUserInfo] = useState({
@@ -329,6 +333,10 @@ const GarageSettings = () => {
           noteLegal: garageInfo.noteLegal,
           logo: imageUrl || garageInfo.logo,
           address: garageInfo.address,
+          startHourTimeline: garageInfo.startHourTimeline,
+          endHourTimeline: garageInfo.endHourTimeline,
+          startMinTimeline: garageInfo.startMinTimeline,
+          endMinTimeline: garageInfo.endMinTimeline,
         }
       );
 
@@ -590,6 +598,95 @@ const GarageSettings = () => {
                       disabled={!isAuth}
                     >
                       Enregistrer les modifications
+                    </Button>
+                  </Box>
+                </Stack>
+              </Paper>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h6">
+                🕒 Paramètres Timeline pour le planning
+              </Typography>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              <Paper elevation={3} sx={{ mt: 4, p: 3 }}>
+                <Stack spacing={3}>
+                  <Stack direction="row" spacing={2}>
+                    <TextField
+                      select
+                      name="startHourTimeline"
+                      label="Début - Heure"
+                      value={garageInfo.startHourTimeline}
+                      onChange={handleChange}
+                      fullWidth
+                    >
+                      {[...Array(25).keys()].map((hour) => (
+                        <MenuItem key={hour} value={hour}>
+                          {hour.toString().padStart(2, "0")} h
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      select
+                      name="startMinTimeline"
+                      label="Début - Minute"
+                      value={garageInfo.startMinTimeline}
+                      onChange={handleChange}
+                      fullWidth
+                    >
+                      {[0, 30].map((min) => (
+                        <MenuItem key={min} value={min}>
+                          {min.toString().padStart(2, "0")} min
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+
+                  <Stack direction="row" spacing={2}>
+                    <TextField
+                      select
+                      name="endHourTimeline"
+                      label="Fin - Heure"
+                      value={garageInfo.endHourTimeline}
+                      onChange={handleChange}
+                      fullWidth
+                    >
+                      {[...Array(25).keys()].map((hour) => (
+                        <MenuItem key={hour} value={hour}>
+                          {hour.toString().padStart(2, "0")} h
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      select
+                      name="endMinTimeline"
+                      label="Fin - Minute"
+                      value={garageInfo.endMinTimeline}
+                      onChange={handleChange}
+                      fullWidth
+                    >
+                      {[0, 30].map((min) => (
+                        <MenuItem key={min} value={min}>
+                          {min.toString().padStart(2, "0")} min
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+
+                  <Box textAlign="right">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      sx={{ width: "100%" }}
+                      onClick={handleSave}
+                      disabled={!isAuth}
+                    >
+                      Enregistrer les horaires
                     </Button>
                   </Box>
                 </Stack>
