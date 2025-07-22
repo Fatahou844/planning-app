@@ -360,7 +360,7 @@ const ActivitySidebar = () => {
                   whiteSpace: "nowrap",
                   position: "absolute",
                   top: "50%",
-                  left: 5,
+                  left: "-5px",
                 }}
               >
                 Activité

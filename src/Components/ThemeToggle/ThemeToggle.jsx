@@ -8,7 +8,7 @@ export const ThemeToggle = () => {
 
   return (
     <Tooltip title={`Passer en mode ${mode === "light" ? "sombre" : "clair"}`}>
-      <IconButton onClick={toggleTheme} size="small" sx={{ ml: 1 }}>
+      <IconButton onClick={toggleTheme} size="small" sx={{ ml: 4 }}>
         {mode === "light" ? (
           <Moon size={18} color="#1E293B" />
         ) : (
