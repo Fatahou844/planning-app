@@ -16,6 +16,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -34,6 +35,14 @@ function AddOrdreReparationModal({
   closeDocumentModal,
   onNotificationSuccess,
 }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const cellStyle = {
+    textAlign: "center",
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
+  };
   const [details, setDetails] = useState(Details || []);
   const [finDate, setFinDate] = useState(editedEvent?.finDate || "");
   const user = { id: 1 };
@@ -769,20 +778,37 @@ function AddOrdreReparationModal({
                 {/* <Typography variant="h6">
                         Détails de l'événement
                       </Typography> */}
-                <TableContainer component={Paper}>
+                <TableContainer
+                  component={Paper}
+                  sx={{
+                    backgroundColor: theme.palette.background.paper,
+                    borderRadius: 2,
+                    boxShadow: isDark
+                      ? "0 0 12px rgba(255, 255, 255, 0.05)"
+                      : "0 0 12px rgba(0, 0, 0, 0.05)",
+                  }}
+                >
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: "60%" }}>
+                        <TableCell style={{ width: "60%", ...cellStyle }}>
                           Libellé / travaux / articles
                         </TableCell>
                         <TableCell
-                          style={{ width: "10%", textAlign: "center" }}
+                          style={{
+                            width: "10%",
+                            textAlign: "center",
+                            ...cellStyle,
+                          }}
                         >
                           Quantité
                         </TableCell>
                         <TableCell
-                          style={{ width: "1O%", textAlign: "center" }}
+                          style={{
+                            width: "1O%",
+                            textAlign: "center",
+                            ...cellStyle,
+                          }}
                         >
                           Prix Unitaire
                         </TableCell>
@@ -792,17 +818,29 @@ function AddOrdreReparationModal({
                                 Remise %
                               </TableCell> */}
                         <TableCell
-                          style={{ width: "10%", textAlign: "center" }}
+                          style={{
+                            width: "10%",
+                            textAlign: "center",
+                            ...cellStyle,
+                          }}
                         >
                           Remise
                         </TableCell>
                         <TableCell
-                          style={{ width: "10%", textAlign: "center" }}
+                          style={{
+                            width: "10%",
+                            textAlign: "center",
+                            ...cellStyle,
+                          }}
                         >
                           Total
                         </TableCell>
                         <TableCell
-                          style={{ width: "10%", textAlign: "center" }}
+                          style={{
+                            width: "10%",
+                            textAlign: "center",
+                            ...cellStyle,
+                          }}
                         >
                           Action
                         </TableCell>
@@ -924,7 +962,7 @@ function AddOrdreReparationModal({
                           </TableRow>
                         ))}
                       <TableRow>
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={7} sx={{ ...cellStyle }}>
                           <Button
                             variant="outlined"
                             onClick={addDetailRow}
@@ -936,23 +974,32 @@ function AddOrdreReparationModal({
                       </TableRow>
 
                       <TableRow>
-                        <TableCell colSpan={4}></TableCell>
-                        <TableCell>Total TTC :</TableCell>
-                        <TableCell>
+                        <TableCell
+                          colSpan={4}
+                          sx={{ ...cellStyle }}
+                        ></TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Total TTC :</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
                           {totalTTC ? totalTTC.toFixed(2) : 0.0}
                         </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell colSpan={4}></TableCell>
-                        <TableCell>Total HT :</TableCell>
-                        <TableCell>
+                        <TableCell
+                          colSpan={4}
+                          sx={{ ...cellStyle }}
+                        ></TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Total HT :</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
                           {totalHT ? totalHT.toFixed(2) : 0.0}
                         </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell colSpan={4}></TableCell>
-                        <TableCell>Acompte :</TableCell>
-                        <TableCell>
+                        <TableCell
+                          colSpan={4}
+                          sx={{ ...cellStyle }}
+                        ></TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Acompte :</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
                           <TextField
                             type="text"
                             value={deposit}

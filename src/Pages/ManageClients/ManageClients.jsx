@@ -25,6 +25,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
 import moment from "moment";
@@ -45,6 +46,14 @@ function ManageClients() {
   const [collectionName, setCollectionName] = useState("");
   const [facture, setFacture] = useState(null);
   const today = dayjs();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const cellStyle = {
+    textAlign: "center",
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
+  };
 
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
@@ -828,7 +837,11 @@ function ManageClients() {
               placeholder="Nom, Prénom, Email, Marque, Modèle"
               style={{ marginRight: 16, flexGrow: 1 }}
             />
-            <FormControl variant="outlined" size="small">
+            <FormControl
+              variant="outlined"
+              size="small"
+              style={{ marginRight: "0.2rem", flexGrow: 1 }}
+            >
               <InputLabel>Type de document</InputLabel>
               <Select
                 value={documentFilter}
@@ -851,6 +864,7 @@ function ManageClients() {
               InputLabelProps={{ shrink: true }}
               value={dateMin || ""}
               onChange={(e) => setDateMin(e.target.value)}
+              style={{ marginRight: "0.2rem", flexGrow: 1 }}
             />
 
             <TextField
@@ -860,6 +874,7 @@ function ManageClients() {
               InputLabelProps={{ shrink: true }}
               value={dateMax || ""}
               onChange={(e) => setDateMax(e.target.value)}
+              style={{ marginRight: "0.2rem", flexGrow: 1 }}
             />
           </Box>
           {selectedItems.length > 0 && (
@@ -877,11 +892,20 @@ function ManageClients() {
           {dataEventsAll.length === 0 ? (
             <Typography>Aucun événement trouvé.</Typography>
           ) : (
-            <TableContainer component={Paper}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 2,
+                boxShadow: isDark
+                  ? "0 0 12px rgba(255, 255, 255, 0.05)"
+                  : "0 0 12px rgba(0, 0, 0, 0.05)",
+              }}
+            >
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox">
+                    <TableCell padding="checkbox" sx={{ ...cellStyle }}>
                       <Checkbox
                         checked={
                           selectedItems.length > 0 &&
@@ -894,14 +918,14 @@ function ManageClients() {
                         onChange={handleSelectAllClick}
                       />
                     </TableCell>
-                    <TableCell>Document</TableCell>
-                    <TableCell>N°</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Nom</TableCell>
-                    <TableCell>Prénom</TableCell>
-                    <TableCell>Téléphone</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Véhicule</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Document</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>N°</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Date</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Nom</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Prénom</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Téléphone</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Email</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Véhicule</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -929,6 +953,7 @@ function ManageClients() {
                         <TableCell
                           padding="checkbox"
                           onClick={(e) => e.stopPropagation()}
+                          sx={{ ...cellStyle }}
                         >
                           <Checkbox
                             checked={selectedItems.some(
@@ -939,7 +964,7 @@ function ManageClients() {
                             }
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
                           <Chip
                             label={event.collectionName}
                             color={getBadgeColor(event.collectionName)}
@@ -949,15 +974,23 @@ function ManageClients() {
                             }}
                           />
                         </TableCell>
-                        <TableCell>{event.id}</TableCell>
-                        <TableCell>
+                        <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
                           {moment(event.createdAt).format("DD/MM/YYYY")}
                         </TableCell>
-                        <TableCell>{event.Client.name}</TableCell>
-                        <TableCell>{event.Client.firstName}</TableCell>
-                        <TableCell>{event.Client.phone || ""}</TableCell>
-                        <TableCell>{event.Client.email}</TableCell>
-                        <TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.name}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.firstName}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.phone || ""}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.email}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
                           {event.Vehicle.model || ""} -{" "}
                           {event.Vehicle.plateNumber || ""}
                         </TableCell>

@@ -17,6 +17,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import dayjs from "dayjs"; // Assure-toi d'avoir installé dayjs
 import { collection, doc, writeBatch } from "firebase/firestore";
@@ -56,6 +57,14 @@ function DocModal({
   const [dataEvents, setDataEvents] = useState([]);
   const [openOrSup, setOpenOrSup] = useState(false);
   const [vehicleUpdated, setVehicleUpdated] = useState(false);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const cellStyle = {
+    textAlign: "center",
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
+  };
 
   const [Vehicle, setVehicle] = useState(editedEvent?.Vehicle);
   const handleVehicleChange = (e) => {
@@ -1097,29 +1106,44 @@ function DocModal({
             </Grid>
 
             {/* Table pour afficher les détails */}
-            <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 2,
+                boxShadow: isDark
+                  ? "0 0 12px rgba(255, 255, 255, 0.05)"
+                  : "0 0 12px rgba(0, 0, 0, 0.05)",
+              }}
+            >
               <Table size="small" aria-label="Event Details Table">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "60%" }}>
+                    <TableCell
+                      sx={{
+                        width: "60%",
+                        ...cellStyle,
+                        fontWeight: "bold",
+                      }}
+                    >
                       Libellé / travaux / articles
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    <TableCell sx={{ width: "10%", ...cellStyle }}>
                       Quantité
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    <TableCell sx={{ width: "10%", ...cellStyle }}>
                       Prix Unitaire
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    <TableCell sx={{ width: "10%", ...cellStyle }}>
                       Remise
                     </TableCell>
-                    {/* <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    {/* <TableCell sx={{ width: "10%", ...cellStyle }}>
                     Remise en %
                   </TableCell> */}
-                    <TableCell style={{ width: "10%", textAlign: "center" }}>
+                    <TableCell sx={{ width: "10%", ...cellStyle }}>
                       Total
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", width: "10%" }}>
+                    <TableCell sx={{ width: "10%", ...cellStyle }}>
                       Actions
                     </TableCell>
                   </TableRow>
@@ -1128,7 +1152,7 @@ function DocModal({
                   {details &&
                     details.map((detail, index) => (
                       <TableRow key={detail.id}>
-                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
                           <TextField
                             value={detail.label}
                             onChange={(e) =>
@@ -1146,7 +1170,7 @@ function DocModal({
                             }
                           />
                         </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
                           <TextField
                             type="text"
                             value={
@@ -1190,7 +1214,7 @@ function DocModal({
                             }
                           />
                         </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
                           <TextField
                             type="text"
                             value={
@@ -1234,7 +1258,7 @@ function DocModal({
                             }
                           />
                         </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
                           <TextField
                             type="text" // Permet la saisie libre (montant ou pourcentage)
                             inputProps={{
@@ -1275,11 +1299,11 @@ function DocModal({
                             }
                           />
                         </TableCell>
-                        <TableCell style={{ textAlign: "center" }}>
+                        <TableCell sx={{ width: "10%", ...cellStyle }}>
                           {calculateLineTotal(detail).toFixed(2)}
                         </TableCell>
 
-                        <TableCell sx={{ fontSize: "0.8rem" }}>
+                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
                           <Button
                             onClick={() => removeDetailRow(index)}
                             disabled={

@@ -147,16 +147,42 @@ const Timeline = ({ config }) => {
   );
 };
 
-const CurrentTimeLine = ({ currentHour }) => {
-  const minutes = new Date().getMinutes();
-  const adjustedHour = currentHour + minutes / 60; // Convertit l'heure actuelle en fraction
+// const CurrentTimeLine = ({ currentHour }) => {
+//   const minutes = new Date().getMinutes();
+//   const adjustedHour = currentHour + minutes / 60; // Convertit l'heure actuelle en fraction
+
+//   return (
+//     <Box
+//       sx={{
+//         position: "absolute",
+//         top: 0,
+//         left: `${((adjustedHour - 7) / 12) * 100}%`,
+//         width: "2px",
+//         height: "100%",
+//         backgroundColor: "blue",
+//         zIndex: 1,
+//       }}
+//     />
+//   );
+// };
+
+const CurrentTimeLine = ({ config }) => {
+  const now = new Date();
+  const currentHour = now.getHours() + now.getMinutes() / 60;
+
+  const start = config.startHour + config.startMinute / 60;
+  const end = config.endHour + config.endMinute / 60;
+  const totalDuration = end - start;
+
+  const relativePosition = ((currentHour - start) / totalDuration) * 100;
+  const clampedPosition = Math.max(0, Math.min(relativePosition, 100));
 
   return (
     <Box
       sx={{
         position: "absolute",
         top: 0,
-        left: `${((adjustedHour - 7) / 12) * 100}%`,
+        left: `${clampedPosition}%`,
         width: "2px",
         height: "100%",
         backgroundColor: "blue",
@@ -384,10 +410,10 @@ const Planning = () => {
               new Date(selectedDate).setHours(0, 0, 0, 0) ===
               new Date(event.endDate).setHours(0, 0, 0, 0);
 
-            let startHour = 7;
-            let startMinute = 0;
-            let endHour = 19;
-            let endMinute = 0;
+            let startHour = configExample.startHour;
+            let startMinute = configExample.startMinute;
+            let endHour = configExample.endHour;
+            let endMinute = configExample.endMinute;
             let nextDay = true;
 
             if (isStartDay) {
@@ -462,10 +488,10 @@ const Planning = () => {
             new Date(selectedDate).setHours(0, 0, 0, 0) ===
             new Date(event.endDate).setHours(0, 0, 0, 0);
 
-          let startHour = 7;
-          let startMinute = 0;
-          let endHour = 19;
-          let endMinute = 0;
+          let startHour = configExample.startHour;
+          let startMinute = configExample.startMinute;
+          let endHour = configExample.endHour;
+          let endMinute = configExample.endMinute;
           let nextDay = true;
 
           if (isStartDay) {
@@ -646,10 +672,10 @@ const Planning = () => {
               new Date(selectedDate).setHours(0, 0, 0, 0) ===
               new Date(event.endDate).setHours(0, 0, 0, 0);
 
-            let startHour = 7;
-            let startMinute = 0;
-            let endHour = 19;
-            let endMinute = 0;
+            let startHour = configExample.startHour;
+            let startMinute = configExample.startMinute;
+            let endHour = configExample.endHour;
+            let endMinute = configExample.endMinute;
             let nextDay = true;
 
             if (isStartDay) {
@@ -1602,10 +1628,10 @@ const Planning = () => {
                 new Date(selectedDate).setHours(0, 0, 0, 0) ===
                 new Date(event.endDate).setHours(0, 0, 0, 0);
 
-              let startHour = 7;
-              let startMinute = 0;
-              let endHour = 19;
-              let endMinute = 0;
+              let startHour = configExample.startHour;
+              let startMinute = configExample.startMinute;
+              let endHour = configExample.endHour;
+              let endMinute = configExample.endMinute;
               let nextDay = true;
 
               if (isStartDay) {
@@ -1715,10 +1741,10 @@ const Planning = () => {
               new Date(selectedDate).setHours(0, 0, 0, 0) ===
               new Date(event.endDate).setHours(0, 0, 0, 0);
 
-            let startHour = 7;
-            let startMinute = 0;
-            let endHour = 19;
-            let endMinute = 0;
+            let startHour = configExample.startHour;
+            let startMinute = configExample.startMinute;
+            let endHour = configExample.endHour;
+            let endMinute = configExample.endMinute;
             let nextDay = true;
 
             if (isStartDay) {
@@ -1969,10 +1995,10 @@ const Planning = () => {
               new Date(selectedDate).setHours(0, 0, 0, 0) ===
               new Date(event.endDate).setHours(0, 0, 0, 0);
 
-            let startHour = 7;
-            let startMinute = 0;
-            let endHour = 19;
-            let endMinute = 0;
+            let startHour = configExample.startHour;
+            let startMinute = configExample.startMinute;
+            let endHour = configExample.endHour;
+            let endMinute = configExample.endMinute;
             let nextDay = true;
 
             if (isStartDay) {
@@ -3055,7 +3081,7 @@ const Planning = () => {
                           <TableBody>
                             {details.map((detail, index) => (
                               <TableRow key={index}>
-                                <TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
                                   <TextField
                                     name="label"
                                     value={detail.label}
@@ -3066,7 +3092,7 @@ const Planning = () => {
                                     fullWidth
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
                                   <TextField
                                     name="quantity"
                                     type="text"
@@ -3102,7 +3128,7 @@ const Planning = () => {
                                     }}
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
                                   <TextField
                                     name="unitPrice"
                                     type="text"
@@ -3144,7 +3170,7 @@ const Planning = () => {
                                   />
                                 </TableCell>
 
-                                <TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
                                   <TextField
                                     name="discountAmount"
                                     type="text" // Permet la saisie de caractères comme '%'
@@ -3206,10 +3232,10 @@ const Planning = () => {
                                   />
                                 </TableCell>
 
-                                <TableCell style={{ textAlign: "center" }}>
+                                <TableCell sx={{ ...cellStyle }}>
                                   {calculateLineTotal(detail).toFixed(2)}
                                 </TableCell>
-                                <TableCell style={{ textAlign: "center" }}>
+                                <TableCell sx={{ ...cellStyle }}>
                                   <Button
                                     color="secondary"
                                     onClick={() => removeDetailRow(index)}
@@ -3220,7 +3246,7 @@ const Planning = () => {
                               </TableRow>
                             ))}
                             <TableRow>
-                              <TableCell colSpan={7}>
+                              <TableCell colSpan={7} sx={{ ...cellStyle }}>
                                 <Button
                                   variant="outlined"
                                   onClick={addDetailRow}
@@ -3232,7 +3258,10 @@ const Planning = () => {
                             </TableRow>
 
                             <TableRow>
-                              <TableCell colSpan={4}></TableCell>
+                              <TableCell
+                                colSpan={4}
+                                sx={{ ...cellStyle }}
+                              ></TableCell>
                               <TableCell sx={{ ...cellStyle }}>
                                 Total TTC :
                               </TableCell>
@@ -3241,7 +3270,10 @@ const Planning = () => {
                               </TableCell>
                             </TableRow>
                             <TableRow>
-                              <TableCell colSpan={4}></TableCell>
+                              <TableCell
+                                colSpan={4}
+                                sx={{ ...cellStyle }}
+                              ></TableCell>
                               <TableCell sx={{ ...cellStyle }}>
                                 Total HT :
                               </TableCell>
@@ -3250,9 +3282,14 @@ const Planning = () => {
                               </TableCell>
                             </TableRow>
                             <TableRow>
-                              <TableCell colSpan={4}></TableCell>
-                              <TableCell>Acompte :</TableCell>
-                              <TableCell>
+                              <TableCell
+                                colSpan={4}
+                                sx={{ ...cellStyle }}
+                              ></TableCell>
+                              <TableCell sx={{ ...cellStyle }}>
+                                Acompte :
+                              </TableCell>
+                              <TableCell sx={{ ...cellStyle }}>
                                 <TextField
                                   type="text"
                                   value={deposit}
@@ -3815,7 +3852,7 @@ const Planning = () => {
             {/* Timeline Component */}
             {configExample && <Timeline config={configExample} />}
             {/* Current Time Indicator */}
-            <CurrentTimeLine currentHour={currentHour} />
+            <CurrentTimeLine config={configExample} />
 
             {/* Droppable Event Zones */}
             {loading == true && <>Chargement...</>}
@@ -4104,19 +4141,28 @@ const Planning = () => {
           {dataEventsAll.length === 0 ? (
             <Typography>Aucun événement trouvé.</Typography>
           ) : (
-            <TableContainer component={Paper}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 2,
+                boxShadow: isDark
+                  ? "0 0 12px rgba(255, 255, 255, 0.05)"
+                  : "0 0 12px rgba(0, 0, 0, 0.05)",
+              }}
+            >
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Document</TableCell>
-                    <TableCell>N°</TableCell>
-                    <TableCell>Nom</TableCell>
-                    <TableCell>Prénom</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Document</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>N°</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Nom</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Prénom</TableCell>
 
-                    <TableCell>Téléphone</TableCell>
-                    <TableCell>Email</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Téléphone</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Email</TableCell>
 
-                    <TableCell>Véhicule</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Véhicule</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -4135,7 +4181,7 @@ const Planning = () => {
                       }}
                       style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
                     >
-                      <TableCell>
+                      <TableCell sx={{ ...cellStyle }}>
                         <Chip
                           label={event.collectionName}
                           color={getBadgeColor(event.collectionName)}
@@ -4145,14 +4191,22 @@ const Planning = () => {
                           }}
                         />
                       </TableCell>
-                      <TableCell>{event.id}</TableCell>
-                      <TableCell>{event.Client.name}</TableCell>
-                      <TableCell>{event.Client.firstName}</TableCell>
+                      <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
+                      <TableCell sx={{ ...cellStyle }}>
+                        {event.Client.name}
+                      </TableCell>
+                      <TableCell sx={{ ...cellStyle }}>
+                        {event.Client.firstName}
+                      </TableCell>
 
-                      <TableCell>{event.Client.phone || ""}</TableCell>
-                      <TableCell>{event.Client.email}</TableCell>
+                      <TableCell sx={{ ...cellStyle }}>
+                        {event.Client.phone || ""}
+                      </TableCell>
+                      <TableCell sx={{ ...cellStyle }}>
+                        {event.Client.email}
+                      </TableCell>
 
-                      <TableCell>
+                      <TableCell sx={{ ...cellStyle }}>
                         {event.Vehicle.model || ""} -{" "}
                         {event.Vehicle.plateNumber || ""}
                       </TableCell>
