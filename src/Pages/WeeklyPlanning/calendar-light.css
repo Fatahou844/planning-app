@@ -1,0 +1,141 @@
+/* Boutons de navigation du calendrier */
+.rbc-btn-group {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.rbc-btn-group button {
+    background-color: #FFFFFF;
+    color: #1E293B;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 6px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease-in-out;
+}
+
+.rbc-btn-group button:hover {
+    background-color: #F1F5F9;
+    border-color: #CBD5E1;
+}
+
+.rbc-btn-group button:active {
+    background-color: #E0E7FF;
+    border-color: #A5B4FC;
+}
+
+/* Boutons lien (vue jour/semaine/mois) */
+.rbc-button-link {
+    color: #4F46E5;
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.rbc-button-link:hover {
+    background-color: rgba(79, 70, 229, 0.08);
+}
+
+.rbc-button-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+}
+
+/* Labels (heures, jours, mois) */
+.rbc-label {
+    color: #64748B;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    padding: 2px 0;
+}
+
+/* Garder ton style déjà existant mais harmoniser */
+.rbc-calendar {
+    background-color: #ffffff;
+    color: #1E293B;
+    border-radius: 16px;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.rbc-header {
+    background-color: #F8FAFC;
+    color: #1E293B;
+    font-weight: 600;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 8px;
+}
+
+.rbc-time-content {
+    border-top: 1px solid #E2E8F0;
+}
+
+.rbc-timeslot-group {
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.rbc-today {
+    background-color: rgba(79, 70, 229, 0.06) !important;
+}
+
+.rbc-event {
+    border-radius: 14px;
+}
+
+.rbc-event-label {
+    font-size: 0.75rem;
+}
+
+.rbc-event-content {
+    font-weight: 500;
+}
+
+.rbc-time-view {
+    border: none;
+}
+
+/* Corrige l'alignement des labels horaires */
+.rbc-time-header-gutter,
+.rbc-time-content>.rbc-time-gutter {
+    flex: 0 0 60px;
+    /* même largeur fixe */
+    /* max-width: 60px; */
+    min-width: 60px;
+}
+
+.rbc-label {
+    width: 100%;
+    text-align: right;
+    /* aligne comme dans la colonne horaire */
+    padding-right: 8px;
+    /* espace similaire au contenu */
+    box-sizing: border-box;
+    font-size: 0.85rem;
+    color: #64748B;
+    /* gris doux du thème */
+    font-weight: 500;
+}
+
+/* Harmonisation du fond pour correspondre au header */
+.rbc-time-header-gutter {
+    background-color: #F8FAFC;
+    border-right: 1px solid #E2E8F0;
+}
+
+/* Alterner toutes les heures entières */
+.rbc-time-content .rbc-timeslot-group:nth-child(even) {
+    background-color: #F9FAFB;
+}
+
+.rbc-time-content .rbc-timeslot-group:nth-child(odd) {
+    background-color: #FFFFFF;
+}

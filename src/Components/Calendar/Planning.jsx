@@ -2,7 +2,9 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import {
+  Badge,
   Box,
   Button,
   Card,
@@ -17,10 +19,14 @@ import {
   Grid,
   IconButton,
   InputLabel,
+  List,
+  ListItem,
+  ListItemText,
   Menu,
   MenuItem,
   Modal,
   Paper,
+  Popover,
   Select,
   Table,
   TableBody,
@@ -34,8 +40,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
 import { doc, updateDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import React, { useEffect, useState } from "react";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import eventsData from "../../data/eventsData.json";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
@@ -48,6 +53,7 @@ import logoGarage from "../../assets/images/garageLogo.jpg";
 // import jumelles from "../../assets/images/jumelles.png";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useTheme } from "@mui/material";
+import WeeklyPlanning from "../../Pages/WeeklyPlanning";
 import useAutoLogout from "../../utils/hook/useAutoLogout";
 import { useAxios } from "../../utils/hook/useAxios";
 import EmailSearch from "../EmailSearch/EmailSearch";
@@ -170,6 +176,8 @@ const Planning = () => {
   const axios = useAxios();
   const today = dayjs();
   const [events, setEvents] = useState(eventsData);
+  const [view, setView] = useState("day");
+
   const [dataEvents, setDataEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
@@ -185,8 +193,18 @@ const Planning = () => {
   const [modalOpen2, setModalOpen2] = useState(false);
   const [modalOpen3, setModalOpen3] = useState(false);
   const [facture, setFacture] = useState(null);
-
+  const [draggingEvent, setDraggingEvent] = useState(null); // contient l’event en déplacement
+  const [dragStartX, setDragStartX] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragX, setDragX] = useState(0); // position x de la souris
   const [collectionName, setCollectionName] = useState("");
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const notifications = [
+    "Nouvelle commande reçue",
+    "Message de l’équipe support",
+    "Mise à jour disponible",
+  ];
 
   const [expanded, setExpanded] = useState([
     "Entretien / Révision",
@@ -237,6 +255,150 @@ const Planning = () => {
     };
     run();
   }, [facture]);
+
+  // useEffect(() => {
+  //   if (!draggingEvent) return;
+
+  //   const handleMouseMove = (e) => {
+  //     if (!draggingEvent || !timelineRef.current) return;
+
+  //     const timelineRect = timelineRef.current.getBoundingClientRect();
+
+  //     const newX = e.clientX - timelineRect.left - draggingEvent.offsetX;
+  //     const clampedX = Math.max(0, Math.min(newX, timelineRect.width));
+
+  //     setDragX(clampedX);
+
+  //     // Optionnel : affichage en temps réel de l'heure
+  //     const timeSlots = generateTimeSlots(configExample);
+  //     const columnWidth = timelineRect.width / timeSlots.length;
+  //     const index = Math.floor(clampedX / columnWidth);
+  //     const minutes = timeSlots[index];
+  //     const hour = Math.floor(minutes / 60);
+  //     const minute = minutes % 60;
+
+  //     console.log(
+  //       `🕒 Heure actuelle glissée: ${hour}:${minute
+  //         .toString()
+  //         .padStart(2, "0")}`
+  //     );
+  //   };
+
+  //   const handleMouseUp = () => {
+  //     if (!timelineRef.current) return;
+
+  //     const timelineRect = timelineRef.current.getBoundingClientRect();
+  //     const timeSlots = generateTimeSlots(configExample);
+  //     const slotWidth = timelineRect.width / timeSlots.length;
+  //     const index = Math.floor(dragX / slotWidth);
+  //     const startMinutes = timeSlots[index];
+
+  //     const duration =
+  //       draggingEvent.endHour * 60 +
+  //       draggingEvent.endMinute -
+  //       (draggingEvent.startHour * 60 + draggingEvent.startMinute);
+
+  //     const endMinutes = startMinutes + duration;
+
+  //     const startHour = Math.floor(startMinutes / 60);
+  //     const startMinute = startMinutes % 60;
+  //     const endHour = Math.floor(endMinutes / 60);
+  //     const endMinute = endMinutes % 60;
+
+  //     console.log(
+  //       `✅ Relâché → Nouvelle plage : ${startHour}:${startMinute
+  //         .toString()
+  //         .padStart(2, "0")} → ${endHour}:${endMinute
+  //         .toString()
+  //         .padStart(2, "0")}`
+  //     );
+
+  //     // Remet les states à 0
+  //     setDraggingEvent(null);
+  //     setDragX(0);
+  //   };
+
+  //   window.addEventListener("mousemove", handleMouseMove);
+  //   window.addEventListener("mouseup", handleMouseUp);
+
+  //   return () => {
+  //     window.removeEventListener("mousemove", handleMouseMove);
+  //     window.removeEventListener("mouseup", handleMouseUp);
+  //   };
+  // }, [draggingEvent, dragX]);
+  useEffect(() => {
+    if (!draggingEvent) return;
+
+    const handleMouseMove = (e) => {
+      if (!timelineRef.current || !draggingEvent) return;
+
+      const timelineRect = timelineRef.current.getBoundingClientRect();
+      const delta = e.clientX - dragStartX; // déplacement souris
+      const newX = draggingEvent.initialLeft + delta;
+
+      const clampedX = Math.max(0, Math.min(newX, timelineRect.width));
+      console.log(`🕒 clampedX: ${clampedX}`);
+
+      setDragX(clampedX);
+
+      // Affichage en temps réel
+      const timeSlots = generateTimeSlots(configExample);
+      const columnWidth = timelineRect.width / timeSlots.length;
+      const index = Math.floor(clampedX / columnWidth);
+      const minutes = timeSlots[index];
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+
+      console.log(
+        `🕒 Heure actuelle glissée: ${hour}:${minute
+          .toString()
+          .padStart(2, "0")}`
+      );
+    };
+
+    const handleMouseUp = () => {
+      if (!timelineRef.current) return;
+
+      const timelineRect = timelineRef.current.getBoundingClientRect();
+      const timeSlots = generateTimeSlots(configExample);
+      const slotWidth = timelineRect.width / timeSlots.length;
+      const index = Math.floor(dragX / slotWidth);
+      const startMinutes = timeSlots[index];
+
+      const duration =
+        draggingEvent.endHour * 60 +
+        draggingEvent.endMinute -
+        (draggingEvent.startHour * 60 + draggingEvent.startMinute);
+
+      const endMinutes = startMinutes + duration;
+
+      const startHour = Math.floor(startMinutes / 60);
+      const startMinute = startMinutes % 60;
+      const endHour = Math.floor(endMinutes / 60);
+      const endMinute = endMinutes % 60;
+
+      console.log(
+        `✅ Relâché → Nouvelle plage : ${startHour}:${startMinute
+          .toString()
+          .padStart(2, "0")} → ${endHour}:${endMinute
+          .toString()
+          .padStart(2, "0")}`
+      );
+
+      setDraggingEvent(null);
+      setDragX(0);
+      setIsDragging(false);
+      setDragStartX(null);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [draggingEvent, dragX, dragStartX]);
 
   const [garageInfo, setGarageInfo] = useState({
     name: "",
@@ -1850,6 +2012,16 @@ const Planning = () => {
 
     return diff / 30 + 1; // ici on n'arrondit pas, on exige demi-heure pile
   }
+  const getTimeFromIndex = (index, config) => {
+    const interval = config.intervalInMinutes || 30;
+    const startMinutes = config.startHour * 60 + config.startMinute;
+    const totalMinutes = startMinutes + index * interval;
+
+    const hour = Math.floor(totalMinutes / 60);
+    const minute = totalMinutes % 60;
+
+    return { hour, minute };
+  };
 
   const handleEventFromChild = () => {
     const fetchEvents = async () => {
@@ -2333,129 +2505,24 @@ const Planning = () => {
   // ÉTATS
   const [draggedEvent, setDraggedEvent] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  // UTILS
-  const convertIndexToTime = (index, config) => {
-    const startHour = config.startHour || 8;
-    const interval = config.interval || 30;
-    const totalMinutes = index * interval;
-    const hour = Math.floor(startHour + totalMinutes / 60);
-    const minute = totalMinutes % 60;
-    return { hour, minute };
-  };
-
-  const calculateDuration = (event) => {
-    const start = event.startHour * 60 + event.startMinute;
-    const end = event.endHour * 60 + event.endMinute;
-    return end - start;
-  };
-
-  const addMinutes = (time, minutesToAdd) => {
-    const totalMinutes = time.hour * 60 + time.minute + minutesToAdd;
-    const hour = Math.floor(totalMinutes / 60);
-    const minute = totalMinutes % 60;
-    return { hour, minute };
-  };
+  const timelineRef = React.useRef(); // ref sur le container
 
   const formatHourMinute = (hour) => {
     if (!hour) return ""; // ou autre fallback adapté
     return hour.toString().padStart(2, "0") + ":00";
   };
 
-  const findEventByDraggableId = (draggableId, dataEvents) => {
-    const [rawId] = draggableId.split("-");
-    return dataEvents.find((event) => String(event.id) === rawId);
-  };
-
-  // const onDragEnd = (result) => {
-  //   const { destination, draggableId } = result;
-
-  //   console.log(
-  //     "99-----------------destination------------------",
-  //     destination
-  //   );
-  //   console.log(
-  //     "99-----------------draggableId------------------",
-  //     draggableId
-  //   );
-  //   if (!destination) return;
-
-  //   const newStartIndex = destination.index;
-  //   console.log("---------------configExample----------------", configExample);
-
-  //   const newStartTime = convertIndexToTime(newStartIndex, configExample);
-
-  //   const event = findEventByDraggableId(draggableId, dataEvents);
-  //   if (!event) return;
-
-  //   const duration = calculateDuration(event);
-  //   const newEndTime = addMinutes(newStartTime, duration);
-
-  //   console.log("---------------newStartTime----------------", newStartTime);
-  //   console.log("---------------newEndTime----------------", newEndTime);
-
-  //   setDraggedEvent({
-  //     ...event,
-  //     newStart: newStartTime,
-  //     newEnd: newEndTime,
-  //   });
-
-  //   setShowConfirmModal(true);
-  // };
-
-  const onDragEnd = (result) => {
-    const { destination, source, draggableId } = result;
-
-    console.log(
-      "99-----------------------------destination----------------------",
-      destination
+  const updateEventTime = (
+    eventId,
+    { startHour, startMinute, endHour, endMinute }
+  ) => {
+    setDataEvents((prevEvents) =>
+      prevEvents.map((event) =>
+        event.id === eventId
+          ? { ...event, startHour, startMinute, endHour, endMinute }
+          : event
+      )
     );
-    console.log(
-      "99-----------------------------source----------------------",
-      source
-    );
-
-    if (!destination) return;
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    // 1. Trouver l'événement déplacé
-    const event = events.find((ev) => ev.id === draggableId);
-    if (!event) return;
-
-    // 2. Calculer la nouvelle heure à partir de l'index de destination
-    const { hour, minute } = convertIndexToTime(
-      destination.index,
-      configExample
-    );
-
-    // 3. Calculer la durée de l'événement avant déplacement
-    const duration = calculateDuration(event);
-
-    // 4. Calculer l'heure de fin en tenant compte de la durée
-    const totalEndMinutes = hour * 60 + minute + duration;
-    const endHour = Math.floor(totalEndMinutes / 60);
-    const endMinute = totalEndMinutes % 60;
-
-    // 5. Créer un nouvel événement mis à jour
-    const updatedEvent = {
-      ...event,
-      startHour: hour,
-      startMinute: minute,
-      endHour,
-      endMinute,
-    };
-
-    // 6. Mettre à jour les événements dans le state
-    const updatedEvents = events.map((ev) =>
-      ev.id === draggableId ? updatedEvent : ev
-    );
-
-    setShowConfirmModal(true);
   };
 
   const handleConfirmUpdate = async () => {
@@ -2485,6 +2552,17 @@ const Planning = () => {
       console.error("Erreur de mise à jour de l'événement :", error);
     }
   };
+
+  const handleNotificationClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseNotif = () => {
+    setAnchorEl(null);
+  };
+
+  const openNotif = Boolean(anchorEl);
+  const id = openNotif ? "notification-popover" : undefined;
 
   return (
     <>
@@ -2728,6 +2806,57 @@ const Planning = () => {
             >
               Rechercher
             </Button>
+
+            {/* Sélecteur de vue */}
+            <Select
+              size="small"
+              value={view}
+              onChange={(e) => setView(e.target.value)}
+              sx={{ ml: 2, backgroundColor: "white", borderRadius: "8px" }}
+            >
+              <MenuItem value="week">Vue Hebdomadaire</MenuItem>
+              <MenuItem value="day">Vue Journalière</MenuItem>
+            </Select>
+            {/* Icône de notification avec badge */}
+            <IconButton
+              color="primary"
+              onClick={handleNotificationClick}
+              sx={{ ml: 2 }}
+            >
+              <Badge badgeContent={notifications.length} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+
+            {/* Popover pour notifications */}
+            <Popover
+              id={id}
+              open={openNotif}
+              anchorEl={anchorEl}
+              onClose={handleCloseNotif}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              PaperProps={{
+                sx: { width: 250, p: 1 },
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ px: 2, py: 1 }}>
+                Notifications
+              </Typography>
+              <List dense>
+                {notifications.map((notif, index) => (
+                  <ListItem key={index} divider>
+                    <ListItemText primary={notif} />
+                  </ListItem>
+                ))}
+              </List>
+            </Popover>
           </Box>
 
           {/* 🔵 Logo à droite */}
@@ -2747,222 +2876,224 @@ const Planning = () => {
         </Box>
 
         {/* Flex container for Sidebar and Main Content */}
-        <Box sx={{ display: "flex", flexGrow: 1 }}>
-          {/* Sidebar Section */}
-          <Box
-            sx={{
-              width: "250px",
-              borderRight: "1px solid lightgray",
-              pr: 2,
-              mt: "56px",
-            }}
-          >
-            {/* Date Filter Input */}
 
-            {/* Events Accordion */}
-
-            {uniqueCategories &&
-              uniqueCategories.map((category, index) => {
-                const categoryEvents = dataEvents
-                  .filter((event) => event.Category != null)
-                  .filter((event) => event.Category.id === category.id); // Filtrer les événements par catégorie
-                const categoryHeight = calculateCategoryHeight({
-                  events: categoryEvents,
-                }); // Calculer la hauteur de la catégorie
-
-                return (
-                  <Card
-                    key={category.id}
-                    sx={{
-                      backgroundColor: getCategoryColor(category),
-                      color: getContrastTextColor(
-                        getCategoryColor(category) || "#05AFC1"
-                      ),
-                      marginTop: "16px",
-                      borderRadius: "8px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                      height: `${categoryHeight}px`, // Hauteur dynamique
-                      width: "calc(33.33% - 8px)", // Chaque carte occupe 1/3 de la largeur avec un gap
-                      minWidth: "200px", // Largeur minimale pour éviter des cartes trop petites
-                    }}
-                  >
-                    <CardContent>
-                      <Typography variant="body2">{category.name}</Typography>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-
-            {/* Floating Action Button */}
-            <Fab
-              color="primary"
-              aria-label="add"
+        {view == "day" && (
+          <Box sx={{ display: "flex", flexGrow: 1 }}>
+            {/* Sidebar Section */}
+            <Box
               sx={{
-                position: "fixed",
-                bottom: 16,
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
-                padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-                borderRadius: "8px", // Optionnel : ajoute un bord arrondi
-              }}
-              onClick={() => {
-                setIsModalOpen(true);
-                setDetails([]);
+                width: "250px",
+                borderRight: "1px solid lightgray",
+                pr: 2,
+                mt: "56px",
               }}
             >
-              <AddIcon />
-            </Fab>
-            <Fab
-              color="seconday"
-              aria-label="add"
-              sx={{
-                position: "fixed",
-                bottom: 16,
-                right: 16,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
-                padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-                borderRadius: "8px", // Optionnel : ajoute un bord arrondi
-              }}
-              onClick={handleLogout}
-            >
-              <LogoutIcon />
-            </Fab>
+              {/* Date Filter Input */}
 
-            {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
+              {/* Events Accordion */}
 
-            <Dialog
-              open={isModalOpen}
-              onClose={() => {
-                setIsModalOpen(false);
-                SetClient({
-                  name: "",
-                  firstName: "",
-                  address: "",
-                  email: "",
-                  phone: "",
-                  postalCode: "",
-                  city: "",
-                });
-                setVehicle({
-                  plateNumber: "",
-                  vin: "",
-                  model: "",
-                  color: "",
-                  mileage: "",
-                  lastCheck: "",
-                });
-                setOperator({
-                  name: "",
-                  firstName: "",
-                  email: "",
-                });
-                setReceptor({
-                  name: "",
-                  firstName: "",
-                  email: "",
-                });
-              }}
-              PaperProps={{
-                style: {
-                  width: "1200px", // Remplacez par la largeur souhaitée
-                  maxWidth: "none", // Supprimez la largeur maximale par défaut
-                },
-              }}
-            >
-              <DialogTitle>Ajouter</DialogTitle>
-              <DialogContent>
-                <form>
-                  <Grid container spacing={2}>
-                    {/* Colonne 1: Infos client */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body1">
-                        Informations Client
-                      </Typography>
-                      <ClientSearch
-                        onSelectClient={handleSelectClient}
-                        Client={Client}
-                      />
-                      <FirstnameSearch
-                        onSelectClient={handleSelectClient}
-                        Client={Client}
-                      />
-                      <TextField
-                        label="Téléphone"
-                        name="phone"
-                        value={Client.phone}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        required
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <EmailSearch
-                        onSelectClient={handleSelectClient}
-                        Client={Client}
-                      />
+              {uniqueCategories &&
+                uniqueCategories.map((category, index) => {
+                  const categoryEvents = dataEvents
+                    .filter((event) => event.Category != null)
+                    .filter((event) => event.Category.id === category.id); // Filtrer les événements par catégorie
+                  const categoryHeight = calculateCategoryHeight({
+                    events: categoryEvents,
+                  }); // Calculer la hauteur de la catégorie
 
-                      <TextField
-                        placeholder="Adresse"
-                        name="adresse"
-                        value={Client.address}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <TextField
-                        placeholder="Code postal"
-                        name="postale"
-                        value={Client.postalCode}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <TextField
-                        placeholder="Ville"
-                        name="ville"
-                        value={Client.city}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                    </Grid>
+                  return (
+                    <Card
+                      key={category.id}
+                      sx={{
+                        backgroundColor: getCategoryColor(category),
+                        color: getContrastTextColor(
+                          getCategoryColor(category) || "#05AFC1"
+                        ),
+                        marginTop: "16px",
+                        borderRadius: "8px",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                        height: `${categoryHeight}px`, // Hauteur dynamique
+                        width: "calc(33.33% - 8px)", // Chaque carte occupe 1/3 de la largeur avec un gap
+                        minWidth: "200px", // Largeur minimale pour éviter des cartes trop petites
+                      }}
+                    >
+                      <CardContent>
+                        <Typography variant="body2">{category.name}</Typography>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
 
-                    {/* Colonne 2: Infos véhicule */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body1">
-                        Informations Véhicule
-                      </Typography>
-                      {/* <TextField
+              {/* Floating Action Button */}
+              <Fab
+                color="primary"
+                aria-label="add"
+                sx={{
+                  position: "fixed",
+                  bottom: 16,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
+                  padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+                  borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+                }}
+                onClick={() => {
+                  setIsModalOpen(true);
+                  setDetails([]);
+                }}
+              >
+                <AddIcon />
+              </Fab>
+              <Fab
+                color="seconday"
+                aria-label="add"
+                sx={{
+                  position: "fixed",
+                  bottom: 16,
+                  right: 16,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
+                  padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+                  borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+                }}
+                onClick={handleLogout}
+              >
+                <LogoutIcon />
+              </Fab>
+
+              {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
+
+              <Dialog
+                open={isModalOpen}
+                onClose={() => {
+                  setIsModalOpen(false);
+                  SetClient({
+                    name: "",
+                    firstName: "",
+                    address: "",
+                    email: "",
+                    phone: "",
+                    postalCode: "",
+                    city: "",
+                  });
+                  setVehicle({
+                    plateNumber: "",
+                    vin: "",
+                    model: "",
+                    color: "",
+                    mileage: "",
+                    lastCheck: "",
+                  });
+                  setOperator({
+                    name: "",
+                    firstName: "",
+                    email: "",
+                  });
+                  setReceptor({
+                    name: "",
+                    firstName: "",
+                    email: "",
+                  });
+                }}
+                PaperProps={{
+                  style: {
+                    width: "1200px", // Remplacez par la largeur souhaitée
+                    maxWidth: "none", // Supprimez la largeur maximale par défaut
+                  },
+                }}
+              >
+                <DialogTitle>Ajouter</DialogTitle>
+                <DialogContent>
+                  <form>
+                    <Grid container spacing={2}>
+                      {/* Colonne 1: Infos client */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body1">
+                          Informations Client
+                        </Typography>
+                        <ClientSearch
+                          onSelectClient={handleSelectClient}
+                          Client={Client}
+                        />
+                        <FirstnameSearch
+                          onSelectClient={handleSelectClient}
+                          Client={Client}
+                        />
+                        <TextField
+                          label="Téléphone"
+                          name="phone"
+                          value={Client.phone}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          required
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <EmailSearch
+                          onSelectClient={handleSelectClient}
+                          Client={Client}
+                        />
+
+                        <TextField
+                          placeholder="Adresse"
+                          name="adresse"
+                          value={Client.address}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <TextField
+                          placeholder="Code postal"
+                          name="postale"
+                          value={Client.postalCode}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <TextField
+                          placeholder="Ville"
+                          name="ville"
+                          value={Client.city}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Colonne 2: Infos véhicule */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body1">
+                          Informations Véhicule
+                        </Typography>
+                        {/* <TextField
                         label="Immatriculation"
                         name="plateNumber"
                         value={newEvent.plateNumber}
@@ -2976,271 +3107,355 @@ const Planning = () => {
                           "& .MuiFormLabel-root": { fontSize: "0.8rem" },
                         }}
                       /> */}
-                      <PlateNumberSearch
-                        onSelectClient={handleSelectVehicle}
-                        Client={Client}
-                      />
-                      <TextField
-                        placeholder="VIN"
-                        name="vin"
-                        value={Vehicle.vin}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <TextField
-                        placeholder="Modèle"
-                        name="model"
-                        value={Vehicle.model}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <TextField
-                        placeholder="Couleur"
-                        name="color"
-                        value={Vehicle.color}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <TextField
-                        placeholder="kilométrage"
-                        name="mileage"
-                        value={Vehicle.mileage}
-                        onChange={handleVehicleChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                      <Typography variant="body1" sx={{ marginTop: "1.3rem" }}>
-                        Prochain controle technique
-                      </Typography>
-                      <TextField
-                        name="lastCheck"
-                        type="date"
-                        value={Vehicle.lastCheck}
-                        onChange={handleVehicleChange}
-                        fullWidth
-                        margin="normal"
-                        size="small"
-                        sx={{
-                          height: "30px",
-                          "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                          "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                        }}
-                      />
-                    </Grid>
+                        <PlateNumberSearch
+                          onSelectClient={handleSelectVehicle}
+                          Client={Client}
+                        />
+                        <TextField
+                          placeholder="VIN"
+                          name="vin"
+                          value={Vehicle.vin}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <TextField
+                          placeholder="Modèle"
+                          name="model"
+                          value={Vehicle.model}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <TextField
+                          placeholder="Couleur"
+                          name="color"
+                          value={Vehicle.color}
+                          onChange={handleInputChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <TextField
+                          placeholder="kilométrage"
+                          name="mileage"
+                          value={Vehicle.mileage}
+                          onChange={handleVehicleChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                        <Typography
+                          variant="body1"
+                          sx={{ marginTop: "1.3rem" }}
+                        >
+                          Prochain controle technique
+                        </Typography>
+                        <TextField
+                          name="lastCheck"
+                          type="date"
+                          value={Vehicle.lastCheck}
+                          onChange={handleVehicleChange}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          sx={{
+                            height: "30px",
+                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                          }}
+                        />
+                      </Grid>
 
-                    {/* Table: Détails de l'événement */}
-                    <Grid item xs={12}>
-                      {/* <Typography variant="h6">
+                      {/* Table: Détails de l'événement */}
+                      <Grid item xs={12}>
+                        {/* <Typography variant="h6">
                         Détails de l'événement
                       </Typography> */}
-                      <TableContainer
-                        component={Paper}
-                        sx={{
-                          backgroundColor: theme.palette.background.paper,
-                          borderRadius: 2,
-                          boxShadow: isDark
-                            ? "0 0 12px rgba(255, 255, 255, 0.05)"
-                            : "0 0 12px rgba(0, 0, 0, 0.05)",
-                        }}
-                      >
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell
-                                sx={{
-                                  width: "60%",
-                                  ...cellStyle,
-                                  fontWeight: "bold",
-                                }}
-                              >
-                                Libellé / travaux / articles
-                              </TableCell>
-                              <TableCell sx={{ width: "10%", ...cellStyle }}>
-                                Quantité
-                              </TableCell>
-                              <TableCell sx={{ width: "10%", ...cellStyle }}>
-                                Prix Unitaire
-                              </TableCell>
-                              {/* <TableCell
+                        <TableContainer
+                          component={Paper}
+                          sx={{
+                            backgroundColor: theme.palette.background.paper,
+                            borderRadius: 2,
+                            boxShadow: isDark
+                              ? "0 0 12px rgba(255, 255, 255, 0.05)"
+                              : "0 0 12px rgba(0, 0, 0, 0.05)",
+                          }}
+                        >
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell
+                                  sx={{
+                                    width: "60%",
+                                    ...cellStyle,
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  Libellé / travaux / articles
+                                </TableCell>
+                                <TableCell sx={{ width: "10%", ...cellStyle }}>
+                                  Quantité
+                                </TableCell>
+                                <TableCell sx={{ width: "10%", ...cellStyle }}>
+                                  Prix Unitaire
+                                </TableCell>
+                                {/* <TableCell
                                 style={{ width: "10%", textAlign: "center" }}
                               >
                                 Remise %
                               </TableCell> */}
-                              <TableCell sx={{ width: "10%", ...cellStyle }}>
-                                Remise
-                              </TableCell>
-                              <TableCell sx={{ width: "10%", ...cellStyle }}>
-                                Total
-                              </TableCell>
-                              <TableCell sx={{ width: "10%", ...cellStyle }}>
-                                Action
-                              </TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {details.map((detail, index) => (
-                              <TableRow key={index}>
-                                <TableCell sx={{ ...cellStyle }}>
-                                  <TextField
-                                    name="label"
-                                    value={detail.label}
-                                    onChange={(e) =>
-                                      handleDetailChange(e, index)
-                                    }
-                                    size="small"
-                                    fullWidth
-                                  />
+                                <TableCell sx={{ width: "10%", ...cellStyle }}>
+                                  Remise
                                 </TableCell>
-                                <TableCell sx={{ ...cellStyle }}>
-                                  <TextField
-                                    name="quantity"
-                                    type="text"
-                                    value={
-                                      detail.quantityInput ??
-                                      detail.quantity ??
-                                      ""
-                                    }
-                                    onChange={(e) =>
-                                      handleDetailChange(e, index)
-                                    }
-                                    size="small"
-                                    style={{
-                                      maxWidth: 80,
-                                    }}
-                                    sx={{
-                                      "& input": {
-                                        textAlign: "center", // Centrer horizontalement
-                                      },
-                                      "& input[type=number]": {
-                                        MozAppearance: "textfield", // Pour Firefox
-                                      },
-                                      "& input[type=number]::-webkit-outer-spin-button":
-                                        {
-                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                          margin: 0,
-                                        },
-                                      "& input[type=number]::-webkit-inner-spin-button":
-                                        {
-                                          WebkitAppearance: "none",
-                                          margin: 0,
-                                        },
-                                    }}
-                                  />
+                                <TableCell sx={{ width: "10%", ...cellStyle }}>
+                                  Total
                                 </TableCell>
-                                <TableCell sx={{ ...cellStyle }}>
-                                  <TextField
-                                    name="unitPrice"
-                                    type="text"
-                                    value={
-                                      detail.unitPriceInput ??
-                                      detail.unitPrice ??
-                                      ""
-                                    }
-                                    onChange={(e) =>
-                                      handleDetailChange(e, index)
-                                    }
-                                    // onInput={(e) => {
-                                    //   const input = e.target.value;
-                                    //   e.target.value = input.replace(",", ".");
-                                    // }}
-                                    size="small"
-                                    style={{
-                                      textAlign: "center",
-                                    }}
-                                    fullWidth
-                                    sx={{
-                                      "& input": {
-                                        textAlign: "center", // Centrer horizontalement
-                                      },
-                                      "& input[type=number]": {
-                                        MozAppearance: "textfield", // Pour Firefox
-                                      },
-                                      "& input[type=number]::-webkit-outer-spin-button":
-                                        {
-                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                          margin: 0,
-                                        },
-                                      "& input[type=number]::-webkit-inner-spin-button":
-                                        {
-                                          WebkitAppearance: "none",
-                                          margin: 0,
-                                        },
-                                    }}
-                                  />
+                                <TableCell sx={{ width: "10%", ...cellStyle }}>
+                                  Action
                                 </TableCell>
-
-                                <TableCell sx={{ ...cellStyle }}>
-                                  <TextField
-                                    name="discountAmount"
-                                    type="text" // Permet la saisie de caractères comme '%'
-                                    value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
-                                    onChange={(e) => {
-                                      let value = e.target.value.trim(); // Supprime les espaces inutiles
-                                      let formattedValue = value; // Conserve la saisie brute pour affichage
-
-                                      // Uniformise les décimales en remplaçant les virgules par des points
-                                      const normalizedValue = value.replace(
-                                        ",",
-                                        "."
-                                      );
-
-                                      // Réinitialisation des valeurs par défaut
-                                      detail.discountAmount = "";
-                                      detail.discountPercent = "";
-
-                                      if (normalizedValue.includes("%")) {
-                                        // Cas où l'utilisateur entre un pourcentage
-                                        const percentage = parseFloat(
-                                          normalizedValue.replace("%", "")
-                                        );
-                                        if (!isNaN(percentage)) {
-                                          detail.discountPercent = percentage; // Met à jour le pourcentage
-                                          detail.discountAmount = ""; // Réinitialise le montant
-                                        }
-                                      } else if (normalizedValue !== "") {
-                                        // Cas où l'utilisateur entre un montant
-                                        const amount =
-                                          parseFloat(normalizedValue);
-                                        if (!isNaN(amount)) {
-                                          detail.discountAmount = amount; // Met à jour le montant
-                                          detail.discountPercent = ""; // Réinitialise le pourcentage
-                                        }
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {details.map((detail, index) => (
+                                <TableRow key={index}>
+                                  <TableCell sx={{ ...cellStyle }}>
+                                    <TextField
+                                      name="label"
+                                      value={detail.label}
+                                      onChange={(e) =>
+                                        handleDetailChange(e, index)
                                       }
+                                      size="small"
+                                      fullWidth
+                                    />
+                                  </TableCell>
+                                  <TableCell sx={{ ...cellStyle }}>
+                                    <TextField
+                                      name="quantity"
+                                      type="text"
+                                      value={
+                                        detail.quantityInput ??
+                                        detail.quantity ??
+                                        ""
+                                      }
+                                      onChange={(e) =>
+                                        handleDetailChange(e, index)
+                                      }
+                                      size="small"
+                                      style={{
+                                        maxWidth: 80,
+                                      }}
+                                      sx={{
+                                        "& input": {
+                                          textAlign: "center", // Centrer horizontalement
+                                        },
+                                        "& input[type=number]": {
+                                          MozAppearance: "textfield", // Pour Firefox
+                                        },
+                                        "& input[type=number]::-webkit-outer-spin-button":
+                                          {
+                                            WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                            margin: 0,
+                                          },
+                                        "& input[type=number]::-webkit-inner-spin-button":
+                                          {
+                                            WebkitAppearance: "none",
+                                            margin: 0,
+                                          },
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell sx={{ ...cellStyle }}>
+                                    <TextField
+                                      name="unitPrice"
+                                      type="text"
+                                      value={
+                                        detail.unitPriceInput ??
+                                        detail.unitPrice ??
+                                        ""
+                                      }
+                                      onChange={(e) =>
+                                        handleDetailChange(e, index)
+                                      }
+                                      // onInput={(e) => {
+                                      //   const input = e.target.value;
+                                      //   e.target.value = input.replace(",", ".");
+                                      // }}
+                                      size="small"
+                                      style={{
+                                        textAlign: "center",
+                                      }}
+                                      fullWidth
+                                      sx={{
+                                        "& input": {
+                                          textAlign: "center", // Centrer horizontalement
+                                        },
+                                        "& input[type=number]": {
+                                          MozAppearance: "textfield", // Pour Firefox
+                                        },
+                                        "& input[type=number]::-webkit-outer-spin-button":
+                                          {
+                                            WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                            margin: 0,
+                                          },
+                                        "& input[type=number]::-webkit-inner-spin-button":
+                                          {
+                                            WebkitAppearance: "none",
+                                            margin: 0,
+                                          },
+                                      }}
+                                    />
+                                  </TableCell>
 
-                                      // Met à jour l'état de l'inputValue avec la saisie brute
-                                      detail.inputValue = formattedValue;
+                                  <TableCell sx={{ ...cellStyle }}>
+                                    <TextField
+                                      name="discountAmount"
+                                      type="text" // Permet la saisie de caractères comme '%'
+                                      value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
+                                      onChange={(e) => {
+                                        let value = e.target.value.trim(); // Supprime les espaces inutiles
+                                        let formattedValue = value; // Conserve la saisie brute pour affichage
 
-                                      // Appelle la fonction de gestion des changements
-                                      handleDetailChange(e, index);
-                                    }}
+                                        // Uniformise les décimales en remplaçant les virgules par des points
+                                        const normalizedValue = value.replace(
+                                          ",",
+                                          "."
+                                        );
+
+                                        // Réinitialisation des valeurs par défaut
+                                        detail.discountAmount = "";
+                                        detail.discountPercent = "";
+
+                                        if (normalizedValue.includes("%")) {
+                                          // Cas où l'utilisateur entre un pourcentage
+                                          const percentage = parseFloat(
+                                            normalizedValue.replace("%", "")
+                                          );
+                                          if (!isNaN(percentage)) {
+                                            detail.discountPercent = percentage; // Met à jour le pourcentage
+                                            detail.discountAmount = ""; // Réinitialise le montant
+                                          }
+                                        } else if (normalizedValue !== "") {
+                                          // Cas où l'utilisateur entre un montant
+                                          const amount =
+                                            parseFloat(normalizedValue);
+                                          if (!isNaN(amount)) {
+                                            detail.discountAmount = amount; // Met à jour le montant
+                                            detail.discountPercent = ""; // Réinitialise le pourcentage
+                                          }
+                                        }
+
+                                        // Met à jour l'état de l'inputValue avec la saisie brute
+                                        detail.inputValue = formattedValue;
+
+                                        // Appelle la fonction de gestion des changements
+                                        handleDetailChange(e, index);
+                                      }}
+                                      size="small"
+                                      sx={{
+                                        "& input": {
+                                          MozAppearance: "textfield", // Pour Firefox
+                                          textAlign: "center", // Centrer horizontalement
+                                        },
+                                        "& input::-webkit-outer-spin-button": {
+                                          WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                          margin: 0,
+                                        },
+                                        "& input::-webkit-inner-spin-button": {
+                                          WebkitAppearance: "none",
+                                          margin: 0,
+                                        },
+                                      }}
+                                    />
+                                  </TableCell>
+
+                                  <TableCell sx={{ ...cellStyle }}>
+                                    {calculateLineTotal(detail).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell sx={{ ...cellStyle }}>
+                                    <Button
+                                      color="secondary"
+                                      onClick={() => removeDetailRow(index)}
+                                    >
+                                      SUPP
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              <TableRow>
+                                <TableCell colSpan={7} sx={{ ...cellStyle }}>
+                                  <Button
+                                    variant="outlined"
+                                    onClick={addDetailRow}
+                                    fullWidth
+                                  >
+                                    Ajouter une ligne
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow>
+                                <TableCell
+                                  colSpan={4}
+                                  sx={{ ...cellStyle }}
+                                ></TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
+                                  Total TTC :
+                                </TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
+                                  {totalTTC.toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell
+                                  colSpan={4}
+                                  sx={{ ...cellStyle }}
+                                ></TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
+                                  Total HT :
+                                </TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
+                                  {totalHT.toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell
+                                  colSpan={4}
+                                  sx={{ ...cellStyle }}
+                                ></TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
+                                  Acompte :
+                                </TableCell>
+                                <TableCell sx={{ ...cellStyle }}>
+                                  <TextField
+                                    type="text"
+                                    value={deposit}
+                                    onChange={(e) => setDeposit(e.target.value)}
                                     size="small"
+                                    style={{ maxWidth: 100 }}
                                     sx={{
                                       "& input": {
                                         MozAppearance: "textfield", // Pour Firefox
@@ -3257,228 +3472,103 @@ const Planning = () => {
                                     }}
                                   />
                                 </TableCell>
-
-                                <TableCell sx={{ ...cellStyle }}>
-                                  {calculateLineTotal(detail).toFixed(2)}
-                                </TableCell>
-                                <TableCell sx={{ ...cellStyle }}>
-                                  <Button
-                                    color="secondary"
-                                    onClick={() => removeDetailRow(index)}
-                                  >
-                                    SUPP
-                                  </Button>
-                                </TableCell>
                               </TableRow>
-                            ))}
-                            <TableRow>
-                              <TableCell colSpan={7} sx={{ ...cellStyle }}>
-                                <Button
-                                  variant="outlined"
-                                  onClick={addDetailRow}
-                                  fullWidth
-                                >
-                                  Ajouter une ligne
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-
-                            <TableRow>
-                              <TableCell
-                                colSpan={4}
-                                sx={{ ...cellStyle }}
-                              ></TableCell>
-                              <TableCell sx={{ ...cellStyle }}>
-                                Total TTC :
-                              </TableCell>
-                              <TableCell sx={{ ...cellStyle }}>
-                                {totalTTC.toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell
-                                colSpan={4}
-                                sx={{ ...cellStyle }}
-                              ></TableCell>
-                              <TableCell sx={{ ...cellStyle }}>
-                                Total HT :
-                              </TableCell>
-                              <TableCell sx={{ ...cellStyle }}>
-                                {totalHT.toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell
-                                colSpan={4}
-                                sx={{ ...cellStyle }}
-                              ></TableCell>
-                              <TableCell sx={{ ...cellStyle }}>
-                                Acompte :
-                              </TableCell>
-                              <TableCell sx={{ ...cellStyle }}>
-                                <TextField
-                                  type="text"
-                                  value={deposit}
-                                  onChange={(e) => setDeposit(e.target.value)}
-                                  size="small"
-                                  style={{ maxWidth: 100 }}
-                                  sx={{
-                                    "& input": {
-                                      MozAppearance: "textfield", // Pour Firefox
-                                      textAlign: "center", // Centrer horizontalement
-                                    },
-                                    "& input::-webkit-outer-spin-button": {
-                                      WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                      margin: 0,
-                                    },
-                                    "& input::-webkit-inner-spin-button": {
-                                      WebkitAppearance: "none",
-                                      margin: 0,
-                                    },
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Grid>
-                    <Grid container spacing={2} item xs={12} md={12}>
-                      {/* Colonne 1: Infos  sur les travaux */}
-                      <Grid item xs={12} md={6}>
-                        {/* <Typography variant="h6">
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Grid>
+                      <Grid container spacing={2} item xs={12} md={12}>
+                        {/* Colonne 1: Infos  sur les travaux */}
+                        <Grid item xs={12} md={6}>
+                          {/* <Typography variant="h6">
                           Informations Événement
                         </Typography> */}
 
-                        <TextField
-                          label="Notes"
-                          name="notes"
-                          value={newEvent.notes}
-                          onChange={handleInputChange}
-                          fullWidth
-                          margin="normal"
-                          multiline
-                          rows={16}
-                          sx={{
-                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                          }}
-                        />
-                        <TextField
-                          name="price"
-                          type="number"
-                          value={newEvent.price}
-                          placeholder="Prix"
-                          onChange={handleInputChange}
-                          fullWidth
-                          margin="normal"
-                          required
-                          size="small"
-                          sx={{
-                            display: "none",
-                            height: "30px",
-                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                            "& input[type=number]": {
-                              MozAppearance: "textfield", // Pour Firefox
-                            },
-                            "& input[type=number]::-webkit-outer-spin-button": {
-                              WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                              margin: 0,
-                            },
-                            "& input[type=number]::-webkit-inner-spin-button": {
-                              WebkitAppearance: "none",
-                              margin: 0,
-                            },
-                          }}
-                        />
-                      </Grid>
+                          <TextField
+                            label="Notes"
+                            name="notes"
+                            value={newEvent.notes}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            multiline
+                            rows={16}
+                            sx={{
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            }}
+                          />
+                          <TextField
+                            name="price"
+                            type="number"
+                            value={newEvent.price}
+                            placeholder="Prix"
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            required
+                            size="small"
+                            sx={{
+                              display: "none",
+                              height: "30px",
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                              "& input[type=number]": {
+                                MozAppearance: "textfield", // Pour Firefox
+                              },
+                              "& input[type=number]::-webkit-outer-spin-button":
+                                {
+                                  WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
+                                  margin: 0,
+                                },
+                              "& input[type=number]::-webkit-inner-spin-button":
+                                {
+                                  WebkitAppearance: "none",
+                                  margin: 0,
+                                },
+                            }}
+                          />
+                        </Grid>
 
-                      {/* Colonne 2: Infos sur l'événement */}
-                      <Grid item xs={12} md={6}>
-                        {/* <Typography variant="h6">
+                        {/* Colonne 2: Infos sur l'événement */}
+                        <Grid item xs={12} md={6}>
+                          {/* <Typography variant="h6">
                           Détails de l'événement
                         </Typography> */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: "1rem", // Espacement entre les champs
-                            marginBottom: "0.9rem",
-                            marginTop: "1.1rem",
-                          }}
-                        >
-                          <UserSearch
-                            onSelectUser={handleSelectOperator}
-                            garageId={getCurrentUser().garageId}
-                            NameAttribute="Opérateur"
-                          ></UserSearch>
-                          <UserSearch
-                            onSelectUser={handleSelectReceptor}
-                            garageId={getCurrentUser().garageId}
-                            NameAttribute="Récepteur"
-                          ></UserSearch>
-                        </Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: "1rem", // Espacement entre les champs
+                              marginBottom: "0.9rem",
+                              marginTop: "1.1rem",
+                            }}
+                          >
+                            <UserSearch
+                              onSelectUser={handleSelectOperator}
+                              garageId={getCurrentUser().garageId}
+                              NameAttribute="Opérateur"
+                            ></UserSearch>
+                            <UserSearch
+                              onSelectUser={handleSelectReceptor}
+                              garageId={getCurrentUser().garageId}
+                              NameAttribute="Récepteur"
+                            ></UserSearch>
+                          </Box>
 
-                        <Grid container spacing={2}>
-                          {/* Section Date de l'événement et Heure de début */}
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body1">
-                              Date de départ
-                            </Typography>
-                            <TextField
-                              name="date"
-                              type="date"
-                              value={newEvent.date}
-                              onChange={handleInputChange}
-                              fullWidth
-                              margin="normal"
-                              required
-                              size="small"
-                              sx={{
-                                height: "30px",
-                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                              }}
-                            />
-                          </Grid>
-
-                          {/* Section Date de fin et Heure de fin */}
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body1">Date de fin</Typography>
-                            <TextField
-                              name="finDate"
-                              type="date"
-                              value={finDate}
-                              onChange={handleInputChangeFinDate}
-                              fullWidth
-                              margin="normal"
-                              required
-                              size="small"
-                              sx={{
-                                height: "30px",
-                                "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                                "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                              }}
-                            />
-                          </Grid>
-
-                          <Grid item xs={12} md={6}>
-                            <Typography
-                              variant="body1"
-                              sx={{ marginBottom: "0.9rem" }}
-                            >
-                              Heure de départ
-                            </Typography>
-                            <Grid item xs={6}>
+                          <Grid container spacing={2}>
+                            {/* Section Date de l'événement et Heure de début */}
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1">
+                                Date de départ
+                              </Typography>
                               <TextField
-                                name="startTime"
-                                placeholder="HHMM (ex: 0700)"
-                                value={
-                                  `${newEvent.startHour}${newEvent.startMinute}` ||
-                                  ""
-                                }
+                                name="date"
+                                type="date"
+                                value={newEvent.date}
                                 onChange={handleInputChange}
-                                margin="none"
+                                fullWidth
+                                margin="normal"
+                                required
                                 size="small"
                                 sx={{
                                   height: "30px",
@@ -3491,379 +3581,433 @@ const Planning = () => {
                                 }}
                               />
                             </Grid>
-                            {/* <Box mt={2}>
+
+                            {/* Section Date de fin et Heure de fin */}
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1">
+                                Date de fin
+                              </Typography>
+                              <TextField
+                                name="finDate"
+                                type="date"
+                                value={finDate}
+                                onChange={handleInputChangeFinDate}
+                                fullWidth
+                                margin="normal"
+                                required
+                                size="small"
+                                sx={{
+                                  height: "30px",
+                                  "& .MuiInputBase-root": {
+                                    fontSize: "0.8rem",
+                                  },
+                                  "& .MuiFormLabel-root": {
+                                    fontSize: "0.8rem",
+                                  },
+                                }}
+                              />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                              <Typography
+                                variant="body1"
+                                sx={{ marginBottom: "0.9rem" }}
+                              >
+                                Heure de départ
+                              </Typography>
+                              <Grid item xs={6}>
+                                <TextField
+                                  name="startTime"
+                                  placeholder="HHMM (ex: 0700)"
+                                  value={
+                                    `${newEvent.startHour}${newEvent.startMinute}` ||
+                                    ""
+                                  }
+                                  onChange={handleInputChange}
+                                  margin="none"
+                                  size="small"
+                                  sx={{
+                                    height: "30px",
+                                    "& .MuiInputBase-root": {
+                                      fontSize: "0.8rem",
+                                    },
+                                    "& .MuiFormLabel-root": {
+                                      fontSize: "0.8rem",
+                                    },
+                                  }}
+                                />
+                              </Grid>
+                              {/* <Box mt={2}>
                               <Typography variant="body2">
                                 Heure : {newEvent.startHour || "Non définie"}{" "}
                                 Minute : {newEvent.startMinute || "Non définie"}
                               </Typography>
                             </Box> */}
-                          </Grid>
-
-                          <Grid item xs={12} md={6}>
-                            <Typography
-                              variant="body1"
-                              sx={{ marginBottom: "0.9rem" }}
-                            >
-                              Heure de fin
-                            </Typography>
-                            <Grid item xs={6}>
-                              <TextField
-                                name="endTime"
-                                placeholder="HHMM (ex: 1730)"
-                                value={
-                                  `${newEvent.endHour}${newEvent.endMinute}` ||
-                                  ""
-                                }
-                                onChange={handleInputChange}
-                                margin="none"
-                                size="small"
-                                sx={{
-                                  height: "30px",
-                                  "& .MuiInputBase-root": {
-                                    fontSize: "0.8rem",
-                                  },
-                                  "& .MuiFormLabel-root": {
-                                    fontSize: "0.8rem",
-                                  },
-                                }}
-                              />
                             </Grid>
-                            {/* <Box mt={2}>
+
+                            <Grid item xs={12} md={6}>
+                              <Typography
+                                variant="body1"
+                                sx={{ marginBottom: "0.9rem" }}
+                              >
+                                Heure de fin
+                              </Typography>
+                              <Grid item xs={6}>
+                                <TextField
+                                  name="endTime"
+                                  placeholder="HHMM (ex: 1730)"
+                                  value={
+                                    `${newEvent.endHour}${newEvent.endMinute}` ||
+                                    ""
+                                  }
+                                  onChange={handleInputChange}
+                                  margin="none"
+                                  size="small"
+                                  sx={{
+                                    height: "30px",
+                                    "& .MuiInputBase-root": {
+                                      fontSize: "0.8rem",
+                                    },
+                                    "& .MuiFormLabel-root": {
+                                      fontSize: "0.8rem",
+                                    },
+                                  }}
+                                />
+                              </Grid>
+                              {/* <Box mt={2}>
                               <Typography variant="body2">
                                 Heure : {newEvent.endHour || "Non définie"}{" "}
                                 Minute : {newEvent.endMinute || "Non définie"}
                               </Typography>
                             </Box> */}
+                            </Grid>
                           </Grid>
-                        </Grid>
 
-                        <TextField
-                          select
-                          label="Catégorie"
-                          name="category"
-                          value={newEvent.category.id}
-                          onChange={handleInputChange}
-                          fullWidth
-                          margin="normal"
-                          required
-                          size="small"
-                          sx={{
-                            height: "30px",
-                            "& .MuiInputBase-root": { fontSize: "0.8rem" },
-                            "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-                          }}
-                        >
-                          {categories.map((categoryGroup, index) => (
-                            <MenuItem
-                              key={index}
-                              value={categoryGroup.id}
-                              sx={{
-                                fontSize: "0.8rem",
-                                minHeight: "30px",
-                              }}
-                            >
-                              {categoryGroup.name}
-                            </MenuItem>
-                          ))}
-                        </TextField>
+                          <TextField
+                            select
+                            label="Catégorie"
+                            name="category"
+                            value={newEvent.category.id}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            required
+                            size="small"
+                            sx={{
+                              height: "30px",
+                              "& .MuiInputBase-root": { fontSize: "0.8rem" },
+                              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
+                            }}
+                          >
+                            {categories.map((categoryGroup, index) => (
+                              <MenuItem
+                                key={index}
+                                value={categoryGroup.id}
+                                sx={{
+                                  fontSize: "0.8rem",
+                                  minHeight: "30px",
+                                }}
+                              >
+                                {categoryGroup.name}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </Grid>
                       </Grid>
                     </Grid>
-                  </Grid>
-                </form>
-                <DialogActions
-                  sx={{
-                    position: "sticky", // Le footer reste collé
-                    bottom: 0, // Toujours en bas
-                    backgroundColor: "background.paper", // Fond cohérent avec le thème
-                    zIndex: 1, // Au-dessus du contenu
-                    borderTop: "1px solid #ddd", // Ligne de séparation
-                  }}
-                >
-                  {/* Boutons CTA en bas */}
-                  <Grid container spacing={3} justifyContent="flex-end">
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleOpenOr}
-                      >
-                        Créer un OR
-                      </Button>
-                      <Modal
-                        open={openOr}
-                        onClose={handleCloseOr}
-                        aria-labelledby="confirmation-modal-title"
-                        aria-describedby="confirmation-modal-description"
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            bgcolor: "background.paper",
-                            border: "2px solid #000",
-                            boxShadow: 24,
-                            p: 4,
-                            borderRadius: 2,
-                          }}
+                  </form>
+                  <DialogActions
+                    sx={{
+                      position: "sticky", // Le footer reste collé
+                      bottom: 0, // Toujours en bas
+                      backgroundColor: "background.paper", // Fond cohérent avec le thème
+                      zIndex: 1, // Au-dessus du contenu
+                      borderTop: "1px solid #ddd", // Ligne de séparation
+                    }}
+                  >
+                    {/* Boutons CTA en bas */}
+                    <Grid container spacing={3} justifyContent="flex-end">
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleOpenOr}
                         >
-                          <Typography
-                            id="confirmation-modal-description"
-                            sx={{ mt: 2, mb: 4 }}
-                          >
-                            Voulez-vous créer un OR ?
-                          </Typography>
+                          Créer un OR
+                        </Button>
+                        <Modal
+                          open={openOr}
+                          onClose={handleCloseOr}
+                          aria-labelledby="confirmation-modal-title"
+                          aria-describedby="confirmation-modal-description"
+                        >
                           <Box
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              bgcolor: "background.paper",
+                              border: "2px solid #000",
+                              boxShadow: 24,
+                              p: 4,
+                              borderRadius: 2,
                             }}
                           >
-                            <Button
-                              variant="outlined"
-                              color="secondary"
-                              onClick={handleCloseOr}
+                            <Typography
+                              id="confirmation-modal-description"
+                              sx={{ mt: 2, mb: 4 }}
                             >
-                              Non
-                            </Button>
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={handleConfirmOr}
+                              Voulez-vous créer un OR ?
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
                             >
-                              Oui
-                            </Button>
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={handleCloseOr}
+                              >
+                                Non
+                              </Button>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleConfirmOr}
+                              >
+                                Oui
+                              </Button>
+                            </Box>
                           </Box>
-                        </Box>
-                      </Modal>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleOpenResa}
-                      >
-                        Créer une résa
-                      </Button>
-                      <Modal
-                        open={openResa}
-                        onClose={handleCloseResa}
-                        aria-labelledby="confirmation-modal-title"
-                        aria-describedby="confirmation-modal-description"
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            bgcolor: "background.paper",
-                            border: "2px solid #000",
-                            boxShadow: 24,
-                            p: 4,
-                            borderRadius: 2,
-                          }}
+                        </Modal>
+                      </Grid>
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleOpenResa}
                         >
-                          <Typography
-                            id="confirmation-modal-description"
-                            sx={{ mt: 2, mb: 4 }}
-                          >
-                            Voulez-vous créer une réservation ?
-                          </Typography>
+                          Créer une résa
+                        </Button>
+                        <Modal
+                          open={openResa}
+                          onClose={handleCloseResa}
+                          aria-labelledby="confirmation-modal-title"
+                          aria-describedby="confirmation-modal-description"
+                        >
                           <Box
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              bgcolor: "background.paper",
+                              border: "2px solid #000",
+                              boxShadow: 24,
+                              p: 4,
+                              borderRadius: 2,
                             }}
                           >
-                            <Button
-                              variant="outlined"
-                              color="secondary"
-                              onClick={handleCloseResa}
+                            <Typography
+                              id="confirmation-modal-description"
+                              sx={{ mt: 2, mb: 4 }}
                             >
-                              Non
-                            </Button>
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={handleConfirmResa}
+                              Voulez-vous créer une réservation ?
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
                             >
-                              Oui
-                            </Button>
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={handleCloseResa}
+                              >
+                                Non
+                              </Button>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleConfirmResa}
+                              >
+                                Oui
+                              </Button>
+                            </Box>
                           </Box>
-                        </Box>
-                      </Modal>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleOpenDevis}
-                      >
-                        Créer un Devis
-                      </Button>
-                      <Modal
-                        open={openDevis}
-                        onClose={handleCloseDevis}
-                        aria-labelledby="confirmation-modal-title"
-                        aria-describedby="confirmation-modal-description"
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            bgcolor: "background.paper",
-                            border: "2px solid #000",
-                            boxShadow: 24,
-                            p: 4,
-                            borderRadius: 2,
-                          }}
+                        </Modal>
+                      </Grid>
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleOpenDevis}
                         >
-                          <Typography
-                            id="confirmation-modal-description"
-                            sx={{ mt: 2, mb: 4 }}
-                          >
-                            Voulez-vous créer un devis ?
-                          </Typography>
+                          Créer un Devis
+                        </Button>
+                        <Modal
+                          open={openDevis}
+                          onClose={handleCloseDevis}
+                          aria-labelledby="confirmation-modal-title"
+                          aria-describedby="confirmation-modal-description"
+                        >
                           <Box
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              bgcolor: "background.paper",
+                              border: "2px solid #000",
+                              boxShadow: 24,
+                              p: 4,
+                              borderRadius: 2,
                             }}
                           >
-                            <Button
-                              variant="outlined"
-                              color="secondary"
-                              onClick={handleCloseDevis}
+                            <Typography
+                              id="confirmation-modal-description"
+                              sx={{ mt: 2, mb: 4 }}
                             >
-                              Non
-                            </Button>
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={handleConfirmDevis}
+                              Voulez-vous créer un devis ?
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
                             >
-                              Oui
-                            </Button>
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={handleCloseDevis}
+                              >
+                                Non
+                              </Button>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleConfirmDevis}
+                              >
+                                Oui
+                              </Button>
+                            </Box>
                           </Box>
-                        </Box>
-                      </Modal>
-                    </Grid>
+                        </Modal>
+                      </Grid>
 
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleOpenFacture}
-                      >
-                        Facturer
-                      </Button>
-                      <Modal
-                        open={openFacture}
-                        onClose={handleCloseFacture}
-                        aria-labelledby="confirmation-modal-title"
-                        aria-describedby="confirmation-modal-description"
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            bgcolor: "background.paper",
-                            border: "2px solid #000",
-                            boxShadow: 24,
-                            p: 4,
-                            borderRadius: 2,
-                          }}
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleOpenFacture}
                         >
-                          <Typography
-                            id="confirmation-modal-description"
-                            sx={{ mt: 2, mb: 4 }}
-                          >
-                            Voulez-vous créer une facture ?
-                          </Typography>
+                          Facturer
+                        </Button>
+                        <Modal
+                          open={openFacture}
+                          onClose={handleCloseFacture}
+                          aria-labelledby="confirmation-modal-title"
+                          aria-describedby="confirmation-modal-description"
+                        >
                           <Box
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              bgcolor: "background.paper",
+                              border: "2px solid #000",
+                              boxShadow: 24,
+                              p: 4,
+                              borderRadius: 2,
                             }}
                           >
-                            <Button
-                              variant="outlined"
-                              color="secondary"
-                              onClick={handleCloseFacture}
+                            <Typography
+                              id="confirmation-modal-description"
+                              sx={{ mt: 2, mb: 4 }}
                             >
-                              Non
-                            </Button>
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={handleConfirmFacture}
+                              Voulez-vous créer une facture ?
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
                             >
-                              Oui
-                            </Button>
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={handleCloseFacture}
+                              >
+                                Non
+                              </Button>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleConfirmFacture}
+                              >
+                                Oui
+                              </Button>
+                            </Box>
                           </Box>
-                        </Box>
-                      </Modal>
-                    </Grid>
+                        </Modal>
+                      </Grid>
 
-                    {/* <Grid item>
+                      {/* <Grid item>
                       <InvoiceTemplateWithoutOR
                         NewEvent={newEvent}
                         details={details}
                         onInvoiceExecuted={handleChildInvoice}
                       />{" "}
                     </Grid> */}
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => {
-                          setIsModalOpen(false);
-                          SetClient({
-                            name: "",
-                            firstName: "",
-                            address: "",
-                            email: "",
-                            phone: "",
-                            postalCode: "",
-                            city: "",
-                          });
-                          setVehicle({
-                            plateNumber: "",
-                            vin: "",
-                            model: "",
-                            color: "",
-                            mileage: "",
-                            lastCheck: "",
-                          });
-                          setOperator({
-                            name: "",
-                            firstName: "",
-                            email: "",
-                          });
-                          setReceptor({
-                            name: "",
-                            firstName: "",
-                            email: "",
-                          });
-                        }}
-                      >
-                        SORTIR
-                      </Button>
+                      <Grid item>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => {
+                            setIsModalOpen(false);
+                            SetClient({
+                              name: "",
+                              firstName: "",
+                              address: "",
+                              email: "",
+                              phone: "",
+                              postalCode: "",
+                              city: "",
+                            });
+                            setVehicle({
+                              plateNumber: "",
+                              vin: "",
+                              model: "",
+                              color: "",
+                              mileage: "",
+                              lastCheck: "",
+                            });
+                            setOperator({
+                              name: "",
+                              firstName: "",
+                              email: "",
+                            });
+                            setReceptor({
+                              name: "",
+                              firstName: "",
+                              email: "",
+                            });
+                          }}
+                        >
+                          SORTIR
+                        </Button>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </DialogActions>
-              </DialogContent>
-            </Dialog>
-          </Box>
-
-          {/* Main Content Section */}
-          <DragDropContext onDragEnd={onDragEnd}>
+                  </DialogActions>
+                </DialogContent>
+              </Dialog>
+            </Box>
+            {/* Main Content Section */}(
             <Box
               sx={{
                 flexGrow: 1,
@@ -3875,6 +4019,7 @@ const Planning = () => {
                 height: "100%",
               }}
               onContextMenu={(e) => handleContextMenuPaste(e)}
+              ref={timelineRef} // ← ajoute ici le `ref`
             >
               {/* Timeline Component */}
               {configExample && <Timeline config={configExample} />}
@@ -3919,207 +4064,229 @@ const Planning = () => {
                           }}
                         >
                           {lines.map((line, lineIndex) => (
-                            <Droppable
-                              droppableId={`line-${lineIndex}`}
+                            <Box
                               key={`line-${lineIndex}`}
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: `repeat(${timeSlots.length}, minmax(50px, 1fr))`, // ✅ dynamique ici
+                                alignItems: "center",
+                                position: "relative",
+                                height: "50px", // Hauteur de chaque ligne
+                                marginTop: lineIndex > 0 ? "8px" : 0,
+                              }}
                             >
-                              {(provided) => (
-                                <Box
-                                  ref={provided.innerRef}
-                                  {...provided.droppableProps}
-                                  key={`line-${lineIndex}`}
+                              {line.map((event, eventIndex) => (
+                                <Tooltip
+                                  title={
+                                    <Typography variant="body2">
+                                      <span
+                                        style={{
+                                          fontWeight: "bold",
+                                          fontSize: "1rem",
+                                        }}
+                                      >
+                                        {event.id}
+                                      </span>
+                                      {" • "}
+                                      <span>
+                                        {" "}
+                                        {/* Gris plus foncé pour les noms */}
+                                        {event.Client.firstName}{" "}
+                                        {event.Client.name}
+                                      </span>
+                                      {" • "}
+                                      <span>
+                                        {" "}
+                                        {/* Vert pour la plaque d'immatriculation */}
+                                        {event.Vehicle.plateNumber}
+                                      </span>
+                                    </Typography>
+                                  }
+                                  arrow
+                                  PopperProps={{
+                                    modifiers: [
+                                      {
+                                        name: "arrow",
+                                        options: {
+                                          padding: 10, // Augmenter l'espace autour de la flèche du tooltip
+                                        },
+                                      },
+                                    ],
+                                  }}
                                   sx={{
-                                    display: "grid",
-                                    gridTemplateColumns: `repeat(${timeSlots.length}, minmax(50px, 1fr))`, // ✅ dynamique ici
-                                    alignItems: "center",
-                                    position: "relative",
-                                    height: "50px", // Hauteur de chaque ligne
-                                    marginTop: lineIndex > 0 ? "8px" : 0,
+                                    backgroundColor: "#fff", // Fond blanc pour le tooltip
+                                    color: "#000", // Texte noir pour un bon contraste sur fond blanc
+                                    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)", // Ombre légère pour la lisibilité
+                                    borderRadius: 2, // Coins arrondis pour le tooltip
                                   }}
                                 >
-                                  {line.map((event, eventIndex) => (
-                                    <Draggable
-                                      key={`event-${event.id}`}
-                                      draggableId={`event-${event.id}`}
-                                      index={eventIndex}
+                                  <Box
+                                    onMouseDown={(e) => {
+                                      if (!timelineRef.current) return; // 🔒 Sécurité anti-null
+                                      if (!isDragging) setIsDragging(true); // active le vrai drag
+                                      const containerRect =
+                                        timelineRef.current.getBoundingClientRect();
+                                      const offsetX =
+                                        e.clientX -
+                                        e.currentTarget.getBoundingClientRect()
+                                          .left;
+                                      const blockRect =
+                                        e.currentTarget.getBoundingClientRect();
+
+                                      const width =
+                                        e.currentTarget.getBoundingClientRect()
+                                          .width;
+
+                                      const initialLeft =
+                                        blockRect.left - containerRect.left;
+
+                                      setDraggingEvent({
+                                        ...event,
+                                        id: event.id,
+                                        offsetX,
+                                        width,
+                                        initialLeft,
+                                      });
+
+                                      const initialX =
+                                        e.clientX -
+                                        containerRect.left -
+                                        offsetX;
+                                      // setDragX(initialX);
+                                      setDragStartX(e.clientX); // 👈 Juste stocker le point de départ
+                                    }}
+                                    onClick={() => handleEventClick(event)}
+                                    onContextMenu={(e) =>
+                                      handleContextMenu(e, event)
+                                    }
+                                    sx={{
+                                      gridColumnStart: calculateTimeValue(
+                                        event.startHour,
+                                        event.startMinute,
+                                        configExample
+                                      ),
+                                      gridColumnEnd: calculateTimeValue(
+                                        event.endHour,
+                                        event.endMinute,
+                                        configExample
+                                      ),
+
+                                      height: "40px",
+                                      backgroundColor:
+                                        event.Category?.color || "#05AFC1",
+                                      border: "1px solid #90caf9",
+                                      color: getContrastTextColor(
+                                        event.Category?.color || "#05AFC1"
+                                      ),
+                                      borderRadius: "10px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+
+                                      transform:
+                                        draggingEvent?.id === event.id &&
+                                        isDragging
+                                          ? `translateX(${dragX}px)`
+                                          : "none",
+                                      position: "relative", // reste tout le temps en flux
+                                      top: 0,
+                                      zIndex:
+                                        draggingEvent?.id === event.id &&
+                                        isDragging
+                                          ? 10
+                                          : "auto",
+                                      width:
+                                        draggingEvent?.id === event.id &&
+                                        isDragging
+                                          ? `${draggingEvent.width}px`
+                                          : "auto",
+                                      minWidth: 0,
+                                      overflow: "hidden",
+                                      transition: isDragging
+                                        ? "none"
+                                        : "left 0.2s ease",
+                                      cursor: draggingEvent
+                                        ? "grabbing"
+                                        : "pointer",
+                                    }}
+                                  >
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
+                                      sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
                                     >
-                                      {(provided, snapshot) => (
-                                        <Tooltip
-                                          title={
-                                            <Typography variant="body2">
-                                              <span
-                                                style={{
-                                                  fontWeight: "bold",
-                                                  fontSize: "1rem",
-                                                }}
-                                              >
-                                                {event.id}
-                                              </span>
-                                              {" • "}
-                                              <span>
-                                                {" "}
-                                                {/* Gris plus foncé pour les noms */}
-                                                {event.Client.firstName}{" "}
-                                                {event.Client.name}
-                                              </span>
-                                              {" • "}
-                                              <span>
-                                                {" "}
-                                                {/* Vert pour la plaque d'immatriculation */}
-                                                {event.Vehicle.plateNumber}
-                                              </span>
-                                            </Typography>
-                                          }
-                                          arrow
-                                          PopperProps={{
-                                            modifiers: [
-                                              {
-                                                name: "arrow",
-                                                options: {
-                                                  padding: 10, // Augmenter l'espace autour de la flèche du tooltip
-                                                },
-                                              },
-                                            ],
-                                          }}
-                                          sx={{
-                                            backgroundColor: "#fff", // Fond blanc pour le tooltip
-                                            color: "#000", // Texte noir pour un bon contraste sur fond blanc
-                                            boxShadow:
-                                              "0px 2px 8px rgba(0, 0, 0, 0.1)", // Ombre légère pour la lisibilité
-                                            borderRadius: 2, // Coins arrondis pour le tooltip
+                                      <Typography variant="body2">
+                                        <span
+                                          style={{
+                                            fontWeight: "bold",
+                                            fontSize: "1rem",
+                                            color: getContrastTextColor(
+                                              event.Category?.color || "#05AFC1"
+                                            ),
                                           }}
                                         >
-                                          <Box
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            onClick={() =>
-                                              handleEventClick(event)
-                                            }
-                                            onContextMenu={(e) =>
-                                              handleContextMenu(e, event)
-                                            }
-                                            sx={{
-                                              gridColumnStart:
-                                                calculateTimeValue(
-                                                  event.startHour,
-                                                  event.startMinute,
-                                                  configExample
-                                                ),
-                                              gridColumnEnd: calculateTimeValue(
-                                                event.endHour,
-                                                event.endMinute,
-                                                configExample
-                                              ),
-
-                                              height: "40px",
-                                              backgroundColor:
-                                                event.Category?.color ||
-                                                "#05AFC1",
-                                              border: snapshot.isDragging
-                                                ? "2px solid #90caf9"
-                                                : "1px solid #90caf9",
-                                              color: getContrastTextColor(
-                                                event.Category?.color ||
-                                                  "#05AFC1"
-                                              ),
-                                              borderRadius: "10px",
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                              cursor: "pointer",
-                                              transition:
-                                                "background-color 0.3s ease",
-                                            }}
-                                          >
-                                            <Box
-                                              display="flex"
-                                              alignItems="center"
-                                              justifyContent="space-between" // Aligne le texte à gauche et l'icône à droite
-                                              sx={{ width: "100%" }} // Assure que le conteneur prend toute la largeur possible
-                                            >
-                                              <Typography variant="body2">
-                                                <span
-                                                  style={{
-                                                    fontWeight: "bold",
-                                                    fontSize: "1rem",
-                                                    color: getContrastTextColor(
-                                                      event.Category?.color ||
-                                                        "#05AFC1"
-                                                    ),
-                                                  }}
-                                                >
-                                                  #{event.id}
-                                                </span>
-                                                {" • "}
-                                                <span
-                                                  style={{
-                                                    color: getContrastTextColor(
-                                                      event.Category?.color ||
-                                                        "#05AFC1"
-                                                    ),
-                                                    fontWeight: "bold",
-                                                  }}
-                                                >
-                                                  {event.Client.name}
-                                                </span>
-                                                {" • "}
-                                                <span
-                                                  style={{
-                                                    color: getContrastTextColor(
-                                                      event.Category?.color ||
-                                                        "#05AFC1"
-                                                    ),
-                                                  }}
-                                                >
-                                                  {event.Vehicle.plateNumber}
-                                                </span>
-                                                <span
-                                                  style={{
-                                                    color: getContrastTextColor(
-                                                      event.Category?.color ||
-                                                        "#05AFC1"
-                                                    ),
-                                                  }}
-                                                >
-                                                  {" "}
-                                                  {event?.isClosed
-                                                    ? "(Fermé)"
-                                                    : ""}
-                                                </span>
-                                              </Typography>
-                                              {event.nextDay && (
-                                                <ArrowForwardIcon
-                                                  fontSize="medium"
-                                                  sx={{
-                                                    color: getContrastTextColor(
-                                                      event.Category?.color ||
-                                                        "#05AFC1"
-                                                    ),
-                                                    transition:
-                                                      "transform 0.3s ease, color 0.3s ease",
-                                                    "&:hover": {
-                                                      color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
-                                                      transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
-                                                    },
-                                                    boxShadow:
-                                                      "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
-                                                    borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
-                                                    padding: "4px", // Ajoute un léger padding pour accentuer l'effet
-                                                    backgroundColor:
-                                                      "rgba(0, 0, 0, 0.05)", // Fond gris très léger
-                                                  }}
-                                                />
-                                              )}
-                                            </Box>
-                                          </Box>
-                                        </Tooltip>
+                                          #{event.id}
+                                        </span>
+                                        {" • "}
+                                        <span
+                                          style={{
+                                            color: getContrastTextColor(
+                                              event.Category?.color || "#05AFC1"
+                                            ),
+                                            fontWeight: "bold",
+                                          }}
+                                        >
+                                          {event.Client.name}
+                                        </span>
+                                        {" • "}
+                                        <span
+                                          style={{
+                                            color: getContrastTextColor(
+                                              event.Category?.color || "#05AFC1"
+                                            ),
+                                          }}
+                                        >
+                                          {event.Vehicle.plateNumber}
+                                        </span>
+                                        <span
+                                          style={{
+                                            color: getContrastTextColor(
+                                              event.Category?.color || "#05AFC1"
+                                            ),
+                                          }}
+                                        >
+                                          {" "}
+                                          {event?.isClosed ? "(Fermé)" : ""}
+                                        </span>
+                                      </Typography>
+                                      {event.nextDay && (
+                                        <ArrowForwardIcon
+                                          fontSize="medium"
+                                          sx={{
+                                            color: getContrastTextColor(
+                                              event.Category?.color || "#05AFC1"
+                                            ),
+                                            transition:
+                                              "transform 0.3s ease, color 0.3s ease",
+                                            "&:hover": {
+                                              color: "#1976d2", // Change de couleur au survol (bleu par défaut de MUI)
+                                              transform: "scale(1.2)", // Agrandit légèrement l'icône au survol
+                                            },
+                                            boxShadow:
+                                              "0px 4px 8px rgba(0, 0, 0, 0.2)", // Ajoute une ombre pour la profondeur
+                                            borderRadius: "50%", // Rend l’icône arrondie pour un effet d’encadrement
+                                            padding: "4px", // Ajoute un léger padding pour accentuer l'effet
+                                            backgroundColor:
+                                              "rgba(0, 0, 0, 0.05)", // Fond gris très léger
+                                          }}
+                                        />
                                       )}
-                                    </Draggable>
-                                  ))}
-                                </Box>
-                              )}
-                            </Droppable>
+                                    </Box>
+                                  </Box>
+                                </Tooltip>
+                              ))}
+                            </Box>
                           ))}
                         </Box>
                       </>
@@ -4128,8 +4295,14 @@ const Planning = () => {
                 </Box>
               )}
             </Box>
-          </DragDropContext>
-        </Box>
+          </Box>
+        )}
+
+        {view == "week" && (
+          <>
+            <WeeklyPlanning ordersData={selectedNewEvents}></WeeklyPlanning>
+          </>
+        )}
       </Box>
       {/* Event Modal */}
 

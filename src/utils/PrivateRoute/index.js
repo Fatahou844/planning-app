@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { BASE_URL_API } from "../../config";
+import AuthPages from "../../Pages/Create/Create";
 
 const PrivateRoute = ({ Component }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -77,7 +78,7 @@ const PrivateRoute = ({ Component }) => {
     }
   }
 
-  return <Navigate to="/connexion" />;
+  return <AuthPages />;
 
   // return isAuthenticated ? <Component /> : <Navigate to="/connexion" />;
 };

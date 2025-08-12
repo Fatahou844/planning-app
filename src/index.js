@@ -26,7 +26,6 @@ import {
 import AccountApprove from "./Pages/AccountApprove.jsx/AccountApprove";
 import AccountCreationSteps from "./Pages/AccountCreationSteps/AccountCreationSteps";
 import AccountVerificationSteps from "./Pages/AccountVerificationSteps/AccountVerificationSteps";
-import AuthPages from "./Pages/Create/Create";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 
@@ -34,6 +33,7 @@ import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
+import WeeklyPlanning from "./Pages/WeeklyPlanning";
 import { CustomThemeProvider } from "./theme/ThemeProvider";
 import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
@@ -429,9 +429,18 @@ const App = () => {
             <DashboardTabs />
 
             <Routes>
-              <Route path="/" element={<AuthPages />} />
-              <Route path="/connexion" element={<AuthPages />} />
+              <Route
+                path="/"
+                element={<PrivateRoute Component={Dashboard} />}
+              />
+              {/* <Route path="/connexion" element={<AuthPages />} /> */}
               <Route path="/register" element={<AccountCreationSteps />} />
+
+               <Route
+                path="/weekly-planning"
+                element={<PrivateRoute Component={WeeklyPlanning} />}
+              />
+
               <Route
                 path="/account-verification"
                 element={<PrivateRoute Component={AccountVerificationSteps} />}

@@ -224,7 +224,7 @@ const PlateNumberSearch = ({ onSelectClient, Client }) => {
     vin: "",
     model: "",
     color: "",
-    mileage: "",
+    mileage: 0,
     lastCheck: "",
   });
 
@@ -303,8 +303,11 @@ const PlateNumberSearch = ({ onSelectClient, Client }) => {
           fullWidth
           onClick={() => setOpenDialog(true)}
           sx={{ marginTop: 2 }}
+          disabled={!Client?.id}
         >
-          + Ajouter un nouveau véhicule
+          {Client?.id
+            ? " + Ajouter un nouveau véhicule"
+            : "Selectionner un client avant d'ajouter une véhicule"}
         </Button>
       }
 
