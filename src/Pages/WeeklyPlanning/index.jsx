@@ -51,7 +51,7 @@ export default function WeeklyPlanning({
   };
 
   const weekDays = [];
-  for (let i = 0; i < 5; i++) weekDays.push(addDays(currentWeekStart, i));
+  for (let i = 0; i < 7; i++) weekDays.push(addDays(currentWeekStart, i));
 
   const grouped = {};
 
