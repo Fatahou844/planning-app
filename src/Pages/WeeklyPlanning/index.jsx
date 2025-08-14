@@ -1,224 +1,294 @@
-// import { format, getDay, parse, startOfWeek } from "date-fns";
-// import { fr } from "date-fns/locale";
-// import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-// import "react-big-calendar/lib/css/react-big-calendar.css";
-// import "./calendar-light.css"; // Style clair adapté à ton thème
-
-// const locales = { fr };
-
-// const localizer = dateFnsLocalizer({
-//   format,
-//   parse,
-//   startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-//   getDay,
-//   locales,
-// });
-
-// const events = [
-//   {
-//     title: "VIDANGE - REVISION • Mouhcine • XXXX-XX01",
-//     start: new Date(2025, 7, 12, 15, 0),
-//     end: new Date(2025, 7, 12, 18, 0),
-//     category: "vidange",
-//   },
-//   {
-//     title: "MECANIQUE • Fatihya • 100-0808",
-//     start: new Date(2025, 7, 12, 16, 0),
-//     end: new Date(2025, 7, 12, 19, 0),
-//     category: "mecanique",
-//   },
-//   {
-//     title: "ELECTRICITE • Salah • 110-0202",
-//     start: new Date(2025, 7, 14, 10, 30),
-//     end: new Date(2025, 7, 14, 12, 0),
-//     category: "electricite",
-//   },
-//   {
-//     title: "MECANIQUE • Salim • 1X0-0202",
-//     start: new Date(2025, 7, 14, 10, 30),
-//     end: new Date(2025, 7, 14, 17, 0),
-//     category: "mecanique",
-//   },
-// ];
-
-// export default function WeeklyPlanning() {
-//   const eventStyleGetter = (event) => {
-//     let backgroundColor = "#4F46E5"; // default primary
-//     if (event.category === "vidange") backgroundColor = "#4F46E5"; // indigo
-//     if (event.category === "mecanique") backgroundColor = "#3B82F6"; // bleu
-//     if (event.category === "electricite") backgroundColor = "#22C55E"; // vert
-
-//     return {
-//       style: {
-//         backgroundColor,
-//         color: "#fff",
-//         borderRadius: "14px",
-//         border: "none",
-//         padding: "6px 8px",
-//         fontSize: "0.85rem",
-//         boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-//       },
-//     };
-//   };
-
-//   const messages = {
-//     allDay: "Toute la journée",
-//     previous: "Précédent",
-//     next: "Suivant",
-//     today: "Aujourd'hui",
-//     month: "Mois",
-//     week: "Semaine",
-//     day: "Jour",
-//     agenda: "Agenda",
-//     date: "Date",
-//     time: "Heure",
-//     event: "Événement",
-//     showMore: (total) => `+ ${total} plus`,
-//   };
-
-//   const formats = {
-//     dayFormat: (date, culture, localizer) =>
-//       localizer.format(date, "EEEE dd/MM", culture), // Lundi 12/08
-//     weekdayFormat: (date, culture, localizer) =>
-//       localizer.format(date, "EEEE", culture), // Lundi, Mardi...
-//     timeGutterFormat: (date, culture, localizer) =>
-//       localizer.format(date, "HH:mm", culture), // 24h format
-//   };
-
-//   return (
-//     <div
-//       style={{
-//         height: "100vh",
-//         backgroundColor: "#F8FAFC",
-//         padding: "16px",
-//         marginLeft: "2rem",
-//       }}
-//     >
-//       <Calendar
-//         localizer={localizer}
-//         events={events}
-//         startAccessor="start"
-//         endAccessor="end"
-//         defaultView="week"
-//         views={["week"]}
-//         messages={messages} // 🔹 Ici on ajoute les textes traduits
-//         formats={formats}
-//         culture="fr"
-//         step={30}
-//         timeslots={2}
-//         eventPropGetter={eventStyleGetter}
-//         min={new Date(2025, 7, 12, 6, 0)}
-//         max={new Date(2025, 7, 12, 21, 30)}
-//         style={{ fontFamily: "'Inter', sans-serif", borderRadius: "16px" }}
-//       />
-//     </div>
-//   );
-// }
-
-import { format, getDay, parse, startOfWeek } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import "./calendar-light.css"; // tes styles
-
-const locales = { fr };
-
-const localizer = dateFnsLocalizer({
+import {
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  useTheme,
+} from "@mui/material";
+import {
+  addDays,
+  addWeeks,
   format,
+  isValid,
   parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-  getDay,
-  locales,
-});
+  startOfWeek,
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { useState } from "react";
+import EventModal from "../../Components/EventModal";
+import { useAxios } from "../../utils/hook/useAxios";
 
-// Fonction pour transformer ton tableau brut en format RBC
-const mapOrdersToEvents = (orders) => {
-  return orders.map((order) => {
-    const start = new Date(order.date);
-    start.setHours(order.startHour || 0, order.startMinute || 0);
+export default function WeeklyPlanning({
+  ordersData = [],
+  handleEventFromChild,
+  handleFactureReceived,
+  garageId,
+}) {
+  const [currentWeekStart, setCurrentWeekStart] = useState(
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
+  const axios = useAxios();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
-    const end = new Date(order.date);
-    end.setHours(order.endHour || 0, order.endMinute || 0);
+  const cellStyle = {
+    textAlign: "center",
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
+  };
 
-    return {
-      title: `${order.Category?.name || ""} • ${
-        order.Client?.firstName || ""
-      } • ${order.Vehicle?.plateNumber || ""}`,
-      start,
-      end,
-      category: order.Category?.name?.toLowerCase() || "default",
+  const safeParseDate = (dateStr) => {
+    if (!dateStr) return null;
+    let d = new Date(dateStr);
+    if (!isValid(d)) d = parse(dateStr, "yyyy-MM-dd HH:mm:ss", new Date());
+    if (!isValid(d)) d = parse(dateStr, "dd/MM/yyyy HH:mm", new Date());
+    return isValid(d) ? d : null;
+  };
+
+  const weekDays = [];
+  for (let i = 0; i < 5; i++) weekDays.push(addDays(currentWeekStart, i));
+
+  const grouped = {};
+
+  ordersData.forEach((order) => {
+    const baseDate = safeParseDate(order.date);
+    if (!baseDate) return;
+    baseDate.setHours(order.startHour || 0, order.startMinute || 0, 0, 0);
+    const dayKey = format(baseDate, "yyyy-MM-dd");
+    const hourKey = format(baseDate, "HH:mm"); // inclut les minutes
+
+    if (!grouped[dayKey]) grouped[dayKey] = {};
+    if (!grouped[dayKey][hourKey]) grouped[dayKey][hourKey] = [];
+    grouped[dayKey][hourKey].push({
+      title: `N° ${order.id || ""} •  ${String(order.startHour ?? 0).padStart(
+        2,
+        "0"
+      )}:${String(order.startMinute ?? 0).padStart(2, "0")} • ${
+        order.Vehicle?.plateNumber || ""
+      }`,
       color: order.Category?.color || "#4F46E5",
-    };
+      or: order,
+    });
   });
-};
 
-export default function WeeklyPlanning({ ordersData = [] }) {
-  const events = mapOrdersToEvents(ordersData);
+  // Heures toutes les 30 minutes
+  const hours = [];
+  for (let h = 6; h < 24; h++) {
+    hours.push(`${String(h).padStart(2, "0")}:00`);
+    hours.push(`${String(h).padStart(2, "0")}:30`);
+  }
 
-  const eventStyleGetter = (event) => {
-    return {
-      style: {
-        backgroundColor: event.color,
-        color: "#fff",
-        borderRadius: "14px",
-        border: "none",
-        padding: "6px 8px",
-        fontSize: "0.85rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-      },
-    };
+  const prevWeek = () => setCurrentWeekStart((w) => addWeeks(w, -1));
+  const nextWeek = () => setCurrentWeekStart((w) => addWeeks(w, 1));
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  const [selectedEvent, setSelectedEvent] = useState({
+    id: "event-1",
+    title: "Entretiens",
+    person: "John Doe",
+    operationType: "Maintenance",
+    startHour: 7,
+    startMinute: 0,
+    endHour: 10,
+    endMinute: 0,
+  });
+  const handleModalClose = () => {
+    setModalOpen(false);
+    console.log("FERMETURE");
   };
-
-  const messages = {
-    allDay: "Toute la journée",
-    previous: "Précédent",
-    next: "Suivant",
-    today: "Aujourd'hui",
-    month: "Mois",
-    week: "Semaine",
-    day: "Jour",
-    agenda: "Agenda",
-    date: "Date",
-    time: "Heure",
-    event: "Événement",
-    showMore: (total) => `+ ${total} plus`,
+  const handleEditedEventChange = (updatedEvent) => {
+    console.log(
+      "########### updatedEvent updatedEvent #################",
+      updatedEvent
+    );
+    setSelectedEvent(updatedEvent);
   };
+  const handleSaveEvent = async (updatedEvent) => {
+    if (!updatedEvent || !updatedEvent.id) return; // Vérifiez que l'événement a un ID
 
-  const formats = {
-    dayFormat: (date, culture, localizer) =>
-      localizer.format(date, "EEEE dd/MM", culture),
-    weekdayFormat: (date, culture, localizer) =>
-      localizer.format(date, "EEEE", culture),
-    timeGutterFormat: (date, culture, localizer) =>
-      localizer.format(date, "HH:mm", culture),
+    try {
+      // Référence au document à mettre à jour
+
+      console.log("Événement mis à jour avec succès:", updatedEvent);
+
+      const fetchEvents = async () => {
+        try {
+          const response = await axios.get(
+            `/documents-garage/order/${garageId}/details`
+          );
+
+          const eventsData = response.data.data;
+
+          // Filtrer les événements si nécessaire
+          const filteredEvents = eventsData.filter(
+            (event) => event.date === !event.isClosed
+          );
+
+          console.log("eventsData", filteredEvents);
+        } catch (error) {
+          console.error(
+            "Erreur lors de la récupération des événements :",
+            error
+          );
+        }
+      };
+
+      fetchEvents();
+
+      // fetchEvents(); // Appeler la fonction au montage du composant
+      handleModalClose(); // Ferme le modal après la sauvegarde
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'événement :", error);
+    }
+  };
+  const handleEventDetailClick = (event) => {
+    setSelectedEvent(event);
+    setModalOpen(true);
   };
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        backgroundColor: "#F8FAFC",
-        padding: "16px",
-        marginLeft: "2rem",
-      }}
-    >
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        defaultView="week"
-        views={["week", "day"]}
-        messages={messages}
-        formats={formats}
-        culture="fr"
-        step={30}
-        timeslots={2}
-        eventPropGetter={eventStyleGetter}
-        min={new Date(2025, 0, 1, 6, 0)}
-        max={new Date(2025, 0, 1, 21, 30)}
-        style={{ fontFamily: "'Inter', sans-serif", borderRadius: "16px" }}
-      />
-    </div>
+    <Paper sx={{ px: 2, bgcolor: "#F8FAFC" }}>
+      {selectedEvent && (
+        <EventModal
+          open={modalOpen}
+          onClose={handleModalClose}
+          editedEvent={selectedEvent}
+          setEditedEvent={handleEditedEventChange}
+          categories={categories}
+          handleSave={handleSaveEvent}
+          handleEventDetailClick={handleEventDetailClick}
+          onEventTriggered={handleEventFromChild}
+          onFactureReceive={handleFactureReceived}
+        />
+      )}
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          display: "flex",
+          gap: 1,
+          zIndex: 1000, // pour être au-dessus du tableau
+        }}
+      >
+        <Button
+          variant="contained"
+          size="small"
+          sx={{ minHeight: 20, px: 1 }}
+          onClick={prevWeek}
+        >
+          ← précédent
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          sx={{ minHeight: 20, px: 1 }}
+          onClick={nextWeek}
+        >
+          suivante →
+        </Button>
+      </Box>
+
+      <TableContainer
+        sx={{
+          overflowY: "auto",
+          backgroundColor: theme.palette.background.paper,
+          borderRadius: 2,
+          boxShadow: isDark
+            ? "0 0 12px rgba(255, 255, 255, 0.05)"
+            : "0 0 12px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <Table sx={{ px: 2, tableLayout: "fixed" }} stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ width: 80, ...cellStyle }}>Heure</TableCell>
+              {weekDays.map((day) => (
+                <TableCell key={day} sx={{ ...cellStyle }}>
+                  {format(day, "EEEE dd/MM", { locale: fr })}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {hours.map((hour, i) => (
+              <TableRow
+                key={hour}
+                sx={{ bgcolor: i % 2 === 0 ? "#fff" : "#afafafff" }}
+              >
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    fontSize: "0.85rem",
+                    border: "1px solid #E2E8F0",
+                    ...cellStyle,
+                  }}
+                >
+                  {hour}
+                </TableCell>
+                {weekDays.map((day) => {
+                  const dayKey = format(day, "yyyy-MM-dd");
+                  const slotEvents = grouped[dayKey]?.[hour] || [];
+                  const rowsNeeded = Math.ceil(slotEvents.length / 2) || 1;
+
+                  return (
+                    <TableCell
+                      key={`${dayKey}-${hour}`}
+                      sx={{
+                        p: 0.5,
+                        border: "1px solid #E2E8F0",
+                        height: `${rowsNeeded * 32}px`,
+                        ...cellStyle,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 0.5,
+                        }}
+                      >
+                        {slotEvents.map((ev, idx) => (
+                          <Box
+                            key={idx}
+                            sx={{
+                              bgcolor: ev.color,
+                              color: "#fff",
+                              borderRadius: 1,
+                              px: 0.5,
+                              fontSize: "0.75rem",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                            onClick={() => {
+                              setSelectedEvent({
+                                ...ev.or,
+                                lastEventId: ev.or.id,
+                              }); // Met à jour l'événement sélectionné
+
+                              setModalOpen(true);
+                            }}
+                          >
+                            {ev.title}
+                          </Box>
+                        ))}
+                      </Box>
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 }

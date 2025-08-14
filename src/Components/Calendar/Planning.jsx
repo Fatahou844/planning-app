@@ -4007,7 +4007,7 @@ const Planning = () => {
                 </DialogContent>
               </Dialog>
             </Box>
-            {/* Main Content Section */}(
+            {/* Main Content Section */}
             <Box
               sx={{
                 flexGrow: 1,
@@ -4300,7 +4300,12 @@ const Planning = () => {
 
         {view == "week" && (
           <>
-            <WeeklyPlanning ordersData={selectedNewEvents}></WeeklyPlanning>
+            <WeeklyPlanning
+              ordersData={selectedNewEvents}
+              handleEventFromChild={handleEventFromChild}
+              handleFactureReceived={handleFactureReceived}
+              garageId={getCurrentUser().garageId}
+            ></WeeklyPlanning>
           </>
         )}
       </Box>
