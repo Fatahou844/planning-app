@@ -40,7 +40,9 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
 import { doc, updateDoc } from "firebase/firestore";
+import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
+import logoGarage from "../../assets/images/garageLogo.jpg";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import eventsData from "../../data/eventsData.json";
 import { db } from "../../hooks/firebaseConfig"; // Votre configuration Firestore
@@ -48,8 +50,6 @@ import DocModal from "../DocModal";
 import DocumentModal from "../DocumentModal";
 import EventModal from "../EventModal";
 import Notification from "../Notification";
-
-import logoGarage from "../../assets/images/garageLogo.jpg";
 // import jumelles from "../../assets/images/jumelles.png";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useTheme } from "@mui/material";
@@ -58,6 +58,7 @@ import useAutoLogout from "../../utils/hook/useAutoLogout";
 import { useAxios } from "../../utils/hook/useAxios";
 import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
+import NotificationsModal from "../NotificationsModal/NotificationsModal";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
 
@@ -179,6 +180,8 @@ const Planning = () => {
   const [view, setView] = useState("day");
 
   const [dataEvents, setDataEvents] = useState([]);
+  const [dataEventsNofications, setDataEventsNotifications] = useState([]);
+
   const [selectedEvent, setSelectedEvent] = useState({
     id: "event-1",
     title: "Entretiens",
@@ -549,6 +552,7 @@ const Planning = () => {
           });
 
         setDataEvents(filteredEvents);
+        setDataEventsNotifications(filteredEvents);
         console.log("filteredEvents", filteredEvents);
       } catch (error) {
         console.error("Erreur lors de la récupération des événements :", error);
@@ -556,7 +560,7 @@ const Planning = () => {
     };
 
     fetchEvents();
-  }, [selectedDate, facture]);
+  }, [, selectedDate, facture]);
 
   const currentHour = new Date().getHours();
 
@@ -2333,9 +2337,25 @@ const Planning = () => {
 
   const handleLogout = async () => {
     try {
+      // Optionnel : suppression de la clé du localStorage
+      const token = Cookies.get("jwtToken"); // si encore présent avant remove
+      if (token) {
+        try {
+          const payloadBase64 = token.split(".")[1];
+          const payload = JSON.parse(atob(payloadBase64));
+          const userEmail = payload?.sub;
+          if (userEmail) {
+            localStorage.removeItem(`hasSeenNotification_${userEmail}`);
+          }
+        } catch (e) {
+          console.error("Erreur décodage JWT :", e);
+        }
+      }
+
       await axios.get("/logout"); // pour envoyer les cookies
       document.cookie =
         "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
       window.location.href = "/"; // redirection après logout
     } catch (error) {
       console.error("Erreur de déconnexion :", error);
@@ -2564,6 +2584,39 @@ const Planning = () => {
   const openNotif = Boolean(anchorEl);
   const id = openNotif ? "notification-popover" : undefined;
 
+  const [modalOpenNotification, setModalOpenNotification] = useState(false);
+
+  useEffect(() => {
+    const token = Cookies.get("jwtToken"); // récupère ton JWT du cookie
+
+    if (!token) return; // pas connecté
+
+    try {
+      // ⚡ On décode uniquement le payload (partie du milieu du JWT)
+      const payloadBase64 = token.split(".")[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      console.log(
+        "*********************************** PAYLOAD ********************************************",
+        payload
+      );
+
+      const userEmail = payload?.sub; // ici sub = email ("marya@amount.com")
+      if (userEmail) {
+        const key = `hasSeenNotification_${userEmail}`;
+
+        // Vérifier si déjà affiché pour cet utilisateur
+        const hasSeen = localStorage.getItem(key);
+
+        if (!hasSeen) {
+          setModalOpenNotification(true);
+          localStorage.setItem(key, "true"); // marquer comme vu
+        }
+      }
+    } catch (e) {
+      console.error("Erreur décodage token :", e);
+    }
+  }, []);
+
   return (
     <>
       {/* Modal pour ajouter un événement */}
@@ -2621,6 +2674,7 @@ const Planning = () => {
           onFactureReceive={handleFactureReceived}
         />
       )}
+
       {facture && (
         <DocumentModal
           open={modalOpen3}
@@ -2633,6 +2687,12 @@ const Planning = () => {
           onFactureReceive={handleFactureReceived}
         />
       )}
+
+      <NotificationsModal
+        open={modalOpenNotification}
+        onClose={() => setModalOpenNotification(false)}
+        orderData={dataEventsNofications}
+      />
 
       {selectedEvent && selectedEvent.collection !== "events" && (
         <DocModal

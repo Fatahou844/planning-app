@@ -28,12 +28,14 @@ import {
   useTheme,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
+import Cookies from "js-cookie";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import DocModal from "../../Components/DocModal";
 import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
 import Notification from "../../Components/Notification";
+
 import "../../Styles/style.css";
 import { useAxios } from "../../utils/hook/useAxios";
 import "./Dashboard.css";
@@ -475,7 +477,23 @@ function ManageClients() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleLogout = async () => {
+
+
     try {
+
+       const token = Cookies.get("jwtToken"); // si encore présent avant remove
+            if (token) {
+              try {
+                const payloadBase64 = token.split(".")[1];
+                const payload = JSON.parse(atob(payloadBase64));
+                const userEmail = payload?.sub;
+                if (userEmail) {
+                  localStorage.removeItem(`hasSeenNotification_${userEmail}`);
+                }
+              } catch (e) {
+                console.error("Erreur décodage JWT :", e);
+              }
+            }
       await axios.get("/logout"); // pour envoyer les cookies
       document.cookie =
         "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
