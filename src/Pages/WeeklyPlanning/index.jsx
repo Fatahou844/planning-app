@@ -19,7 +19,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EventModal from "../../Components/EventModal";
 import { useAxios } from "../../utils/hook/useAxios";
 
@@ -35,12 +35,38 @@ export default function WeeklyPlanning({
   const axios = useAxios();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const [events, setEvents] = useState(ordersData); // ⚡ copie locale des données
 
   const cellStyle = {
     textAlign: "center",
     color: theme.palette.text.primary,
     backgroundColor: theme.palette.background.default,
   };
+
+  // --- fonction pour rafraîchir depuis l’API ---
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get(
+        `/documents-garage/order/${garageId}/details`
+      );
+      setEvents(response.data.data || []);
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement des événements :", error);
+    }
+  };
+
+  // --- wrapper pour handleFactureReceived ---
+  const onFactureReceive = async (...args) => {
+    if (handleFactureReceived) {
+      await handleFactureReceived(...args); // exécute le callback du parent si défini
+    }
+    await fetchEvents(); // puis recharge les données
+  };
+
+  // ⚡ hook qui met à jour events si ordersData change côté parent
+  useEffect(() => {
+    setEvents(ordersData);
+  }, [ordersData]);
 
   const safeParseDate = (dateStr) => {
     if (!dateStr) return null;
@@ -55,7 +81,7 @@ export default function WeeklyPlanning({
 
   const grouped = {};
 
-  ordersData.forEach((order) => {
+  events.forEach((order) => {
     const baseDate = safeParseDate(order.date);
     if (!baseDate) return;
     baseDate.setHours(order.startHour || 0, order.startMinute || 0, 0, 0);
@@ -165,7 +191,7 @@ export default function WeeklyPlanning({
           handleSave={handleSaveEvent}
           handleEventDetailClick={handleEventDetailClick}
           onEventTriggered={handleEventFromChild}
-          onFactureReceive={handleFactureReceived}
+          onFactureReceive={onFactureReceive}
         />
       )}
       <Box

@@ -71,6 +71,8 @@ function ManageClients() {
   const [modalOpen2, setModalOpen2] = useState(false);
   const [modalOpen3, setModalOpen3] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openPage, setOpenPage] = useState(true);
+
   const [showPopup, setShowPopup] = useState(false);
   const [categories, setCategories] = useState([]);
 
@@ -95,35 +97,173 @@ function ManageClients() {
     return null;
   }
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get(
-          "/categories/garage/" + getCurrentUser().garageId
-        );
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     try {
+  //       const response = await axios.get(
+  //         "/categories/garage/" + getCurrentUser().garageId
+  //       );
 
-        // Récupérer les données
-        const categoriesData = response.data;
+  //       // Récupérer les données
+  //       const categoriesData = response.data;
 
-        // Extraire les noms des catégories
-        const categoryNames = categoriesData.data.map(
-          (category) => category.name
-        );
+  //       // Extraire les noms des catégories
+  //       const categoryNames = categoriesData.data.map(
+  //         (category) => category.name
+  //       );
 
-        // Mettre à jour les états
-        setCategories(categoriesData.data);
+  //       // Mettre à jour les états
+  //       setCategories(categoriesData.data);
 
-        console.log("categoriesData", categoriesData.data);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des catégories :", error);
-      }
-    };
+  //       console.log("categoriesData", categoriesData.data);
+  //     } catch (error) {
+  //       console.error("Erreur lors de la récupération des catégories :", error);
+  //     }
+  //   };
 
-    fetchCategories();
-  }, []);
+  //   fetchCategories(); searchQueryInterior
+  // }, []);
+
+  // async function handleSearchClick() {
+  //   const keyword = searchQuery.trim().toLowerCase();
+
+  //   // Liste des collections à rechercher
+  //   const collections = {
+  //     reservations: "reservation",
+  //     devis: "quote",
+  //     factures: "invoice",
+  //     events: "order",
+  //   };
+
+  //   try {
+  //     // Préparer les requêtes pour chaque collection
+  //     const collectionPromises = Object.entries(collections).map(
+  //       async ([collectionKey, apiEndpoint]) => {
+  //         const url = `/documents-garage/${apiEndpoint}/${
+  //           getCurrentUser().garageId
+  //         }/details`;
+
+  //         // Effectuer la requête GET
+  //         const response = await axios.get(url);
+
+  //         if (!response || !response.data) {
+  //           console.log(`Aucune donnée trouvée pour ${collectionKey}`);
+  //           return [];
+  //         }
+
+  //         let filtResults = response.data.data.map((item) => ({
+  //           ...item,
+  //           collectionName: collectionKey,
+  //         }));
+
+  //         // Filtrer les résultats en fonction du mot-clé
+  //         const filteredResults = filtResults.filter((item) => {
+  //           return (
+  //             item?.Client?.firstName?.toLowerCase().includes(keyword) ||
+  //             item?.Client?.name?.toLowerCase().includes(keyword) ||
+  //             item?.Client?.email?.toLowerCase().includes(keyword)
+  //           );
+  //         });
+
+  //         console.log(
+  //           "############  filteredResults ####################",
+  //           filtResults
+  //         );
+
+  //         // Appliquer le filtre "isClosed === false" pour toutes sauf factures
+  //         return collectionKey !== "factures"
+  //           ? filteredResults.filter((item) => item.isClosed === false)
+  //           : filteredResults;
+  //       }
+  //     );
+
+  //     // Attendre les résultats de toutes les collections
+  //     const allCollectionsResults = (
+  //       await Promise.all(collectionPromises)
+  //     ).flat();
+
+  //     // Suppression des doublons
+  //     const uniqueResults = allCollectionsResults.filter(
+  //       (value, index, self) =>
+  //         index ===
+  //         self.findIndex(
+  //           (t) =>
+  //             t.id === value.id && t.collectionName === value.collectionName
+  //         )
+  //     );
+
+  //     console.log("Résultats combinés :", uniqueResults);
+
+  //     // Mettre à jour l'état avec les résultats
+  //     setDataEventsAll(uniqueResults);
+  //     setFilteredEvents(
+  //       uniqueResults.filter((event) => {
+  //         const matchesDocument =
+  //           documentFilter === "all" || event.collectionName === documentFilter;
+
+  //         const searchLower = searchQueryInterior.toLowerCase();
+
+  //         const matchesSearch =
+  //           event.Client.name?.toLowerCase().includes(searchLower) ||
+  //           event.Client.firstName?.toLowerCase().includes(searchLower) ||
+  //           event.Client.email?.toLowerCase().includes(searchLower) ||
+  //           event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+  //           event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+  //         const eventDate = new Date(event.createdAt); // ou event.createdAt
+
+  //         const matchesDate =
+  //           (!dateMin || eventDate >= new Date(dateMin)) &&
+  //           (!dateMax || eventDate <= new Date(dateMax));
+
+  //         return matchesDocument && matchesSearch && matchesDate;
+  //       })
+  //     );
+
+  //     const paginatedData = uniqueResults.filter((event) => {
+  //       const matchesDocument =
+  //         documentFilter === "all" || event.collectionName === documentFilter;
+
+  //       const searchLower = searchQueryInterior.toLowerCase();
+
+  //       const matchesSearch =
+  //         event.Client.name?.toLowerCase().includes(searchLower) ||
+  //         event.Client.firstName?.toLowerCase().includes(searchLower) ||
+  //         event.Client.email?.toLowerCase().includes(searchLower) ||
+  //         event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+  //         event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+  //       const eventDate = new Date(event.createdAt); // ou event.createdAt
+
+  //       const matchesDate =
+  //         (!dateMin || eventDate >= new Date(dateMin)) &&
+  //         (!dateMax || eventDate <= new Date(dateMax));
+
+  //       return matchesDocument && matchesSearch && matchesDate;
+  //     });
+
+  //     setPaginatedEvents(
+  //       paginatedData.slice(
+  //         page * rowsPerPage,
+  //         page * rowsPerPage + rowsPerPage
+  //       )
+  //     );
+  //     setOpen(true); // Ouvre le dialogue après la recherche
+  //   } catch (error) {
+  //     console.error("Erreur lors de la recherche des collections :", error);
+  //   }
+  // }
 
   async function handleSearchClick() {
     const keyword = searchQuery.trim().toLowerCase();
+    const searchInterior = searchQueryInterior.trim().toLowerCase();
+    setOpen(true); // Ouvre le dialogue après la recherche
+
+    // Vérification préalable : si pas de mot-clé ET pas les deux dates -> on stoppe la fonction
+    if (!keyword && !searchInterior && (!dateMin || !dateMax)) {
+      console.log("Recherche ignorée : aucun mot-clé ou période définie.");
+      return;
+    }
 
     // Liste des collections à rechercher
     const collections = {
@@ -162,11 +302,6 @@ function ManageClients() {
               item?.Client?.email?.toLowerCase().includes(keyword)
             );
           });
-
-          console.log(
-            "############  filteredResults ####################",
-            filtResults
-          );
 
           // Appliquer le filtre "isClosed === false" pour toutes sauf factures
           return collectionKey !== "factures"
@@ -208,7 +343,7 @@ function ManageClients() {
             event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
             event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
 
-          const eventDate = new Date(event.createdAt); // ou event.createdAt
+          const eventDate = new Date(event.createdAt);
 
           const matchesDate =
             (!dateMin || eventDate >= new Date(dateMin)) &&
@@ -231,7 +366,7 @@ function ManageClients() {
           event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
           event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
 
-        const eventDate = new Date(event.createdAt); // ou event.createdAt
+        const eventDate = new Date(event.createdAt);
 
         const matchesDate =
           (!dateMin || eventDate >= new Date(dateMin)) &&
@@ -246,7 +381,6 @@ function ManageClients() {
           page * rowsPerPage + rowsPerPage
         )
       );
-      setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
     }
@@ -284,6 +418,9 @@ function ManageClients() {
     fetchEvents();
     setOpen(false);
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
+    setFilteredEvents([]);
+    setSearchQueryInterior("");
+     setSearchQuery("");
   };
   const getBadgeColor = (collection) => {
     switch (collection) {
@@ -595,9 +732,9 @@ function ManageClients() {
     })
   );
 
-  useEffect(() => {
-    handleSearchClick();
-  }, [documentFilter]);
+  // useEffect(() => {
+  //   handleSearchClick();
+  // }, [documentFilter]);
 
   // 👉 À l'intérieur de ton composant
   const [page, setPage] = useState(0);
@@ -726,9 +863,13 @@ function ManageClients() {
     setPaginatedEvents(filteredEvents.slice(startIndex, endIndex));
   }, [filteredEvents, page, rowsPerPage]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   handleSearchClick();
+  // }, [searchQueryInterior]);
+
+  const handleFilterDocuments = () => {
     handleSearchClick();
-  }, [searchQueryInterior]);
+  };
 
   return (
     <div className="app-container">
@@ -802,7 +943,10 @@ function ManageClients() {
           <Button
             variant="contained"
             color="secondary"
-            onClick={handleSearchClick}
+            onClick={() => {
+              handleSearchClick();
+              setOpenPage(false);
+            }}
             sx={{ ml: 2 }}
           >
             Rechercher
@@ -810,7 +954,7 @@ function ManageClients() {
         </Box>
       </div>
       <Dialog
-        open={open}
+        open={open && !openPage}
         onClose={handleClose}
         PaperProps={{
           style: {
@@ -1031,6 +1175,9 @@ function ManageClients() {
           </Fab>
         </DialogContent>
         <DialogActions>
+          <Button onClick={handleFilterDocuments} color="primary">
+            Appliquer
+          </Button>
           <Button onClick={handleClose} color="primary">
             Fermer
           </Button>
