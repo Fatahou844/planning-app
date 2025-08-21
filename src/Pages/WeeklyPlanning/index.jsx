@@ -20,13 +20,14 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useEffect, useState } from "react";
+import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
+import Notification from "../../Components/Notification";
 import { useAxios } from "../../utils/hook/useAxios";
 
 export default function WeeklyPlanning({
   ordersData = [],
   handleEventFromChild,
-  handleFactureReceived,
   garageId,
 }) {
   const [currentWeekStart, setCurrentWeekStart] = useState(
@@ -36,6 +37,36 @@ export default function WeeklyPlanning({
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [events, setEvents] = useState(ordersData); // ⚡ copie locale des données
+  const [facture, setFacture] = useState(null);
+  const [modalOpen2, setModalOpen2] = useState(false);
+  const [modalOpen3, setModalOpen3] = useState(false);
+  const [collectName, setCollectName] = useState("factures");
+  const [collectionName, setCollectionName] = useState("");
+  const [details, setDetails] = useState([
+    {
+      label: "",
+      quantity: "",
+      unitPrice: "",
+      discountPercent: "",
+      discountAmount: "",
+    },
+  ]);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleShowPopup = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    console.log("fermeture du popup");
+  };
 
   const cellStyle = {
     textAlign: "center",
@@ -49,9 +80,55 @@ export default function WeeklyPlanning({
       const response = await axios.get(
         `/documents-garage/order/${garageId}/details`
       );
-      setEvents(response.data.data || []);
+      setEvents(response.data.data.filter((event) => !event.isClosed) || []);
     } catch (error) {
       console.error("Erreur lors du rafraîchissement des événements :", error);
+    }
+  };
+  const handleOpenNotif = (collectionName) => {
+    setNotification({
+      open: true,
+      message: "Votre " + collectionName + " a été crée",
+      severity: "success", // Peut être "error", "warning", "info"
+    });
+    if (collectionName === "reservation") {
+      setCollectName("reservations");
+    }
+
+    if (collectionName === "OR") {
+      setCollectName("events");
+    }
+    if (collectionName === "devis") {
+      setCollectName("devis");
+    }
+    if (collectionName === "Facture") {
+      setCollectName("factures");
+    }
+    handleShowPopup();
+  };
+
+  // Fonction qui sera appelée par l'enfant pour envoyer la facture
+  const handleFactureReceived = (factureData) => {
+    setFacture(factureData?.data);
+    console.log(
+      "---------------------------------- Call handleFactureReceived ------------------------------",
+      factureData?.data
+    );
+
+    if (factureData) {
+      setModalOpen(false);
+
+      setShowPopup(true);
+      setModalOpen2(false);
+      setModalOpen3(true);
+      setFacture(factureData?.data);
+
+      handleOpenNotif("Facture");
+      setSelectedEvent({
+        ...selectedEvent,
+        id: factureData?.data.id,
+        lastEventId: selectedEvent.id,
+      });
     }
   };
 
@@ -66,6 +143,7 @@ export default function WeeklyPlanning({
   // ⚡ hook qui met à jour events si ordersData change côté parent
   useEffect(() => {
     setEvents(ordersData);
+    console.log("************* ORDERSDATA ******************", ordersData);
   }, [ordersData]);
 
   const safeParseDate = (dateStr) => {
@@ -178,6 +256,10 @@ export default function WeeklyPlanning({
     setSelectedEvent(event);
     setModalOpen(true);
   };
+  const handleModalClose3 = () => {
+    setModalOpen3(false);
+    console.log("modalOpen2", modalOpen2);
+  };
 
   return (
     <Paper sx={{ px: 2, bgcolor: "#F8FAFC" }}>
@@ -192,6 +274,27 @@ export default function WeeklyPlanning({
           handleEventDetailClick={handleEventDetailClick}
           onEventTriggered={handleEventFromChild}
           onFactureReceive={onFactureReceive}
+        />
+      )}
+      {facture && (
+        <DocumentModal
+          open={modalOpen3}
+          onClose={handleModalClose3}
+          editedEvent={facture}
+          setEditedEvent={handleEditedEventChange}
+          collectionName={"factures"}
+          setCollectionName={setCollectionName}
+          categories={categories}
+          onFactureReceive={onFactureReceive}
+        />
+      )}
+      {showPopup && (
+        <Notification
+          message={notification.message}
+          handleClose={handleClosePopup}
+          collectionName={collectName}
+          dataEvent={selectedEvent}
+          dataDetails={details}
         />
       )}
       <Box

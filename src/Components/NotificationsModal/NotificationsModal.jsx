@@ -7,17 +7,21 @@ import {
 } from "@mui/material";
 
 function calculateLineTotal(line) {
-  let total = line.unitPrice * line.quantity;
+  // Prix TTC
+  let totalTTC = line.unitPrice * line.quantity;
 
   if (line.discountPercent && line.discountPercent > 0) {
-    total -= (total * line.discountPercent) / 100;
+    totalTTC -= (totalTTC * line.discountPercent) / 100;
   }
 
   if (line.discountValue && line.discountValue > 0) {
-    total -= line.discountValue;
+    totalTTC -= line.discountValue;
   }
 
-  return total;
+  // Conversion TTC → HT (TVA 20%)
+  const totalHT = totalTTC / 1.2;
+
+  return totalHT;
 }
 
 export default function NotificationsModal({ open, onClose, orderData = [] }) {

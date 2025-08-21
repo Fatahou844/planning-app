@@ -179,67 +179,6 @@ const DashboardTabs = () => {
   );
 };
 
-// const ActivitySidebar = () => {
-//   const [open, setOpen] = useState(false);
-
-//   return (
-//     <>
-//       <Drawer
-//         anchor="left"
-//         open={open}
-//         variant="permanent"
-//         sx={{
-//           width: open ? 250 : 40,
-//           flexShrink: 0,
-//           "& .MuiDrawer-paper": {
-//             width: open ? 250 : 40,
-//             transition: "width 0.3s",
-//             overflow: "hidden",
-//             display: "flex",
-//             alignItems: "center",
-//             justifyContent: "space-between",
-//           },
-//         }}
-//       >
-//         <Box
-//           sx={{
-//             display: "flex",
-//             flexDirection: "column",
-//             alignItems: "center",
-//             width: "100%",
-//           }}
-//         >
-//           <IconButton
-//             onClick={() => setOpen(!open)}
-//             sx={{ alignSelf: "flex-end" }}
-//           >
-//             <MenuIcon />
-//           </IconButton>
-//           {open ? (
-//             <List>
-//               <ListItem button>
-//                 <ListItemText primary="Historique 1" />
-//               </ListItem>
-//               <ListItem button>
-//                 <ListItemText primary="Historique 2" />
-//               </ListItem>
-//               <ListItem button>
-//                 <ListItemText primary="Historique 3" />
-//               </ListItem>
-//             </List>
-//           ) : (
-//             <Typography
-//               variant="body2"
-//               sx={{ transform: "rotate(-90deg)", whiteSpace: "nowrap" }}
-//             >
-//               Activité
-//             </Typography>
-//           )}
-//         </Box>
-//       </Drawer>
-//     </>
-//   );
-// };
 
 const ActivitySidebar = () => {
   const [open, setOpen] = useState(false);

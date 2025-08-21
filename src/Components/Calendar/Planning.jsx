@@ -4361,9 +4361,8 @@ const Planning = () => {
         {view == "week" && (
           <>
             <WeeklyPlanning
-              ordersData={selectedNewEvents}
+              ordersData={selectedNewEvents.filter((event) => !event.isClosed)}
               handleEventFromChild={handleEventFromChild}
-              handleFactureReceived={handleFactureReceived}
               garageId={getCurrentUser().garageId}
             ></WeeklyPlanning>
           </>
