@@ -19,7 +19,8 @@ import {
   startOfWeek,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import AddDocumentComponent from "../../Components/AddDocumentComponent";
 import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
 import Notification from "../../Components/Notification";
@@ -29,10 +30,13 @@ export default function WeeklyPlanning({
   ordersData = [],
   handleEventFromChild,
   garageId,
+  dateSelected,
+  onDateChange, // 👈 callback fourni par le parent
 }) {
   const [currentWeekStart, setCurrentWeekStart] = useState(
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+    startOfWeek(dateSelected || new Date(), { weekStartsOn: 1 })
   );
+
   const axios = useAxios();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -42,6 +46,8 @@ export default function WeeklyPlanning({
   const [modalOpen3, setModalOpen3] = useState(false);
   const [collectName, setCollectName] = useState("factures");
   const [collectionName, setCollectionName] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0); // 👈 petit compteur
+
   const [details, setDetails] = useState([
     {
       label: "",
@@ -169,12 +175,7 @@ export default function WeeklyPlanning({
     if (!grouped[dayKey]) grouped[dayKey] = {};
     if (!grouped[dayKey][hourKey]) grouped[dayKey][hourKey] = [];
     grouped[dayKey][hourKey].push({
-      title: `N° ${order.id || ""} •  ${String(order.startHour ?? 0).padStart(
-        2,
-        "0"
-      )}:${String(order.startMinute ?? 0).padStart(2, "0")} • ${
-        order.Vehicle?.plateNumber || ""
-      }`,
+      title: `N° ${order.id || ""} • ${order.Vehicle?.plateNumber || ""}`,
       color: order.Category?.color || "#4F46E5",
       or: order,
     });
@@ -187,8 +188,25 @@ export default function WeeklyPlanning({
     hours.push(`${String(h).padStart(2, "0")}:30`);
   }
 
-  const prevWeek = () => setCurrentWeekStart((w) => addWeeks(w, -1));
-  const nextWeek = () => setCurrentWeekStart((w) => addWeeks(w, 1));
+  // const prevWeek = () => setCurrentWeekStart((w) => addWeeks(w, -1));
+  // const nextWeek = () => setCurrentWeekStart((w) => addWeeks(w, 1));
+  // --- boutons navigation ---
+
+  const prevWeek = () => {
+    setCurrentWeekStart((w) => {
+      const newStart = addWeeks(w, -1);
+      onDateChange?.(newStart); // 👈 notifier le parent
+      return newStart;
+    });
+  };
+
+  const nextWeek = () => {
+    setCurrentWeekStart((w) => {
+      const newStart = addWeeks(w, 1);
+      onDateChange?.(newStart); // 👈 notifier le parent
+      return newStart;
+    });
+  };
 
   const [modalOpen, setModalOpen] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -261,6 +279,45 @@ export default function WeeklyPlanning({
     console.log("modalOpen2", modalOpen2);
   };
 
+  // useEffect(() => {
+  //   if (dateSelected) {
+  //     setCurrentWeekStart(startOfWeek(dateSelected, { weekStartsOn: 1 }));
+  //   }
+  // }, [dateSelected]);
+
+  const lastDateRef = useRef(null); // 👈 garde en mémoire la dernière valeur
+
+  useEffect(() => {
+    if (dateSelected) {
+      const parsedDate = new Date(dateSelected);
+      if (!isNaN(parsedDate)) {
+        // Vérifie si la nouvelle date est différente de l'ancienne
+        if (
+          !lastDateRef.current ||
+          parsedDate.getTime() !== lastDateRef.current.getTime()
+        ) {
+          setCurrentWeekStart(startOfWeek(parsedDate, { weekStartsOn: 1 }));
+          lastDateRef.current = parsedDate; // update la ref
+        }
+      }
+    }
+  }, [dateSelected]);
+
+  const handleDocumentCreated = async () => {
+    // Ici tu peux par ex :
+    // - Mettre à jour ton state `ordersData` ou `events`
+    // - Appeler une API
+    // - Déclencher un re-render ou recalculer la semaine
+    try {
+      const response = await axios.get(
+        `/documents-garage/order/${garageId}/details`
+      );
+      setEvents(response.data.data.filter((event) => !event.isClosed) || []);
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement des événements :", error);
+    }
+  };
+
   return (
     <Paper sx={{ px: 2, bgcolor: "#F8FAFC" }}>
       {selectedEvent && (
@@ -324,9 +381,12 @@ export default function WeeklyPlanning({
           suivante →
         </Button>
       </Box>
-
+      <AddDocumentComponent
+        onDocumentCreated={handleDocumentCreated}
+      ></AddDocumentComponent>
       <TableContainer
         sx={{
+          maxHeight: "70vh", // 👈 limite la hauteur
           overflowY: "auto",
           backgroundColor: theme.palette.background.paper,
           borderRadius: 2,

@@ -31,6 +31,7 @@ import dayjs from "dayjs"; // ou luxon selon ta préférence
 import Cookies from "js-cookie";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import AddDocumentComponent from "../../Components/AddDocumentComponent";
 import DocModal from "../../Components/DocModal";
 import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
@@ -422,7 +423,7 @@ function ManageClients() {
     setDataEventsAll([]); // Réinitialiser les résultats lorsque le dialogue est fermé
     setFilteredEvents([]);
     setSearchQueryInterior("");
-     setSearchQuery("");
+    setSearchQuery("");
   };
   const getBadgeColor = (collection) => {
     switch (collection) {
@@ -477,23 +478,20 @@ function ManageClients() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleLogout = async () => {
-
-
     try {
-
-       const token = Cookies.get("jwtToken"); // si encore présent avant remove
-            if (token) {
-              try {
-                const payloadBase64 = token.split(".")[1];
-                const payload = JSON.parse(atob(payloadBase64));
-                const userEmail = payload?.sub;
-                if (userEmail) {
-                  localStorage.removeItem(`hasSeenNotification_${userEmail}`);
-                }
-              } catch (e) {
-                console.error("Erreur décodage JWT :", e);
-              }
-            }
+      const token = Cookies.get("jwtToken"); // si encore présent avant remove
+      if (token) {
+        try {
+          const payloadBase64 = token.split(".")[1];
+          const payload = JSON.parse(atob(payloadBase64));
+          const userEmail = payload?.sub;
+          if (userEmail) {
+            localStorage.removeItem(`hasSeenNotification_${userEmail}`);
+          }
+        } catch (e) {
+          console.error("Erreur décodage JWT :", e);
+        }
+      }
       await axios.get("/logout"); // pour envoyer les cookies
       document.cookie =
         "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -889,6 +887,13 @@ function ManageClients() {
     handleSearchClick();
   };
 
+  const handleDocumentCreated = async () => {
+    // Ici tu peux par ex :
+    // - Mettre à jour ton state `ordersData` ou `events`
+    // - Appeler une API
+    // - Déclencher un re-render ou recalculer la semaine
+  };
+
   return (
     <div className="app-container">
       <div className="main-content">
@@ -1173,24 +1178,6 @@ function ManageClients() {
               />
             </TableContainer>
           )}
-          <Fab
-            color="seconday"
-            aria-label="add"
-            sx={{
-              position: "fixed",
-              bottom: 16,
-              right: 16,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
-              padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-              borderRadius: "8px", // Optionnel : ajoute un bord arrondi
-            }}
-            onClick={handleLogout}
-          >
-            <LogoutIcon />
-          </Fab>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFilterDocuments} color="primary">
@@ -1211,6 +1198,27 @@ function ManageClients() {
           />
         )}
       </Dialog>
+      <AddDocumentComponent
+        onDocumentCreated={handleDocumentCreated}
+      ></AddDocumentComponent>
+      <Fab
+        color="seconday"
+        aria-label="add"
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
+          padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
+          borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+        }}
+        onClick={handleLogout}
+      >
+        <LogoutIcon />
+      </Fab>
     </div>
   );
 }

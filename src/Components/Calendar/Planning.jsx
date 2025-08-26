@@ -4364,6 +4364,8 @@ const Planning = () => {
               ordersData={selectedNewEvents.filter((event) => !event.isClosed)}
               handleEventFromChild={handleEventFromChild}
               garageId={getCurrentUser().garageId}
+              dateSelected={selectedDate}
+              onDateChange={(newDate) => setSelectedDate(newDate)} // 👈 synchro
             ></WeeklyPlanning>
           </>
         )}

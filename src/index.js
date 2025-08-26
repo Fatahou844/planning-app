@@ -32,6 +32,7 @@ import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
 import ManageClients from "./Pages/ManageClients/ManageClients";
+import Store from "./Pages/Store/Store";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import WeeklyPlanning from "./Pages/WeeklyPlanning";
 import { CustomThemeProvider } from "./theme/ThemeProvider";
@@ -178,7 +179,6 @@ const DashboardTabs = () => {
     </>
   );
 };
-
 
 const ActivitySidebar = () => {
   const [open, setOpen] = useState(false);
@@ -375,9 +375,14 @@ const App = () => {
               {/* <Route path="/connexion" element={<AuthPages />} /> */}
               <Route path="/register" element={<AccountCreationSteps />} />
 
-               <Route
+              <Route
                 path="/weekly-planning"
                 element={<PrivateRoute Component={WeeklyPlanning} />}
+              />
+
+              <Route
+                path="/store"
+                element={<PrivateRoute Component={Store} />}
               />
 
               <Route
