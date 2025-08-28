@@ -2,8 +2,6 @@ import { Button } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import { Box, Modal, Typography } from "@mui/material";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
 
@@ -641,30 +639,6 @@ const InvoiceTemplate = ({
     }
   };
 
-  const getLastOrderNumberForUser = async (userId) => {
-    const docRef = doc(db, "userOrderNumbers", userId); // Document unique pour chaque userId
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return docSnap.data().lastOrderNumber; // Récupère le dernier numéro
-    } else {
-      // Si le document n'existe pas encore, on commence à 00000 pour cet utilisateur
-      return 0;
-    }
-  };
-
-  // Fonction pour mettre à jour le dernier numéro de commande pour un userId
-  const updateLastOrderNumberForUser = async (userId, newOrderNumber) => {
-    const docRef = doc(db, "userOrderNumbers", userId); // Document unique par userId
-    await setDoc(docRef, { lastOrderNumber: newOrderNumber, userId: userId }); // Met à jour ou crée le document
-  };
-
-  // Fonction pour générer un numéro de commande formaté à 5 chiffres
-  const generateOrderNumber = (lastOrderNumber) => {
-    const newOrderNumber = lastOrderNumber + 1;
-    return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
-  };
-
   const addFacture = async () => {
     // Ajout du paramètre isMultiDay
     // if (!user) {
@@ -691,7 +665,11 @@ const InvoiceTemplate = ({
       "facture",
       true
     ); // Ajout à Firestore
-    const validDetails = details.filter((detail) => {
+    console.log(
+      "909998. ################################## DETAILS FACTURES ##################################",
+      editedEvent
+    );
+    const validDetails = editedEvent.Details.filter((detail) => {
       return (
         detail.label?.trim() ||
         detail.quantity?.toString().trim() ||
@@ -715,10 +693,7 @@ const InvoiceTemplate = ({
       setFacture(fact);
       if (onFactureGenerated) {
         onFactureGenerated(fact);
-        console.log(
-          "Facture récupérée : onFactureGenerated",
-          onFactureGenerated
-        );
+        console.log("Facture récupérée : onFactureGenerated", fact);
       } else {
         console.error(
           "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"

@@ -414,6 +414,10 @@ function EventDialog({
     }
 
     setDetails(updatedDetails);
+    setEditedEvent((prev) => ({
+      ...prev,
+      Details: updatedDetails,
+    }));
   };
 
   const removeDetailRow = async (index) => {
