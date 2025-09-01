@@ -141,26 +141,73 @@ const OrdreReparationTemplate2 = ({
     },
 
     observations: `${editedEvent?.notes ? editedEvent?.notes : ""}`,
+    rdvDate: `${editedEvent?.date ? editedEvent?.date : ""} à ${
+      editedEvent?.startHour
+        ? editedEvent?.startHour.toString().padStart(2, "0")
+        : ""
+    }h${
+      editedEvent?.startMinute
+        ? editedEvent?.startMinute.toString().padStart(2, "0")
+        : ""
+    }`,
+    endDate: `${
+      editedEvent?.endDate
+        ? new Date(editedEvent.endDate).toLocaleDateString("fr-FR")
+        : ""
+    } à ${
+      editedEvent?.endHour
+        ? editedEvent?.endHour.toString().padStart(2, "0")
+        : ""
+    }h${
+      editedEvent?.endMinute
+        ? editedEvent?.endMinute.toString().padStart(2, "0")
+        : ""
+    }`,
   };
 
   console.log("INCOICE DATA*********************", invoiceData);
 
   const documentDefinition = {
     content: [
-      // Header avec numéro de facture et date
+      // HEADER avec OR + zone SCAN
+      {
+        table: {
+          widths: ["65%", "35%"],
+          body: [
+            [
+              {
+                text: `ORDRE DE REPARATION N° ${invoiceData?.orderNumber}`,
+                style: "headerTitle",
+                alignment: "left",
+              },
+              {
+                text: `RDV : ${invoiceData?.rdvDate || ""}`,
+                style: "headerSub",
+                alignment: "right",
+              },
+            ],
+          ],
+        },
+        layout: "noBorders",
+        marginBottom: 10,
+      },
+
       {
         table: {
           widths: ["50%", "50%"],
           body: [
             [
               {
-                text: `Ordre de réparation No : ${invoiceData?.orderNumber}`,
-                style: "headerInfo",
-                alignment: "left",
+                text: "Zone code-barre / Scan",
+                style: "barcodeZone",
+                alignment: "center",
+                border: [true, true, true, true],
+                fillColor: "#f5f5f5",
               },
+
               {
-                text: `Date: ${new Date().toLocaleDateString()}`,
-                style: "headerInfo",
+                text: `Fin des travaux : ${invoiceData?.endDate || ""}`,
+                style: "headerSub",
                 alignment: "right",
               },
             ],
@@ -170,163 +217,186 @@ const OrdreReparationTemplate2 = ({
         marginBottom: 20,
       },
 
-      // Header avec trois colonnes : entreprise, véhicule, client
+      // BLOCS SEPARÉS ENTREPRISE / VEHICULE / CLIENT
       {
-        table: {
-          widths: ["33%", "33%", "33%"],
-          body: [
-            [
+        columns: [
+          {
+            stack: [
               {
-                text: invoiceData.companyInfo.name,
-                style: "companyHeader",
-                alignment: "center",
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 160,
+                    h: 90,
+                    r: 8,
+                    color: "#f9f9f9",
+                    lineColor: "#cccccc",
+                  },
+                ],
+                margin: [0, 0, 0, -90],
               },
               {
-                text: "",
-                style: "vehicleHeader",
-                alignment: "center",
-              },
-              {
-                text: "",
-                style: "clientHeader",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: invoiceData.companyInfo.address,
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `Modèle : ${invoiceData.vehicle.model}`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `nom : ${invoiceData.client.name}`,
-                style: "clientInfo",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: invoiceData.companyInfo.phone,
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `VIN : ${invoiceData.vehicle.vin}`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Tel: ${invoiceData.client.phone}`,
-                style: "clientInfo",
-                alignment: "center",
+                stack: [
+                  {
+                    text: invoiceData.companyInfo.name,
+                    style: "companyHeader",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.address,
+                    style: "companySubheader",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.phone,
+                    style: "companySubheader",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.email,
+                    style: "companySubheader",
+                    alignment: "center",
+                  },
+                ],
+                margin: [5, 10, 5, 0],
               },
             ],
-            [
+          },
+          {
+            stack: [
               {
-                text: invoiceData.companyInfo.email,
-                style: "companySubheader",
-                alignment: "center",
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 160,
+                    h: 90,
+                    r: 8,
+                    color: "#f9f9f9",
+                    lineColor: "#cccccc",
+                  },
+                ],
+                margin: [0, 0, 0, -90],
               },
               {
-                text: `Kilométrage : ${invoiceData.vehicle.km} km`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Email : ${invoiceData.client.email}`,
-                style: "clientInfo",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: " ",
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `Immatriculation : ${
-                  invoiceData.vehicle.licensePlate || ""
-                }`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Adresse : ${
-                  invoiceData.client?.adresse ? invoiceData.client?.adresse : ""
-                } ${
-                  invoiceData.client?.postale ? invoiceData.client?.postale : ""
-                }`,
-                style: "clientInfo",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: " ",
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `Couleur : ${invoiceData.vehicle.color}`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Ville : ${
-                  invoiceData.client?.ville ? invoiceData.client?.ville : ""
-                }`,
-                style: "clientInfo",
-                alignment: "center",
+                stack: [
+                  {
+                    text: "VÉHICULE",
+                    style: "vehicleHeader",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.vehicle.model} - ${
+                      invoiceData.vehicle.engine || ""
+                    }`,
+                    style: "vehicleInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `VIN : ${invoiceData.vehicle.vin}`,
+                    style: "vehicleInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Km : ${invoiceData.vehicle.km} km`,
+                    style: "vehicleInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Immat : ${invoiceData.vehicle.licensePlate || ""}`,
+                    style: "vehicleInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Couleur : ${invoiceData.vehicle.color}`,
+                    style: "vehicleInfo",
+                    alignment: "center",
+                  },
+                ],
+                margin: [5, 10, 5, 0],
               },
             ],
-            [
+          },
+          {
+            stack: [
               {
-                text: " ",
-                style: "companySubheader",
-                alignment: "center",
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 160,
+                    h: 90,
+                    r: 8,
+                    color: "#f9f9f9",
+                    lineColor: "#cccccc",
+                  },
+                ],
+                margin: [0, 0, 0, -90],
               },
               {
-                text: `Dernier controle technique : ${
-                  invoiceData.vehicle?.lastCheck
-                    ? invoiceData.vehicle?.lastCheck
-                    : ""
-                }`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: " ",
-                style: "clientInfo",
-                alignment: "center",
+                stack: [
+                  {
+                    text: "CLIENT",
+                    style: "clientHeader",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.client.name,
+                    style: "clientInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Tel : ${invoiceData.client.phone}`,
+                    style: "clientInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Email : ${invoiceData.client.email}`,
+                    style: "clientInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Adresse : ${invoiceData.client?.adresse || ""} ${
+                      invoiceData.client?.postale || ""
+                    }`,
+                    style: "clientInfo",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Ville : ${invoiceData.client?.ville || ""}`,
+                    style: "clientInfo",
+                    alignment: "center",
+                  },
+                ],
+                margin: [5, 10, 5, 0],
               },
             ],
-          ],
-        },
-        layout: "noBorders",
+          },
+        ],
+        columnGap: 10,
         marginBottom: 20,
       },
 
-      // Tableau des Items
+      // TABLEAU ITEMS
       {
         table: {
-          widths: ["*", "auto", "auto", "auto", "auto", "auto", "auto"],
+          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto"],
           body: [
             [
-              { text: "Libellé / travaux", style: "tableHeader" },
+              { text: "Code", style: "tableHeader" },
+              { text: "Libellé / Travaux", style: "tableHeader" },
               { text: "P.U. HT", style: "tableHeader" },
               { text: "P.U. TTC", style: "tableHeader" },
               { text: "Qté", style: "tableHeader" },
               { text: "Total HT", style: "tableHeader" },
               { text: "Total TTC", style: "tableHeader" },
-              { text: "Rem", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
+              item.code || "",
               item.description,
               `${item.unitPriceHT?.toFixed(2)} €`,
               `${item.unitPriceTTC?.toFixed(2)} €`,
@@ -339,16 +409,14 @@ const OrdreReparationTemplate2 = ({
                 text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
                 alignment: "right",
               },
-              `${item.discount} %`,
             ]),
           ],
         },
         layout: "lightHorizontalLines",
         marginBottom: 20,
-        alignment: "center",
       },
 
-      // Totaux
+      // TOTAUX
       {
         table: {
           widths: ["*", "auto"],
@@ -356,33 +424,41 @@ const OrdreReparationTemplate2 = ({
             [
               { text: "Total HT :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.totalHT.toFixed(2) || 0.0} €`,
-                alignment: "right",
+                text: `${invoiceData.totals.totalHT.toFixed(2)} €`,
                 style: "totalValue",
+                alignment: "right",
               },
             ],
             [
               { text: "TVA (20%) :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.tva.toFixed(2) || 0.0} €`,
-                alignment: "right",
+                text: `${invoiceData.totals.tva.toFixed(2)} €`,
                 style: "totalValue",
+                alignment: "right",
               },
             ],
             [
-              { text: "Total TTC :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.totalTTC.toFixed(2) || 0.0} €`,
+                text: "Total Net TTC :",
                 alignment: "right",
+                style: "totalLabel",
+              },
+              {
+                text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
                 style: "totalValue",
+                alignment: "right",
               },
             ],
             [
-              { text: "Acompte:", alignment: "right", style: "totalLabel" },
+              {
+                text: "Acompte versé :",
+                alignment: "right",
+                style: "totalLabel",
+              },
               {
                 text: `${invoiceData.deposit || 0.0} €`,
-                alignment: "right",
                 style: "totalValue",
+                alignment: "right",
               },
             ],
           ],
@@ -391,45 +467,32 @@ const OrdreReparationTemplate2 = ({
         marginBottom: 20,
       },
 
-      // Observations
+      // OBSERVATIONS
+      { text: "Observations et conseils :", style: "sectionHeader" },
       {
-        text: "Observations et conseils :",
-        style: "sectionHeader",
-      },
-      {
-        text: invoiceData.observations,
+        text: invoiceData.observations || "",
         style: "subheader",
-      },
-
-      // Zone Rectangulaire pour Détails
-      {
-        table: {
-          widths: ["100%"],
-          body: [
-            [
-              {
-                text: "",
-                style: "rectangle",
-                border: [true, true, true, true], // Bordures pour la zone
-                marginBottom: 10,
-                marginTop: 10,
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
         marginBottom: 10,
       },
 
-      // Paragraphe
+      // NOTES EXPLICATIVES
       {
         text: companyInfo.noteLegal,
-
         style: "paragraph",
         alignment: "justify",
+        marginBottom: 15,
       },
 
-      // Signatures
+      {
+        text: `Le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString(
+          [],
+          { hour: "2-digit", minute: "2-digit" }
+        )}`,
+        style: "footer",
+        alignment: "right",
+      },
+
+      // SIGNATURES
       {
         table: {
           widths: ["50%", "50%"],
@@ -449,108 +512,43 @@ const OrdreReparationTemplate2 = ({
           ],
         },
         layout: "noBorders",
-        marginTop: 20,
-      },
-
-      // Footer avec date et message
-      {
-        text: `Fait le : ${new Date().toLocaleDateString()}`,
-        style: "footer",
-        alignment: "right",
-        marginBottom: 5,
-      },
-      {
-        text: "Merci pour votre confiance",
-        style: "footer",
-        alignment: "right",
+        marginBottom: 20,
       },
     ],
 
     styles: {
-      headerInfo: {
-        fontSize: 10,
-        bold: true,
-        marginBottom: 10,
-      },
-      companyHeader: {
-        fontSize: 14,
-        bold: true,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      companySubheader: {
-        fontSize: 10,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      vehicleHeader: {
-        fontSize: 12,
-        bold: true,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      vehicleInfo: {
-        fontSize: 10,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      clientHeader: {
-        fontSize: 12,
-        bold: true,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      clientInfo: {
-        fontSize: 10,
-        color: "#00000",
-        marginBottom: 5,
-      },
+      headerTitle: { fontSize: 14, bold: true },
+      headerSub: { fontSize: 9, italics: true },
+      companyHeader: { fontSize: 12, bold: true, marginBottom: 3 },
+      companySubheader: { fontSize: 9 },
+      vehicleHeader: { fontSize: 11, bold: true, marginBottom: 3 },
+      vehicleInfo: { fontSize: 9 },
+      clientHeader: { fontSize: 11, bold: true, marginBottom: 3 },
+      clientInfo: { fontSize: 9 },
       tableHeader: {
         bold: true,
         alignment: "center",
-        padding: 5,
+        fillColor: "#eeeeee",
+        margin: [3, 3, 3, 3],
       },
-      totalLabel: {
-        fontSize: 10,
-        bold: true,
-      },
-      totalValue: {
-        fontSize: 10,
-      },
+      totalLabel: { fontSize: 10, bold: true },
+      totalValue: { fontSize: 10 },
       sectionHeader: {
-        fontSize: 12,
+        fontSize: 11,
         bold: true,
         marginTop: 10,
         marginBottom: 5,
       },
-      subheader: {
-        fontSize: 10,
-        marginBottom: 5,
+      subheader: { fontSize: 9, marginBottom: 5 },
+      signature: { fontSize: 9, marginTop: 15 },
+      footer: { fontSize: 9, italics: true, marginTop: 10 },
+      barcodeZone: {
+        fontSize: 8,
+        bold: true,
+        color: "grey",
+        margin: [5, 15, 5, 15],
       },
-      signature: {
-        textAlign: "center",
-        paddingTop: 10,
-        fontSize: 10,
-        marginBottom: 30,
-      },
-      footer: {
-        textAlign: "center",
-        marginTop: 20,
-        fontSize: 10,
-        color: "#00000",
-      },
-      rectangle: {
-        fontSize: 10,
-        color: "#00000",
-        padding: 10,
-        height: 50,
-      },
-      paragraph: {
-        fontSize: 9,
-        color: "#00000",
-        marginTop: 10,
-        lineHeight: 1.3,
-      },
+      paragraph: { fontSize: 8, lineHeight: 1.2 },
     },
   };
 
