@@ -31,6 +31,7 @@ import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 
 import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
+import Atelier from "./Pages/Atelier/Atelier";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import Store from "./Pages/Store/Store";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
@@ -383,6 +384,10 @@ const App = () => {
               <Route
                 path="/store"
                 element={<PrivateRoute Component={Store} />}
+              />
+              <Route
+                path="/atelier"
+                element={<PrivateRoute Component={Atelier} />}
               />
 
               <Route

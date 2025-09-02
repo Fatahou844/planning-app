@@ -416,56 +416,50 @@ const OrdreReparationTemplate2 = ({
         marginBottom: 20,
       },
 
+     
       // TOTAUX
-      {
-        table: {
-          widths: ["*", "auto"],
-          body: [
-            [
-              { text: "Total HT :", alignment: "right", style: "totalLabel" },
-              {
-                text: `${invoiceData.totals.totalHT.toFixed(2)} €`,
-                style: "totalValue",
-                alignment: "right",
-              },
-            ],
-            [
-              { text: "TVA (20%) :", alignment: "right", style: "totalLabel" },
-              {
-                text: `${invoiceData.totals.tva.toFixed(2)} €`,
-                style: "totalValue",
-                alignment: "right",
-              },
-            ],
-            [
-              {
-                text: "Total Net TTC :",
-                alignment: "right",
-                style: "totalLabel",
-              },
-              {
-                text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
-                style: "totalValue",
-                alignment: "right",
-              },
-            ],
-            [
-              {
-                text: "Acompte versé :",
-                alignment: "right",
-                style: "totalLabel",
-              },
-              {
-                text: `${invoiceData.deposit || 0.0} €`,
-                style: "totalValue",
-                alignment: "right",
-              },
-            ],
+     {
+  table: {
+    widths: ["50%", "50%"],
+    body: [
+      [
+        {
+          stack: [
+            {
+              text: `Total HT : ${invoiceData.totals.totalHT.toFixed(2)} €`,
+              alignment: "right",
+              style: "totalLabel",
+            },
+            {
+              text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
+              alignment: "right",
+              style: "totalLabel",
+            },
           ],
+          fillColor: "#f5f5f5", // gris clair
         },
-        layout: "noBorders",
-        marginBottom: 20,
-      },
+        {
+          text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(2)} €`,
+          alignment: "right",
+          style: "totalLabel",
+          fillColor: "#f5f5f5", // gris clair
+        },
+      ],
+      [
+        { text: "", border: [false, false, false, false], fillColor: "#f5f5f5" },
+        {
+          text: `Acompte versé : ${invoiceData.deposit?.toFixed(2) || "0.00"} €`,
+          alignment: "right",
+          style: "totalLabel",
+          fillColor: "#f5f5f5",
+        },
+      ],
+    ],
+  },
+  layout: "lightHorizontalLines",
+  marginBottom: 20,
+}
+,
 
       // OBSERVATIONS
       { text: "Observations et conseils :", style: "sectionHeader" },
