@@ -470,9 +470,9 @@ const OrdreReparationTemplate = ({
                 fillColor: "#f5f5f5",
               },
               {
-                text: `Acompte versé : ${
-                  invoiceData.deposit?.toFixed(2) || "0.00"
-                } €`,
+                text: `Acompte versé : ${Number(
+                  invoiceData?.deposit || 0
+                ).toFixed(2)} €`,
                 alignment: "right",
                 style: "totalLabel",
                 fillColor: "#f5f5f5",
