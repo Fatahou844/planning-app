@@ -355,19 +355,19 @@ const OrdreReparationTemplate2 = ({
                     alignment: "center",
                   },
                   {
-                    text: `Tel : ${invoiceData.client.phone}`,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
-                    text: `Email : ${invoiceData.client.email}`,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
                     text: `${invoiceData.client?.adresse || ""} ${
                       invoiceData.client?.postale || ""
                     } ${invoiceData.client?.ville || ""}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client.phone}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client.email}`,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -396,7 +396,7 @@ const OrdreReparationTemplate2 = ({
               { text: "Total TTC", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
-              { text: item.code || "", style: "tableCell" }, // Code
+              { text: item.code || "---", style: "tableCell" }, // Code
               { text: item.description, style: "tableCell" }, // Libellé
               { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" }, // P.U. HT
               {

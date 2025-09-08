@@ -406,7 +406,7 @@ const OrdreReparationTemplate = ({
               { text: "Total TTC", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
-              { text: item.code || "", style: "tableCell" }, // Code
+              { text: item.code || "---", style: "tableCell" }, // Code
               { text: item.description, style: "tableCell" }, // Libellé
               {
                 text: `${item.unitPriceHT?.toFixed(2)} €`,

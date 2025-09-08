@@ -151,420 +151,384 @@ const ReservationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     },
 
     observations: `${editedEvent?.notes ? editedEvent?.notes : ""}`,
+    DevisDate: `${
+      editedEvent?.date
+        ? new Date(editedEvent?.date).toLocaleDateString("fr-FR")
+        : ""
+    }`,
+  };
+
+  const addDays = (dateString, days) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return date.toLocaleDateString("fr-FR"); // ou retourne l'objet `date` directement si besoin
   };
 
   const documentDefinition = {
     content: [
-      // Header avec numéro de facture et date
+      // HEADER avec OR + zone SCAN
       {
         table: {
           widths: ["50%", "50%"],
           body: [
             [
               {
-                text: `Réservation No : ${invoiceData?.orderNumber}`,
-                style: "headerInfo",
-                alignment: "left",
+                stack: [
+                  {
+                    text: `RESERVATION N° ${invoiceData?.orderNumber}`,
+                    style: "headerTitle",
+                    alignment: "left",
+                  },
+                  {
+                    text: `du ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString(
+                      [],
+                      { hour: "2-digit", minute: "2-digit" }
+                    )}`,
+                    style: "headerSub",
+                    alignment: "left",
+                  },
+                ],
               },
               {
-                text: `Date : ${new Date().toLocaleDateString()}`,
-                style: "headerInfo",
+                text: `Resa valable jusqu'au : ${addDays(
+                  editedEvent.createdAt || new Date().toISOString(),
+                  companyInfo.dayValidityQuote
+                )}`,
+                style: "headerSub",
                 alignment: "right",
               },
             ],
           ],
         },
         layout: "noBorders",
-        marginBottom: 20,
+        marginBottom: 15,
       },
 
-      // Header avec trois colonnes : entreprise, véhicule, client
+      // BLOCS ENTREPRISE / VEHICULE / CLIENT (sans titres)
       {
-        table: {
-          widths: ["33%", "33%", "33%"],
-          body: [
-            [
+        columns: [
+          // ENTREPRISE
+          {
+            stack: [
               {
-                text: invoiceData.companyInfo.name,
-                style: "companyHeader",
-                alignment: "center",
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 160,
+                    h: 80,
+                    r: 6,
+                    color: "#f9f9f9",
+                    lineColor: "#cccccc",
+                  },
+                ],
+                margin: [0, 0, 0, -80],
               },
               {
-                text: "",
-                style: "vehicleHeader",
-                alignment: "center",
-              },
-              {
-                text: "",
-                style: "clientHeader",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: invoiceData.companyInfo.address,
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `Modèle : ${invoiceData.vehicle.model}`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `nom : ${invoiceData.client.name}`,
-                style: "clientInfo",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: invoiceData.companyInfo.phone,
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `VIN : ${invoiceData.vehicle.vin}`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Tel: ${invoiceData.client.phone}`,
-                style: "clientInfo",
-                alignment: "center",
+                stack: [
+                  {
+                    text: invoiceData.companyInfo.name,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.address,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.phone,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.email,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                ],
+                margin: [5, 8, 5, 0],
               },
             ],
-            [
+          },
+
+          // VEHICULE
+          {
+            stack: [
               {
-                text: invoiceData.companyInfo.email,
-                style: "companySubheader",
-                alignment: "center",
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 160,
+                    h: 80,
+                    r: 6,
+                    color: "#f9f9f9",
+                    lineColor: "#cccccc",
+                  },
+                ],
+                margin: [0, 0, 0, -80],
               },
               {
-                text: `Kilométrage : ${invoiceData.vehicle.km} km`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Email : ${invoiceData.client.email}`,
-                style: "clientInfo",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: " ",
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `Immatriculation : ${
-                  invoiceData.vehicle.licensePlate || ""
-                }`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Adresse : ${
-                  invoiceData.client?.adresse ? invoiceData.client?.adresse : ""
-                } ${
-                  invoiceData.client?.postale ? invoiceData.client?.postale : ""
-                }`,
-                style: "clientInfo",
-                alignment: "center",
-              },
-            ],
-            [
-              {
-                text: " ",
-                style: "companySubheader",
-                alignment: "center",
-              },
-              {
-                text: `Couleur : ${invoiceData.vehicle.color}`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: `Ville : ${
-                  invoiceData.client?.ville ? invoiceData.client?.ville : ""
-                }`,
-                style: "clientInfo",
-                alignment: "center",
+                stack: [
+                  {
+                    text: `${invoiceData.vehicle.model} - ${
+                      invoiceData.vehicle.engine || ""
+                    }`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `VIN : ${invoiceData.vehicle.vin}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Km : ${invoiceData.vehicle.km} km`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Immat : ${invoiceData.vehicle.licensePlate || ""}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `Couleur : ${invoiceData.vehicle.color}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                ],
+                margin: [5, 8, 5, 0],
               },
             ],
-            [
+          },
+
+          // CLIENT
+          {
+            stack: [
               {
-                text: " ",
-                style: "companySubheader",
-                alignment: "center",
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 160,
+                    h: 80,
+                    r: 6,
+                    color: "#f9f9f9",
+                    lineColor: "#cccccc",
+                  },
+                ],
+                margin: [0, 0, 0, -80],
               },
               {
-                text: `Dernier controle technique : ${
-                  invoiceData.vehicle?.lastCheck
-                    ? invoiceData.vehicle?.lastCheck
-                    : ""
-                }`,
-                style: "vehicleInfo",
-                alignment: "center",
-              },
-              {
-                text: " ",
-                style: "clientInfo",
-                alignment: "center",
+                stack: [
+                  {
+                    text: invoiceData.client.name,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client?.adresse || ""} ${
+                      invoiceData.client?.postale || ""
+                    } ${invoiceData.client?.ville || ""}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client.phone}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client.email}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                ],
+                margin: [5, 8, 5, 0],
               },
             ],
-          ],
-        },
-        layout: "noBorders",
-        marginBottom: 20,
+          },
+        ],
+        columnGap: 8,
+        marginBottom: 30,
       },
 
-      // Tableau des Items
+      // TABLEAU ITEMS
       {
         table: {
-          widths: ["*", "auto", "auto", "auto", "auto", "auto", "auto"],
+          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto"],
           body: [
             [
-              { text: "Libellé / travaux", style: "tableHeader" },
+              { text: "Code", style: "tableHeader" },
+              { text: "Libellé / Travaux", style: "tableHeader" },
               { text: "P.U. HT", style: "tableHeader" },
               { text: "P.U. TTC", style: "tableHeader" },
               { text: "Qté", style: "tableHeader" },
               { text: "Total HT", style: "tableHeader" },
               { text: "Total TTC", style: "tableHeader" },
-              { text: "Rem", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
-              item.description,
-              `${item.unitPriceHT.toFixed(2)} €`,
-              `${item.unitPriceTTC.toFixed(2)} €`,
-              item.quantity,
+              { text: item.code || "---", style: "tableCell" }, // Code
+              { text: item.description, style: "tableCell" }, // Libellé
+              {
+                text: `${item.unitPriceHT?.toFixed(2)} €`,
+                style: "smallCell",
+              }, // P.U. HT
+              {
+                text: `${item.unitPriceTTC?.toFixed(2)} €`,
+                style: "smallCell",
+              }, // P.U. TTC
+              { text: item.quantity, style: "smallCell" }, // Qté
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
                 alignment: "right",
-              },
+                style: "tableCell",
+              }, // Total HT
               {
                 text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
                 alignment: "right",
-              },
-              `${
-                item.discount > 0
-                  ? item.discount + "%"
-                  : item.discountAmount + "€"
-              }`,
+                style: "tableCell",
+              }, // Total TTC
             ]),
           ],
         },
         layout: "lightHorizontalLines",
         marginBottom: 20,
-        alignment: "center",
       },
 
-      // Totaux
+      // TOTAUX
       {
         table: {
-          widths: ["*", "auto"],
+          widths: ["50%", "50%"],
           body: [
             [
-              { text: "Total HT :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.totalHT.toFixed(2)} €`,
+                stack: [
+                  {
+                    text: `Total HT : ${invoiceData.totals.totalHT.toFixed(
+                      2
+                    )} €`,
+                    alignment: "right",
+                    style: "totalLabel",
+                  },
+                  {
+                    text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
+                    alignment: "right",
+                    style: "totalLabel",
+                  },
+                ],
+                fillColor: "#f5f5f5", // gris clair
+              },
+              {
+                text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(
+                  2
+                )} €`,
                 alignment: "right",
-                style: "totalValue",
+                style: "totalLabel",
+                fillColor: "#f5f5f5", // gris clair
               },
             ],
             [
-              { text: "TVA (20%) :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.tva.toFixed(2)} €`,
-                alignment: "right",
-                style: "totalValue",
+                text: "",
+                border: [false, false, false, false],
+                fillColor: "#f5f5f5",
               },
-            ],
-            [
-              { text: "Total TTC :", alignment: "right", style: "totalLabel" },
               {
-                text: `${invoiceData.totals.totalTTC.toFixed(2)} €`,
+                text: `Acompte versé : ${
+                  invoiceData.deposit?.toFixed(2) || "0.00"
+                } €`,
                 alignment: "right",
-                style: "totalValue",
-              },
-            ],
-            [
-              { text: "Acompte :", alignment: "right", style: "totalLabel" },
-              {
-                text: `${invoiceData.deposit} €`,
-                alignment: "right",
-                style: "totalValue",
+                style: "totalLabel",
+                fillColor: "#f5f5f5",
               },
             ],
           ],
         },
-        layout: "noBorders",
+        layout: "lightHorizontalLines",
         marginBottom: 20,
       },
-
-      // Observations
+      // OBSERVATIONS
+      { text: "Observations et conseils :", style: "sectionHeader" },
       {
-        text: "Observations et conseils :",
-        style: "sectionHeader",
-      },
-      {
-        text: invoiceData.observations,
+        text: invoiceData.observations || "",
         style: "subheader",
+        marginBottom: 10,
       },
 
-      // Zone Rectangulaire pour Détails
+      // NOTES EXPLICATIVES
+      {
+        text: companyInfo.noteLegal,
+        style: "paragraph",
+        alignment: "justify",
+        marginBottom: 15,
+      },
+
+      // {
+      //   text: `Le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString(
+      //     [],
+      //     { hour: "2-digit", minute: "2-digit" }
+      //   )}`,
+      //   style: "footer",
+      //   alignment: "right",
+      // },
+
+      // SIGNATURES
       {
         table: {
           widths: ["100%"],
           body: [
             [
               {
-                text: "",
-                style: "rectangle",
-                border: [true, true, true, true], // Bordures pour la zone
-                marginBottom: 10,
-                marginTop: 10,
+                text: "MERCI DE VOTRE CONFIANCE.",
+                style: "signature",
+                alignment: "center",
               },
             ],
           ],
         },
         layout: "noBorders",
-        marginBottom: 10,
-      },
-
-      // Paragraphe
-      {
-        text: companyInfo.noteLegal,
-        style: "paragraph",
-        alignment: "justify",
-      },
-
-      // Signatures
-      {
-        table: {
-          widths: ["50%", "50%"],
-          body: [
-            [
-              {
-                text: ``,
-                style: "signature",
-                alignment: "left",
-              },
-              {
-                text: "",
-                style: "signature",
-                alignment: "right",
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
-        marginTop: 20,
-      },
-
-      // Footer avec date et message
-      {
-        text: `Fait le : ${new Date().toLocaleDateString()}`,
-        style: "footer",
-        alignment: "right",
-        marginBottom: 5,
-      },
-      {
-        text: "Merci pour votre confiance",
-        style: "footer",
-        alignment: "right",
+        marginBottom: 20,
       },
     ],
 
     styles: {
-      headerInfo: {
-        fontSize: 10,
-        bold: true,
-        marginBottom: 10,
-      },
-      companyHeader: {
-        fontSize: 14,
-        bold: true,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      companySubheader: {
-        fontSize: 10,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      vehicleHeader: {
-        fontSize: 12,
-        bold: true,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      vehicleInfo: {
-        fontSize: 10,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      clientHeader: {
-        fontSize: 12,
-        bold: true,
-        color: "#00000",
-        marginBottom: 5,
-      },
-      clientInfo: {
-        fontSize: 10,
-        color: "#00000",
-        marginBottom: 5,
-      },
+      headerTitle: { fontSize: 12, bold: true },
+      headerSub: { fontSize: 8, italics: true },
+      infoBlock: { fontSize: 9 }, // tout harmonisé
       tableHeader: {
         bold: true,
         alignment: "center",
-        padding: 5,
+        fontSize: 8,
+        fillColor: "#eeeeee",
+        margin: [2, 2, 2, 2],
       },
-      totalLabel: {
-        fontSize: 10,
-        bold: true,
-      },
-      totalValue: {
-        fontSize: 10,
-      },
+      tableCell: { fontSize: 8 }, // Valeurs normales
+      smallCell: { fontSize: 8 }, // Qté, P.U., Remise
+      totalLabel: { fontSize: 8, bold: true },
       sectionHeader: {
-        fontSize: 12,
-        bold: true,
-        marginTop: 10,
-        marginBottom: 5,
-      },
-      subheader: {
-        fontSize: 10,
-        marginBottom: 5,
-      },
-      signature: {
-        textAlign: "center",
-        paddingTop: 10,
-        fontSize: 10,
-        marginBottom: 30,
-      },
-      footer: {
-        textAlign: "center",
-        marginTop: 20,
-        fontSize: 10,
-        color: "#00000",
-      },
-      rectangle: {
-        fontSize: 10,
-        color: "#00000",
-        padding: 10,
-        height: 50,
-      },
-      paragraph: {
         fontSize: 9,
-        color: "#00000",
-        marginTop: 10,
-        lineHeight: 1.3,
+        bold: true,
+        marginTop: 8,
+        marginBottom: 4,
       },
+      subheader: { fontSize: 8, marginBottom: 4 },
+      signature: { fontSize: 8, marginTop: 12 },
+      footer: { fontSize: 8, italics: true, marginTop: 8 },
+      barcodeZone: {
+        fontSize: 7,
+        bold: true,
+        color: "grey",
+        margin: [4, 12, 4, 12],
+      },
+      paragraph: { fontSize: 7, lineHeight: 1.1 },
     },
   };
-
   function generatePdf() {
     pdfMake.createPdf(documentDefinition).open();
     if (onInvoiceExecuted) {
