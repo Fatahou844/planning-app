@@ -78,20 +78,25 @@ const ReservationTemplate = ({
       name: `${Client?.firstName ? Client.firstName : ""} ${
         Client?.name ? Client.name : ""
       }`,
-      adresse: `${Client?.address ? Client?.address : ""} ${
-        Client?.postalCode ? Client.postalCode : ""
-      }`, // Si une adresse client est disponible, l'ajouter ici
+      adresse: `${Client?.address ? Client?.address : ""}`, // Si une adresse client est disponible, l'ajouter ici
       phone: Client?.phone ? Client.phone : "",
       email: Client?.email ? Client.email : "",
       ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
+      postalVille: `${Client?.postalCode ? Client?.postalCode : ""} ${
+        Client?.city ? Client.city : ""
+      }`,
     },
     items: details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
-      quantity: item.quantity,
-      discount: item.discountPercent,
+      discount:
+        item.discountPercent && item.discountPercent !== ""
+          ? `${item.discountPercent}%`
+          : item.discountAmount && item.discountAmount !== ""
+          ? String(item.discountAmount)
+          : "0",
       discountAmount: item.discountAmount,
       unitPriceTTCafterDiscount:
         item.unitPrice -
@@ -334,9 +339,12 @@ const ReservationTemplate = ({
                     alignment: "center",
                   },
                   {
-                    text: `${invoiceData.client?.adresse || ""} ${
-                      invoiceData.client?.postale || ""
-                    } ${invoiceData.client?.ville || ""}`,
+                    text: `${invoiceData.client?.adresse || ""}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client?.postalVille || ""}`,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -363,7 +371,7 @@ const ReservationTemplate = ({
       // TABLEAU ITEMS
       {
         table: {
-          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto"],
+          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"],
           body: [
             [
               { text: "Code", style: "tableHeader" },
@@ -373,14 +381,12 @@ const ReservationTemplate = ({
               { text: "Qté", style: "tableHeader" },
               { text: "Total HT", style: "tableHeader" },
               { text: "Total TTC", style: "tableHeader" },
+              { text: "Remise", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
               { text: item.code || "---", style: "tableCell" }, // Code
               { text: item.description, style: "tableCell" }, // Libellé
-              {
-                text: `${item.unitPriceHT?.toFixed(2)} €`,
-                style: "smallCell",
-              }, // P.U. HT
+              { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" }, // P.U. HT
               {
                 text: `${item.unitPriceTTC?.toFixed(2)} €`,
                 style: "smallCell",
@@ -396,6 +402,11 @@ const ReservationTemplate = ({
                 alignment: "right",
                 style: "tableCell",
               }, // Total TTC
+              {
+                text: `${item.discount}`,
+                alignment: "right",
+                style: "tableCell",
+              }, // Remise
             ]),
           ],
         },
@@ -481,23 +492,16 @@ const ReservationTemplate = ({
       // },
 
       // SIGNATURES
-      {
-        table: {
-          widths: ["100%"],
-          body: [
-            [
-              {
-                text: "MERCI DE VOTRE CONFIANCE.",
-                style: "signature",
-                alignment: "center",
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
-        marginBottom: 20,
-      },
     ],
+
+    footer: function (currentPage, pageCount) {
+      return {
+        text: "MERCI DE VOTRE CONFIANCE.",
+        style: "signature",
+        alignment: "center",
+        margin: [0, 0, 0, 10], // marge par rapport au bas
+      };
+    },
 
     styles: {
       headerTitle: { fontSize: 12, bold: true },

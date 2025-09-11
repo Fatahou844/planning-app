@@ -81,20 +81,28 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       name: `${Client?.firstName ? Client.firstName : ""} ${
         Client?.lastName ? Client.lastName : ""
       }`,
-      adresse: `${Client?.address ? Client?.address : ""} ${
-        Client?.postalCode ? Client.postalCode : ""
-      }`, // Si une adresse client est disponible, l'ajouter ici
+      adresse: `${Client?.address ? Client?.address : ""}`, // Si une adresse client est disponible, l'ajouter ici
       phone: Client?.phone ? Client.phone : "",
       email: Client?.email ? Client.email : "",
       ville: Client?.city ? Client.city : "",
       rdv: date ? date : "", // Date de l'événement (le RDV)
+      postalVille: `${Client?.postalCode ? Client?.postalCode : ""} ${
+        Client?.city ? Client.city : ""
+      }`,
     },
     items: details.map((item) => ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
-      discount: item.discountPercent || 0,
+
+      discount:
+        item.discountPercent && item.discountPercent !== ""
+          ? `${item.discountPercent}%`
+          : item.discountAmount && item.discountAmount !== ""
+          ? String(item.discountAmount)
+          : "0",
+
       discountAmount: item.discountAmount || 0,
       unitPriceTTCafterDiscount:
         item.unitPrice -
@@ -179,10 +187,7 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
                     alignment: "left",
                   },
                   {
-                    text: `du ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString(
-                      [],
-                      { hour: "2-digit", minute: "2-digit" }
-                    )}`,
+                    text: `du ${new Date().toLocaleDateString()}`,
                     style: "headerSub",
                     alignment: "left",
                   },
@@ -232,17 +237,17 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
                     alignment: "center",
                   },
                   {
-                    text: invoiceData.companyInfo.address,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
                     text: invoiceData.companyInfo.phone,
                     style: "infoBlock",
                     alignment: "center",
                   },
                   {
                     text: invoiceData.companyInfo.email,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: invoiceData.companyInfo.address,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -331,9 +336,12 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
                     alignment: "center",
                   },
                   {
-                    text: `${invoiceData.client?.adresse || ""} ${
-                      invoiceData.client?.postale || ""
-                    } ${invoiceData.client?.ville || ""}`,
+                    text: `${invoiceData.client?.adresse || ""}`,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text: `${invoiceData.client?.postalVille || ""}`,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -360,7 +368,7 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       // TABLEAU ITEMS
       {
         table: {
-          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto"],
+          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"],
           body: [
             [
               { text: "Code", style: "tableHeader" },
@@ -370,14 +378,12 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
               { text: "Qté", style: "tableHeader" },
               { text: "Total HT", style: "tableHeader" },
               { text: "Total TTC", style: "tableHeader" },
+              { text: "Remise", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
               { text: item.code || "---", style: "tableCell" }, // Code
               { text: item.description, style: "tableCell" }, // Libellé
-              {
-                text: `${item.unitPriceHT?.toFixed(2)} €`,
-                style: "smallCell",
-              }, // P.U. HT
+              { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" }, // P.U. HT
               {
                 text: `${item.unitPriceTTC?.toFixed(2)} €`,
                 style: "smallCell",
@@ -393,6 +399,11 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
                 alignment: "right",
                 style: "tableCell",
               }, // Total TTC
+              {
+                text: `${item.discount}`,
+                alignment: "right",
+                style: "tableCell",
+              }, // Remise
             ]),
           ],
         },
@@ -476,25 +487,16 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       //   style: "footer",
       //   alignment: "right",
       // },
-
-      // SIGNATURES
-      {
-        table: {
-          widths: ["100%"],
-          body: [
-            [
-              {
-                text: "MERCI DE VOTRE CONFIANCE.",
-                style: "signature",
-                alignment: "center",
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
-        marginBottom: 20,
-      },
     ],
+
+    footer: function (currentPage, pageCount) {
+      return {
+        text: "MERCI DE VOTRE CONFIANCE.",
+        style: "signature",
+        alignment: "center",
+        margin: [0, 0, 0, 10], // marge par rapport au bas
+      };
+    },
 
     styles: {
       headerTitle: { fontSize: 12, bold: true },
