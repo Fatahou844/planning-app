@@ -50,6 +50,8 @@ const InvoiceTemplateWithoutOR = ({
       address: companyInfo?.address,
       phone: companyInfo?.phone,
       email: companyInfo?.email,
+      codePostal: companyInfo?.codePostal,
+      ville: companyInfo?.ville,
     },
     vehicle: {
       model: Vehicle?.model ? Vehicle.model : "",
@@ -250,6 +252,14 @@ const InvoiceTemplateWithoutOR = ({
                           {
                             text: invoiceData.companyInfo.email,
                             style: "infoBlock",
+                          },
+                          {
+                            text:
+                              invoiceData.companyInfo.codePostal +
+                              " " +
+                              invoiceData.companyInfo.ville,
+                            style: "infoBlock",
+                            alignment: "center",
                           },
                         ],
                         margin: [8, 6, 8, 6],
@@ -533,7 +543,10 @@ const InvoiceTemplateWithoutOR = ({
     },
   };
   function generatePdf() {
-    pdfMake.createPdf(documentDefinition).open();
+    const fileName = `Facture_${invoiceData.orderNumber}_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    pdfMake.createPdf(documentDefinition).download(fileName);
     if (onInvoiceExecuted) {
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }

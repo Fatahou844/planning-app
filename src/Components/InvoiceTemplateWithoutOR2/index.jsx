@@ -54,6 +54,8 @@ const InvoiceTemplateWithoutOR2 = ({
       address: companyInfo?.address,
       phone: companyInfo?.phone,
       email: companyInfo?.email,
+      codePostal: companyInfo?.codePostal,
+      ville: companyInfo?.ville,
     },
     vehicle: {
       model: Vehicle?.model ? Vehicle.model : "",
@@ -254,6 +256,14 @@ const InvoiceTemplateWithoutOR2 = ({
                           {
                             text: invoiceData.companyInfo.email,
                             style: "infoBlock",
+                          },
+                          {
+                            text:
+                              invoiceData.companyInfo.codePostal +
+                              " " +
+                              invoiceData.companyInfo.ville,
+                            style: "infoBlock",
+                            alignment: "center",
                           },
                         ],
                         margin: [8, 6, 8, 6],
@@ -544,13 +554,27 @@ const InvoiceTemplateWithoutOR2 = ({
   //   }
   //   window.location.href = "/planning/categories";
   // }
+  // function generatePdf() {
+  //   pdfMake.createPdf(documentDefinition).open();
+  //   if (onInvoiceExecuted) {
+  //     onInvoiceExecuted(); // Déclenche la fonction du parent
+  //   }
+
+  //   // Attendre un court instant avant de rediriger
+  //   setTimeout(() => {
+  //     window.location.href = "/planning/categories";
+  //   }, 5000); // Petit délai pour éviter les pages blanches
+  // }
+
   function generatePdf() {
-    pdfMake.createPdf(documentDefinition).open();
+    const fileName = `Facture_${invoiceData.orderNumber}_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    pdfMake.createPdf(documentDefinition).download(fileName);
     if (onInvoiceExecuted) {
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }
 
-    // Attendre un court instant avant de rediriger
     setTimeout(() => {
       window.location.href = "/planning/categories";
     }, 5000); // Petit délai pour éviter les pages blanches

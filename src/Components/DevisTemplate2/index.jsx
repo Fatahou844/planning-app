@@ -67,6 +67,8 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       address: companyInfo?.address,
       phone: companyInfo?.phone,
       email: companyInfo?.email,
+      codePostal: companyInfo?.codePostal,
+      ville: companyInfo?.ville,
     },
     vehicle: {
       model: Vehicle?.model ? Vehicle.model : "",
@@ -237,6 +239,11 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
                     alignment: "center",
                   },
                   {
+                    text: invoiceData.companyInfo.address,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
                     text: invoiceData.companyInfo.phone,
                     style: "infoBlock",
                     alignment: "center",
@@ -246,8 +253,12 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
                     style: "infoBlock",
                     alignment: "center",
                   },
+
                   {
-                    text: invoiceData.companyInfo.address,
+                    text:
+                      invoiceData.companyInfo.codePostal +
+                      " " +
+                      invoiceData.companyInfo.ville,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -531,8 +542,11 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
     },
   };
 
-  function generatePdf() {
-    pdfMake.createPdf(documentDefinition).open();
+function generatePdf() {
+    const fileName = `Devis_${invoiceData.orderNumber}_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    pdfMake.createPdf(documentDefinition).download(fileName);
     if (onInvoiceExecuted) {
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }

@@ -52,6 +52,8 @@ const OrdreReparationTemplate2 = ({
       address: companyInfo?.address,
       phone: companyInfo?.phone,
       email: companyInfo?.email,
+      codePostal: companyInfo?.codePostal,
+      ville: companyInfo?.ville,
     },
     vehicle: {
       model: Vehicle?.model ? Vehicle.model : "",
@@ -268,6 +270,14 @@ const OrdreReparationTemplate2 = ({
                   },
                   {
                     text: invoiceData.companyInfo.email,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text:
+                      invoiceData.companyInfo.codePostal +
+                      " " +
+                      invoiceData.companyInfo.ville,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -561,7 +571,10 @@ const OrdreReparationTemplate2 = ({
   };
 
   function generatePdf() {
-    pdfMake.createPdf(documentDefinition).open();
+    const fileName = `OrdreReparation_${invoiceData.orderNumber}_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    pdfMake.createPdf(documentDefinition).download(fileName);
     if (onInvoiceExecuted) {
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }

@@ -54,6 +54,8 @@ const GarageSettings = () => {
     endHourTimeline: 0,
     startMinTimeline: 0,
     endMinTimeline: 0,
+    codePostal: "",
+    ville: "",
   });
 
   const [userInfo, setUserInfo] = useState({
@@ -337,6 +339,8 @@ const GarageSettings = () => {
           endHourTimeline: garageInfo.endHourTimeline,
           startMinTimeline: garageInfo.startMinTimeline,
           endMinTimeline: garageInfo.endMinTimeline,
+          codePostal: garageInfo.codePostal,
+          ville: garageInfo.ville,
         }
       );
 
@@ -510,6 +514,7 @@ const GarageSettings = () => {
                   />
                   <TextField
                     name="phone"
+                    placeholder="Téléphone"
                     fullWidth
                     value={garageInfo.phone}
                     onChange={handleChange}
@@ -522,8 +527,26 @@ const GarageSettings = () => {
                   />
                   <TextField
                     name="address"
+                    placeholder="Adresse locale"
                     fullWidth
                     value={garageInfo.address}
+                    onChange={handleChange}
+                  />
+                  {/* <label htmlFor="code postale">Code postal</label> */}
+
+                  <TextField
+                    name="codePostal"
+                    placeholder="Code postale"
+                    fullWidth
+                    value={garageInfo.codePostal}
+                    onChange={handleChange}
+                  />
+                  {/* <label htmlFor="ville">Ville</label> */}
+                  <TextField
+                    name="ville"
+                    placeholder="Ville"
+                    fullWidth
+                    value={garageInfo.ville}
                     onChange={handleChange}
                   />
 

@@ -64,6 +64,8 @@ const ReservationTemplate = ({
       address: companyInfo?.address,
       phone: companyInfo?.phone,
       email: companyInfo?.email,
+      codePostal: companyInfo?.codePostal,
+      ville: companyInfo?.ville,
     },
     vehicle: {
       model: Vehicle?.model ? Vehicle.model : "",
@@ -251,6 +253,14 @@ const ReservationTemplate = ({
                   },
                   {
                     text: invoiceData.companyInfo.email,
+                    style: "infoBlock",
+                    alignment: "center",
+                  },
+                  {
+                    text:
+                      invoiceData.companyInfo.codePostal +
+                      " " +
+                      invoiceData.companyInfo.ville,
                     style: "infoBlock",
                     alignment: "center",
                   },
@@ -537,7 +547,10 @@ const ReservationTemplate = ({
   };
 
   function generatePdf() {
-    pdfMake.createPdf(documentDefinition).open();
+    const fileName = `Resa_${invoiceData.orderNumber}_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
+    pdfMake.createPdf(documentDefinition).download(fileName);
     if (onInvoiceExecuted) {
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }
