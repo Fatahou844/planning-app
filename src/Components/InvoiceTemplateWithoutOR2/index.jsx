@@ -29,28 +29,19 @@ const InvoiceTemplateWithoutOR2 = ({
 
   const [logoBase64, setLogoBase64] = useState(null);
 
+  // Charger le logo en base64 via ton backend au montage du composant
   useEffect(() => {
     if (companyInfo?.logo) {
-      toBase64(companyInfo.logo).then((base64) => {
-        setLogoBase64(base64);
-      });
+      axios
+        .get(`/logo-base64?url=${encodeURIComponent(companyInfo.logo)}`)
+        .then((res) => {
+          setLogoBase64(res.data.base64); // axios place la réponse JSON dans res.data
+        })
+        .catch((err) => {
+          console.error("Erreur récupération logo:", err);
+        });
     }
   }, [companyInfo]);
-
-  function toBase64(url) {
-    return fetch(url)
-      .then((response) => response.blob())
-      .then(
-        (blob) =>
-          new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          })
-      );
-  }
-
   function getCurrentUser() {
     const storedUser = localStorage.getItem("me");
     if (storedUser) {
