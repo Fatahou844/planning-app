@@ -42,6 +42,30 @@ const InvoiceTemplateWithoutOR = ({
     fetchGarageInfo();
   }, [, user]);
 
+  const [logoBase64, setLogoBase64] = useState(null);
+
+  useEffect(() => {
+    if (companyInfo?.logo) {
+      toBase64(companyInfo.logo).then((base64) => {
+        setLogoBase64(base64);
+      });
+    }
+  }, [companyInfo]);
+
+  function toBase64(url) {
+    return fetch(url)
+      .then((response) => response.blob())
+      .then(
+        (blob) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          })
+      );
+  }
+
   const invoiceData = {
     orderNumber: NewEvent ? NewEvent.id : "",
     deposit: deposit,
@@ -173,12 +197,9 @@ const InvoiceTemplateWithoutOR = ({
                     marginBottom: 3,
                   },
                   {
-                    text: companyInfo?.logo || "", // lien affiché comme texte
-                    style: "headerSub",
+                    image: logoBase64, // on récupère directement le state
+                    width: 80,
                     alignment: "left",
-                    color: "blue",
-                    decoration: "underline",
-                    link: companyInfo?.logo || null,
                   },
                 ],
                 border: [false, false, false, false],
@@ -388,7 +409,7 @@ const InvoiceTemplateWithoutOR = ({
           },
         ],
         columnGap: 8,
-        margin: [0, 0, 0, 25], // <<--- marge en bas ajoutée ici
+        margin: [0, 0, 0, 40], // <<--- marge en bas ajoutée ici
       },
 
       // TABLEAU ITEMS
@@ -524,7 +545,7 @@ const InvoiceTemplateWithoutOR = ({
         fillColor: "#f9f9f9",
         padding: 5,
       },
-      infoBlock: { fontSize: 9, alignment: "center", margin: [0, 2, 0, 2] },
+      infoBlock: { fontSize: 9, alignment: "center", margin: [0, 2, 0, 4] },
       tableHeader: {
         bold: true,
         alignment: "center",

@@ -27,6 +27,30 @@ const InvoiceTemplateWithoutOR2 = ({
     userId: user?.uid,
   });
 
+  const [logoBase64, setLogoBase64] = useState(null);
+
+  useEffect(() => {
+    if (companyInfo?.logo) {
+      toBase64(companyInfo.logo).then((base64) => {
+        setLogoBase64(base64);
+      });
+    }
+  }, [companyInfo]);
+
+  function toBase64(url) {
+    return fetch(url)
+      .then((response) => response.blob())
+      .then(
+        (blob) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          })
+      );
+  }
+
   function getCurrentUser() {
     const storedUser = localStorage.getItem("me");
     if (storedUser) {
@@ -177,12 +201,9 @@ const InvoiceTemplateWithoutOR2 = ({
                     marginBottom: 3,
                   },
                   {
-                    text: companyInfo?.logo || "", // lien affiché comme texte
-                    style: "headerSub",
+                    image: logoBase64, // on récupère directement le state
+                    width: 80,
                     alignment: "left",
-                    color: "blue",
-                    decoration: "underline",
-                    link: companyInfo?.logo || null,
                   },
                 ],
                 border: [false, false, false, false],
@@ -226,7 +247,7 @@ const InvoiceTemplateWithoutOR2 = ({
                     type: "rect",
                     x: 0,
                     y: 0,
-                    w: 170, // largeur colonne (ajuste si besoin)
+                    w: 160, // largeur colonne (ajuste si besoin)
                     h: 120,
                     r: 8,
                     lineColor: "#cccccc",
@@ -286,7 +307,7 @@ const InvoiceTemplateWithoutOR2 = ({
                     type: "rect",
                     x: 0,
                     y: 0,
-                    w: 170,
+                    w: 160,
                     h: 120,
                     r: 8,
                     lineColor: "#cccccc",
@@ -346,7 +367,7 @@ const InvoiceTemplateWithoutOR2 = ({
                     type: "rect",
                     x: 0,
                     y: 0,
-                    w: 170,
+                    w: 160,
                     h: 120,
                     r: 8,
                     lineColor: "#cccccc",
@@ -392,7 +413,7 @@ const InvoiceTemplateWithoutOR2 = ({
           },
         ],
         columnGap: 8,
-        margin: [0, 0, 0, 25], // <<--- marge en bas ajoutée ici
+        margin: [0, 0, 0, 45], // <<--- marge en bas ajoutée ici
       },
 
       // TABLEAU ITEMS
@@ -528,7 +549,7 @@ const InvoiceTemplateWithoutOR2 = ({
         fillColor: "#f9f9f9",
         padding: 5,
       },
-      infoBlock: { fontSize: 9, alignment: "center", margin: [0, 2, 0, 2] },
+      infoBlock: { fontSize: 9, alignment: "center", margin: [0, 2, 0, 4] },
       tableHeader: {
         bold: true,
         alignment: "center",
@@ -547,25 +568,6 @@ const InvoiceTemplateWithoutOR2 = ({
     },
   };
 
-  // function generatePdf() {
-  //   pdfMake.createPdf(documentDefinition).open();
-  //   if (onInvoiceExecuted) {
-  //     onInvoiceExecuted(); // Déclenche la fonction du parent
-  //   }
-  //   window.location.href = "/planning/categories";
-  // }
-  // function generatePdf() {
-  //   pdfMake.createPdf(documentDefinition).open();
-  //   if (onInvoiceExecuted) {
-  //     onInvoiceExecuted(); // Déclenche la fonction du parent
-  //   }
-
-  //   // Attendre un court instant avant de rediriger
-  //   setTimeout(() => {
-  //     window.location.href = "/planning/categories";
-  //   }, 5000); // Petit délai pour éviter les pages blanches
-  // }
-
   function generatePdf() {
     const fileName = `Facture_${invoiceData.orderNumber}_${
       new Date().toISOString().split("T")[0]
@@ -575,9 +577,9 @@ const InvoiceTemplateWithoutOR2 = ({
       onInvoiceExecuted(); // Déclenche la fonction du parent
     }
 
-    setTimeout(() => {
-      window.location.href = "/planning/categories";
-    }, 5000); // Petit délai pour éviter les pages blanches
+    //   setTimeout(() => {
+    //     window.location.href = "/planning/categories";
+    //   }, 5000); // Petit délai pour éviter les pages blanches
   }
 
   // Générer le PDF
