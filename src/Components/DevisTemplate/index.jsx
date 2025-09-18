@@ -422,15 +422,16 @@ const DevisTemplate = ({
                       2
                     )} €`,
                     alignment: "right",
-                    style: "totalLabel",
+                    style: "totalSub",
                   },
                   {
                     text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
                     alignment: "right",
-                    style: "totalLabel",
+                    style: "totalSub",
                   },
                 ],
-                fillColor: "#f5f5f5", // gris clair
+                fillColor: "#f5f5f5",
+                margin: [2, 4, 2, 4],
               },
               {
                 text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(
@@ -438,7 +439,9 @@ const DevisTemplate = ({
                 )} €`,
                 alignment: "right",
                 style: "totalLabel",
-                fillColor: "#f5f5f5", // gris clair
+                fillColor: "#4F46E5",
+                color: "white",
+                margin: [2, 4, 2, 4],
               },
             ],
             [
@@ -452,7 +455,7 @@ const DevisTemplate = ({
                   invoiceData?.deposit || 0
                 ).toFixed(2)} €`,
                 alignment: "right",
-                style: "totalLabel",
+                style: "totalSub",
                 fillColor: "#f5f5f5",
               },
             ],
@@ -498,35 +501,49 @@ const DevisTemplate = ({
     },
 
     styles: {
-      headerTitle: { fontSize: 12, bold: true },
-      headerSub: { fontSize: 8, italics: true },
-      infoBlock: { fontSize: 9 }, // tout harmonisé
+      headerTitle: { fontSize: 14, bold: true, color: "#4F46E5" },
+      headerSub: { fontSize: 9, italics: true, color: "#64748B" },
+      infoBlock: { fontSize: 9, color: "#1E293B", alignment: "center" },
+
       tableHeader: {
         bold: true,
         alignment: "center",
-        fontSize: 8,
-        fillColor: "#eeeeee",
-        margin: [2, 2, 2, 2],
+        fontSize: 9,
+        fillColor: "#4F46E5",
+        color: "white",
+        margin: [2, 4, 2, 4],
       },
-      tableCell: { fontSize: 8 }, // Valeurs normales
-      smallCell: { fontSize: 8 }, // Qté, P.U., Remise
-      totalLabel: { fontSize: 8, bold: true },
-      sectionHeader: {
+
+      tableCell: { fontSize: 8, color: "#1E293B" },
+      smallCell: { fontSize: 8, color: "#1E293B", alignment: "right" },
+
+      totalLabel: {
         fontSize: 9,
         bold: true,
-        marginTop: 8,
-        marginBottom: 4,
+        color: "white",
+        fillColor: "#4F46E5", // 👈 reste violet uniquement pour TTC
+        alignment: "right",
+        margin: [2, 4, 2, 4],
       },
-      subheader: { fontSize: 8, marginBottom: 4 },
-      signature: { fontSize: 8, marginTop: 12 },
-      footer: { fontSize: 8, italics: true, marginTop: 8 },
-      barcodeZone: {
-        fontSize: 7,
+
+      totalSub: {
+        fontSize: 9,
         bold: true,
-        color: "grey",
-        margin: [4, 12, 4, 12],
+        color: "#1E293B", // 👈 texte sombre
+        alignment: "right",
       },
-      paragraph: { fontSize: 7, lineHeight: 1.1 },
+
+      sectionHeader: {
+        fontSize: 10,
+        bold: true,
+        color: "#3B82F6",
+        marginTop: 8,
+        marginBottom: 6,
+      },
+      subheader: { fontSize: 8, color: "#64748B", marginBottom: 4 },
+      signature: { fontSize: 8, marginTop: 12, color: "#1E293B" },
+      footer: { fontSize: 8, italics: true, marginTop: 8, color: "#64748B" },
+      paragraph: { fontSize: 7, lineHeight: 1.2, color: "#64748B" },
     },
   };
 

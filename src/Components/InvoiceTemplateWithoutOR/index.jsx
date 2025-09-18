@@ -1,10 +1,11 @@
 import { Button } from "@mui/material";
+import { createCanvas } from "canvas";
+import JsBarcode from "jsbarcode";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
-
 const InvoiceTemplateWithoutOR = ({
   NewEvent,
   details,
@@ -170,7 +171,12 @@ const InvoiceTemplateWithoutOR = ({
         : ""
     }`,
   };
-
+  const canvas = createCanvas();
+  JsBarcode(canvas, `Facture:${invoiceData?.orderNumber || "0000"}`, {
+    format: "CODE128",
+    displayValue: true,
+  });
+  const barcodeBase64 = canvas.toDataURL("image/png");
   const documentDefinition = {
     content: [
       // HEADER
@@ -179,7 +185,7 @@ const InvoiceTemplateWithoutOR = ({
           widths: ["50%", "50%"],
           body: [
             [
-              // Colonne gauche : Date + lien logo
+              // Colonne gauche : Date + logo
               {
                 stack: [
                   {
@@ -189,7 +195,7 @@ const InvoiceTemplateWithoutOR = ({
                     marginBottom: 3,
                   },
                   {
-                    image: logoBase64, // on récupère directement le state
+                    image: logoBase64,
                     width: 80,
                     alignment: "left",
                   },
@@ -197,21 +203,23 @@ const InvoiceTemplateWithoutOR = ({
                 border: [false, false, false, false],
               },
 
-              // Colonne droite : Titre + QR Code
+              // Colonne droite : Titre + QR Code superposés
               {
                 stack: [
                   {
-                    text: `FACTURE N° ${invoiceData?.orderNumber}`,
-                    style: "headerTitle",
-                    alignment: "right",
-                    marginBottom: 3,
+                    image: barcodeBase64,
+                    fit: [200, 80],
+                    alignment: "center",
+                    border: [true, true, true, true],
+                    fillColor: "#F8FAFC",
                   },
                   {
-                    qr: `OR:${invoiceData?.orderNumber || "0000"} | Fin:${
-                      invoiceData?.date || ""
-                    } | Client:${invoiceData?.client?.name || ""}`,
-                    fit: 70,
-                    alignment: "right",
+                    text: `FACTURE N° ${invoiceData?.orderNumber}`,
+                    style: "headerTitle",
+                    alignment: "center",
+                    bold: true,
+                    fontSize: 16,
+                    marginTop: -70, // remonte le texte pour le superposer au code-barres
                   },
                 ],
                 border: [false, false, false, false],
@@ -401,7 +409,7 @@ const InvoiceTemplateWithoutOR = ({
           },
         ],
         columnGap: 8,
-        margin: [0, 0, 0, 40], // <<--- marge en bas ajoutée ici
+        margin: [0, 0, 0, 60], // <<--- marge en bas ajoutée ici
       },
 
       // TABLEAU ITEMS
@@ -463,15 +471,16 @@ const InvoiceTemplateWithoutOR = ({
                       2
                     )} €`,
                     alignment: "right",
-                    style: "totalLabel",
+                    style: "totalSub",
                   },
                   {
                     text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
                     alignment: "right",
-                    style: "totalLabel",
+                    style: "totalSub",
                   },
                 ],
                 fillColor: "#f5f5f5",
+                margin: [2, 4, 2, 4],
               },
               {
                 text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(
@@ -479,7 +488,9 @@ const InvoiceTemplateWithoutOR = ({
                 )} €`,
                 alignment: "right",
                 style: "totalLabel",
-                fillColor: "#f5f5f5",
+                fillColor: "#4F46E5",
+                color: "white",
+                margin: [2, 4, 2, 4],
               },
             ],
             [
@@ -493,7 +504,7 @@ const InvoiceTemplateWithoutOR = ({
                   invoiceData?.deposit || 0
                 ).toFixed(2)} €`,
                 alignment: "right",
-                style: "totalLabel",
+                style: "totalSub",
                 fillColor: "#f5f5f5",
               },
             ],
@@ -530,29 +541,49 @@ const InvoiceTemplateWithoutOR = ({
     },
 
     styles: {
-      headerTitle: { fontSize: 12, bold: true },
-      headerSub: { fontSize: 8, italics: true },
-      infoCard: {
-        margin: [0, 0, 0, 0],
-        fillColor: "#f9f9f9",
-        padding: 5,
-      },
-      infoBlock: { fontSize: 9, alignment: "center", margin: [0, 2, 0, 4] },
+      headerTitle: { fontSize: 14, bold: true, color: "#4F46E5" },
+      headerSub: { fontSize: 9, italics: true, color: "#64748B" },
+      infoBlock: { fontSize: 9, color: "#1E293B", alignment: "center" },
+
       tableHeader: {
         bold: true,
         alignment: "center",
-        fontSize: 8,
-        fillColor: "#eeeeee",
-        margin: [2, 2, 2, 2],
+        fontSize: 9,
+        fillColor: "#4F46E5",
+        color: "white",
+        margin: [2, 4, 2, 4],
       },
-      tableCell: { fontSize: 8 },
-      smallCell: { fontSize: 8 },
-      totalLabel: { fontSize: 8, bold: true },
-      sectionHeader: { fontSize: 9, bold: true, marginTop: 8, marginBottom: 4 },
-      subheader: { fontSize: 8, marginBottom: 4 },
-      signature: { fontSize: 8, marginTop: 12 },
-      footer: { fontSize: 8, italics: true, marginTop: 8 },
-      paragraph: { fontSize: 7, lineHeight: 1.1 },
+
+      tableCell: { fontSize: 8, color: "#1E293B" },
+      smallCell: { fontSize: 8, color: "#1E293B", alignment: "right" },
+
+      totalLabel: {
+        fontSize: 9,
+        bold: true,
+        color: "white",
+        fillColor: "#4F46E5", // 👈 reste violet uniquement pour TTC
+        alignment: "right",
+        margin: [2, 4, 2, 4],
+      },
+
+      totalSub: {
+        fontSize: 9,
+        bold: true,
+        color: "#1E293B", // 👈 texte sombre
+        alignment: "right",
+      },
+
+      sectionHeader: {
+        fontSize: 10,
+        bold: true,
+        color: "#3B82F6",
+        marginTop: 8,
+        marginBottom: 6,
+      },
+      subheader: { fontSize: 8, color: "#64748B", marginBottom: 4 },
+      signature: { fontSize: 8, marginTop: 12, color: "#1E293B" },
+      footer: { fontSize: 8, italics: true, marginTop: 8, color: "#64748B" },
+      paragraph: { fontSize: 7, lineHeight: 1.2, color: "#64748B" },
     },
   };
   function generatePdf() {

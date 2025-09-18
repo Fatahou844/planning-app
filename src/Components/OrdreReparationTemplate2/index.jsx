@@ -6,6 +6,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
 import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
+
+import { createCanvas } from "canvas";
+import JsBarcode from "jsbarcode";
 const OrdreReparationTemplate2 = ({
   editedEvent,
   details,
@@ -179,44 +182,395 @@ const OrdreReparationTemplate2 = ({
 
   console.log("INCOICE DATA*********************", invoiceData);
 
+  // Génération du code-barres en base64
+  const canvas = createCanvas();
+  JsBarcode(canvas, `OR:${invoiceData?.orderNumber || "0000"}`, {
+    format: "CODE128",
+    displayValue: true,
+  });
+  const barcodeBase64 = canvas.toDataURL("image/png");
+
+  // const documentDefinition = {
+  //   content: [
+  //     // HEADER avec OR + zone SCAN
+  //     {
+  //       table: {
+  //         widths: ["65%", "35%"],
+  //         body: [
+  //           [
+  //             {
+  //               text: `ORDRE DE REPARATION N° ${invoiceData?.orderNumber}`,
+  //               style: "headerTitle",
+  //               alignment: "left",
+  //             },
+  //             {
+  //               text: `RDV : ${invoiceData?.rdvDate || ""}`,
+  //               style: "headerSub",
+  //               alignment: "right",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //       layout: "noBorders",
+  //       marginBottom: 8,
+  //     },
+
+  //     {
+  //       table: {
+  //         widths: ["50%", "50%"],
+  //         body: [
+  //           [
+  //             {
+  //               image: barcodeBase64,
+  //               fit: [200, 80], // adapte la taille
+  //               alignment: "center",
+  //               border: [true, true, true, true],
+  //               fillColor: "#F8FAFC",
+  //             },
+  //             {
+  //               text: `Fin des travaux : ${invoiceData?.endDate || ""}`,
+  //               style: "headerSub",
+  //               alignment: "right",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //       layout: "noBorders",
+  //       marginBottom: 15,
+  //     },
+
+  //     // BLOCS ENTREPRISE / VEHICULE / CLIENT
+  //     {
+  //       columns: [
+  //         // ENTREPRISE
+  //         {
+  //           stack: [
+  //             {
+  //               canvas: [
+  //                 {
+  //                   type: "rect",
+  //                   x: 0,
+  //                   y: 0,
+  //                   w: 160,
+  //                   h: 80,
+  //                   r: 8,
+  //                   color: "#F8FAFC",
+  //                   lineColor: "#E2E8F0",
+  //                 },
+  //               ],
+  //               margin: [0, 0, 0, -80],
+  //             },
+  //             {
+  //               stack: [
+  //                 { text: invoiceData.companyInfo.name, style: "infoBlock" },
+  //                 { text: invoiceData.companyInfo.address, style: "infoBlock" },
+  //                 { text: invoiceData.companyInfo.phone, style: "infoBlock" },
+  //                 { text: invoiceData.companyInfo.email, style: "infoBlock" },
+  //                 {
+  //                   text:
+  //                     invoiceData.companyInfo.codePostal +
+  //                     " " +
+  //                     invoiceData.companyInfo.ville,
+  //                   style: "infoBlock",
+  //                 },
+  //               ],
+  //               margin: [5, 8, 5, 0],
+  //             },
+  //           ],
+  //         },
+
+  //         // VEHICULE
+  //         {
+  //           stack: [
+  //             {
+  //               canvas: [
+  //                 {
+  //                   type: "rect",
+  //                   x: 0,
+  //                   y: 0,
+  //                   w: 160,
+  //                   h: 80,
+  //                   r: 8,
+  //                   color: "#F8FAFC",
+  //                   lineColor: "#E2E8F0",
+  //                 },
+  //               ],
+  //               margin: [0, 0, 0, -80],
+  //             },
+  //             {
+  //               stack: [
+  //                 {
+  //                   text: `${invoiceData.vehicle.model} - ${
+  //                     invoiceData.vehicle.engine || ""
+  //                   }`,
+  //                   style: "infoBlock",
+  //                 },
+  //                 {
+  //                   text: `VIN : ${invoiceData.vehicle.vin}`,
+  //                   style: "infoBlock",
+  //                 },
+  //                 {
+  //                   text: `Km : ${invoiceData.vehicle.km} km`,
+  //                   style: "infoBlock",
+  //                 },
+  //                 {
+  //                   text: `Immat : ${invoiceData.vehicle.licensePlate || ""}`,
+  //                   style: "infoBlock",
+  //                 },
+  //                 {
+  //                   text: `Couleur : ${invoiceData.vehicle.color}`,
+  //                   style: "infoBlock",
+  //                 },
+  //               ],
+  //               margin: [5, 8, 5, 0],
+  //             },
+  //           ],
+  //         },
+
+  //         // CLIENT
+  //         {
+  //           stack: [
+  //             {
+  //               canvas: [
+  //                 {
+  //                   type: "rect",
+  //                   x: 0,
+  //                   y: 0,
+  //                   w: 160,
+  //                   h: 80,
+  //                   r: 8,
+  //                   color: "#F8FAFC",
+  //                   lineColor: "#E2E8F0",
+  //                 },
+  //               ],
+  //               margin: [0, 0, 0, -80],
+  //             },
+  //             {
+  //               stack: [
+  //                 { text: invoiceData.client.name, style: "infoBlock" },
+  //                 {
+  //                   text: `${invoiceData.client?.adresse || ""}`,
+  //                   style: "infoBlock",
+  //                 },
+  //                 {
+  //                   text: `${invoiceData.client?.postalVille || ""}`,
+  //                   style: "infoBlock",
+  //                 },
+  //                 { text: `${invoiceData.client.phone}`, style: "infoBlock" },
+  //                 { text: `${invoiceData.client.email}`, style: "infoBlock" },
+  //               ],
+  //               margin: [5, 8, 5, 0],
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //       columnGap: 8,
+  //       marginBottom: 30,
+  //     },
+
+  //     // TABLEAU ITEMS
+  //     {
+  //       table: {
+  //         widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"],
+  //         body: [
+  //           [
+  //             { text: "Code", style: "tableHeader" },
+  //             { text: "Libellé / Travaux", style: "tableHeader" },
+  //             { text: "P.U. HT", style: "tableHeader" },
+  //             { text: "P.U. TTC", style: "tableHeader" },
+  //             { text: "Qté", style: "tableHeader" },
+  //             { text: "Total HT", style: "tableHeader" },
+  //             { text: "Total TTC", style: "tableHeader" },
+  //             { text: "Remise", style: "tableHeader" },
+  //           ],
+  //           ...invoiceData.items.map((item) => [
+  //             { text: item.code || "---", style: "tableCell" },
+  //             { text: item.description, style: "tableCell" },
+  //             { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" },
+  //             {
+  //               text: `${item.unitPriceTTC?.toFixed(2)} €`,
+  //               style: "smallCell",
+  //             },
+  //             { text: item.quantity, style: "smallCell" },
+  //             {
+  //               text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
+  //               alignment: "right",
+  //               style: "tableCell",
+  //             },
+  //             {
+  //               text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
+  //               alignment: "right",
+  //               style: "tableCell",
+  //             },
+  //             {
+  //               text: `${item.discount}`,
+  //               alignment: "right",
+  //               style: "tableCell",
+  //             },
+  //           ]),
+  //         ],
+  //       },
+  //       layout: "lightHorizontalLines",
+  //       marginBottom: 20,
+  //     },
+
+  //     // TOTAUX
+  //     {
+  //       table: {
+  //         widths: ["50%", "50%"],
+  //         body: [
+  //           [
+  //             {
+  //               stack: [
+  //                 {
+  //                   text: `Total HT : ${invoiceData.totals.totalHT.toFixed(
+  //                     2
+  //                   )} €`,
+  //                   alignment: "right",
+  //                   style: "totalLabel",
+  //                 },
+  //                 {
+  //                   text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
+  //                   alignment: "right",
+  //                   style: "totalLabel",
+  //                 },
+  //               ],
+  //               fillColor: "#F8FAFC",
+  //             },
+  //             {
+  //               text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(
+  //                 2
+  //               )} €`,
+  //               alignment: "right",
+  //               style: "totalLabel",
+  //               fillColor: "#EEF2FF",
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "",
+  //               border: [false, false, false, false],
+  //               fillColor: "#F8FAFC",
+  //             },
+  //             {
+  //               text: `Acompte versé : ${
+  //                 invoiceData.deposit?.toFixed(2) || "0.00"
+  //               } €`,
+  //               alignment: "right",
+  //               style: "totalLabel",
+  //               fillColor: "#F8FAFC",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //       layout: "lightHorizontalLines",
+  //       marginBottom: 20,
+  //     },
+
+  //     // OBSERVATIONS
+  //     { text: "Observations et conseils :", style: "sectionHeader" },
+  //     {
+  //       text: invoiceData.observations || "",
+  //       style: "subheader",
+  //       marginBottom: 10,
+  //     },
+
+  //     // NOTES EXPLICATIVES
+  //     {
+  //       text: companyInfo.noteLegal,
+  //       style: "paragraph",
+  //       alignment: "justify",
+  //       marginBottom: 15,
+  //     },
+
+  //     {
+  //       text: `Le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString(
+  //         [],
+  //         { hour: "2-digit", minute: "2-digit" }
+  //       )}`,
+  //       style: "footer",
+  //       alignment: "right",
+  //     },
+
+  //     // SIGNATURES
+  //     {
+  //       table: {
+  //         widths: ["50%", "50%"],
+  //         body: [
+  //           [
+  //             {
+  //               text: "Signature du Réceptionnaire",
+  //               style: "signature",
+  //               alignment: "left",
+  //             },
+  //             {
+  //               text: "Signature du Client",
+  //               style: "signature",
+  //               alignment: "right",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //       layout: "noBorders",
+  //       marginBottom: 20,
+  //     },
+  //   ],
+
+  //   styles: {
+  //     headerTitle: { fontSize: 14, bold: true, color: "#4F46E5" },
+  //     headerSub: { fontSize: 9, italics: true, color: "#64748B" },
+  //     infoBlock: { fontSize: 9, color: "#1E293B", alignment: "center" },
+  //     tableHeader: {
+  //       bold: true,
+  //       alignment: "center",
+  //       fontSize: 9,
+  //       fillColor: "#EEF2FF",
+  //       color: "#1E293B",
+  //       margin: [2, 4, 2, 4],
+  //     },
+  //     tableCell: { fontSize: 8, color: "#1E293B" },
+  //     smallCell: { fontSize: 8, color: "#1E293B" },
+  //     totalLabel: { fontSize: 9, bold: true, color: "#4F46E5" },
+  //     sectionHeader: {
+  //       fontSize: 10,
+  //       bold: true,
+  //       color: "#3B82F6",
+  //       marginTop: 8,
+  //       marginBottom: 6,
+  //     },
+  //     subheader: { fontSize: 8, color: "#64748B", marginBottom: 4 },
+  //     signature: { fontSize: 8, marginTop: 12, color: "#1E293B" },
+  //     footer: { fontSize: 8, italics: true, marginTop: 8, color: "#64748B" },
+  //     paragraph: { fontSize: 7, lineHeight: 1.2, color: "#64748B" },
+  //   },
+  // };
+
   const documentDefinition = {
     content: [
       // HEADER avec OR + zone SCAN
-      {
-        table: {
-          widths: ["65%", "35%"],
-          body: [
-            [
-              {
-                text: `ORDRE DE REPARATION N° ${invoiceData?.orderNumber}`,
-                style: "headerTitle",
-                alignment: "left",
-              },
-              {
-                text: `RDV : ${invoiceData?.rdvDate || ""}`,
-                style: "headerSub",
-                alignment: "right",
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
-        marginBottom: 8,
-      },
-
       {
         table: {
           widths: ["50%", "50%"],
           body: [
             [
               {
-                qr: `OR:${invoiceData?.orderNumber || "0000"} | Fin:${
-                  invoiceData?.endDate || ""
-                } | Client:${invoiceData?.client?.name || ""}`,
-                fit: 80, // taille du QR Code
-                alignment: "center",
+                stack: [
+                  {
+                    image: barcodeBase64,
+                    fit: [200, 80], // taille du code-barres
+                    alignment: "center",
+                  },
+                  {
+                    text: `ORDRE DE REPARATION N° ${invoiceData?.orderNumber}`,
+                    style: "headerTitle",
+                    bold: true,
+
+                    alignment: "center",
+                    marginTop: -70, // remonte le texte pour le superposer au code-barres
+                  },
+                ],
+                fillColor: "#F8FAFC",
                 border: [true, true, true, true],
-                fillColor: "#f5f5f5",
               },
               {
                 text: `Fin des travaux : ${invoiceData?.endDate || ""}`,
@@ -227,10 +581,9 @@ const OrdreReparationTemplate2 = ({
           ],
         },
         layout: "noBorders",
-        marginBottom: 15,
+        marginBottom: 55,
       },
-
-      // BLOCS ENTREPRISE / VEHICULE / CLIENT (sans titres)
+      // BLOCS ENTREPRISE / VEHICULE / CLIENT
       {
         columns: [
           // ENTREPRISE
@@ -244,42 +597,25 @@ const OrdreReparationTemplate2 = ({
                     y: 0,
                     w: 160,
                     h: 80,
-                    r: 6,
-                    color: "#f9f9f9",
-                    lineColor: "#cccccc",
+                    r: 8,
+                    color: "#F8FAFC",
+                    lineColor: "#E2E8F0",
                   },
                 ],
                 margin: [0, 0, 0, -80],
               },
               {
                 stack: [
-                  {
-                    text: invoiceData.companyInfo.name,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
-                    text: invoiceData.companyInfo.address,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
-                    text: invoiceData.companyInfo.phone,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
-                    text: invoiceData.companyInfo.email,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
+                  { text: invoiceData.companyInfo.name, style: "infoBlock" },
+                  { text: invoiceData.companyInfo.address, style: "infoBlock" },
+                  { text: invoiceData.companyInfo.phone, style: "infoBlock" },
+                  { text: invoiceData.companyInfo.email, style: "infoBlock" },
                   {
                     text:
                       invoiceData.companyInfo.codePostal +
                       " " +
                       invoiceData.companyInfo.ville,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                 ],
                 margin: [5, 8, 5, 0],
@@ -298,9 +634,9 @@ const OrdreReparationTemplate2 = ({
                     y: 0,
                     w: 160,
                     h: 80,
-                    r: 6,
-                    color: "#f9f9f9",
-                    lineColor: "#cccccc",
+                    r: 8,
+                    color: "#F8FAFC",
+                    lineColor: "#E2E8F0",
                   },
                 ],
                 margin: [0, 0, 0, -80],
@@ -312,27 +648,22 @@ const OrdreReparationTemplate2 = ({
                       invoiceData.vehicle.engine || ""
                     }`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                   {
                     text: `VIN : ${invoiceData.vehicle.vin}`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                   {
                     text: `Km : ${invoiceData.vehicle.km} km`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                   {
                     text: `Immat : ${invoiceData.vehicle.licensePlate || ""}`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                   {
                     text: `Couleur : ${invoiceData.vehicle.color}`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                 ],
                 margin: [5, 8, 5, 0],
@@ -351,40 +682,26 @@ const OrdreReparationTemplate2 = ({
                     y: 0,
                     w: 160,
                     h: 80,
-                    r: 6,
-                    color: "#f9f9f9",
-                    lineColor: "#cccccc",
+                    r: 8,
+                    color: "#F8FAFC",
+                    lineColor: "#E2E8F0",
                   },
                 ],
                 margin: [0, 0, 0, -80],
               },
               {
                 stack: [
-                  {
-                    text: invoiceData.client.name,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
+                  { text: invoiceData.client.name, style: "infoBlock" },
                   {
                     text: `${invoiceData.client?.adresse || ""}`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
                   {
                     text: `${invoiceData.client?.postalVille || ""}`,
                     style: "infoBlock",
-                    alignment: "center",
                   },
-                  {
-                    text: `${invoiceData.client.phone}`,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
-                  {
-                    text: `${invoiceData.client.email}`,
-                    style: "infoBlock",
-                    alignment: "center",
-                  },
+                  { text: `${invoiceData.client.phone}`, style: "infoBlock" },
+                  { text: `${invoiceData.client.email}`, style: "infoBlock" },
                 ],
                 margin: [5, 8, 5, 0],
               },
@@ -411,29 +728,29 @@ const OrdreReparationTemplate2 = ({
               { text: "Remise", style: "tableHeader" },
             ],
             ...invoiceData.items.map((item) => [
-              { text: item.code || "---", style: "tableCell" }, // Code
-              { text: item.description, style: "tableCell" }, // Libellé
-              { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" }, // P.U. HT
+              { text: item.code || "---", style: "tableCell" },
+              { text: item.description, style: "tableCell" },
+              { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" },
               {
                 text: `${item.unitPriceTTC?.toFixed(2)} €`,
                 style: "smallCell",
-              }, // P.U. TTC
-              { text: item.quantity, style: "smallCell" }, // Qté
+              },
+              { text: item.quantity, style: "smallCell" },
               {
                 text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
                 alignment: "right",
                 style: "tableCell",
-              }, // Total HT
+              },
               {
                 text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
                 alignment: "right",
                 style: "tableCell",
-              }, // Total TTC
+              },
               {
                 text: `${item.discount}`,
                 alignment: "right",
                 style: "tableCell",
-              }, // Remise
+              },
             ]),
           ],
         },
@@ -453,39 +770,34 @@ const OrdreReparationTemplate2 = ({
                     text: `Total HT : ${invoiceData.totals.totalHT.toFixed(
                       2
                     )} €`,
-                    alignment: "right",
-                    style: "totalLabel",
+                    style: "totalSub", // 👈 style plus léger
                   },
                   {
                     text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
-                    alignment: "right",
-                    style: "totalLabel",
+                    style: "totalSub", // 👈 idem
                   },
                 ],
-                fillColor: "#f5f5f5", // gris clair
+                fillColor: "#F8FAFC", // 👈 même fond que les blocs info
+                margin: [2, 4, 2, 4],
               },
               {
                 text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(
                   2
                 )} €`,
-                alignment: "right",
-                style: "totalLabel",
-                fillColor: "#f5f5f5", // gris clair
+                style: "totalLabel", // 👈 celui-là garde violet + blanc
               },
             ],
             [
               {
                 text: "",
                 border: [false, false, false, false],
-                fillColor: "#f5f5f5",
+                fillColor: "#F8FAFC",
               },
               {
                 text: `Acompte versé : ${
                   invoiceData.deposit?.toFixed(2) || "0.00"
                 } €`,
-                alignment: "right",
-                style: "totalLabel",
-                fillColor: "#f5f5f5",
+                style: "totalSub", // 👈 on garde le style plus lisible
               },
             ],
           ],
@@ -493,6 +805,7 @@ const OrdreReparationTemplate2 = ({
         layout: "lightHorizontalLines",
         marginBottom: 20,
       },
+
       // OBSERVATIONS
       { text: "Observations et conseils :", style: "sectionHeader" },
       {
@@ -543,30 +856,49 @@ const OrdreReparationTemplate2 = ({
     ],
 
     styles: {
-      headerTitle: { fontSize: 12, bold: true },
-      headerSub: { fontSize: 8, italics: true },
-      infoBlock: { fontSize: 9 }, // tout harmonisé
+      headerTitle: { fontSize: 14, bold: true, color: "#4F46E5" },
+      headerSub: { fontSize: 9, italics: true, color: "#64748B" },
+      infoBlock: { fontSize: 9, color: "#1E293B", alignment: "center" },
+
       tableHeader: {
         bold: true,
         alignment: "center",
-        fontSize: 8,
-        fillColor: "#eeeeee",
-        margin: [2, 2, 2, 2],
+        fontSize: 9,
+        fillColor: "#4F46E5",
+        color: "white",
+        margin: [2, 4, 2, 4],
       },
-      tableCell: { fontSize: 8 }, // Valeurs normales
-      smallCell: { fontSize: 8 }, // Qté, P.U., Remise
-      totalLabel: { fontSize: 8, bold: true },
-      sectionHeader: { fontSize: 9, bold: true, marginTop: 8, marginBottom: 4 },
-      subheader: { fontSize: 8, marginBottom: 4 },
-      signature: { fontSize: 8, marginTop: 12 },
-      footer: { fontSize: 8, italics: true, marginTop: 8 },
-      barcodeZone: {
-        fontSize: 7,
+
+      tableCell: { fontSize: 8, color: "#1E293B" },
+      smallCell: { fontSize: 8, color: "#1E293B", alignment: "right" },
+
+      totalLabel: {
+        fontSize: 9,
         bold: true,
-        color: "grey",
-        margin: [4, 12, 4, 12],
+        color: "white",
+        fillColor: "#4F46E5", // 👈 reste violet uniquement pour TTC
+        alignment: "right",
+        margin: [2, 4, 2, 4],
       },
-      paragraph: { fontSize: 7, lineHeight: 1.1 },
+
+      totalSub: {
+        fontSize: 9,
+        bold: true,
+        color: "#1E293B", // 👈 texte sombre
+        alignment: "right",
+      },
+
+      sectionHeader: {
+        fontSize: 10,
+        bold: true,
+        color: "#3B82F6",
+        marginTop: 8,
+        marginBottom: 6,
+      },
+      subheader: { fontSize: 8, color: "#64748B", marginBottom: 4 },
+      signature: { fontSize: 8, marginTop: 12, color: "#1E293B" },
+      footer: { fontSize: 8, italics: true, marginTop: 8, color: "#64748B" },
+      paragraph: { fontSize: 7, lineHeight: 1.2, color: "#64748B" },
     },
   };
 
