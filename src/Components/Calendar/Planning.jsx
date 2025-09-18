@@ -1892,7 +1892,7 @@ const Planning = () => {
       discountAmount: "",
     },
   ]);
-  const [deposit, setDeposit] = useState(0);
+  const [deposit, setDeposit] = useState(0); 
 
   const handleDetailChange = (event, index) => {
     const { name, value } = event.target;
