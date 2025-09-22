@@ -88,17 +88,17 @@ const OrdreReparationTemplate2 = ({
       discount:
         item.discountPercent && item.discountPercent !== ""
           ? `${item.discountPercent}%`
-          : item.discountAmount && item.discountAmount !== ""
-          ? String(item.discountAmount)
+          : item.discountValue && item.discountValue !== ""
+          ? String(item.discountValue)
           : "0",
-      discountAmount: item.discountAmount || 0,
+      discountValue: item.discountValue || 0,
       unitPriceTTCafterDiscount:
         item.unitPrice -
-        item.discountAmount -
+        item.discountValue -
         (item.unitPrice * item.discountPercent) / 100,
       unitPriceHTafterDiscount:
         item.unitPrice / 1.2 -
-        item.discountAmount -
+        item.discountValue -
         (item.unitPrice * item.discountPercent) / 120,
     })),
 
@@ -106,14 +106,14 @@ const OrdreReparationTemplate2 = ({
       totalHT: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const discountValue = parseFloat(item.discountValue) || 0;
         const quantity = parseFloat(item.quantity) || 1;
 
         const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
           unitPriceHT * (1 - discountPercent / 100) -
-            (discountAmount / quantity || 0)
+            (discountValue / quantity || 0)
         );
 
         return acc + discountedPriceHT * quantity;
@@ -122,14 +122,14 @@ const OrdreReparationTemplate2 = ({
       tva: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const discountValue = parseFloat(item.discountValue) || 0;
         const quantity = parseFloat(item.quantity) || 1;
 
         const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
           unitPriceHT * (1 - discountPercent / 100) -
-            (discountAmount / quantity || 0)
+            (discountValue / quantity || 0)
         );
 
         return acc + discountedPriceHT * quantity * 0.2;
@@ -138,13 +138,13 @@ const OrdreReparationTemplate2 = ({
       totalTTC: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const discountValue = parseFloat(item.discountValue) || 0;
         const quantity = parseFloat(item.quantity) || 1;
 
         const discountedPriceTTC = Math.max(
           0,
           unitPrice * (1 - discountPercent / 100) -
-            (discountAmount / quantity || 0)
+            (discountValue / quantity || 0)
         );
 
         return acc + discountedPriceTTC * quantity;

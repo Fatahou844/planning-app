@@ -191,8 +191,8 @@ function DocModal({
 
             if (item.discountPercent && item.discountPercent !== "") {
               inputValue = `${item.discountPercent}%`;
-            } else if (item.discountAmount && item.discountAmount !== "") {
-              inputValue = String(item.discountAmount);
+            } else if (item.discountValue && item.discountValue !== "") {
+              inputValue = String(item.discountValue);
             }
 
             return {
@@ -389,7 +389,7 @@ function DocModal({
           detail.quantity?.toString().trim() ||
           detail.unitPrice?.toString().trim() ||
           detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.discountValue?.toString().trim()
         );
       });
 
@@ -409,7 +409,7 @@ function DocModal({
           quantity: detail.quantity || 0,
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
-          discountAmount: detail.discountAmount || 0,
+          discountValue: detail.discountValue || 0,
         });
       }
 
@@ -449,6 +449,7 @@ function DocModal({
 
       if (onNotificationSuccess) {
         onNotificationSuccess(newReservation);
+        setNewOrder(newReservation);
         console.log(
           "Add reservation Component: RESA reçue dans DocModal onNotificationSuccess :",
           newReservation
@@ -466,7 +467,7 @@ function DocModal({
           detail.quantity?.toString().trim() ||
           detail.unitPrice?.toString().trim() ||
           detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.discountValue?.toString().trim()
         );
       });
 
@@ -486,7 +487,7 @@ function DocModal({
       // 4. Notifications + actions UI
       setCollectionName("reservations");
       if (onEventTriggered) onEventTriggered();
-      handleResaCReated();
+      handleResaCReated(newReservation);
       onClose();
     } catch (error) {
       console.error("❌ Erreur lors de la création de la réservation :", error);
@@ -510,7 +511,7 @@ function DocModal({
       detail.inputValue = raw;
 
       // Réinitialiser d'abord
-      detail.discountAmount = "";
+      detail.discountValue = "";
       detail.discountPercent = "";
 
       const cleaned = normalizedValue.replace("%", "");
@@ -519,7 +520,7 @@ function DocModal({
       if (normalizedValue.includes("%") && !isNaN(value)) {
         detail.discountPercent = value;
       } else if (!isNaN(value)) {
-        detail.discountAmount = value;
+        detail.discountValue = value;
       }
 
       // detail.inputValue = raw;
@@ -565,7 +566,7 @@ function DocModal({
         quantityInput: "",
         unitPrice: 0,
         unitPriceInput: "",
-        discountAmount: "",
+        discountValue: "",
         discountPercent: "",
         inputValue: "",
       },
@@ -579,9 +580,9 @@ function DocModal({
       // Priorité au pourcentage
       discount =
         detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
+    } else if (detail.discountValue > 0) {
       // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+      discount = detail.discountValue;
     }
 
     // Calcul du total après remise
@@ -800,9 +801,11 @@ function DocModal({
     }
   };
 
-  const handleResaCReated = () => {
+  const handleResaCReated = (valeur) => {
     if (onNotificationSuccess) {
       //  onNotificationSuccess();
+
+      setNewOrder(valeur);
 
       onSearchAfterDevisResa();
       console.log("Resa reçue dans DocumentModal handleResaCReated :");
@@ -819,7 +822,10 @@ function DocModal({
         <Notification
           message={notification.message}
           handleClose={handleClosePopup}
-          dataEvent={{ ...editedEvent, id: newOrder.id }}
+          dataEvent={{
+            ...editedEvent,
+            id: newOrder.id ? newOrder.id : editedEvent.id,
+          }}
           collectionName={collectionName}
           dataDetails={details}
         />

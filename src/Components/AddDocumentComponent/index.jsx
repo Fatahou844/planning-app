@@ -137,7 +137,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
       quantity: "",
       unitPrice: "",
       discountPercent: "",
-      discountAmount: "",
+      discountValue: "",
     },
   ]);
   const [deposit, setDeposit] = useState(0);
@@ -192,7 +192,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
           detail.quantity?.toString().trim() ||
           detail.unitPrice?.toString().trim() ||
           detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.discountValue?.toString().trim()
         );
       });
 
@@ -508,7 +508,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
         detail.quantity?.toString().trim() ||
         detail.unitPrice?.toString().trim() ||
         detail.discountPercent?.toString().trim() ||
-        detail.discountAmount?.toString().trim()
+        detail.discountValue?.toString().trim()
       );
     });
 
@@ -581,7 +581,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
         detail.quantity?.toString().trim() ||
         detail.unitPrice?.toString().trim() ||
         detail.discountPercent?.toString().trim() ||
-        detail.discountAmount?.toString().trim()
+        detail.discountValue?.toString().trim()
       );
     });
 
@@ -654,7 +654,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
         detail.quantity?.toString().trim() ||
         detail.unitPrice?.toString().trim() ||
         detail.discountPercent?.toString().trim() ||
-        detail.discountAmount?.toString().trim()
+        detail.discountValue?.toString().trim()
       );
     });
 
@@ -705,7 +705,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
           detail.quantity ||
           detail.unitPrice ||
           detail.discountPercent ||
-          detail.discountAmount
+          detail.discountValue
         );
       });
 
@@ -722,7 +722,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
           quantity: detail.quantity || 0,
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
-          discountAmount: detail.discountAmount || 0,
+          discountValue: detail.discountValue || 0,
           orderId: eventId,
           documentType: "Order",
         });
@@ -746,7 +746,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
           detail.quantity ||
           detail.unitPrice ||
           detail.discountPercent ||
-          detail.discountAmount
+          detail.discountValue
         );
       });
 
@@ -764,7 +764,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountAmount: detail.discountAmount || 0,
+            discountValue: detail.discountValue || 0,
             documentType: "Quote",
             quoteId: eventId,
           });
@@ -776,7 +776,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountAmount: detail.discountAmount || 0,
+            discountValue: detail.discountValue || 0,
             documentType: "Reservation",
             reservationId: eventId,
           });
@@ -788,7 +788,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountAmount: detail.discountAmount || 0,
+            discountValue: detail.discountValue || 0,
             documentType: "Invoice",
             invoiceId: eventId,
           });
@@ -1049,9 +1049,9 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
     let rawValue = value.trim();
     const normalizedValue = rawValue.replace(",", ".");
 
-    if (name === "discountAmount" || name === "discountPercent") {
+    if (name === "discountValue" || name === "discountPercent") {
       // (Pas besoin de changer ici, ça marche déjà bien)
-      updatedDetails[index].discountAmount = "";
+      updatedDetails[index].discountValue = "";
       updatedDetails[index].discountPercent = "";
 
       if (normalizedValue.includes("%")) {
@@ -1062,7 +1062,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
       } else if (normalizedValue !== "") {
         const amount = parseFloat(normalizedValue);
         if (!isNaN(amount)) {
-          updatedDetails[index].discountAmount = amount;
+          updatedDetails[index].discountValue = amount;
         }
       }
 
@@ -1091,9 +1091,9 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
       // Priorité au pourcentage
       discount =
         detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
+    } else if (detail.discountValue > 0) {
       // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+      discount = detail.discountValue;
     }
 
     // Calcul du total après remise
@@ -1115,7 +1115,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
         quantityInput: "",
         unitPrice: 0,
         unitPriceInput: "",
-        discountAmount: "",
+        discountValue: "",
         discountPercent: "",
         inputValue: "",
       },
@@ -1579,7 +1579,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
 
                           <TableCell sx={{ ...cellStyle }}>
                             <TextField
-                              name="discountAmount"
+                              name="discountValue"
                               type="text" // Permet la saisie de caractères comme '%'
                               value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
                               onChange={(e) => {
@@ -1590,7 +1590,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
                                 const normalizedValue = value.replace(",", ".");
 
                                 // Réinitialisation des valeurs par défaut
-                                detail.discountAmount = "";
+                                detail.discountValue = "";
                                 detail.discountPercent = "";
 
                                 if (normalizedValue.includes("%")) {
@@ -1600,13 +1600,13 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
                                   );
                                   if (!isNaN(percentage)) {
                                     detail.discountPercent = percentage; // Met à jour le pourcentage
-                                    detail.discountAmount = ""; // Réinitialise le montant
+                                    detail.discountValue = ""; // Réinitialise le montant
                                   }
                                 } else if (normalizedValue !== "") {
                                   // Cas où l'utilisateur entre un montant
                                   const amount = parseFloat(normalizedValue);
                                   if (!isNaN(amount)) {
-                                    detail.discountAmount = amount; // Met à jour le montant
+                                    detail.discountValue = amount; // Met à jour le montant
                                     detail.discountPercent = ""; // Réinitialise le pourcentage
                                   }
                                 }

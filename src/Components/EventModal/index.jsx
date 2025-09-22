@@ -156,8 +156,8 @@ function EventDialog({
 
             if (item.discountPercent && item.discountPercent !== "") {
               inputValue = `${item.discountPercent}%`;
-            } else if (item.discountAmount && item.discountAmount !== "") {
-              inputValue = String(item.discountAmount);
+            } else if (item.discountValue && item.discountValue !== "") {
+              inputValue = String(item.discountValue);
             }
 
             return {
@@ -395,7 +395,7 @@ function EventDialog({
       detail.inputValue = raw;
 
       // Réinitialiser d'abord
-      detail.discountAmount = "";
+      detail.discountValue = "";
       detail.discountPercent = "";
 
       const cleaned = normalizedValue.replace("%", "");
@@ -404,7 +404,7 @@ function EventDialog({
       if (normalizedValue.includes("%") && !isNaN(value)) {
         detail.discountPercent = value;
       } else if (!isNaN(value)) {
-        detail.discountAmount = value;
+        detail.discountValue = value;
       }
 
       // detail.inputValue = raw;
@@ -454,7 +454,7 @@ function EventDialog({
         quantityInput: "",
         unitPrice: 0,
         unitPriceInput: "",
-        discountAmount: "",
+        discountValue: "",
         discountPercent: "",
         inputValue: "",
       },
@@ -510,9 +510,9 @@ function EventDialog({
       // Priorité au pourcentage
       discount =
         detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
+    } else if (detail.discountValue > 0) {
       // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+      discount = detail.discountValue;
     }
 
     // Calcul du total après remise
@@ -904,13 +904,13 @@ function EventDialog({
                             // value={
                             //   detail.discountPercent !== ""
                             //     ? `${detail.discountPercent}%`
-                            //     : detail.discountAmount || ""
+                            //     : detail.discountValue || ""
                             // } // Affiche soit le pourcentage, soit le montant
                             // onChange={(e) => {
                             //   const input = e.target.value.trim();
 
                             //   let formattedValue = input; // Supprime le symbole %
-                            //   detail.discountAmount = "";
+                            //   detail.discountValue = "";
                             //   detail.discountPercent = "";
 
                             //   let amount = parseFloat(formattedValue); // Tente de convertir en nombre
@@ -919,14 +919,14 @@ function EventDialog({
                             //   if (input.includes("%") && !isNaN(amount)) {
                             //     // Si l'utilisateur entre un pourcentage
                             //     detail.discountPercent = amount; // Met à jour le pourcentage
-                            //     detail.discountAmount = ""; // Réinitialise le montant
+                            //     detail.discountValue = ""; // Réinitialise le montant
                             //   } else if (!isNaN(amount)) {
                             //     // Si l'utilisateur entre un montant
-                            //     detail.discountAmount = amount; // Met à jour le montant
+                            //     detail.discountValue = amount; // Met à jour le montant
                             //     detail.discountPercent = ""; // Réinitialise le pourcentage
                             //   } else {
                             //     // Si la saisie est invalide
-                            //     detail.discountAmount = "";
+                            //     detail.discountValue = "";
                             //     detail.discountPercent = "";
                             //   }
 
@@ -936,8 +936,8 @@ function EventDialog({
                             //   // Appelle la fonction pour notifier le changement
                             //   handleDetailChange(
                             //     index,
-                            //     "discountAmount",
-                            //     detail.discountAmount
+                            //     "discountValue",
+                            //     detail.discountValue
                             //   );
                             // }}
                             inputProps={{

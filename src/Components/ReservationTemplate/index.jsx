@@ -48,9 +48,9 @@ const ReservationTemplate = ({
       // Priorité au pourcentage
       discount =
         detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
+    } else if (detail.discountValue > 0) {
       // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+      discount = detail.discountValue;
     }
 
     // Calcul du total après remise
@@ -93,20 +93,21 @@ const ReservationTemplate = ({
       description: item.label,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
+      quantity: item.quantity,
       discount:
         item.discountPercent && item.discountPercent !== ""
           ? `${item.discountPercent}%`
-          : item.discountAmount && item.discountAmount !== ""
-          ? String(item.discountAmount)
+          : item.discountValue && item.discountValue !== ""
+          ? String(item.discountValue)
           : "0",
-      discountAmount: item.discountAmount,
+      discountValue: item.discountValue,
       unitPriceTTCafterDiscount:
         item.unitPrice -
-        item.discountAmount -
+        item.discountValue -
         (item.unitPrice * item.discountPercent) / 100,
       unitPriceHTafterDiscount:
         item.unitPrice / 1.2 -
-        item.discountAmount -
+        item.discountValue -
         (item.unitPrice * item.discountPercent) / 120,
     })),
 
@@ -114,14 +115,14 @@ const ReservationTemplate = ({
       totalHT: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const discountValue = parseFloat(item.discountValue) || 0;
         const quantity = parseFloat(item.quantity) || 1;
 
         const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
           unitPriceHT * (1 - discountPercent / 100) -
-            (discountAmount / quantity || 0)
+            (discountValue / quantity || 0)
         );
 
         return acc + discountedPriceHT * quantity;
@@ -130,14 +131,14 @@ const ReservationTemplate = ({
       tva: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const discountValue = parseFloat(item.discountValue) || 0;
         const quantity = parseFloat(item.quantity) || 1;
 
         const unitPriceHT = unitPrice / 1.2;
         const discountedPriceHT = Math.max(
           0,
           unitPriceHT * (1 - discountPercent / 100) -
-            (discountAmount / quantity || 0)
+            (discountValue / quantity || 0)
         );
 
         return acc + discountedPriceHT * quantity * 0.2;
@@ -146,13 +147,13 @@ const ReservationTemplate = ({
       totalTTC: details.reduce((acc, item) => {
         const unitPrice = parseFloat(item.unitPrice) || 0;
         const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountAmount = parseFloat(item.discountAmount) || 0;
+        const discountValue = parseFloat(item.discountValue) || 0;
         const quantity = parseFloat(item.quantity) || 1;
 
         const discountedPriceTTC = Math.max(
           0,
           unitPrice * (1 - discountPercent / 100) -
-            (discountAmount / quantity || 0)
+            (discountValue / quantity || 0)
         );
 
         return acc + discountedPriceTTC * quantity;

@@ -103,7 +103,7 @@ function AddOrdreReparationModal({
         quantity: "",
         unitPrice: "",
         discountPercent: "",
-        discountAmount: "",
+        discountValue: "",
       },
     ]);
   };
@@ -231,11 +231,11 @@ function AddOrdreReparationModal({
       typeof rawValue === "string" ? rawValue.replace(",", ".") : rawValue;
 
     // Logique spécifique pour remise (discount)
-    if (field === "discountAmount") {
+    if (field === "discountValue") {
       const value = normalizedValue.trim();
       detail.inputValue = rawValue; // garde la valeur brute pour affichage
 
-      detail.discountAmount = "";
+      detail.discountValue = "";
       detail.discountPercent = "";
 
       if (value.includes("%")) {
@@ -246,7 +246,7 @@ function AddOrdreReparationModal({
       } else {
         const amount = parseFloat(value);
         if (!isNaN(amount)) {
-          detail.discountAmount = amount;
+          detail.discountValue = amount;
         }
       }
     } else if (field === "quantity" || field === "unitPrice") {
@@ -295,9 +295,9 @@ function AddOrdreReparationModal({
     //   // Priorité au pourcentage
     //   discount =
     //     detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    // } else if (detail.discountAmount > 0) {
+    // } else if (detail.discountValue > 0) {
     //   // Sinon, utilise le montant fixe
-    //   discount = detail.discountAmount;
+    //   discount = detail.discountValue;
     // }
 
     // // Calcul du total après remise
@@ -309,7 +309,7 @@ function AddOrdreReparationModal({
       String(detail.unitPrice || "").replace(",", ".")
     );
     const discountPercent = detail.discountPercent || 0;
-    const discountAmount = detail.discountAmount || 0;
+    const discountValue = detail.discountValue || 0;
 
     if (isNaN(quantity) || isNaN(unitPrice)) return 0;
 
@@ -317,8 +317,8 @@ function AddOrdreReparationModal({
 
     if (discountPercent) {
       total -= (total * discountPercent) / 100;
-    } else if (discountAmount) {
-      total -= discountAmount;
+    } else if (discountValue) {
+      total -= discountValue;
     }
 
     return total;
@@ -348,7 +348,7 @@ function AddOrdreReparationModal({
           detail.quantity ||
           detail.unitPrice ||
           detail.discountPercent ||
-          detail.discountAmount
+          detail.discountValue
         );
       });
 
@@ -365,7 +365,7 @@ function AddOrdreReparationModal({
           quantity: detail.quantity || 0,
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
-          discountAmount: detail.discountAmount || 0,
+          discountValue: detail.discountValue || 0,
           orderId: eventId,
           documentType: "Order",
         });
@@ -493,7 +493,7 @@ function AddOrdreReparationModal({
         detail.quantity?.toString().trim() ||
         detail.unitPrice?.toString().trim() ||
         detail.discountPercent?.toString().trim() ||
-        detail.discountAmount?.toString().trim()
+        detail.discountValue?.toString().trim()
       );
     });
 
@@ -920,13 +920,13 @@ function AddOrdreReparationModal({
 
                             <TableCell>
                               <TextField
-                                name="discountAmount"
+                                name="discountValue"
                                 type="text"
                                 value={detail.inputValue || ""}
                                 onChange={(e) =>
                                   handleDetailChange(
                                     index,
-                                    "discountAmount",
+                                    "discountValue",
                                     e.target.value
                                   )
                                 }

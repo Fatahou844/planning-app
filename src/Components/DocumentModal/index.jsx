@@ -96,8 +96,8 @@ function DocumentModal({
 
             if (item.discountPercent && item.discountPercent !== "") {
               inputValue = `${item.discountPercent}%`;
-            } else if (item.discountAmount && item.discountAmount !== "") {
-              inputValue = String(item.discountAmount);
+            } else if (item.discountValue && item.discountValue !== "") {
+              inputValue = String(item.discountValue);
             }
 
             return {
@@ -306,7 +306,7 @@ function DocumentModal({
           detail.quantity?.toString().trim() ||
           detail.unitPrice?.toString().trim() ||
           detail.discountPercent?.toString().trim() ||
-          detail.discountAmount?.toString().trim()
+          detail.discountValue?.toString().trim()
         );
       });
 
@@ -349,7 +349,7 @@ function DocumentModal({
       detail.inputValue = raw;
 
       // Réinitialiser d'abord
-      detail.discountAmount = "";
+      detail.discountValue = "";
       detail.discountPercent = "";
 
       const cleaned = normalizedValue.replace("%", "");
@@ -358,7 +358,7 @@ function DocumentModal({
       if (normalizedValue.includes("%") && !isNaN(value)) {
         detail.discountPercent = value;
       } else if (!isNaN(value)) {
-        detail.discountAmount = value;
+        detail.discountValue = value;
       }
 
       // detail.inputValue = raw;
@@ -404,7 +404,7 @@ function DocumentModal({
         quantityInput: "",
         unitPrice: 0,
         unitPriceInput: "",
-        discountAmount: "",
+        discountValue: "",
         discountPercent: "",
         inputValue: "",
       },
@@ -418,9 +418,9 @@ function DocumentModal({
       // Priorité au pourcentage
       discount =
         detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
+    } else if (detail.discountValue > 0) {
       // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+      discount = detail.discountValue;
     }
 
     // Calcul du total après remise

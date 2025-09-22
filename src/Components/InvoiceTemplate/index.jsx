@@ -24,9 +24,9 @@ const InvoiceTemplate = ({
       // Priorité au pourcentage
       discount =
         detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    } else if (detail.discountAmount > 0) {
+    } else if (detail.discountValue > 0) {
       // Sinon, utilise le montant fixe
-      discount = detail.discountAmount;
+      discount = detail.discountValue;
     }
 
     // Calcul du total après remise
@@ -66,7 +66,7 @@ const InvoiceTemplate = ({
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
       discount: item.discountPercent,
-      discountAmount: item.discountAmount,
+      discountValue: item.discountValue,
     })),
     totals: {
       // Total HT avec remises
@@ -282,7 +282,7 @@ const InvoiceTemplate = ({
               `${
                 item.discount > 0
                   ? item.discount + "%"
-                  : item.discountAmount + "€"
+                  : item.discountValue + "€"
               }`,
             ]),
           ],
@@ -577,7 +577,7 @@ const InvoiceTemplate = ({
           detail.quantity ||
           detail.unitPrice ||
           detail.discountPercent ||
-          detail.discountAmount
+          detail.discountValue
         );
       });
 
@@ -600,7 +600,7 @@ const InvoiceTemplate = ({
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountAmount: detail.discountAmount || 0,
+            discountValue: detail.discountValue || 0,
             documentType: "Quote",
             quoteId: eventId,
           });
@@ -612,7 +612,7 @@ const InvoiceTemplate = ({
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountAmount: detail.discountAmount || 0,
+            discountValue: detail.discountValue || 0,
             documentType: "Reservation",
             reservationId: eventId,
           });
@@ -624,7 +624,7 @@ const InvoiceTemplate = ({
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountAmount: detail.discountAmount || 0,
+            discountValue: detail.discountValue || 0,
             documentType: "Invoice",
             invoiceId: eventId,
           });
@@ -675,7 +675,7 @@ const InvoiceTemplate = ({
         detail.quantity?.toString().trim() ||
         detail.unitPrice?.toString().trim() ||
         detail.discountPercent?.toString().trim() ||
-        detail.discountAmount?.toString().trim()
+        detail.discountValue?.toString().trim()
       );
     });
 
