@@ -244,32 +244,33 @@ const ActivitySidebar = () => {
 
     fetchAuthStatus();
   }, [, isAuthenticated]);
-  const handleLogout = async () => {
-    try {
-      // Optionnel : suppression de la clé du localStorage
-      const token = Cookies.get("jwtToken"); // si encore présent avant remove
-      if (token) {
-        try {
-          const payloadBase64 = token.split(".")[1];
-          const payload = JSON.parse(atob(payloadBase64));
-          const userEmail = payload?.sub;
-          if (userEmail) {
-            localStorage.removeItem(`hasSeenNotification_${userEmail}`);
-          }
-        } catch (e) {
-          console.error("Erreur décodage JWT :", e);
+  function handleLogout() {
+    const token = Cookies.get("jwtToken");
+    if (token) {
+      try {
+        const payloadBase64 = token.split(".")[1];
+        const payload = JSON.parse(atob(payloadBase64));
+        const userEmail = payload?.sub;
+        if (userEmail) {
+          localStorage.removeItem(`hasSeenNotification_${userEmail}`);
         }
+      } catch (e) {
+        console.error("Erreur décodage JWT :", e);
       }
-
-      await axios.get(`${BASE_URL_API}/v1/logout`); // pour envoyer les cookies
-      document.cookie =
-        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-      window.location.href = "/"; // redirection après logout
-    } catch (error) {
-      console.error("Erreur de déconnexion :", error);
     }
-  };
+
+    axios
+      .get(`${BASE_URL_API}/v1/logout`, { withCredentials: true })
+      .then(() => {
+        document.cookie =
+          "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        return new Promise((r) => setTimeout(r, 300));
+      })
+      .then(() => {
+        window.location.replace("/");
+      })
+      .catch((err) => console.error("Erreur de déconnexion :", err));
+  }
 
   return (
     <>
