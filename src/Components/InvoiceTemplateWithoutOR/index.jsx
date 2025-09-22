@@ -208,7 +208,7 @@ const InvoiceTemplateWithoutOR = ({
                 stack: [
                   {
                     image: barcodeBase64,
-                    fit: [200, 80],
+                    fit: [300, 50],
                     alignment: "center",
                     border: [true, true, true, true],
                     fillColor: "#F8FAFC",

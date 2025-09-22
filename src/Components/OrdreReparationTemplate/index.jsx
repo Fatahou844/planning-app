@@ -612,7 +612,7 @@ const OrdreReparationTemplate = ({
                 stack: [
                   {
                     image: barcodeBase64,
-                    fit: [200, 80], // taille du code-barres
+                    fit: [300, 50], // taille du code-barres
                     alignment: "center",
                   },
                   {
