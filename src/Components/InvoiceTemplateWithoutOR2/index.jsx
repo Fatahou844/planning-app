@@ -84,7 +84,7 @@ const InvoiceTemplateWithoutOR2 = ({
     },
     client: {
       name: `${Client?.firstName ? Client.firstName : ""} ${
-        Client?.lastName ? Client.lastName : ""
+        Client?.name ? Client.name : ""
       }`,
       adresse: `${Client?.address ? Client?.address : ""}`, // Si une adresse client est disponible, l'ajouter ici
       phone: Client?.phone ? Client.phone : "",
