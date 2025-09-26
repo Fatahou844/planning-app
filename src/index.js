@@ -436,10 +436,10 @@ const App = () => {
 
               {/* Routes protégées */}
 
-              <Route
+              {/* <Route
                 path="/planning/categories"
                 element={<PrivateRoute Component={Dashboard} />}
-              />
+              /> */}
 
               <Route
                 path="/clients"

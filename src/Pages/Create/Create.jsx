@@ -63,7 +63,7 @@ export default function AuthPages() {
       });
 
       if (userToken.data.token) {
-        window.location.href = "/planning/categories";
+        window.location.href = "/";
       }
     }
 
