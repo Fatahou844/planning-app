@@ -43,7 +43,7 @@ import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute"; // Importez le composant PrivateRoute
 const tabLabels = [
   { label: "Atelier", path: "/atelier" },
-  { label: "Planning", path: "/planning/categories" },
+  { label: "Planning", path: "/" },
   { label: "Clients", path: "/clients" },
   { label: "Store", path: "/store" },
   { label: "Team", path: "/team" },
