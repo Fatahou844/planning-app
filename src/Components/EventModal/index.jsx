@@ -373,32 +373,68 @@ function EventDialog({
     }
   };
 
-  // const handleDetailChange = (index, field, value) => {
+
+  // const handleDetailChange = (index, field, rawValue) => {
   //   const updatedDetails = [...details];
-  //   updatedDetails[index][field] = value;
+
+  //   const detail = updatedDetails[index];
+
+  //   const raw = String(rawValue).trim(); // 🔁 conversion propre
+  //   const normalizedValue = raw.replace(",", ".");
+  //   // Toujours mettre à jour ce que l'utilisateur tape
+
+  //   if (field === "quantity" || field === "unitPrice") {
+  //     updatedDetails[index][`${field}Input`] = raw;
+  //     const numericValue = parseFloat(normalizedValue);
+  //     updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
+  //   } else if (field === "discountInput") {
+  //     detail.inputValue = raw;
+
+  //     // Réinitialiser d'abord
+  //     detail.discountValue = "";
+  //     detail.discountPercent = "";
+
+  //     const cleaned = normalizedValue.replace("%", "");
+  //     const value = parseFloat(cleaned);
+
+  //     if (normalizedValue.includes("%") && !isNaN(value)) {
+  //       detail.discountPercent = value;
+  //     } else if (!isNaN(value)) {
+  //       detail.discountValue = value;
+  //     }
+
+  //     // detail.inputValue = raw;
+  //     // updatedDetails[index].inputValue = value;
+  //   } else {
+  //     updatedDetails[index][field] = raw;
+  //   }
+
   //   setDetails(updatedDetails);
+  //   setEditedEvent((prev) => ({
+  //     ...prev,
+  //     Details: updatedDetails,
+  //   }));
   // };
+
   const handleDetailChange = (index, field, rawValue) => {
     const updatedDetails = [...details];
-
     const detail = updatedDetails[index];
 
-    const raw = String(rawValue).trim(); // 🔁 conversion propre
+    // Pas de trim par défaut → sauf pour les champs numériques
+    const raw = String(rawValue);
     const normalizedValue = raw.replace(",", ".");
-    // Toujours mettre à jour ce que l'utilisateur tape
 
     if (field === "quantity" || field === "unitPrice") {
       updatedDetails[index][`${field}Input`] = raw;
-      const numericValue = parseFloat(normalizedValue);
+      const numericValue = parseFloat(normalizedValue.trim());
       updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
     } else if (field === "discountInput") {
-      detail.inputValue = raw;
+      detail.inputValue = raw.trim();
 
-      // Réinitialiser d'abord
       detail.discountValue = "";
       detail.discountPercent = "";
 
-      const cleaned = normalizedValue.replace("%", "");
+      const cleaned = normalizedValue.replace("%", "").trim();
       const value = parseFloat(cleaned);
 
       if (normalizedValue.includes("%") && !isNaN(value)) {
@@ -406,11 +442,8 @@ function EventDialog({
       } else if (!isNaN(value)) {
         detail.discountValue = value;
       }
-
-      // detail.inputValue = raw;
-      // updatedDetails[index].inputValue = value;
     } else {
-      updatedDetails[index][field] = raw;
+      updatedDetails[index][field] = raw; // garder les espaces pour le texte
     }
 
     setDetails(updatedDetails);
@@ -419,6 +452,7 @@ function EventDialog({
       Details: updatedDetails,
     }));
   };
+
 
   const removeDetailRow = async (index) => {
     // Récupère le détail à supprimer avant de modifier le state

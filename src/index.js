@@ -412,7 +412,7 @@ const App = () => {
 
               <Route
                 path="/weekly-planning"
-                element={<PrivateRoute Component={WeeklyPlanning} />}
+                  element={<PrivateRoute Component={WeeklyPlanning} />}
               />
 
               <Route
