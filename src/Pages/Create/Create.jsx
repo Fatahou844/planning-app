@@ -97,12 +97,7 @@ export default function AuthPages() {
           {isSignUp ? "Créer un compte" : "Connexion à l'espace garage"}
         </Typography>
 
-        {/* <Alert severity="info" sx={{ mb: 2 }}>
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Iusto velit
-          fuga quos possimus, nemo alias quam maxime animi aliquam architecto
-          eveniet pariatur dolorem vero, nobis maiores asperiores iure amet
-          harum.
-        </Alert> */}
+  
 
         {alertMessage && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -152,32 +147,7 @@ export default function AuthPages() {
             </>
           )}
 
-          {/* <TextField
-            placeholder="Adresse e-mail"
-            fullWidth
-            type={showUsername ? "text" : "password"}
-            value={form.email}
-            onChange={(e) => handleChange("email", e.target.value)}
-            size="small"
-            sx={{
-              height: "30px",
-              "& .MuiInputBase-root": { fontSize: "0.8rem" },
-              "& .MuiFormLabel-root": { fontSize: "0.8rem" },
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowUsername((prev) => !prev)}
-                    edge="end"
-                    size="small"
-                  >
-                    {showUsername ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          /> */}
+         
           <Box sx={{ position: "relative", width: "100%" }}>
             {showUsername ? (
               <TextField

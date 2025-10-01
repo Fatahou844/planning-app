@@ -29,7 +29,7 @@ import AccountCreationSteps from "./Pages/AccountCreationSteps/AccountCreationSt
 import AccountVerificationSteps from "./Pages/AccountVerificationSteps/AccountVerificationSteps";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
-
+import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
 import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
 import Atelier from "./Pages/Atelier/Atelier";
@@ -409,10 +409,14 @@ const App = () => {
               />
               {/* <Route path="/connexion" element={<AuthPages />} /> */}
               <Route path="/register" element={<AccountCreationSteps />} />
+              <Route
+                path="/reset-password/:token"
+                element={<ResetPasswordPage />}
+              />
 
               <Route
                 path="/weekly-planning"
-                  element={<PrivateRoute Component={WeeklyPlanning} />}
+                element={<PrivateRoute Component={WeeklyPlanning} />}
               />
 
               <Route
