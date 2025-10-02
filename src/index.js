@@ -24,16 +24,17 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
+import { BASE_URL_API } from "./config";
 import AccountApprove from "./Pages/AccountApprove.jsx/AccountApprove";
 import AccountCreationSteps from "./Pages/AccountCreationSteps/AccountCreationSteps";
 import AccountVerificationSteps from "./Pages/AccountVerificationSteps/AccountVerificationSteps";
+import Atelier from "./Pages/Atelier/Atelier";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
-import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
-import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
-import { BASE_URL_API } from "./config";
-import Atelier from "./Pages/Atelier/Atelier";
 import ManageClients from "./Pages/ManageClients/ManageClients";
+import NotFoundPage from "./Pages/NotFoundPage/NotFoundPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
 import Store from "./Pages/Store/Store";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import WeeklyPlanning from "./Pages/WeeklyPlanning";
@@ -437,6 +438,7 @@ const App = () => {
                 path="/account-approbation"
                 element={<PrivateRoute Component={AccountApprove} />}
               />
+              <Route path="*" element={<NotFoundPage />} />
 
               {/* Routes protégées */}
 
