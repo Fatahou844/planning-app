@@ -411,7 +411,7 @@ const App = () => {
               {/* <Route path="/connexion" element={<AuthPages />} /> */}
               <Route path="/register" element={<AccountCreationSteps />} />
               <Route
-                path="/reset-password/:token"
+                path="/reset-password"
                 element={<ResetPasswordPage />}
               />
 

@@ -11,12 +11,14 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAxios } from "../../utils/hook/useAxios";
 
 const ResetPasswordPage = () => {
-  const { token } = useParams(); // récupère le token de l’URL (/reset-password/:token)
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const token = queryParams.get("token");
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
