@@ -59,7 +59,7 @@ export default function Atelier() {
       <Box sx={{ height: "100vh", px: 4, bgcolor: "#f5f5f5" }}>
         <Grid container spacing={2} sx={{ height: "100%" }}>
           {/* Gauche - 25% */}
-          <Grid item xs={12} md={3} sx={{ paddingLeft: "3.2rem" }}>
+          <Grid item xs={12} md={3}>
             <Card
               sx={{ height: "100%", display: "flex", flexDirection: "column" }}
             >
@@ -69,6 +69,7 @@ export default function Atelier() {
                     display: "flex",
                     justifyContent: "space-between",
                     mb: 2,
+                    ml: 3,
                   }}
                 >
                   <Typography variant="h6">Suivi activité atelier</Typography>
@@ -76,7 +77,7 @@ export default function Atelier() {
                     {new Date().toLocaleDateString()}
                   </Typography>
                 </Box>
-                <Box sx={{ maxHeight: "80vh", overflowY: "auto" }}>
+                <Box sx={{ maxHeight: "80vh", overflowY: "auto", ml: 3 }}>
                   {activite.map((item) => (
                     <Box
                       key={item.id}
