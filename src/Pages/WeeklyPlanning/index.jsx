@@ -384,7 +384,7 @@ export default function WeeklyPlanning({
       <AddDocumentComponent
         onDocumentCreated={handleDocumentCreated}
       ></AddDocumentComponent>
-      <TableContainer
+      {/* <TableContainer
         sx={{
           maxHeight: "70vh", // 👈 limite la hauteur
           overflowY: "auto",
@@ -475,6 +475,134 @@ export default function WeeklyPlanning({
                 })}
               </TableRow>
             ))}
+          </TableBody>
+        </Table>
+      </TableContainer> */}
+      <TableContainer
+        sx={{
+          maxHeight: "70vh",
+          overflowY: "auto",
+          backgroundColor: theme.palette.background.paper,
+          borderRadius: 2,
+          boxShadow: isDark
+            ? "0 0 12px rgba(255, 255, 255, 0.05)"
+            : "0 0 12px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <Table sx={{ px: 2, tableLayout: "fixed" }} stickyHeader>
+          {/* ==== HEADER ==== */}
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ width: 80, ...cellStyle }}>Heure</TableCell>
+              {weekDays.map((day) => (
+                <TableCell key={day} sx={{ ...cellStyle }}>
+                  {format(day, "EEEE dd/MM", { locale: fr })}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
+          {/* ==== BODY ==== */}
+          <TableBody>
+            {(() => {
+              // Génère les heures toutes les 30 minutes
+              const hours = [];
+              for (let h = 6; h < 24; h++) {
+                hours.push(`${String(h).padStart(2, "0")}:00`);
+                hours.push(`${String(h).padStart(2, "0")}:30`);
+              }
+
+              return hours.map((hour, i) => (
+                <TableRow
+                  key={hour}
+                  sx={{ bgcolor: i % 2 === 0 ? "#fff" : "#f7f7f7" }}
+                >
+                  {/* ==== Colonne Heure ==== */}
+                  <TableCell
+                    sx={{
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      border: "1px solid #E2E8F0",
+                      ...cellStyle,
+                    }}
+                  >
+                    {hour}
+                  </TableCell>
+
+                  {/* ==== Colonnes Jours ==== */}
+                  {weekDays.map((day) => {
+                    const dayKey = format(day, "yyyy-MM-dd");
+
+                    // Découpe l'heure et calcule le quart d'heure suivant
+                    const [baseHour, baseMinute] = hour.split(":").map(Number);
+                    const nextMinute = baseMinute === 0 ? 15 : 45; // 0→15, 30→45
+
+                    const firstSlot = `${String(baseHour).padStart(
+                      2,
+                      "0"
+                    )}:${String(baseMinute).padStart(2, "0")}`;
+                    const secondSlot = `${String(baseHour).padStart(
+                      2,
+                      "0"
+                    )}:${String(nextMinute).padStart(2, "0")}`;
+
+                    // Fusion des événements 00+15 ou 30+45
+                    const slotEvents = [
+                      ...(grouped[dayKey]?.[firstSlot] || []),
+                      ...(grouped[dayKey]?.[secondSlot] || []),
+                    ];
+
+                    const rowsNeeded = Math.ceil(slotEvents.length / 2) || 1;
+
+                    return (
+                      <TableCell
+                        key={`${dayKey}-${hour}`}
+                        sx={{
+                          p: 0.5,
+                          border: "1px solid #E2E8F0",
+                          height: `${rowsNeeded * 32}px`,
+                          ...cellStyle,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: 0.5,
+                          }}
+                        >
+                          {slotEvents.map((ev, idx) => (
+                            <Box
+                              key={idx}
+                              sx={{
+                                bgcolor: ev.color || "#3b82f6",
+                                color: "#fff",
+                                borderRadius: 1,
+                                px: 0.5,
+                                fontSize: "0.75rem",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                setSelectedEvent({
+                                  ...ev.or,
+                                  lastEventId: ev.or.id,
+                                });
+                                setModalOpen(true);
+                              }}
+                            >
+                              {ev.title}
+                            </Box>
+                          ))}
+                        </Box>
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ));
+            })()}
           </TableBody>
         </Table>
       </TableContainer>

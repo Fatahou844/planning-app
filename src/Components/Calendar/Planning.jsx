@@ -65,8 +65,8 @@ import UserSearch from "../UserSearch/UserSearch";
 function generateTimeSlots({ startHour, startMinute, endHour, endMinute }) {
   const start = startHour * 60 + startMinute;
   const end = endHour * 60 + endMinute;
-  const slots = (end - start) / 30; // +1 pour inclure la dernière demi-heure
-  return Array.from({ length: slots }, (_, index) => start + index * 30);
+  const slots = (end - start) / 15; // +1 pour inclure la dernière demi-heure
+  return Array.from({ length: slots }, (_, index) => start + index * 15);
 }
 
 const Timeline = ({ config }) => {
@@ -122,7 +122,15 @@ const Timeline = ({ config }) => {
                 color: theme.palette.text.secondary,
               }}
             >
-              {hour.toString().padStart(2, "0")}:{minute === 0 ? "00" : "30"}
+              {/* {hour.toString().padStart(2, "0")}:{minute === 0 ? "00" : "30"} */}
+              {hour.toString().padStart(2, "0")}:
+              {minute === 0
+                ? "00"
+                : minute === 15
+                ? "15"
+                : minute === 30
+                ? "30"
+                : "45"}
             </Typography>
             <Box
               sx={{
@@ -1892,7 +1900,7 @@ const Planning = () => {
       discountAmount: "",
     },
   ]);
-  const [deposit, setDeposit] = useState(0); 
+  const [deposit, setDeposit] = useState(0);
 
   const handleDetailChange = (event, index) => {
     const { name, value } = event.target;
@@ -2001,6 +2009,21 @@ const Planning = () => {
   //   return Math.floor((totalMinutes - startMinutes) / 30) + 1;
   // }
 
+  // function calculateTimeValue(hour, minute, config) {
+  //   const totalMinutes = hour * 60 + minute;
+  //   const startMinutes = config.startHour * 60 + config.startMinute;
+  //   const diff = totalMinutes - startMinutes;
+
+  //   // Sécurise si avant début du planning
+  //   if (diff < 0) return 1;
+
+  //   // Vérifie si le temps est aligné sur une demi-heure
+  //   if (diff % 30 !== 0) {
+  //     console.warn("Attention : l'heure ne tombe pas pile sur une demi-heure.");
+  //   }
+
+  //   return diff / 30 + 1; // ici on n'arrondit pas, on exige demi-heure pile
+  // }
   function calculateTimeValue(hour, minute, config) {
     const totalMinutes = hour * 60 + minute;
     const startMinutes = config.startHour * 60 + config.startMinute;
@@ -2009,13 +2032,16 @@ const Planning = () => {
     // Sécurise si avant début du planning
     if (diff < 0) return 1;
 
-    // Vérifie si le temps est aligné sur une demi-heure
-    if (diff % 30 !== 0) {
-      console.warn("Attention : l'heure ne tombe pas pile sur une demi-heure.");
+    // Vérifie si le temps est aligné sur un quart d'heure
+    if (diff % 15 !== 0) {
+      console.warn(
+        "Attention : l'heure ne tombe pas pile sur un quart d'heure."
+      );
     }
 
-    return diff / 30 + 1; // ici on n'arrondit pas, on exige demi-heure pile
+    return diff / 15 + 1; // on compte un slot toutes les 15 minutes
   }
+
   const getTimeFromIndex = (index, config) => {
     const interval = config.intervalInMinutes || 30;
     const startMinutes = config.startHour * 60 + config.startMinute;
