@@ -59,7 +59,7 @@ export default function Atelier() {
       <Box sx={{ height: "100vh", px: 4, bgcolor: "#f5f5f5" }}>
         <Grid container spacing={2} sx={{ height: "100%" }}>
           {/* Gauche - 25% */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} sx={{ paddingLeft: "3.2rem" }}>
             <Card
               sx={{ height: "100%", display: "flex", flexDirection: "column" }}
             >
@@ -204,8 +204,8 @@ export default function Atelier() {
                 <Typography align="right">
                   {factures
                     .flatMap((f) => f.Details || [])
-                    .reduce((sum, d) => sum + d.unitPrice * d.quantity, 0)
-                    .toFixed(2)}
+                    .reduce((sum, d) => sum + d.unitPrice * d.quantity, 0) /
+                    (1.2).toFixed(2)}
                 </Typography>
               </CardContent>
             </Card>
