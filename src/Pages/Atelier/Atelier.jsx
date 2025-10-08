@@ -10,10 +10,15 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
+import PointageDialog from "../../Components/PointageDialog/PointageDialog";
 import { useAxios } from "../../utils/hook/useAxios";
-
 export default function Atelier() {
   const [orders, setOrders] = useState([]);
+
+  const [openPointage, setOpenPointage] = useState(false);
+  const handleOpenPointage = () => setOpenPointage(true);
+  const handleClosePointage = () => setOpenPointage(false);
+
   const axios = useAxios();
 
   function getCurrentUser() {
@@ -40,6 +45,7 @@ export default function Atelier() {
 
     fetchOrders();
   }, []);
+
   const handleDocumentCreated = async () => {
     // Ici tu peux par ex :
     // - Mettre à jour ton state `ordersData` ou `events`
@@ -105,7 +111,7 @@ export default function Atelier() {
                           borderRadius: 1,
                         }}
                       >
-                        en cours
+                        {item.OrderStatus}
                       </Typography>
                     </Box>
                   ))}
@@ -140,7 +146,11 @@ export default function Atelier() {
                 </Button>
               </Box>
 
-              <Button variant="contained" sx={{ mb: 2, width: "100%" }}>
+              <Button
+                variant="contained"
+                sx={{ mb: 2, width: "100%" }}
+                onClick={handleOpenPointage}
+              >
                 Pointage
               </Button>
               <Button variant="contained" sx={{ mb: 2, width: "100%" }}>
@@ -203,10 +213,26 @@ export default function Atelier() {
                 </Box>
                 <Divider sx={{ my: 2 }} />
                 <Typography align="right">
-                  {factures
+                  {/* {factures
                     .flatMap((f) => f.Details || [])
                     .reduce((sum, d) => sum + d.unitPrice * d.quantity, 0) /
-                    (1.2).toFixed(2)}
+                    (1.2).toFixed(2)} */}
+                  {(
+                    factures
+                      .flatMap((f) => f.Details || [])
+                      .reduce((sum, d) => {
+                        const base = d.unitPrice * d.quantity;
+                        const discountPercent = d.discountPercent
+                          ? (base * d.discountPercent) / 100
+                          : 0;
+                        const discountValue = d.discountValue || 0;
+                        const totalAfterDiscount =
+                          base - discountPercent - discountValue;
+                        return sum + totalAfterDiscount;
+                      }, 0) / 1.2
+                  ) // application de la TVA 20%
+                    .toFixed(2)}{" "}
+                  €
                 </Typography>
               </CardContent>
             </Card>
@@ -216,6 +242,14 @@ export default function Atelier() {
       <AddDocumentComponent
         onDocumentCreated={handleDocumentCreated}
       ></AddDocumentComponent>
+
+      {/* ✅ MODAL POINTAGE */}
+      <PointageDialog
+        openPointage={openPointage}
+        handleClosePointage={handleClosePointage}
+        activite={activite}
+        onSaveStatus={(id, status) => console.log("Sauvegarde :", id, status)}
+      />
     </>
   );
 }

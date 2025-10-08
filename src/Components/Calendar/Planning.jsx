@@ -1,7 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import {
   Badge,
@@ -3033,7 +3032,7 @@ const Planning = () => {
               >
                 <AddIcon />
               </Fab>
-              <Fab
+              {/* <Fab
                 color="seconday"
                 aria-label="add"
                 sx={{
@@ -3050,7 +3049,7 @@ const Planning = () => {
                 onClick={handleLogout}
               >
                 <LogoutIcon />
-              </Fab>
+              </Fab> */}
 
               {/* Modal (Dialog) pour le formulaire d'ajout d'événement */}
 
