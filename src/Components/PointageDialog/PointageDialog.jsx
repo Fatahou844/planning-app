@@ -84,9 +84,13 @@ export default function PointageDialog({
                 onChange={(e) => handleStatusChange(item.id, e.target.value)}
                 sx={{ ml: 2, minWidth: 150, bgcolor: "white", color: "black" }}
               >
-                <MenuItem value="En RDV">En RDV</MenuItem>
+                <MenuItem value="En RDV" disabled>
+                  En RDV
+                </MenuItem>
                 <MenuItem value="En cours">En cours</MenuItem>
-                <MenuItem value="Clé présente">Clé présente</MenuItem>
+                <MenuItem value="Clé présente" disabled>
+                  Clé présente
+                </MenuItem>
                 <MenuItem value="En pause">En pause</MenuItem>
                 <MenuItem value="Cloturé">Clôturé</MenuItem>
               </Select>

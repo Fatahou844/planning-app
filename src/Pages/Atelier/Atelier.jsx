@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   CardContent,
-  Divider,
   Grid,
   TextField,
   Typography,
@@ -11,9 +10,12 @@ import {
 import { useEffect, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
 import PointageDialog from "../../Components/PointageDialog/PointageDialog";
+import PreviewOR from "../../Components/PreviewOR";
 import { useAxios } from "../../utils/hook/useAxios";
+
 export default function Atelier() {
   const [orders, setOrders] = useState([]);
+  const [selectedOR, setSelectedOR] = useState(null);
 
   const [openPointage, setOpenPointage] = useState(false);
   const handleOpenPointage = () => setOpenPointage(true);
@@ -65,11 +67,15 @@ export default function Atelier() {
       <Box sx={{ height: "100vh", px: 4, bgcolor: "#f5f5f5" }}>
         <Grid container spacing={2} sx={{ height: "100%" }}>
           {/* Gauche - 25% */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} sx={{ pl: "2.5rem !important" }}>
             <Card
-              sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
             >
-              <CardContent sx={{ flex: 1, overflow: "hidden" }}>
+              <CardContent sx={{ flex: 1, overflowY: "auto" }}>
                 <Box
                   sx={{
                     display: "flex",
@@ -83,8 +89,9 @@ export default function Atelier() {
                     {new Date().toLocaleDateString()}
                   </Typography>
                 </Box>
-                <Box sx={{ maxHeight: "80vh", overflowY: "auto", ml: 3 }}>
+                {/* <Box sx={{ maxHeight: "80vh", overflowY: "auto", ml: 3 }}>
                   {activite.map((item) => (
+                    
                     <Box
                       key={item.id}
                       sx={{
@@ -115,8 +122,114 @@ export default function Atelier() {
                       </Typography>
                     </Box>
                   ))}
+                </Box> */}
+                <Box sx={{ maxHeight: "80vh", overflowY: "auto", ml: 3 }}>
+                  {activite.map((item) => {
+                    // 🧮 Calcul du total HT de l'activité à partir des détails TTC
+                    const totalHT = item.Details?.reduce((acc, d) => {
+                      const montantTTC = d.unitPrice * d.quantity;
+                      const remiseTTC =
+                        d.discountPercent > 0
+                          ? (montantTTC * d.discountPercent) / 100
+                          : d.discountValue || 0;
+
+                      const totalTTC = montantTTC - remiseTTC;
+
+                      // Conversion TTC → HT (20% TVA)
+                      const totalHTDetail = totalTTC / 1.2;
+
+                      return acc + totalHTDetail;
+                    }, 0);
+
+                    return (
+                      <Box
+                        key={item.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          p: 1,
+                          mb: 1,
+                          borderRadius: 1,
+                          bgcolor: item.Category?.color || "#ccc",
+                          color: "white",
+                          cursor: "pointer", // 🖱 indique qu'on peut cliquer
+                        }}
+                        onClick={() => setSelectedOR(item)} // 🔥 on met à jour l'OR sélectionné
+                      >
+                        <Typography variant="body2">
+                          {item.id} - {item.Vehicle?.plateNumber} -{" "}
+                          {item.Client?.name}
+                        </Typography>
+
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          {/* Statut */}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              bgcolor: "white",
+                              color: "black",
+                              px: 1,
+                              borderRadius: 1,
+                            }}
+                          >
+                            {item.OrderStatus}
+                          </Typography>
+
+                          {/* Total activité */}
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              bgcolor: "white",
+                              color: "black",
+                              px: 1.5,
+                              borderRadius: 1,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {totalHT?.toFixed(2)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
                 </Box>
+                {/* 🧾 Total général */}
               </CardContent>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  p: 2,
+                  borderTop: "1px solid #ddd",
+                  backgroundColor: "#fff",
+                  position: "sticky",
+                  bottom: 0,
+                  zIndex: 1,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  Total ORs HT :{" "}
+                  {activite
+                    .reduce((acc, item) => {
+                      const totalItemHT = item.Details?.reduce((sum, d) => {
+                        const montantTTC = d.unitPrice * d.quantity;
+                        const remiseTTC =
+                          d.discountPercent > 0
+                            ? (montantTTC * d.discountPercent) / 100
+                            : d.discountValue || 0;
+                        const totalTTC = montantTTC - remiseTTC;
+                        return sum + totalTTC / 1.2; // conversion TTC → HT
+                      }, 0);
+                      return acc + totalItemHT;
+                    }, 0)
+                    .toFixed(2)}{" "}
+                  € HT
+                </Typography>
+              </Box>
             </Card>
           </Grid>
 
@@ -158,29 +271,78 @@ export default function Atelier() {
               </Button>
 
               <Box sx={{ flexGrow: 1 }} />
+              {selectedOR ? (
+                <PreviewOR orData={selectedOR} />
+              ) : (
+                <Box
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    color: "#999",
+                  }}
+                >
+                  Sélectionnez un OR pour voir les détails
+                </Box>
+              )}
             </Box>
+
+            {/* Prévisualisation OR */}
           </Grid>
 
           {/* Droite - 25% */}
           <Grid item xs={12} md={3}>
             <Card
-              sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+              }}
             >
-              <CardContent sx={{ flex: 1, overflow: "hidden" }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 2,
-                  }}
-                >
-                  <Typography variant="h6">Factures atelier</Typography>
-                  <Typography variant="body2">
-                    {new Date().toLocaleDateString()}
-                  </Typography>
-                </Box>
-                <Box sx={{ maxHeight: "80vh", overflowY: "auto" }}>
-                  {factures.map((item) => (
+              {/* --- HEADER FIXE --- */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  p: 2,
+                  borderBottom: "1px solid #ddd",
+                  backgroundColor: "#fff",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                }}
+              >
+                <Typography variant="h6">Factures atelier</Typography>
+                <Typography variant="body2">
+                  {new Date().toLocaleDateString()}
+                </Typography>
+              </Box>
+
+              {/* --- CONTENU SCROLLABLE --- */}
+              <Box
+                sx={{
+                  flex: 1,
+                  overflowY: "auto",
+                  p: 2,
+                }}
+              >
+                {factures.map((item) => {
+                  // 🧮 Calcul du total HT par facture
+                  const totalHT = item.Details?.reduce((acc, d) => {
+                    const montantTTC = d.unitPrice * d.quantity;
+                    const remiseTTC =
+                      d.discountPercent > 0
+                        ? (montantTTC * d.discountPercent) / 100
+                        : d.discountValue || 0;
+                    const totalTTC = montantTTC - remiseTTC;
+                    return acc + totalTTC / 1.2; // Conversion TTC → HT
+                  }, 0);
+
+                  return (
                     <Box
                       key={item.id}
                       sx={{
@@ -197,44 +359,74 @@ export default function Atelier() {
                         {item.id} - {item.Vehicle?.plateNumber} -{" "}
                         {item.Client?.name}
                       </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          bgcolor: "green",
-                          color: "white",
-                          px: 1,
-                          borderRadius: 1,
-                        }}
+
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        facturé
-                      </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            bgcolor: "green",
+                            color: "white",
+                            px: 1,
+                            borderRadius: 1,
+                          }}
+                        >
+                          Facturé
+                        </Typography>
+
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            bgcolor: "white",
+                            color: "black",
+                            px: 1.5,
+                            borderRadius: 1,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {totalHT?.toFixed(2)} €
+                        </Typography>
+                      </Box>
                     </Box>
-                  ))}
-                </Box>
-                <Divider sx={{ my: 2 }} />
-                <Typography align="right">
-                  {/* {factures
-                    .flatMap((f) => f.Details || [])
-                    .reduce((sum, d) => sum + d.unitPrice * d.quantity, 0) /
-                    (1.2).toFixed(2)} */}
-                  {(
-                    factures
-                      .flatMap((f) => f.Details || [])
-                      .reduce((sum, d) => {
-                        const base = d.unitPrice * d.quantity;
-                        const discountPercent = d.discountPercent
-                          ? (base * d.discountPercent) / 100
-                          : 0;
-                        const discountValue = d.discountValue || 0;
-                        const totalAfterDiscount =
-                          base - discountPercent - discountValue;
-                        return sum + totalAfterDiscount;
-                      }, 0) / 1.2
-                  ) // application de la TVA 20%
+                  );
+                })}
+              </Box>
+
+              {/* --- FOOTER FIXE --- */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  p: 2,
+                  borderTop: "1px solid #ddd",
+                  backgroundColor: "#fff",
+                  position: "sticky",
+                  bottom: 0,
+                  zIndex: 1,
+                  boxShadow: "0 -2px 6px rgba(0,0,0,0.05)",
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  Total Factures HT :{" "}
+                  {factures
+                    .reduce((acc, item) => {
+                      const totalItemHT = item.Details?.reduce((sum, d) => {
+                        const montantTTC = d.unitPrice * d.quantity;
+                        const remiseTTC =
+                          d.discountPercent > 0
+                            ? (montantTTC * d.discountPercent) / 100
+                            : d.discountValue || 0;
+                        const totalTTC = montantTTC - remiseTTC;
+                        return sum + totalTTC / 1.2;
+                      }, 0);
+                      return acc + totalItemHT;
+                    }, 0)
                     .toFixed(2)}{" "}
                   €
                 </Typography>
-              </CardContent>
+              </Box>
             </Card>
           </Grid>
         </Grid>
