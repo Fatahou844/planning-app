@@ -4,11 +4,11 @@ import {
   Card,
   CardContent,
   Grid,
-  TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
+import AtelierSearch from "../../Components/AtelierSearch";
 import PointageDialog from "../../Components/PointageDialog/PointageDialog";
 import PreviewOR from "../../Components/PreviewOR";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -247,21 +247,15 @@ export default function Atelier() {
                 boxShadow: 2,
               }}
             >
-              <Box sx={{ display: "flex", mb: 2, width: "100%" }}>
-                <TextField
-                  placeholder="Rechercher"
-                  size="small"
-                  variant="outlined"
-                  fullWidth
-                />
-                <Button variant="contained" sx={{ ml: 1 }}>
-                  Rechercher
-                </Button>
-              </Box>
+              <AtelierSearch
+                onSaveStatus={(id, status) =>
+                  console.log("Sauvegarde :", id, status)
+                }
+              />
 
               <Button
                 variant="contained"
-                sx={{ mb: 2, width: "100%" }}
+                sx={{ mb: 2, mt: 3, width: "100%" }}
                 onClick={handleOpenPointage}
               >
                 Pointage

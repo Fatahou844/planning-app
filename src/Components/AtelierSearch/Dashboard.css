@@ -1,0 +1,11 @@
+/* src/App.css */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 20vh;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+}
