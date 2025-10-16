@@ -8,9 +8,9 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
-import AtelierSearch from "../../Components/AtelierSearch";
 import PointageDialog from "../../Components/PointageDialog/PointageDialog";
 import PreviewOR from "../../Components/PreviewOR";
+import SearchBar from "../../Components/SearchBar";
 import { useAxios } from "../../utils/hook/useAxios";
 
 export default function Atelier() {
@@ -247,7 +247,7 @@ export default function Atelier() {
                 boxShadow: 2,
               }}
             >
-              <AtelierSearch
+              <SearchBar
                 onSaveStatus={(id, status) =>
                   console.log("Sauvegarde :", id, status)
                 }

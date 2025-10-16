@@ -1,16 +1,15 @@
 // src/App.js
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SaveIcon from "@mui/icons-material/Save";
 import {
   Box,
   Button,
+  Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -23,19 +22,21 @@ import {
   TablePagination,
   TableRow,
   TextField,
-  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
+import moment from "moment";
 import { useEffect, useState } from "react";
+import AddDocumentComponent from "../../Components/AddDocumentComponent";
 import DocModal from "../../Components/DocModal";
 import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
+import Notification from "../../Components/Notification";
 import "../../Styles/style.css";
 import { useAxios } from "../../utils/hook/useAxios";
 import "./Dashboard.css";
-function AtelierSearch({ onSaveStatus }) {
+function SearchBar() {
   const axios = useAxios();
   const [searchQuery, setSearchQuery] = useState("");
   const [dataEventsAll, setDataEventsAll] = useState([]);
@@ -704,26 +705,11 @@ function AtelierSearch({ onSaveStatus }) {
     handleSearchClick();
   };
 
-  const handleStatusChange = (id, value) => {
-    setEditedStatus((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleSave = async (id) => {
-    const newStatus = editedStatus[id];
-    if (!newStatus) return;
-
-    setSaving(id);
-
-    // 🧠 Appel backend ou fonction parent
-    if (onSaveStatus) {
-      await onSaveStatus(id, newStatus);
-      await axios.put(`/orders/${id}`, {
-        OrderStatus: newStatus,
-      });
-    }
-
-    // feedback visuel court
-    setTimeout(() => setSaving(null), 800);
+  const handleDocumentCreated = async () => {
+    // Ici tu peux par ex :
+    // - Mettre à jour ton state `ordersData` ou `events`
+    // - Appeler une API
+    // - Déclencher un re-render ou recalculer la semaine
   };
 
   return (
@@ -835,7 +821,26 @@ function AtelierSearch({ onSaveStatus }) {
               placeholder="Nom, Prénom, Email, Marque, Modèle"
               style={{ marginRight: 16, flexGrow: 1 }}
             />
-           
+            <FormControl
+              variant="outlined"
+              size="small"
+              style={{ marginRight: "0.2rem", flexGrow: 1 }}
+            >
+              <InputLabel>Type de document</InputLabel>
+              <Select
+                value={documentFilter}
+                onChange={(e) => setDocumentFilter(e.target.value)}
+                label="Type de document"
+                style={{ minWidth: 200 }}
+              >
+                <MenuItem value="all">Tous</MenuItem>
+                <MenuItem value="events">O.R</MenuItem>
+                <MenuItem value="reservations">Reservations</MenuItem>
+                <MenuItem value="devis">Devis</MenuItem>
+                <MenuItem value="factures">Factures</MenuItem>
+                {/* Ajoute d'autres types si nécessaire */}
+              </Select>
+            </FormControl>
             <TextField
               label="Date min"
               type="date"
@@ -884,12 +889,27 @@ function AtelierSearch({ onSaveStatus }) {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox" sx={{ ...cellStyle }}>
+                      <Checkbox
+                        checked={
+                          selectedItems.length > 0 &&
+                          selectedItems.length === filteredEvents.length
+                        }
+                        indeterminate={
+                          selectedItems.length > 0 &&
+                          selectedItems.length < filteredEvents.length
+                        }
+                        onChange={handleSelectAllClick}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Document</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>N°</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Date</TableCell>
                     <TableCell sx={{ ...cellStyle }}>Nom</TableCell>
                     <TableCell sx={{ ...cellStyle }}>Prénom</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Immatriculation</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>N° OR</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Status</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Action</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Téléphone</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Email</TableCell>
+                    <TableCell sx={{ ...cellStyle }}>Véhicule</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -897,76 +917,66 @@ function AtelierSearch({ onSaveStatus }) {
                   {paginatedEvents.map((event) => {
                     const selected = isSelected(event.id);
 
-                    const currentStatus =
-                      editedStatus[event.id] ?? event.OrderStatus;
-                    const isSaving = saving === event.id;
-
                     return (
                       <TableRow
                         key={event.id}
                         hover
                         selected={selected}
-                        sx={{
-                          borderRadius: 1,
-                          bgcolor: event.Category?.color || "#efeff0ff",
-                          color: "white",
-                          cursor: "pointer", // 🖱 indique qu'on peut cliquer
+                        style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          setSelectedEvent({ ...event, lastEventId: event.id }); // Met à jour l'événement sélectionné
+                          setCollectionName(event.collectionName);
+                          if (event.collectionName !== "events") {
+                            setModalOpen2(true);
+                            setModalOpen(false);
+                          } else {
+                            setModalOpen(true);
+                          }
                         }}
                       >
+                        <TableCell
+                          padding="checkbox"
+                          onClick={(e) => e.stopPropagation()}
+                          sx={{ ...cellStyle }}
+                        >
+                          <Checkbox
+                            checked={selectedItems.some(
+                              (item) => item.id === event.id
+                            )}
+                            onChange={() =>
+                              handleSelectClick(event.id, event.collectionName)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          <Chip
+                            label={event.collectionName}
+                            color={getBadgeColor(event.collectionName)}
+                            style={{
+                              fontWeight: "bold",
+                              textTransform: "capitalize",
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {moment(event.createdAt).format("DD/MM/YYYY")}
+                        </TableCell>
                         <TableCell sx={{ ...cellStyle }}>
                           {event.Client.name}
                         </TableCell>
                         <TableCell sx={{ ...cellStyle }}>
                           {event.Client.firstName}
                         </TableCell>
-
                         <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.phone || ""}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.email}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Vehicle.model || ""} -{" "}
                           {event.Vehicle.plateNumber || ""}
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          <Select
-                            size="small"
-                            value={currentStatus}
-                            onChange={(e) =>
-                              handleStatusChange(event.id, e.target.value)
-                            }
-                            sx={{
-                              ml: 2,
-                              minWidth: 150,
-                              bgcolor: "white",
-                              color: "black",
-                            }}
-                          >
-                            <MenuItem value="En RDV" disabled>
-                              En RDV
-                            </MenuItem>
-                            <MenuItem value="En cours">En cours</MenuItem>
-                            <MenuItem value="Clé présente" disabled>
-                              Clé présente
-                            </MenuItem>
-                            <MenuItem value="En pause">En pause</MenuItem>
-                            <MenuItem value="Cloturé">Clôturé</MenuItem>
-                          </Select>
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          <Tooltip title="Enregistrer le statut">
-                            <IconButton
-                              onClick={() => handleSave(event.id)}
-                              disabled={isSaving}
-                              sx={{
-                                ml: 2,
-                                color: isSaving ? "success.main" : "blue",
-                                "&:hover": { color: "success.light" },
-                              }}
-                            >
-                              {isSaving ? (
-                                <CheckCircleIcon fontSize="small" />
-                              ) : (
-                                <SaveIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     );
@@ -994,9 +1004,22 @@ function AtelierSearch({ onSaveStatus }) {
             Fermer
           </Button>
         </DialogActions>
+
+        {showPopup && (
+          <Notification
+            message={notification.message}
+            handleClose={handleClosePopup}
+            collectionName={collectName}
+            dataEvent={selectedEvent}
+            dataDetails={details}
+          />
+        )}
       </Dialog>
+      <AddDocumentComponent
+        onDocumentCreated={handleDocumentCreated}
+      ></AddDocumentComponent>
     </div>
   );
 }
 
-export default AtelierSearch;
+export default SearchBar;

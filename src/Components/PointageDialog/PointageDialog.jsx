@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
+import AtelierSearch from "../AtelierSearch";
 
 export default function PointageDialog({
   openPointage,
@@ -57,6 +58,9 @@ export default function PointageDialog({
     >
       <DialogTitle>Pointage des RDVs</DialogTitle>
       <DialogContent dividers>
+        <AtelierSearch
+          onSaveStatus={(id, status) => console.log("Sauvegarde :", id, status)}
+        ></AtelierSearch>
         {activite.map((item) => {
           const currentStatus = editedStatus[item.id] ?? item.OrderStatus;
           const isSaving = saving === item.id;
@@ -68,6 +72,7 @@ export default function PointageDialog({
                 justifyContent: "space-between",
                 alignItems: "center",
                 mb: 2,
+                mt: 2,
                 p: 1,
                 bgcolor: item.Category?.color || "#ccc",
                 borderRadius: 1,
