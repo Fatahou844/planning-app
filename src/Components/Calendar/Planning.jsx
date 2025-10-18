@@ -1676,9 +1676,9 @@ const Planning = () => {
           phone: updatedEvent.Client.phone || "",
         },
         vehicule: {
-          plateNumber: updatedEvent.Vehicle.plateNumber || "",
-          vin: updatedEvent.Vehicle.vin || "",
-          color: updatedEvent.Vehicle.color || "",
+          plateNumber: updatedEvent?.Vehicle?.plateNumber || "",
+          vin: updatedEvent?.Vehicle?.vin || "",
+          color: updatedEvent?.Vehicle?.color || "",
         },
         details: {
           notes: updatedEvent.details.notes || "",
@@ -2401,8 +2401,8 @@ const Planning = () => {
       event.Client.name?.toLowerCase().includes(searchLower) ||
       event.Client.firstName?.toLowerCase().includes(searchLower) ||
       event.Client.email?.toLowerCase().includes(searchLower) ||
-      event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
-      event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+      event?.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+      event?.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
 
     return matchesDocument && matchesSearch;
   });
@@ -4183,7 +4183,7 @@ const Planning = () => {
                                       <span>
                                         {" "}
                                         {/* Vert pour la plaque d'immatriculation */}
-                                        {event.Vehicle.plateNumber}
+                                        {event?.Vehicle?.plateNumber}
                                       </span>
                                     </Typography>
                                   }
@@ -4332,7 +4332,7 @@ const Planning = () => {
                                             ),
                                           }}
                                         >
-                                          {event.Vehicle.plateNumber}
+                                          {event?.Vehicle?.plateNumber}
                                         </span>
                                         <span
                                           style={{
@@ -4471,52 +4471,53 @@ const Planning = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredEvents && filteredEvents?.map((event) => (
-                    <TableRow
-                      key={event.id}
-                      hover
-                      onClick={() => {
-                        setSelectedEvent({ ...event, lastEventId: event.id }); // Met à jour l'événement sélectionné
-                        setCollectionName(event.collectionName);
-                        if (event.collectionName !== "events") {
-                          setModalOpen2(true);
-                          setModalOpen(false);
-                          console.log("modalOpen2 listing", modalOpen2);
-                        } else setModalOpen(true);
-                      }}
-                      style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
-                    >
-                      <TableCell sx={{ ...cellStyle }}>
-                        <Chip
-                          label={event.collectionName}
-                          color={getBadgeColor(event.collectionName)}
-                          style={{
-                            fontWeight: "bold",
-                            textTransform: "capitalize",
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
-                      <TableCell sx={{ ...cellStyle }}>
-                        {event.Client.name}
-                      </TableCell>
-                      <TableCell sx={{ ...cellStyle }}>
-                        {event.Client.firstName}
-                      </TableCell>
+                  {filteredEvents &&
+                    filteredEvents?.map((event) => (
+                      <TableRow
+                        key={event.id}
+                        hover
+                        onClick={() => {
+                          setSelectedEvent({ ...event, lastEventId: event.id }); // Met à jour l'événement sélectionné
+                          setCollectionName(event.collectionName);
+                          if (event.collectionName !== "events") {
+                            setModalOpen2(true);
+                            setModalOpen(false);
+                            console.log("modalOpen2 listing", modalOpen2);
+                          } else setModalOpen(true);
+                        }}
+                        style={{ cursor: "pointer" }} // Indique que la ligne est cliquable
+                      >
+                        <TableCell sx={{ ...cellStyle }}>
+                          <Chip
+                            label={event.collectionName}
+                            color={getBadgeColor(event.collectionName)}
+                            style={{
+                              fontWeight: "bold",
+                              textTransform: "capitalize",
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.name}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.firstName}
+                        </TableCell>
 
-                      <TableCell sx={{ ...cellStyle }}>
-                        {event.Client.phone || ""}
-                      </TableCell>
-                      <TableCell sx={{ ...cellStyle }}>
-                        {event.Client.email}
-                      </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.phone || ""}
+                        </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event.Client.email}
+                        </TableCell>
 
-                      <TableCell sx={{ ...cellStyle }}>
-                        {event.Vehicle.model || ""} -{" "}
-                        {event.Vehicle.plateNumber || ""}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell sx={{ ...cellStyle }}>
+                          {event?.Vehicle?.model || ""} -{" "}
+                          {event?.Vehicle?.plateNumber || ""}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </TableContainer>
