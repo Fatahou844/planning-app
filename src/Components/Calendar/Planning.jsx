@@ -4471,7 +4471,7 @@ const Planning = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredEvents.map((event) => (
+                  {filteredEvents && filteredEvents?.map((event) => (
                     <TableRow
                       key={event.id}
                       hover
