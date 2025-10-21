@@ -9,9 +9,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -714,12 +712,18 @@ function AtelierSearch({ onSaveStatus }) {
 
     setSaving(id);
 
-    // 🧠 Appel backend ou fonction parent
+    const now = new Date();
+    const localDateTime = now.toISOString().slice(0, 19).replace("T", " ");
+
+    // ⚙️ D'abord : mise à jour côté backend
+    await axios.put(`/orders/${id}`, {
+      OrderStatus: newStatus,
+      datePointage: localDateTime,
+    });
+
+    // 🧩 Ensuite : informer le parent
     if (onSaveStatus) {
-      await onSaveStatus(id, newStatus);
-      await axios.put(`/orders/${id}`, {
-        OrderStatus: newStatus,
-      });
+      onSaveStatus(id, newStatus, localDateTime);
     }
 
     // feedback visuel court
@@ -835,7 +839,7 @@ function AtelierSearch({ onSaveStatus }) {
               placeholder="Nom, Prénom, Email, Marque, Modèle"
               style={{ marginRight: 16, flexGrow: 1 }}
             />
-           
+
             <TextField
               label="Date min"
               type="date"

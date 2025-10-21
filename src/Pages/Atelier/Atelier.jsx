@@ -6,7 +6,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
 import PointageDialog from "../../Components/PointageDialog/PointageDialog";
 import PreviewOR from "../../Components/PreviewOR";
@@ -16,6 +16,7 @@ import { useAxios } from "../../utils/hook/useAxios";
 export default function Atelier() {
   const [orders, setOrders] = useState([]);
   const [selectedOR, setSelectedOR] = useState(null);
+  const [localOrders, setLocalOrders] = useState([]);
 
   const [openPointage, setOpenPointage] = useState(false);
   const handleOpenPointage = () => setOpenPointage(true);
@@ -48,6 +49,26 @@ export default function Atelier() {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    setLocalOrders(orders);
+  }, [orders]);
+
+  const handleStatusOrder = async (id, newStatus, localDateTime) => {
+    // 🧠 1. Mets à jour l’état local `orders` immédiatement
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === id
+          ? { ...order, OrderStatus: newStatus, datePointage: localDateTime }
+          : order
+      )
+    );
+
+    // 💬 2. (Optionnel) Affiche un feedback ou une alerte
+    console.log(
+      `✅ Commande ${id} mise à jour en "${newStatus}" à ${localDateTime}`
+    );
+  };
+
   const handleDocumentCreated = async () => {
     // Ici tu peux par ex :
     // - Mettre à jour ton state `ordersData` ou `events`
@@ -55,13 +76,32 @@ export default function Atelier() {
     // - Déclencher un re-render ou recalculer la semaine
   };
 
-  // Séparation en "en cours" et "facturés"
-  const today = new Date().toISOString().split("T")[0];
-  // ça donne "2025-09-29" (AAAA-MM-JJ)
+  /* -------------------
+   EN COURS
+------------------- */
+  const activite = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const getDateOnly = (datetime) => datetime?.split("T")[0];
 
-  const activite = orders.filter((o) => !o.isClosed && o.date === today);
+    return localOrders.filter((o) => {
+      const orderDate = getDateOnly(o.date);
+      const pointageDate = getDateOnly(o.datePointage);
+      return (
+        !o.isClosed &&
+        (orderDate === today ||
+          (pointageDate === today && o.OrderStatus === "En cours"))
+      );
+    });
+  }, [localOrders]); // recalcul seulement quand orders change
 
-  const factures = orders.filter((o) => o.isClosed && o.date === today);
+  const factures = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const getDateOnly = (datetime) => datetime?.split("T")[0];
+    return localOrders.filter((o) => {
+      const orderDate = getDateOnly(o.date);
+      return o.isClosed && orderDate === today;
+    });
+  }, [localOrders]);
   return (
     <>
       <Box sx={{ height: "100vh", px: 4, bgcolor: "#f5f5f5" }}>
@@ -247,11 +287,7 @@ export default function Atelier() {
                 boxShadow: 2,
               }}
             >
-              <SearchBar
-                onSaveStatus={(id, status) =>
-                  console.log("Sauvegarde :", id, status)
-                }
-              />
+              <SearchBar onSaveStatus={handleStatusOrder} />
 
               <Button
                 variant="contained"
@@ -434,7 +470,7 @@ export default function Atelier() {
         openPointage={openPointage}
         handleClosePointage={handleClosePointage}
         activite={activite}
-        onSaveStatus={(id, status) => console.log("Sauvegarde :", id, status)}
+        onSaveStatus={handleStatusOrder}
       />
     </>
   );

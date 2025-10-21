@@ -37,12 +37,18 @@ export default function PointageDialog({
 
     setSaving(id);
 
-    // 🧠 Appel backend ou fonction parent
+    const now = new Date();
+    const localDateTime = now.toISOString().slice(0, 19).replace("T", " ");
+
+    // ⚙️ D'abord : mise à jour côté backend
+    await axios.put(`/orders/${id}`, {
+      OrderStatus: newStatus,
+      datePointage: localDateTime,
+    });
+
+    // 🧩 Ensuite : informer le parent
     if (onSaveStatus) {
-      await onSaveStatus(id, newStatus);
-      await axios.put(`/orders/${id}`, {
-        OrderStatus: newStatus,
-      });
+      onSaveStatus(id, newStatus, localDateTime);
     }
 
     // feedback visuel court
@@ -58,9 +64,7 @@ export default function PointageDialog({
     >
       <DialogTitle>Pointage des RDVs</DialogTitle>
       <DialogContent dividers>
-        <AtelierSearch
-          onSaveStatus={(id, status) => console.log("Sauvegarde :", id, status)}
-        ></AtelierSearch>
+        <AtelierSearch onSaveStatus={onSaveStatus}></AtelierSearch>
         {activite.map((item) => {
           const currentStatus = editedStatus[item.id] ?? item.OrderStatus;
           const isSaving = saving === item.id;
