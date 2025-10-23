@@ -94,7 +94,7 @@ export default function WeeklyPlanning({
   const handleOpenNotif = (collectionName) => {
     setNotification({
       open: true,
-      message: "Votre " + collectionName + " a été crée",
+      message: "Bravo!! Votre " + collectionName + " a été crée",
       severity: "success", // Peut être "error", "warning", "info"
     });
     if (collectionName === "reservation") {
@@ -351,7 +351,7 @@ export default function WeeklyPlanning({
           handleClose={handleClosePopup}
           collectionName={collectName}
           dataEvent={selectedEvent}
-          dataDetails={details}
+          dataDetails={selectedEvent.Details}
         />
       )}
       <Box

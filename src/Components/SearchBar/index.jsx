@@ -98,6 +98,34 @@ function SearchBar() {
     return null;
   }
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "/categories/garage/" + getCurrentUser().garageId
+        );
+
+        // Récupérer les données
+        const categoriesData = response.data;
+
+        // Extraire les noms des catégories
+        const categoryNames = categoriesData.data.map(
+          (category) => category.name
+        );
+
+        // Mettre à jour les états
+
+        setCategories(categoriesData.data);
+
+        console.log("categoriesData", categoriesData.data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des catégories :", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   async function handleSearchClick() {
     const keyword = searchQuery.trim().toLowerCase();
     const searchInterior = searchQueryInterior.trim().toLowerCase();
@@ -1011,7 +1039,7 @@ function SearchBar() {
             handleClose={handleClosePopup}
             collectionName={collectName}
             dataEvent={selectedEvent}
-            dataDetails={details}
+            dataDetails={selectedEvent?.Details ?? []}
           />
         )}
       </Dialog>

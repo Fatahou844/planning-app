@@ -109,6 +109,10 @@ function AddOrdreReparationModal({
   };
 
   useEffect(() => {
+    console.log(
+      "AddOrderReparationModam: #############################categories***************************************",
+      categories
+    );
     if (editedEvent && collectionNameOpen == "reservations") {
       const fetchDetails = async () => {
         try {

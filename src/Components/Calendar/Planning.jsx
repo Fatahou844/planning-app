@@ -2193,7 +2193,7 @@ const Planning = () => {
   const handleOpenNotif = (collectionName) => {
     setNotification({
       open: true,
-      message: "Votre " + collectionName + " a été crée",
+      message: "Bravo! Votre " + collectionName + " a été crée",
       severity: "success", // Peut être "error", "warning", "info"
     });
     if (collectionName === "reservation") {
@@ -2242,6 +2242,7 @@ const Planning = () => {
       setModalOpen2(false);
       setModalOpen3(true);
       setFacture(factureData?.data);
+      setDetails(factureData?.data?.Details);
       handleRefrechData();
 
       handleOpenNotif("Facture");

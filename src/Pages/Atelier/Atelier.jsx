@@ -89,7 +89,8 @@ export default function Atelier() {
       return (
         !o.isClosed &&
         (orderDate === today ||
-          (pointageDate === today && o.OrderStatus === "En cours"))
+            pointageDate === today ||
+          o.OrderStatus === "En cours")
       );
     });
   }, [localOrders]); // recalcul seulement quand orders change

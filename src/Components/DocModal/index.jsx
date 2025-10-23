@@ -177,6 +177,10 @@ function DocModal({
   };
 
   useEffect(() => {
+    console.log(
+      "DocModal: #############################categories***************************************",
+      categories
+    );
     if (editedEvent) {
       const fetchDetails = async () => {
         try {

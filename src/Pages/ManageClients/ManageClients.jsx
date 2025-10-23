@@ -124,138 +124,164 @@ function ManageClients() {
   //     }
   //   };
 
-  //   fetchCategories(); searchQueryInterior
+  //   fetchCategories();
+  //   searchQueryInterior;
   // }, []);
 
-  // async function handleSearchClick() {
-  //   const keyword = searchQuery.trim().toLowerCase();
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "/categories/garage/" + getCurrentUser().garageId
+        );
 
-  //   // Liste des collections à rechercher
-  //   const collections = {
-  //     reservations: "reservation",
-  //     devis: "quote",
-  //     factures: "invoice",
-  //     events: "order",
-  //   };
+        // Récupérer les données
+        const categoriesData = response.data;
 
-  //   try {
-  //     // Préparer les requêtes pour chaque collection
-  //     const collectionPromises = Object.entries(collections).map(
-  //       async ([collectionKey, apiEndpoint]) => {
-  //         const url = `/documents-garage/${apiEndpoint}/${
-  //           getCurrentUser().garageId
-  //         }/details`;
+        // Extraire les noms des catégories
+        const categoryNames = categoriesData.data.map(
+          (category) => category.name
+        );
 
-  //         // Effectuer la requête GET
-  //         const response = await axios.get(url);
+        setCategories(categoriesData.data);
 
-  //         if (!response || !response.data) {
-  //           console.log(`Aucune donnée trouvée pour ${collectionKey}`);
-  //           return [];
-  //         }
+        console.log("categoriesData", categoriesData.data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des catégories :", error);
+      }
+    };
 
-  //         let filtResults = response.data.data.map((item) => ({
-  //           ...item,
-  //           collectionName: collectionKey,
-  //         }));
+    fetchCategories();
+  }, []);
+  async function handleSearchClick() {
+    const keyword = searchQuery.trim().toLowerCase();
 
-  //         // Filtrer les résultats en fonction du mot-clé
-  //         const filteredResults = filtResults.filter((item) => {
-  //           return (
-  //             item?.Client?.firstName?.toLowerCase().includes(keyword) ||
-  //             item?.Client?.name?.toLowerCase().includes(keyword) ||
-  //             item?.Client?.email?.toLowerCase().includes(keyword)
-  //           );
-  //         });
+    // Liste des collections à rechercher
+    const collections = {
+      reservations: "reservation",
+      devis: "quote",
+      factures: "invoice",
+      events: "order",
+    };
 
-  //         console.log(
-  //           "############  filteredResults ####################",
-  //           filtResults
-  //         );
+    try {
+      // Préparer les requêtes pour chaque collection
+      const collectionPromises = Object.entries(collections).map(
+        async ([collectionKey, apiEndpoint]) => {
+          const url = `/documents-garage/${apiEndpoint}/${
+            getCurrentUser().garageId
+          }/details`;
 
-  //         // Appliquer le filtre "isClosed === false" pour toutes sauf factures
-  //         return collectionKey !== "factures"
-  //           ? filteredResults.filter((item) => item.isClosed === false)
-  //           : filteredResults;
-  //       }
-  //     );
+          // Effectuer la requête GET
+          const response = await axios.get(url);
 
-  //     // Attendre les résultats de toutes les collections
-  //     const allCollectionsResults = (
-  //       await Promise.all(collectionPromises)
-  //     ).flat();
+          if (!response || !response.data) {
+            console.log(`Aucune donnée trouvée pour ${collectionKey}`);
+            return [];
+          }
 
-  //     // Suppression des doublons
-  //     const uniqueResults = allCollectionsResults.filter(
-  //       (value, index, self) =>
-  //         index ===
-  //         self.findIndex(
-  //           (t) =>
-  //             t.id === value.id && t.collectionName === value.collectionName
-  //         )
-  //     );
+          let filtResults = response.data.data.map((item) => ({
+            ...item,
+            collectionName: collectionKey,
+          }));
 
-  //     console.log("Résultats combinés :", uniqueResults);
+          // Filtrer les résultats en fonction du mot-clé
+          const filteredResults = filtResults.filter((item) => {
+            return (
+              item?.Client?.firstName?.toLowerCase().includes(keyword) ||
+              item?.Client?.name?.toLowerCase().includes(keyword) ||
+              item?.Client?.email?.toLowerCase().includes(keyword)
+            );
+          });
 
-  //     // Mettre à jour l'état avec les résultats
-  //     setDataEventsAll(uniqueResults);
-  //     setFilteredEvents(
-  //       uniqueResults.filter((event) => {
-  //         const matchesDocument =
-  //           documentFilter === "all" || event.collectionName === documentFilter;
+          console.log(
+            "############  filteredResults ####################",
+            filtResults
+          );
 
-  //         const searchLower = searchQueryInterior.toLowerCase();
+          // Appliquer le filtre "isClosed === false" pour toutes sauf factures
+          return collectionKey !== "factures"
+            ? filteredResults.filter((item) => item.isClosed === false)
+            : filteredResults;
+        }
+      );
 
-  //         const matchesSearch =
-  //           event.Client.name?.toLowerCase().includes(searchLower) ||
-  //           event.Client.firstName?.toLowerCase().includes(searchLower) ||
-  //           event.Client.email?.toLowerCase().includes(searchLower) ||
-  //           event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
-  //           event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+      // Attendre les résultats de toutes les collections
+      const allCollectionsResults = (
+        await Promise.all(collectionPromises)
+      ).flat();
 
-  //         const eventDate = new Date(event.createdAt); // ou event.createdAt
+      // Suppression des doublons
+      const uniqueResults = allCollectionsResults.filter(
+        (value, index, self) =>
+          index ===
+          self.findIndex(
+            (t) =>
+              t.id === value.id && t.collectionName === value.collectionName
+          )
+      );
 
-  //         const matchesDate =
-  //           (!dateMin || eventDate >= new Date(dateMin)) &&
-  //           (!dateMax || eventDate <= new Date(dateMax));
+      console.log("Résultats combinés :", uniqueResults);
 
-  //         return matchesDocument && matchesSearch && matchesDate;
-  //       })
-  //     );
+      // Mettre à jour l'état avec les résultats
+      setDataEventsAll(uniqueResults);
+      setFilteredEvents(
+        uniqueResults.filter((event) => {
+          const matchesDocument =
+            documentFilter === "all" || event.collectionName === documentFilter;
 
-  //     const paginatedData = uniqueResults.filter((event) => {
-  //       const matchesDocument =
-  //         documentFilter === "all" || event.collectionName === documentFilter;
+          const searchLower = searchQueryInterior.toLowerCase();
 
-  //       const searchLower = searchQueryInterior.toLowerCase();
+          const matchesSearch =
+            event.Client.name?.toLowerCase().includes(searchLower) ||
+            event.Client.firstName?.toLowerCase().includes(searchLower) ||
+            event.Client.email?.toLowerCase().includes(searchLower) ||
+            event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+            event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
 
-  //       const matchesSearch =
-  //         event.Client.name?.toLowerCase().includes(searchLower) ||
-  //         event.Client.firstName?.toLowerCase().includes(searchLower) ||
-  //         event.Client.email?.toLowerCase().includes(searchLower) ||
-  //         event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
-  //         event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+          const eventDate = new Date(event.createdAt); // ou event.createdAt
 
-  //       const eventDate = new Date(event.createdAt); // ou event.createdAt
+          const matchesDate =
+            (!dateMin || eventDate >= new Date(dateMin)) &&
+            (!dateMax || eventDate <= new Date(dateMax));
 
-  //       const matchesDate =
-  //         (!dateMin || eventDate >= new Date(dateMin)) &&
-  //         (!dateMax || eventDate <= new Date(dateMax));
+          return matchesDocument && matchesSearch && matchesDate;
+        })
+      );
 
-  //       return matchesDocument && matchesSearch && matchesDate;
-  //     });
+      const paginatedData = uniqueResults.filter((event) => {
+        const matchesDocument =
+          documentFilter === "all" || event.collectionName === documentFilter;
 
-  //     setPaginatedEvents(
-  //       paginatedData.slice(
-  //         page * rowsPerPage,
-  //         page * rowsPerPage + rowsPerPage
-  //       )
-  //     );
-  //     setOpen(true); // Ouvre le dialogue après la recherche
-  //   } catch (error) {
-  //     console.error("Erreur lors de la recherche des collections :", error);
-  //   }
-  // }
+        const searchLower = searchQueryInterior.toLowerCase();
+
+        const matchesSearch =
+          event.Client.name?.toLowerCase().includes(searchLower) ||
+          event.Client.firstName?.toLowerCase().includes(searchLower) ||
+          event.Client.email?.toLowerCase().includes(searchLower) ||
+          event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
+          event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
+
+        const eventDate = new Date(event.createdAt); // ou event.createdAt
+
+        const matchesDate =
+          (!dateMin || eventDate >= new Date(dateMin)) &&
+          (!dateMax || eventDate <= new Date(dateMax));
+
+        return matchesDocument && matchesSearch && matchesDate;
+      });
+
+      setPaginatedEvents(
+        paginatedData.slice(
+          page * rowsPerPage,
+          page * rowsPerPage + rowsPerPage
+        )
+      );
+      setOpen(true); // Ouvre le dialogue après la recherche
+    } catch (error) {
+      console.error("Erreur lors de la recherche des collections :", error);
+    }
+  }
 
   async function handleSearchClick() {
     const keyword = searchQuery.trim().toLowerCase();
@@ -593,7 +619,7 @@ function ManageClients() {
       setModalOpen(false);
       setNotification({
         open: true,
-        message: "Votre  Facture a été crée ",
+        message: "Bravo Votre  Facture a été crée ",
         severity: "success", // Peut être "error", "warning", "info"
       });
       setShowPopup(true);
@@ -1194,7 +1220,7 @@ function ManageClients() {
             handleClose={handleClosePopup}
             collectionName={collectName}
             dataEvent={selectedEvent}
-            dataDetails={details}
+            dataDetails={selectedEvent?.Details ?? []}
           />
         )}
       </Dialog>
