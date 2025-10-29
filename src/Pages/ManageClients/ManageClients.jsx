@@ -4,6 +4,8 @@ import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bo
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   Checkbox,
   Chip,
   Dialog,
@@ -12,10 +14,15 @@ import {
   DialogTitle,
   Fab,
   FormControl,
+  Grid,
   InputLabel,
+  List,
+  ListItem,
+  ListItemText,
   MenuItem,
   Paper,
   Select,
+  Tab,
   Table,
   TableBody,
   TableCell,
@@ -23,6 +30,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Tabs,
   TextField,
   Typography,
   useTheme,
@@ -40,6 +48,109 @@ import Notification from "../../Components/Notification";
 import "../../Styles/style.css";
 import { useAxios } from "../../utils/hook/useAxios";
 import "./Dashboard.css";
+const menuItems = [
+  { key: "clients", label: "Clients" },
+  { key: "vehicules", label: "Véhicules" },
+  { key: "historiques", label: "Historiques" },
+];
+// 👇 Liste des clients
+const clientsData = [
+  {
+    id: 1,
+    nom: "Dupont",
+    prenom: "Jean",
+    telephone: "0612345678",
+    email: "jean.dupont@mail.com",
+    vehicules: 2,
+  },
+  {
+    id: 2,
+    nom: "Martin",
+    prenom: "Claire",
+    telephone: "0622334455",
+    email: "claire.martin@mail.com",
+    vehicules: 1,
+  },
+  {
+    id: 3,
+    nom: "Benali",
+    prenom: "Youssef",
+    telephone: "0655443322",
+    email: "y.benali@mail.com",
+    vehicules: 3,
+  },
+];
+
+// 👇 Liste des véhicules
+const vehiculesData = [
+  {
+    id: 1,
+    immatriculation: "AA-123-BB",
+    marque: "Peugeot",
+    modele: "308",
+    client: "Dupont Jean",
+    kilometrage: 50000,
+  },
+  {
+    id: 2,
+    immatriculation: "CC-456-DD",
+    marque: "Renault",
+    modele: "Clio",
+    client: "Martin Claire",
+    kilometrage: 35000,
+  },
+  {
+    id: 3,
+    immatriculation: "EE-789-FF",
+    marque: "Toyota",
+    modele: "Corolla",
+    client: "Benali Youssef",
+    kilometrage: 60000,
+  },
+];
+
+// 👇 Liste des factures
+const facturesData = [
+  {
+    id: 1,
+    numero: "FAC-001",
+    client: "Dupont Jean",
+    vehicule: "Peugeot 308",
+    montant: "350 €",
+    date: "12/10/2025",
+  },
+  {
+    id: 2,
+    numero: "FAC-002",
+    client: "Martin Claire",
+    vehicule: "Renault Clio",
+    montant: "480 €",
+    date: "20/10/2025",
+  },
+];
+
+// 👇 Liste des devis
+const devisData = [
+  {
+    id: 1,
+    numero: "DEV-001",
+    client: "Dupont Jean",
+    vehicule: "Peugeot 308",
+    montant: "300 €",
+    date: "10/10/2025",
+  },
+  {
+    id: 2,
+    numero: "DEV-002",
+    client: "Benali Youssef",
+    vehicule: "Toyota Corolla",
+    montant: "600 €",
+    date: "22/10/2025",
+  },
+];
+const orData = [];
+const reservationsData = [];
+const entretiensData = [];
 function ManageClients() {
   const axios = useAxios();
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +159,18 @@ function ManageClients() {
   const [dataEvents, setDataEvents] = useState([]);
   const [collectionName, setCollectionName] = useState("");
   const [facture, setFacture] = useState(null);
+  // Création
+  const [openCreateClientDialog, setOpenCreateClientDialog] = useState(false);
+  const [openCreateVehiculeDialog, setOpenCreateVehiculeDialog] =
+    useState(false);
+
+  // Modification
+  const [openEditClientDialog, setOpenEditClientDialog] = useState(false);
+  const [openEditVehiculeDialog, setOpenEditVehiculeDialog] = useState(false);
+
+  // Pour stocker l'élément à modifier
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedVehicule, setSelectedVehicule] = useState(null);
   const today = dayjs();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -920,9 +1043,220 @@ function ManageClients() {
     // - Déclencher un re-render ou recalculer la semaine
   };
 
+  const [selected, setSelected] = useState("clients");
+  const [openDialog, setOpenDialog] = useState(false);
+  const [tabHist, setTabHist] = useState(0);
+
+  const renderContent = () => {
+    switch (selected) {
+      // ------------------ Clients ------------------
+      case "clients":
+        return (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Gestion des clients
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setOpenCreateClientDialog(true)}
+              sx={{ mb: 2 }}
+            >
+              Créer un client
+            </Button>
+            <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Nom</TableCell>
+                    <TableCell>Prénom</TableCell>
+                    <TableCell>Téléphone</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Adresse</TableCell>
+                    <TableCell>Code postal</TableCell>
+                    <TableCell>Ville</TableCell>
+                    <TableCell>Nb véhicules</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {clientsData.map((c) => (
+                    <TableRow key={c.id} hover>
+                      <TableCell>{c.id}</TableCell>
+                      <TableCell>{c.nom}</TableCell>
+                      <TableCell>{c.prenom}</TableCell>
+                      <TableCell>{c.telephone}</TableCell>
+                      <TableCell>{c.email}</TableCell>
+                      <TableCell>{c?.adresse}</TableCell>
+                      <TableCell>{c?.postalCode}</TableCell>
+                      <TableCell>{c?.city}</TableCell>
+                      <TableCell>{c.vehicules}</TableCell>
+                      <TableCell>
+                        <Button variant="outlined" size="small" sx={{ mr: 1 }}>
+                          Voir
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="secondary"
+                          onClick={() => {
+                            setSelectedClient(c); // pour clients
+                            setOpenEditClientDialog(true);
+                          }}
+                        >
+                          Modifier
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          </Box>
+        );
+
+      // ------------------ Véhicules ------------------
+      case "vehicules":
+        return (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Gestion des véhicules
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setOpenCreateVehiculeDialog(true)}
+              sx={{ mb: 2 }}
+            >
+              Créer un véhicule
+            </Button>
+            <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Immatriculation</TableCell>
+                    <TableCell>Marque</TableCell>
+                    <TableCell>Modèle</TableCell>
+                    <TableCell>Client</TableCell>
+                    <TableCell>Kilométrage</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {vehiculesData.map((v) => (
+                    <TableRow key={v.id} hover>
+                      <TableCell>{v.id}</TableCell>
+                      <TableCell>{v.immatriculation}</TableCell>
+                      <TableCell>{v.marque}</TableCell>
+                      <TableCell>{v.modele}</TableCell>
+                      <TableCell>{v.client}</TableCell>
+                      <TableCell>{v.kilometrage}</TableCell>
+                      <TableCell>
+                        <Button variant="outlined" size="small" sx={{ mr: 1 }}>
+                          Voir
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="secondary"
+                          onClick={() => {
+                            setSelectedVehicule(v); // pour véhicules
+                            setOpenEditVehiculeDialog(true);
+                          }}
+                        >
+                          Modifier
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          </Box>
+        );
+
+      // ------------------ Historiques ------------------
+      case "historiques":
+        return (
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Historiques
+            </Typography>
+
+            <Tabs
+              value={tabHist}
+              onChange={(e, v) => setTabHist(v)}
+              textColor="primary"
+              indicatorColor="primary"
+              sx={{ mb: 3 }}
+            >
+              <Tab label="Factures" />
+              <Tab label="Devis" />
+              <Tab label="Ordres de Réparation" />
+              <Tab label="Réservations" />
+              <Tab label="Entretiens" />
+            </Tabs>
+
+            {tabHist === 0 && renderTable(facturesData, "Facture")}
+            {tabHist === 1 && renderTable(devisData, "Devis")}
+            {tabHist === 2 && renderTable(orData, "OR")}
+            {tabHist === 3 && renderTable(reservationsData, "Réservation")}
+            {tabHist === 4 && renderTable(entretiensData, "Entretien")}
+          </Box>
+        );
+
+      default:
+        return <Typography>Choisissez une section</Typography>;
+    }
+  };
+
+  // ------------------ Helper pour Historique ------------------
+  const renderTable = (data, type) => (
+    <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Liste des {type}s
+      </Typography>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>N° {type}</TableCell>
+            <TableCell>Client</TableCell>
+            <TableCell>Véhicule</TableCell>
+            {type !== "OR" &&
+              type !== "Réservation" &&
+              type !== "Entretien" && <TableCell>Montant</TableCell>}
+            <TableCell>Date</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((d) => (
+            <TableRow key={d.id} hover>
+              <TableCell>{d.numero}</TableCell>
+              <TableCell>{d.client}</TableCell>
+              <TableCell>{d.vehicule}</TableCell>
+              {"montant" in d && <TableCell>{d.montant}</TableCell>}
+              <TableCell>{d.date}</TableCell>
+              <TableCell>
+                <Button variant="outlined" size="small" sx={{ mr: 1 }}>
+                  Voir
+                </Button>
+                {"montant" in d && (
+                  <Button variant="outlined" size="small" color="secondary">
+                    Imprimer
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Paper>
+  );
+
   return (
-    <div className="app-container">
-      <div className="main-content">
+    <>
+      <div className="">
         {/* 🔍 Barre de recherche centrée */}
         <Box
           sx={{
@@ -1224,6 +1558,202 @@ function ManageClients() {
           />
         )}
       </Dialog>
+      <Box sx={{ height: "100vh", px: 4 }}>
+        <Grid container spacing={2} sx={{ height: "100%", mt: 3 }}>
+          {/* 🟦 Colonne gauche — sidebar locale */}
+          <Grid
+            item
+            xs={12}
+            md={2}
+            sx={{
+              pl: "2.5rem !important",
+            }}
+          >
+            <Card
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <CardContent sx={{ flex: 1, overflowY: "auto" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 2,
+                    ml: 3,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ mb: 2, textAlign: "center" }}>
+                    Menu
+                  </Typography>
+
+                  <List>
+                    {menuItems.map((item) => (
+                      <ListItem
+                        button
+                        key={item.key}
+                        selected={selected === item.key}
+                        onClick={() => setSelected(item.key)}
+                        sx={{
+                          borderRadius: 1,
+                          mb: 1,
+                          bgcolor:
+                            selected === item.key
+                              ? "primary.main"
+                              : "transparent",
+                          color:
+                            selected === item.key ? "white" : "text.primary",
+                          "&:hover": {
+                            bgcolor:
+                              selected === item.key
+                                ? "primary.dark"
+                                : "grey.100",
+                          },
+                        }}
+                      >
+                        <ListItemText primary={item.label} />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* 🟩 Colonne droite — contenu principal */}
+          <Grid item xs={12} md={10}>
+            <Box
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "left",
+                p: 2,
+                bgcolor: "white",
+                borderRadius: 2,
+                boxShadow: 2,
+              }}
+            >
+              {renderContent()}
+            </Box>
+          </Grid>
+        </Grid>
+
+        {/* Dialog (création / modif) */}
+        <Dialog
+          open={openCreateClientDialog}
+          onClose={() => setOpenCreateClientDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Créer un client</DialogTitle>
+          <DialogContent
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <TextField label="Nom" fullWidth />
+            <TextField label="Prénom" fullWidth />
+            <TextField label="Téléphone" fullWidth />
+            <TextField label="Email" fullWidth />
+            <TextField label="Adresse" fullWidth />
+            <TextField label="Code postal" fullWidth />
+            <TextField label="Ville" fullWidth />
+            <Button variant="contained">Enregistrer</Button>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={openEditClientDialog}
+          onClose={() => setOpenEditClientDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Modifier le client</DialogTitle>
+          <DialogContent
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <TextField
+              label="Nom"
+              fullWidth
+              value={selectedClient?.nom || ""}
+            />
+            <TextField
+              label="Prénom"
+              fullWidth
+              value={selectedClient?.prenom || ""}
+            />
+            <TextField
+              label="Téléphone"
+              fullWidth
+              value={selectedClient?.telephone || ""}
+            />
+            <TextField
+              label="Email"
+              fullWidth
+              value={selectedClient?.email || ""}
+            />
+            <Button variant="contained">Enregistrer</Button>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={openCreateVehiculeDialog}
+          onClose={() => setOpenCreateVehiculeDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Créer un véhicule</DialogTitle>
+          <DialogContent
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <TextField label="Immatriculation" fullWidth />
+            <TextField label="Marque" fullWidth />
+            <TextField label="Modèle" fullWidth />
+            <TextField label="Couleur" fullWidth />
+            <TextField label="Client" fullWidth />
+            <TextField label="Kilométrage" fullWidth />
+            <TextField label="VIN" fullWidth />
+            <Button variant="contained">Enregistrer</Button>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={openEditVehiculeDialog}
+          onClose={() => setOpenEditVehiculeDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Modifier le véhicule</DialogTitle>
+          <DialogContent
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <TextField
+              label="Immatriculation"
+              fullWidth
+              value={selectedVehicule?.immatriculation || ""}
+            />
+            <TextField
+              label="Marque"
+              fullWidth
+              value={selectedVehicule?.marque || ""}
+            />
+            <TextField
+              label="Modèle"
+              fullWidth
+              value={selectedVehicule?.modele || ""}
+            />
+            <TextField
+              label="Client"
+              fullWidth
+              value={selectedVehicule?.client || ""}
+            />
+            <TextField
+              label="Kilométrage"
+              fullWidth
+              value={selectedVehicule?.kilometrage || ""}
+            />
+            <Button variant="contained">Enregistrer</Button>
+          </DialogContent>
+        </Dialog>
+      </Box>
       <AddDocumentComponent
         onDocumentCreated={handleDocumentCreated}
       ></AddDocumentComponent>
@@ -1245,7 +1775,7 @@ function ManageClients() {
       >
         <LogoutIcon />
       </Fab>
-    </div>
+    </>
   );
 }
 

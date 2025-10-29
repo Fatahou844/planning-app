@@ -89,7 +89,7 @@ export default function Atelier() {
       return (
         !o.isClosed &&
         (orderDate === today ||
-            pointageDate === today ||
+          pointageDate === today ||
           o.OrderStatus === "En cours")
       );
     });
@@ -130,40 +130,7 @@ export default function Atelier() {
                     {new Date().toLocaleDateString()}
                   </Typography>
                 </Box>
-                {/* <Box sx={{ maxHeight: "80vh", overflowY: "auto", ml: 3 }}>
-                  {activite.map((item) => (
-                    
-                    <Box
-                      key={item.id}
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        p: 1,
-                        mb: 1,
-                        borderRadius: 1,
-                        bgcolor: item.Category?.color || "#ccc",
-                        color: "white",
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {item.id} - {item.Vehicle?.plateNumber} -{" "}
-                        {item.Client?.name}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          bgcolor: "white",
-                          color: "black",
-                          px: 1,
-                          borderRadius: 1,
-                        }}
-                      >
-                        {item.OrderStatus}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box> */}
+
                 <Box sx={{ maxHeight: "80vh", overflowY: "auto", ml: 3 }}>
                   {activite.map((item) => {
                     // 🧮 Calcul du total HT de l'activité à partir des détails TTC
