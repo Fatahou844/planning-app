@@ -53,106 +53,31 @@ const menuItems = [
   { key: "vehicules", label: "Véhicules" },
   { key: "historiques", label: "Historiques" },
 ];
-// 👇 Liste des clients
-const clientsData = [
-  {
-    id: 1,
-    nom: "Dupont",
-    prenom: "Jean",
-    telephone: "0612345678",
-    email: "jean.dupont@mail.com",
-    vehicules: 2,
-  },
-  {
-    id: 2,
-    nom: "Martin",
-    prenom: "Claire",
-    telephone: "0622334455",
-    email: "claire.martin@mail.com",
-    vehicules: 1,
-  },
-  {
-    id: 3,
-    nom: "Benali",
-    prenom: "Youssef",
-    telephone: "0655443322",
-    email: "y.benali@mail.com",
-    vehicules: 3,
-  },
-];
 
-// 👇 Liste des véhicules
-const vehiculesData = [
-  {
-    id: 1,
-    immatriculation: "AA-123-BB",
-    marque: "Peugeot",
-    modele: "308",
-    client: "Dupont Jean",
-    kilometrage: 50000,
-  },
-  {
-    id: 2,
-    immatriculation: "CC-456-DD",
-    marque: "Renault",
-    modele: "Clio",
-    client: "Martin Claire",
-    kilometrage: 35000,
-  },
-  {
-    id: 3,
-    immatriculation: "EE-789-FF",
-    marque: "Toyota",
-    modele: "Corolla",
-    client: "Benali Youssef",
-    kilometrage: 60000,
-  },
-];
-
-// 👇 Liste des factures
-const facturesData = [
-  {
-    id: 1,
-    numero: "FAC-001",
-    client: "Dupont Jean",
-    vehicule: "Peugeot 308",
-    montant: "350 €",
-    date: "12/10/2025",
-  },
-  {
-    id: 2,
-    numero: "FAC-002",
-    client: "Martin Claire",
-    vehicule: "Renault Clio",
-    montant: "480 €",
-    date: "20/10/2025",
-  },
-];
-
-// 👇 Liste des devis
-const devisData = [
-  {
-    id: 1,
-    numero: "DEV-001",
-    client: "Dupont Jean",
-    vehicule: "Peugeot 308",
-    montant: "300 €",
-    date: "10/10/2025",
-  },
-  {
-    id: 2,
-    numero: "DEV-002",
-    client: "Benali Youssef",
-    vehicule: "Toyota Corolla",
-    montant: "600 €",
-    date: "22/10/2025",
-  },
-];
-const orData = [];
-const reservationsData = [];
-const entretiensData = [];
 function ManageClients() {
   const axios = useAxios();
+  const [clientsData, setClientsData] = useState([]);
+  const [vehiculesData, setVehiculesData] = useState([]);
+  const [facturesData, setFacturesData] = useState([]);
+  const [devisData, setDevisData] = useState([]);
+  const [orData, setOrData] = useState([]);
+  const [reservationsData, setReservationsData] = useState([]);
+  const [entretiensData, setEntretiensData] = useState([]);
+  const [errors, setErrors] = useState({
+    phone: "",
+    email: "",
+  });
+
+  const [isFormInvalid, setIsFormInvalid] = useState(false);
+  const [formData, setFormData] = useState({
+    plateNumber: "",
+    brand: "",
+    model: "",
+    color: "",
+    clientId: "",
+    mileage: "",
+    vin: "",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [dataEventsAll, setDataEventsAll] = useState([]);
   const [collectName, setCollectName] = useState("factures");
@@ -171,6 +96,100 @@ function ManageClients() {
   // Pour stocker l'élément à modifier
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedVehicule, setSelectedVehicule] = useState(null);
+
+  const handleCreateClient = () => {
+    const clientData = {
+      ...selectedClient,
+      garageId: getCurrentUser().garageId, // Assurez-vous que garageId est défini dans le composant
+    };
+    axios
+      .post("/clients", clientData)
+      .then((res) => {
+        if (res.data) {
+          setOpenCreateClientDialog(false);
+        }
+      })
+      .catch((err) => console.error(err));
+  };
+
+  const handleNewClientChange = (e) => {
+    const { name, value } = e.target;
+    // Nouvelle valeur du client mise à jour localement
+    const updatedClient = { ...selectedClient, [name]: value };
+
+    setSelectedClient(updatedClient);
+
+    // Reset de l'erreur pour ce champ
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    // Recalcul de la validité du formulaire
+    const hasErrors = Object.values(errors).some((err) => err !== "");
+    const isInvalid = !updatedClient.phone || !updatedClient.email || hasErrors;
+    setIsFormInvalid(isInvalid);
+  };
+
+  const handleNewVehiculeChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedVehicule((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 🔹 Fonction de création du véhicule
+  const createVehicule = async () => {
+    const vehiculeData = {
+      ...selectedVehicule,
+      clientId: formData.clientId, // Assurez-vous que garageId est défini dans le composant
+    };
+    try {
+      const res = await axios.post("/vehicles", vehiculeData);
+      if (res.data) {
+        setOpenCreateVehiculeDialog(false);
+      }
+      console.log("Véhicule créé :", res.data);
+    } catch (error) {
+      console.error("Erreur lors de la création du véhicule :", error);
+      alert("Erreur : impossible de créer le véhicule.");
+    }
+  };
+
+  // 🔹 Fonction de mise à jour du client
+  const handleUpdateClients = async () => {
+    try {
+      if (!selectedClient?.id) return alert("Aucun client sélectionné.");
+      const res = await axios.put(
+        `/clients/${selectedClient.id}`,
+        selectedClient
+      );
+
+      if (res.data) {
+        setOpenEditClientDialog(false);
+      }
+
+      console.log("Client mis à jour :", res.data);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du client :", error);
+      alert("Erreur : impossible de mettre à jour le client.");
+    }
+  };
+
+  // 🔹 Fonction de mise à jour du client
+  const handleUpdateVehicule = async () => {
+    try {
+      if (!selectedVehicule?.id) return alert("Aucun client sélectionné.");
+      const res = await axios.put(
+        `/vehicles/${selectedVehicule.id}`,
+        selectedVehicule
+      );
+      if (res.data) {
+        setOpenEditVehiculeDialog(false);
+      }
+      console.log("Vehicule mis à jour :", res.data);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du vehicule :", error);
+      alert("Erreur : impossible de mettre à jour le vehicule.");
+    }
+  };
+
   const today = dayjs();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -223,34 +242,6 @@ function ManageClients() {
     return null;
   }
 
-  // useEffect(() => {
-  //   const fetchCategories = async () => {
-  //     try {
-  //       const response = await axios.get(
-  //         "/categories/garage/" + getCurrentUser().garageId
-  //       );
-
-  //       // Récupérer les données
-  //       const categoriesData = response.data;
-
-  //       // Extraire les noms des catégories
-  //       const categoryNames = categoriesData.data.map(
-  //         (category) => category.name
-  //       );
-
-  //       // Mettre à jour les états
-  //       setCategories(categoriesData.data);
-
-  //       console.log("categoriesData", categoriesData.data);
-  //     } catch (error) {
-  //       console.error("Erreur lors de la récupération des catégories :", error);
-  //     }
-  //   };
-
-  //   fetchCategories();
-  //   searchQueryInterior;
-  // }, []);
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -261,12 +252,15 @@ function ManageClients() {
         // Récupérer les données
         const categoriesData = response.data;
 
-        // Extraire les noms des catégories
-        const categoryNames = categoriesData.data.map(
-          (category) => category.name
-        );
-
         setCategories(categoriesData.data);
+
+        const clients = await axios.get(
+          "/clients/search/garage/" + getCurrentUser().garageId
+        );
+        const vehicules = await axios.get("/vehicles");
+
+        setClientsData(clients.data.data);
+        setVehiculesData(vehicules.data.data);
 
         console.log("categoriesData", categoriesData.data);
       } catch (error) {
@@ -1064,53 +1058,59 @@ function ManageClients() {
               Créer un client
             </Button>
             <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Nom</TableCell>
-                    <TableCell>Prénom</TableCell>
-                    <TableCell>Téléphone</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Adresse</TableCell>
-                    <TableCell>Code postal</TableCell>
-                    <TableCell>Ville</TableCell>
-                    <TableCell>Nb véhicules</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {clientsData.map((c) => (
-                    <TableRow key={c.id} hover>
-                      <TableCell>{c.id}</TableCell>
-                      <TableCell>{c.nom}</TableCell>
-                      <TableCell>{c.prenom}</TableCell>
-                      <TableCell>{c.telephone}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c?.adresse}</TableCell>
-                      <TableCell>{c?.postalCode}</TableCell>
-                      <TableCell>{c?.city}</TableCell>
-                      <TableCell>{c.vehicules}</TableCell>
-                      <TableCell>
-                        <Button variant="outlined" size="small" sx={{ mr: 1 }}>
-                          Voir
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="secondary"
-                          onClick={() => {
-                            setSelectedClient(c); // pour clients
-                            setOpenEditClientDialog(true);
-                          }}
-                        >
-                          Modifier
-                        </Button>
-                      </TableCell>
+              <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Nom</TableCell>
+                      <TableCell>Prénom</TableCell>
+                      <TableCell>Téléphone</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Adresse</TableCell>
+                      <TableCell>Code postal</TableCell>
+                      <TableCell>Ville</TableCell>
+                      <TableCell>Nb véhicules</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {clientsData.map((c) => (
+                      <TableRow key={c.id} hover>
+                        <TableCell>{c.id}</TableCell>
+                        <TableCell>{c.name}</TableCell>
+                        <TableCell>{c.firstname}</TableCell>
+                        <TableCell>{c.phone}</TableCell>
+                        <TableCell>{c.email}</TableCell>
+                        <TableCell>{c?.adress}</TableCell>
+                        <TableCell>{c?.postalCode}</TableCell>
+                        <TableCell>{c?.city}</TableCell>
+
+                        <TableCell>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{ mr: 1 }}
+                          >
+                            Voir
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            onClick={() => {
+                              setSelectedClient(c); // pour clients
+                              setOpenEditClientDialog(true);
+                            }}
+                          >
+                            Modifier
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Paper>
           </Box>
         );
@@ -1130,47 +1130,51 @@ function ManageClients() {
               Créer un véhicule
             </Button>
             <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Immatriculation</TableCell>
-                    <TableCell>Marque</TableCell>
-                    <TableCell>Modèle</TableCell>
-                    <TableCell>Client</TableCell>
-                    <TableCell>Kilométrage</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {vehiculesData.map((v) => (
-                    <TableRow key={v.id} hover>
-                      <TableCell>{v.id}</TableCell>
-                      <TableCell>{v.immatriculation}</TableCell>
-                      <TableCell>{v.marque}</TableCell>
-                      <TableCell>{v.modele}</TableCell>
-                      <TableCell>{v.client}</TableCell>
-                      <TableCell>{v.kilometrage}</TableCell>
-                      <TableCell>
-                        <Button variant="outlined" size="small" sx={{ mr: 1 }}>
-                          Voir
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="secondary"
-                          onClick={() => {
-                            setSelectedVehicule(v); // pour véhicules
-                            setOpenEditVehiculeDialog(true);
-                          }}
-                        >
-                          Modifier
-                        </Button>
-                      </TableCell>
+              <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Immatriculation</TableCell>
+                      <TableCell>Modèle</TableCell>
+                      <TableCell>Client</TableCell>
+                      <TableCell>Kilométrage</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {vehiculesData.map((v) => (
+                      <TableRow key={v.id} hover>
+                        <TableCell>{v.id}</TableCell>
+                        <TableCell>{v.plateNumber}</TableCell>
+                        <TableCell>{v.model}</TableCell>
+                        <TableCell>{v.Client?.name}</TableCell>
+                        <TableCell>{v.mileage}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{ mr: 1 }}
+                          >
+                            Voir
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            onClick={() => {
+                              setSelectedVehicule(v); // pour véhicules
+                              setOpenEditVehiculeDialog(true);
+                            }}
+                          >
+                            Modifier
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Paper>
           </Box>
         );
@@ -1652,14 +1656,46 @@ function ManageClients() {
           <DialogContent
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
-            <TextField label="Nom" fullWidth />
-            <TextField label="Prénom" fullWidth />
-            <TextField label="Téléphone" fullWidth />
-            <TextField label="Email" fullWidth />
-            <TextField label="Adresse" fullWidth />
-            <TextField label="Code postal" fullWidth />
-            <TextField label="Ville" fullWidth />
-            <Button variant="contained">Enregistrer</Button>
+            <TextField
+              name="name"
+              onChange={handleNewClientChange}
+              label="Nom"
+              fullWidth
+            />
+            <TextField
+              name="firstName"
+              onChange={handleNewClientChange}
+              label="Prénom"
+              fullWidth
+            />
+            <TextField
+              name="phone"
+              onChange={handleNewClientChange}
+              label="Téléphone"
+              fullWidth
+            />
+            <TextField
+              name="email"
+              onChange={handleNewClientChange}
+              label="Email"
+              fullWidth
+            />
+            <TextField
+              name="address"
+              onChange={handleNewClientChange}
+              label="Adresse"
+              fullWidth
+            />
+            <TextField name="postalCode" label="Code postal" fullWidth />
+            <TextField
+              name="city"
+              onChange={handleNewClientChange}
+              label="Ville"
+              fullWidth
+            />
+            <Button variant="contained" onClick={handleCreateClient}>
+              Enregistrer
+            </Button>
           </DialogContent>
         </Dialog>
         <Dialog
@@ -1675,24 +1711,55 @@ function ManageClients() {
             <TextField
               label="Nom"
               fullWidth
-              value={selectedClient?.nom || ""}
+              name="name"
+              onChange={handleNewClientChange}
+              value={selectedClient?.name || ""}
             />
             <TextField
               label="Prénom"
+              name="firstName"
+              onChange={handleNewClientChange}
               fullWidth
-              value={selectedClient?.prenom || ""}
+              value={selectedClient?.firstName || ""}
             />
             <TextField
               label="Téléphone"
+              name="phone"
+              onChange={handleNewClientChange}
               fullWidth
-              value={selectedClient?.telephone || ""}
+              value={selectedClient?.phone || ""}
             />
             <TextField
               label="Email"
+              name="email"
+              onChange={handleNewClientChange}
               fullWidth
               value={selectedClient?.email || ""}
             />
-            <Button variant="contained">Enregistrer</Button>
+            <TextField
+              label="Addresse"
+              name="address"
+              onChange={handleNewClientChange}
+              fullWidth
+              value={selectedClient?.address || ""}
+            />
+            <TextField
+              label="Code postal"
+              name="postalCode"
+              onChange={handleNewClientChange}
+              fullWidth
+              value={selectedClient?.postalCode || ""}
+            />
+            <TextField
+              label="Ville"
+              name="city"
+              onChange={handleNewClientChange}
+              fullWidth
+              value={selectedClient?.city || ""}
+            />
+            <Button variant="contained" onClick={handleUpdateClients}>
+              Enregistrer
+            </Button>
           </DialogContent>
         </Dialog>
         <Dialog
@@ -1705,14 +1772,55 @@ function ManageClients() {
           <DialogContent
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
-            <TextField label="Immatriculation" fullWidth />
-            <TextField label="Marque" fullWidth />
-            <TextField label="Modèle" fullWidth />
-            <TextField label="Couleur" fullWidth />
-            <TextField label="Client" fullWidth />
-            <TextField label="Kilométrage" fullWidth />
-            <TextField label="VIN" fullWidth />
-            <Button variant="contained">Enregistrer</Button>
+            <TextField
+              name="plateNumber"
+              onChange={handleNewVehiculeChange}
+              label="Immatriculation"
+              fullWidth
+            />
+            <TextField
+              name="model"
+              onChange={handleNewVehiculeChange}
+              label="Modèle"
+              fullWidth
+            />
+            <TextField
+              name="color"
+              onChange={handleNewVehiculeChange}
+              label="Couleur"
+              fullWidth
+            />
+            {/* 🔹 Sélecteur de client */}
+            <FormControl fullWidth>
+              <InputLabel>Client</InputLabel>
+              <Select
+                name="clientId"
+                value={formData.clientId}
+                onChange={handleNewVehiculeChange}
+                label="Client"
+              >
+                {clientsData.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              name="mileage"
+              onChange={handleNewVehiculeChange}
+              label="Kilométrage"
+              fullWidth
+            />
+            <TextField
+              name="vin"
+              onChange={handleNewVehiculeChange}
+              label="VIN"
+              fullWidth
+            />
+            <Button variant="contained" onClick={createVehicule}>
+              Enregistrer
+            </Button>
           </DialogContent>
         </Dialog>
         <Dialog
@@ -1727,30 +1835,49 @@ function ManageClients() {
           >
             <TextField
               label="Immatriculation"
+              name="plateNumber"
+              onChange={handleNewVehiculeChange}
               fullWidth
-              value={selectedVehicule?.immatriculation || ""}
+              value={selectedVehicule?.plateNumber || ""}
             />
-            <TextField
-              label="Marque"
-              fullWidth
-              value={selectedVehicule?.marque || ""}
-            />
+
             <TextField
               label="Modèle"
               fullWidth
-              value={selectedVehicule?.modele || ""}
+              name="model"
+              onChange={handleNewVehiculeChange}
+              value={selectedVehicule?.model || ""}
+            />
+            <TextField
+              label="Couleur"
+              name="color"
+              onChange={handleNewVehiculeChange}
+              fullWidth
+              value={selectedVehicule?.color || ""}
             />
             <TextField
               label="Client"
               fullWidth
-              value={selectedVehicule?.client || ""}
+              value={selectedVehicule?.Client.name || ""}
+              disabled="true"
             />
             <TextField
               label="Kilométrage"
+              name="mileage"
+              onChange={handleNewVehiculeChange}
               fullWidth
-              value={selectedVehicule?.kilometrage || ""}
+              value={selectedVehicule?.mileage || ""}
             />
-            <Button variant="contained">Enregistrer</Button>
+            <TextField
+              label="VIN"
+              name="vin"
+              onChange={handleNewVehiculeChange}
+              fullWidth
+              value={selectedVehicule?.vin || ""}
+            />
+            <Button variant="contained" onClick={handleUpdateVehicule}>
+              Enregistrer
+            </Button>
           </DialogContent>
         </Dialog>
       </Box>
