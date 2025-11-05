@@ -1251,9 +1251,9 @@ function ManageClients() {
         <TableBody>
           {data.map((d) => (
             <TableRow key={d.id} hover>
-              <TableCell>{d.id}</TableCell>
+              <TableCell>{d?.id}</TableCell>
               <TableCell>{d?.Client?.name}</TableCell>
-              <TableCell>{d?.Vehicle.plateNumber}</TableCell>
+              <TableCell>{d?.Vehicle?.plateNumber}</TableCell>
 
               <TableCell>
                 {new Date(d.createdAt).toLocaleDateString()}
@@ -1271,19 +1271,19 @@ function ManageClients() {
                 {type == "OR" && (
                   <OrdreReparationTemplate2
                     editedEvent={d}
-                    details={d.Details}
+                    details={d?.Details}
                   />
                 )}
                 {type == "Devis" && (
-                  <DevisTemplate2 editedEvent={d} details={d.Details} />
+                  <DevisTemplate2 editedEvent={d} details={d?.Details} />
                 )}
                 {type == "Facture" && (
-                  <InvoiceTemplateWithoutOR2 NewEvent={d} details={d.Details} />
+                  <InvoiceTemplateWithoutOR2 NewEvent={d} details={d?.Details} />
                 )}
                 {type == "Réservation" && (
                   <ReservationTemplate2
                     editedEvent={d}
-                    details={d.Details || []}
+                    details={d?.Details || []}
                   />
                 )}
               </TableCell>
