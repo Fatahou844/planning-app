@@ -21,6 +21,7 @@ import {
   ListItemText,
   MenuItem,
   Paper,
+  Popover,
   Select,
   Tab,
   Table,
@@ -40,10 +41,15 @@ import Cookies from "js-cookie";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
+import DevisTemplate2 from "../../Components/DevisTemplate2";
 import DocModal from "../../Components/DocModal";
 import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
+import InvoiceTemplateWithoutOR2 from "../../Components/InvoiceTemplateWithoutOR2";
 import Notification from "../../Components/Notification";
+import OrdreReparationTemplate2 from "../../Components/OrdreReparationTemplate2";
+import PreviewDocument from "../../Components/PreviewDocument";
+import ReservationTemplate2 from "../../Components/ReservationTemplate2";
 
 import "../../Styles/style.css";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -63,6 +69,8 @@ function ManageClients() {
   const [orData, setOrData] = useState([]);
   const [reservationsData, setReservationsData] = useState([]);
   const [entretiensData, setEntretiensData] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedData, setSelectedData] = useState(null);
   const [errors, setErrors] = useState({
     phone: "",
     email: "",
@@ -261,6 +269,29 @@ function ManageClients() {
 
         setClientsData(clients.data.data);
         setVehiculesData(vehicules.data.data);
+
+        const ordres = await axios.get(
+          "/documents-garage/order/" + getCurrentUser().garageId + "/details"
+        );
+
+        const devis = await axios.get(
+          "/documents-garage/quote/" + getCurrentUser().garageId + "/details"
+        );
+
+        const resa = await axios.get(
+          "/documents-garage/reservation/" +
+            getCurrentUser().garageId +
+            "/details"
+        );
+
+        const factures = await axios.get(
+          "/documents-garage/invoice/" + getCurrentUser().garageId + "/details"
+        );
+
+        setOrData(ordres.data.data);
+        setDevisData(devis.data.data);
+        setReservationsData(resa.data.data);
+        setFacturesData(factures.data.data);
 
         console.log("categoriesData", categoriesData.data);
       } catch (error) {
@@ -1090,13 +1121,6 @@ function ManageClients() {
                           <Button
                             variant="outlined"
                             size="small"
-                            sx={{ mr: 1 }}
-                          >
-                            Voir
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
                             color="secondary"
                             onClick={() => {
                               setSelectedClient(c); // pour clients
@@ -1151,13 +1175,6 @@ function ManageClients() {
                         <TableCell>{v.Client?.name}</TableCell>
                         <TableCell>{v.mileage}</TableCell>
                         <TableCell>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            sx={{ mr: 1 }}
-                          >
-                            Voir
-                          </Button>
                           <Button
                             variant="outlined"
                             size="small"
@@ -1226,9 +1243,7 @@ function ManageClients() {
             <TableCell>N° {type}</TableCell>
             <TableCell>Client</TableCell>
             <TableCell>Véhicule</TableCell>
-            {type !== "OR" &&
-              type !== "Réservation" &&
-              type !== "Entretien" && <TableCell>Montant</TableCell>}
+
             <TableCell>Date</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
@@ -1236,27 +1251,79 @@ function ManageClients() {
         <TableBody>
           {data.map((d) => (
             <TableRow key={d.id} hover>
-              <TableCell>{d.numero}</TableCell>
-              <TableCell>{d.client}</TableCell>
-              <TableCell>{d.vehicule}</TableCell>
-              {"montant" in d && <TableCell>{d.montant}</TableCell>}
-              <TableCell>{d.date}</TableCell>
+              <TableCell>{d.id}</TableCell>
+              <TableCell>{d?.Client?.name}</TableCell>
+              <TableCell>{d?.Vehicle.plateNumber}</TableCell>
+
               <TableCell>
-                <Button variant="outlined" size="small" sx={{ mr: 1 }}>
+                {new Date(d.createdAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{ mr: 1 }}
+                  onClick={(event) => HandleViewDocument(event, d)}
+                >
                   Voir
                 </Button>
-                {"montant" in d && (
-                  <Button variant="outlined" size="small" color="secondary">
-                    Imprimer
-                  </Button>
+
+                {type == "OR" && (
+                  <OrdreReparationTemplate2
+                    editedEvent={d}
+                    details={d.Details}
+                  />
+                )}
+                {type == "Devis" && (
+                  <DevisTemplate2 editedEvent={d} details={d.Details} />
+                )}
+                {type == "Facture" && (
+                  <InvoiceTemplateWithoutOR2 NewEvent={d} details={d.Details} />
+                )}
+                {type == "Réservation" && (
+                  <ReservationTemplate2
+                    editedEvent={d}
+                    details={d.Details || []}
+                  />
                 )}
               </TableCell>
             </TableRow>
           ))}
+          <Popover
+            id={id}
+            open={openView}
+            anchorEl={anchorEl}
+            onClose={handleCloseViewDocument}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "left",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "left",
+            }}
+          >
+            {/* On passe les données sélectionnées au composant PreviewDocument */}
+            {selectedData && <PreviewDocument DocumentData={selectedData} />}
+          </Popover>
         </TableBody>
       </Table>
     </Paper>
   );
+
+  // Renommé selon ta demande
+  const HandleViewDocument = (event, data) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedData(data); // données spécifiques à cette ligne
+  };
+
+  const handleCloseViewDocument = () => {
+    setAnchorEl(null);
+    setSelectedData(null);
+  };
+
+  const openView = Boolean(anchorEl);
+  const id = openView ? "preview-popover" : undefined;
 
   return (
     <>
