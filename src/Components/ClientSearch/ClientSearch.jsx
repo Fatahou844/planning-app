@@ -29,16 +29,37 @@ const ClientSearch = ({ onSelectClient, Client }) => {
 
   const [isFormInvalid, setIsFormInvalid] = useState(false);
 
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const validatePhone = (phone) => {
-    const regex = /^\+?[0-9\s\-]{7,15}$/; // Accepte les formats avec +, espace, tirets
-    return regex.test(phone);
-  };
   const axios = useAxios();
+
+  // Appel API dès qu'on a 2 chiffres ou plus dans le code postal
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (postalCode.length >= 2) {
+        setLoading(true);
+        try {
+          const response = await axios.get(
+            `/villes/search/codepostal?codepostal=${postalCode}`
+          );
+          setSuggestions(response.data.data || []);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des villes :", error);
+          setSuggestions([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    };
+
+    const timeout = setTimeout(fetchSuggestions, 400); // petit debounce
+    return () => clearTimeout(timeout);
+  }, [postalCode]);
 
   // 🔍 Recherche automatique des clients
   useEffect(() => {
@@ -72,21 +93,39 @@ const ClientSearch = ({ onSelectClient, Client }) => {
     }
   };
 
+  const handleSelectVille = (event, value) => {
+    if (value) {
+      setPostalCode(value.codepostal);
+      setCity(value.nom);
+      handleNewClientChange({
+        target: { name: "postalCode", value: value.codepostal },
+      });
+      handleNewClientChange({ target: { name: "city", value: value.nom } });
+
+      const updatedClient = { ...newClient, postalCode: value.codepostal };
+
+      setNewClient(updatedClient);
+    }
+  };
+
   // ✏️ Gérer les champs du formulaire de création
   const handleNewClientChange = (e) => {
     const { name, value } = e.target;
     // Nouvelle valeur du client mise à jour localement
-    const updatedClient = { ...newClient, [name]: value };
+    {
+      const updatedClient = { ...newClient, [name]: value };
 
-    setNewClient(updatedClient);
+      setNewClient(updatedClient);
 
-    // Reset de l'erreur pour ce champ
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+      // Reset de l'erreur pour ce champ
+      setErrors((prev) => ({ ...prev, [name]: "" }));
 
-    // Recalcul de la validité du formulaire
-    const hasErrors = Object.values(errors).some((err) => err !== "");
-    const isInvalid = !updatedClient.phone || !updatedClient.email || hasErrors;
-    setIsFormInvalid(isInvalid);
+      // Recalcul de la validité du formulaire
+      const hasErrors = Object.values(errors).some((err) => err !== "");
+      const isInvalid =
+        !updatedClient.phone || !updatedClient.email || hasErrors;
+      setIsFormInvalid(isInvalid);
+    }
   };
 
   function getCurrentUser() {
@@ -248,7 +287,7 @@ const ClientSearch = ({ onSelectClient, Client }) => {
             onChange={handleNewClientChange}
             size="small"
           />
-          <TextField
+          {/* <TextField
             name="postalCode"
             label="Code postal"
             fullWidth
@@ -263,6 +302,42 @@ const ClientSearch = ({ onSelectClient, Client }) => {
             margin="normal"
             onChange={handleNewClientChange}
             size="small"
+          /> */}
+          {/* 🔍 Sélecteur de code postal + ville */}
+          <Autocomplete
+            options={suggestions}
+            getOptionLabel={(option) => `${option.codepostal}`}
+            loading={loading}
+            onChange={handleSelectVille}
+            inputValue={postalCode} // ✅ C’est ici que tu lies ton champ postalCode
+            onInputChange={(event, newInputValue) => {
+              setPostalCode(newInputValue);
+              handleNewClientChange({
+                target: { name: "postalCode", value: newInputValue },
+              });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Code postal"
+                fullWidth
+                margin="normal"
+                size="small"
+              />
+            )}
+          />
+
+          <TextField
+            name="city"
+            label="Ville"
+            fullWidth
+            margin="normal"
+            size="small"
+            value={city}
+            onChange={(e) => {
+              setCity(e.target.value);
+              handleNewClientChange(e);
+            }}
           />
         </DialogContent>
         <DialogActions>
