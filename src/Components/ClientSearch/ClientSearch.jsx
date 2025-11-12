@@ -102,7 +102,11 @@ const ClientSearch = ({ onSelectClient, Client }) => {
       });
       handleNewClientChange({ target: { name: "city", value: value.nom } });
 
-      const updatedClient = { ...newClient, postalCode: value.codepostal };
+      const updatedClient = {
+        ...newClient,
+        postalCode: value.codepostal,
+        city: value.nom,
+      };
 
       setNewClient(updatedClient);
     }
