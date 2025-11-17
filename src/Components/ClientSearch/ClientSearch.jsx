@@ -39,7 +39,7 @@ const ClientSearch = ({ onSelectClient, Client }) => {
   // Appel API dès qu'on a 2 chiffres ou plus dans le code postal
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (postalCode.length >= 2) {
+      if (postalCode.length >= 5) {
         setLoading(true);
         try {
           const response = await axios.get(
@@ -291,26 +291,11 @@ const ClientSearch = ({ onSelectClient, Client }) => {
             onChange={handleNewClientChange}
             size="small"
           />
-          {/* <TextField
-            name="postalCode"
-            label="Code postal"
-            fullWidth
-            margin="normal"
-            onChange={handleNewClientChange}
-            size="small"
-          />
-          <TextField
-            name="city"
-            label="Ville"
-            fullWidth
-            margin="normal"
-            onChange={handleNewClientChange}
-            size="small"
-          /> */}
+
           {/* 🔍 Sélecteur de code postal + ville */}
-          <Autocomplete
+          {/* <Autocomplete
             options={suggestions}
-            getOptionLabel={(option) => `${option.codepostal}`}
+            getOptionLabel={(option) => `${option.codepostal}, ${option.nom}`}
             loading={loading}
             onChange={handleSelectVille}
             inputValue={postalCode} // ✅ C’est ici que tu lies ton champ postalCode
@@ -320,6 +305,36 @@ const ClientSearch = ({ onSelectClient, Client }) => {
                 target: { name: "postalCode", value: newInputValue },
               });
             }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Code postal"
+                fullWidth
+                margin="normal"
+                size="small"
+              />
+            )}
+          /> */}
+          <Autocomplete
+            options={suggestions}
+            getOptionLabel={(option) => `${option.codepostal}, ${option.nom}`} // pour la liste
+            loading={loading}
+            onChange={handleSelectVille}
+            inputValue={postalCode} // le champ affichera uniquement le code postal
+            onInputChange={(event, newInputValue, reason) => {
+              if (reason === "input") {
+                setPostalCode(newInputValue);
+                handleNewClientChange({
+                  target: { name: "postalCode", value: newInputValue },
+                });
+              }
+            }}
+            renderOption={(props, option) => (
+              <li {...props}>
+                {option.nom} - {option.codepostal}{" "}
+                {/* Liste des options comme tu veux */}
+              </li>
+            )}
             renderInput={(params) => (
               <TextField
                 {...params}
