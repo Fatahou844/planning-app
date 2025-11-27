@@ -10,13 +10,6 @@ import {
   Grid,
   MenuItem,
   Modal,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useTheme,
@@ -29,9 +22,9 @@ import { useEffect, useState } from "react";
 import eventsData from "../../data/eventsData.json";
 import EmailSearch from "../EmailSearch/EmailSearch";
 import FirstnameSearch from "../FirstnameSearch/FirstnameSearch";
+import ForfaitSearch from "../ForfaitSearch";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
-
 export default function AddDocumentComponent({ onDocumentCreated }) {
   const axios = useAxios();
   const theme = useTheme();
@@ -141,6 +134,12 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
     },
   ]);
   const [deposit, setDeposit] = useState(0);
+
+  // Callback pour récupérer les updates de l'enfant
+  const handleUpdateFromChild = (newDetails, newDeposit) => {
+    setDetails(newDetails);
+    setDeposit(newDeposit);
+  };
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -1447,273 +1446,12 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
               </Grid>
 
               {/* Table: Détails de l'événement */}
-              <Grid item xs={12}>
-                {/* <Typography variant="h6">
-                          Détails de l'événement
-                        </Typography> */}
-                <TableContainer
-                  component={Paper}
-                  sx={{
-                    backgroundColor: theme.palette.background.paper,
-                    borderRadius: 2,
-                    boxShadow: isDark
-                      ? "0 0 12px rgba(255, 255, 255, 0.05)"
-                      : "0 0 12px rgba(0, 0, 0, 0.05)",
-                  }}
-                >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell
-                          sx={{
-                            width: "60%",
-                            ...cellStyle,
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Libellé / travaux / articles
-                        </TableCell>
-                        <TableCell sx={{ width: "10%", ...cellStyle }}>
-                          Quantité
-                        </TableCell>
-                        <TableCell sx={{ width: "10%", ...cellStyle }}>
-                          Prix Unitaire
-                        </TableCell>
-                        {/* <TableCell
-                                  style={{ width: "10%", textAlign: "center" }}
-                                >
-                                  Remise %
-                                </TableCell> */}
-                        <TableCell sx={{ width: "10%", ...cellStyle }}>
-                          Remise
-                        </TableCell>
-                        <TableCell sx={{ width: "10%", ...cellStyle }}>
-                          Total
-                        </TableCell>
-                        <TableCell sx={{ width: "10%", ...cellStyle }}>
-                          Action
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {details.map((detail, index) => (
-                        <TableRow key={index}>
-                          <TableCell sx={{ ...cellStyle }}>
-                            <TextField
-                              name="label"
-                              value={detail.label}
-                              onChange={(e) => handleDetailChange(e, index)}
-                              size="small"
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            <TextField
-                              name="quantity"
-                              type="text"
-                              value={
-                                detail.quantityInput ?? detail.quantity ?? ""
-                              }
-                              onChange={(e) => handleDetailChange(e, index)}
-                              size="small"
-                              style={{
-                                maxWidth: 80,
-                              }}
-                              sx={{
-                                "& input": {
-                                  textAlign: "center", // Centrer horizontalement
-                                },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            <TextField
-                              name="unitPrice"
-                              type="text"
-                              value={
-                                detail.unitPriceInput ?? detail.unitPrice ?? ""
-                              }
-                              onChange={(e) => handleDetailChange(e, index)}
-                              // onInput={(e) => {
-                              //   const input = e.target.value;
-                              //   e.target.value = input.replace(",", ".");
-                              // }}
-                              size="small"
-                              style={{
-                                textAlign: "center",
-                              }}
-                              fullWidth
-                              sx={{
-                                "& input": {
-                                  textAlign: "center", // Centrer horizontalement
-                                },
-                                "& input[type=number]": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                },
-                                "& input[type=number]::-webkit-outer-spin-button":
-                                  {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                "& input[type=number]::-webkit-inner-spin-button":
-                                  {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
-                              }}
-                            />
-                          </TableCell>
-
-                          <TableCell sx={{ ...cellStyle }}>
-                            <TextField
-                              name="discountValue"
-                              type="text" // Permet la saisie de caractères comme '%'
-                              value={detail.inputValue || ""} // Utilise la valeur brute pour l'affichage
-                              onChange={(e) => {
-                                let value = e.target.value.trim(); // Supprime les espaces inutiles
-                                let formattedValue = value; // Conserve la saisie brute pour affichage
-
-                                // Uniformise les décimales en remplaçant les virgules par des points
-                                const normalizedValue = value.replace(",", ".");
-
-                                // Réinitialisation des valeurs par défaut
-                                detail.discountValue = "";
-                                detail.discountPercent = "";
-
-                                if (normalizedValue.includes("%")) {
-                                  // Cas où l'utilisateur entre un pourcentage
-                                  const percentage = parseFloat(
-                                    normalizedValue.replace("%", "")
-                                  );
-                                  if (!isNaN(percentage)) {
-                                    detail.discountPercent = percentage; // Met à jour le pourcentage
-                                    detail.discountValue = ""; // Réinitialise le montant
-                                  }
-                                } else if (normalizedValue !== "") {
-                                  // Cas où l'utilisateur entre un montant
-                                  const amount = parseFloat(normalizedValue);
-                                  if (!isNaN(amount)) {
-                                    detail.discountValue = amount; // Met à jour le montant
-                                    detail.discountPercent = ""; // Réinitialise le pourcentage
-                                  }
-                                }
-
-                                // Met à jour l'état de l'inputValue avec la saisie brute
-                                detail.inputValue = formattedValue;
-
-                                // Appelle la fonction de gestion des changements
-                                handleDetailChange(e, index);
-                              }}
-                              size="small"
-                              sx={{
-                                "& input": {
-                                  MozAppearance: "textfield", // Pour Firefox
-                                  textAlign: "center", // Centrer horizontalement
-                                },
-                                "& input::-webkit-outer-spin-button": {
-                                  WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                  margin: 0,
-                                },
-                                "& input::-webkit-inner-spin-button": {
-                                  WebkitAppearance: "none",
-                                  margin: 0,
-                                },
-                              }}
-                            />
-                          </TableCell>
-
-                          <TableCell sx={{ ...cellStyle }}>
-                            {calculateLineTotal(detail).toFixed(2)}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            <Button
-                              color="secondary"
-                              onClick={() => removeDetailRow(index)}
-                            >
-                              SUPP
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow>
-                        <TableCell colSpan={7} sx={{ ...cellStyle }}>
-                          <Button
-                            variant="outlined"
-                            onClick={addDetailRow}
-                            fullWidth
-                          >
-                            Ajouter une ligne
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          sx={{ ...cellStyle }}
-                        ></TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Total TTC :</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {totalTTC.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          sx={{ ...cellStyle }}
-                        ></TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Total HT :</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {totalHT.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          sx={{ ...cellStyle }}
-                        ></TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Acompte :</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          <TextField
-                            type="text"
-                            value={deposit}
-                            onChange={(e) => setDeposit(e.target.value)}
-                            size="small"
-                            style={{ maxWidth: 100 }}
-                            sx={{
-                              "& input": {
-                                MozAppearance: "textfield", // Pour Firefox
-                                textAlign: "center", // Centrer horizontalement
-                              },
-                              "& input::-webkit-outer-spin-button": {
-                                WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                margin: 0,
-                              },
-                              "& input::-webkit-inner-spin-button": {
-                                WebkitAppearance: "none",
-                                margin: 0,
-                              },
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
+              <ForfaitSearch
+                onChange={(newDetails, newDeposit) => {
+                  setDetails(newDetails);
+                  setDeposit(newDeposit);
+                }}
+              ></ForfaitSearch>
               <Grid container spacing={2} item xs={12} md={12}>
                 {/* Colonne 1: Infos  sur les travaux */}
                 <Grid item xs={12} md={6}>

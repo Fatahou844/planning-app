@@ -476,6 +476,7 @@ const GarageSettings = () => {
 
   return (
     <Box p={4}>
+      
       <Typography variant="h4" gutterBottom sx={{ px: 3 }}>
         Paramètres du Garage
       </Typography>
@@ -484,7 +485,6 @@ const GarageSettings = () => {
           Certaines blocc, seul l'administrateur peut apporter des modifications
         </Alert>
       )}
-
       <Grid container spacing={4} sx={{ p: 3 }}>
         {/* Colonne Gauche */}
         <Grid item xs={12} md={6}>
