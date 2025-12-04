@@ -1447,6 +1447,7 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
 
               {/* Table: Détails de l'événement */}
               <ForfaitSearch
+                initialDetails={details}
                 onChange={(newDetails, newDeposit) => {
                   setDetails(newDetails);
                   setDeposit(newDeposit);

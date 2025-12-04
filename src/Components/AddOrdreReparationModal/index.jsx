@@ -7,19 +7,13 @@ import {
   DialogTitle,
   Grid,
   MenuItem,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
+import ForfaitSearch from "../ForfaitSearch";
 import UserSearch from "../UserSearch/UserSearch";
 
 function AddOrdreReparationModal({
@@ -778,259 +772,14 @@ function AddOrdreReparationModal({
               </Grid>
 
               {/* Table: Détails de l'événement */}
-              <Grid item xs={12}>
-                {/* <Typography variant="h6">
-                        Détails de l'événement
-                      </Typography> */}
-                <TableContainer
-                  component={Paper}
-                  sx={{
-                    backgroundColor: theme.palette.background.paper,
-                    borderRadius: 2,
-                    boxShadow: isDark
-                      ? "0 0 12px rgba(255, 255, 255, 0.05)"
-                      : "0 0 12px rgba(0, 0, 0, 0.05)",
-                  }}
-                >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell style={{ width: "60%", ...cellStyle }}>
-                          Libellé / travaux / articles
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            width: "10%",
-                            textAlign: "center",
-                            ...cellStyle,
-                          }}
-                        >
-                          Quantité
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            width: "1O%",
-                            textAlign: "center",
-                            ...cellStyle,
-                          }}
-                        >
-                          Prix Unitaire
-                        </TableCell>
-                        {/* <TableCell
-                                style={{ width: "10%", textAlign: "center" }}
-                              >
-                                Remise %
-                              </TableCell> */}
-                        <TableCell
-                          style={{
-                            width: "10%",
-                            textAlign: "center",
-                            ...cellStyle,
-                          }}
-                        >
-                          Remise
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            width: "10%",
-                            textAlign: "center",
-                            ...cellStyle,
-                          }}
-                        >
-                          Total
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            width: "10%",
-                            textAlign: "center",
-                            ...cellStyle,
-                          }}
-                        >
-                          Action
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {details &&
-                        details.length > 0 &&
-                        details.map((detail, index) => (
-                          <TableRow key={index}>
-                            <TableCell>
-                              <TextField
-                                name="label"
-                                value={detail.label}
-                                onChange={(e) =>
-                                  handleDetailChange(
-                                    index,
-                                    "label",
-                                    e.target.value
-                                  )
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                name="quantity"
-                                type="text"
-                                value={detail.quantity}
-                                onChange={(e) =>
-                                  handleDetailChange(
-                                    index,
-                                    "quantity",
-                                    e.target.value
-                                  )
-                                }
-                                size="small"
-                                style={{
-                                  maxWidth: 80,
-                                }}
-                                sx={{
-                                  "& input": {
-                                    textAlign: "center", // Centrer horizontalement
-                                  },
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                name="unitPrice"
-                                type="text"
-                                value={detail.unitPrice}
-                                onChange={(e) =>
-                                  handleDetailChange(
-                                    index,
-                                    "unitPrice",
-                                    e.target.value
-                                  )
-                                }
-                                // onInput={(e) => {
-                                //   const input = e.target.value;
-                                //   e.target.value = input.replace(",", ".");
-                                // }}
-                                size="small"
-                                style={{
-                                  textAlign: "center",
-                                }}
-                                fullWidth
-                                sx={{
-                                  "& input": {
-                                    textAlign: "center", // Centrer horizontalement
-                                  },
-                                }}
-                              />
-                            </TableCell>
-
-                            <TableCell>
-                              <TextField
-                                name="discountValue"
-                                type="text"
-                                value={detail.inputValue || ""}
-                                onChange={(e) =>
-                                  handleDetailChange(
-                                    index,
-                                    "discountValue",
-                                    e.target.value
-                                  )
-                                }
-                                size="small"
-                                sx={{
-                                  "& input": {
-                                    MozAppearance: "textfield", // Pour Firefox
-                                    textAlign: "center", // Centrer horizontalement
-                                  },
-                                  "& input::-webkit-outer-spin-button": {
-                                    WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                    margin: 0,
-                                  },
-                                  "& input::-webkit-inner-spin-button": {
-                                    WebkitAppearance: "none",
-                                    margin: 0,
-                                  },
-                                }}
-                              />
-                            </TableCell>
-
-                            <TableCell style={{ textAlign: "center" }}>
-                              {calculateLineTotal(detail).toFixed(2)}
-                            </TableCell>
-                            <TableCell style={{ textAlign: "center" }}>
-                              <Button
-                                color="secondary"
-                                onClick={() => removeDetailRow(index)}
-                              >
-                                SUPP
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      <TableRow>
-                        <TableCell colSpan={7} sx={{ ...cellStyle }}>
-                          <Button
-                            variant="outlined"
-                            onClick={addDetailRow}
-                            fullWidth
-                          >
-                            Ajouter une ligne
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          sx={{ ...cellStyle }}
-                        ></TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Total TTC :</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {totalTTC ? totalTTC.toFixed(2) : 0.0}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          sx={{ ...cellStyle }}
-                        ></TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Total HT :</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {totalHT ? totalHT.toFixed(2) : 0.0}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          sx={{ ...cellStyle }}
-                        ></TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Acompte :</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          <TextField
-                            type="text"
-                            value={deposit}
-                            onChange={(e) => setDeposit(e.target.value)}
-                            size="small"
-                            style={{ maxWidth: 100 }}
-                            sx={{
-                              "& input": {
-                                MozAppearance: "textfield", // Pour Firefox
-                                textAlign: "center", // Centrer horizontalement
-                              },
-                              "& input::-webkit-outer-spin-button": {
-                                WebkitAppearance: "none", // Pour Chrome, Safari, Edge, Opera
-                                margin: 0,
-                              },
-                              "& input::-webkit-inner-spin-button": {
-                                WebkitAppearance: "none",
-                                margin: 0,
-                              },
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
+              <ForfaitSearch
+                initialDetails={details}
+                initialDeposit={deposit}
+                onChange={(newDetails, newDeposit) => {
+                  setDetails(newDetails);
+                  setDeposit(newDeposit);
+                }}
+              ></ForfaitSearch>
               <Grid container spacing={2} item xs={12} md={12}>
                 {/* Colonne 1: Infos  sur les travaux */}
                 <Grid item xs={12} md={6}>

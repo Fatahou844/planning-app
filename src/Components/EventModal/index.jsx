@@ -8,19 +8,13 @@ import {
   Grid,
   MenuItem,
   Modal,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
   useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
+import ForfaitSearch from "../ForfaitSearch";
 import InvoiceTemplate from "../InvoiceTemplate";
 import Notification from "../Notification";
 import OrdreReparationTemplate2 from "../OrdreReparationTemplate2";
@@ -373,7 +367,6 @@ function EventDialog({
     }
   };
 
-
   // const handleDetailChange = (index, field, rawValue) => {
   //   const updatedDetails = [...details];
 
@@ -452,7 +445,6 @@ function EventDialog({
       Details: updatedDetails,
     }));
   };
-
 
   const removeDetailRow = async (index) => {
     // Récupère le détail à supprimer avant de modifier le state
@@ -804,251 +796,18 @@ function EventDialog({
             </Grid>
 
             {/* Table pour afficher les détails */}
-            <TableContainer
-              component={Paper}
-              sx={{
-                backgroundColor: theme.palette.background.paper,
-                borderRadius: 2,
-                boxShadow: isDark
-                  ? "0 0 12px rgba(255, 255, 255, 0.05)"
-                  : "0 0 12px rgba(0, 0, 0, 0.05)",
-              }}
-            >
-              <Table size="small" aria-label="Event Details Table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        width: "60%",
-                        ...cellStyle,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Libellé / travaux / articles
-                    </TableCell>
-                    <TableCell sx={{ width: "10%", ...cellStyle }}>
-                      Quantité
-                    </TableCell>
-                    <TableCell sx={{ width: "10%", ...cellStyle }}>
-                      Prix Unitaire
-                    </TableCell>
-                    <TableCell sx={{ width: "10%", ...cellStyle }}>
-                      Remise
-                    </TableCell>
-                    {/* <TableCell sx={{ width: "10%", ...cellStyle }}>
-                    Remise en %
-                  </TableCell> */}
-                    <TableCell sx={{ width: "10%", ...cellStyle }}>
-                      Total
-                    </TableCell>
-                    <TableCell sx={{ width: "10%", ...cellStyle }}>
-                      Actions
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {details &&
-                    details.map((detail, index) => (
-                      <TableRow key={detail.id}>
-                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
-                          <TextField
-                            value={detail.label}
-                            onChange={(e) =>
-                              handleDetailChange(index, "label", e.target.value)
-                            }
-                            size="small"
-                            fullWidth
-                          />
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
-                          <TextField
-                            type="text"
-                            value={
-                              detail.quantityInput ?? detail.quantity ?? ""
-                            }
-                            onChange={(e) =>
-                              handleDetailChange(
-                                index,
-                                "quantity",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            fullWidth
-                            sx={{
-                              "& input": {
-                                MozAppearance: "textfield", // Pour Firefox
-                                textAlign: "center", // Centrer horizontalement
-                              },
-                              "& input[type=number]": {
-                                MozAppearance: "textfield",
-                              },
-                              "& input[type=number]::-webkit-outer-spin-button":
-                                {
-                                  WebkitAppearance: "none",
-                                  margin: 0,
-                                },
-                              "& input[type=number]::-webkit-inner-spin-button":
-                                {
-                                  WebkitAppearance: "none",
-                                  margin: 0,
-                                },
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
-                          <TextField
-                            type="text"
-                            value={
-                              detail.unitPriceInput ?? detail.unitPrice ?? ""
-                            }
-                            onChange={(e) =>
-                              handleDetailChange(
-                                index,
-                                "unitPrice",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            fullWidth
-                            sx={{
-                              "& input": {
-                                MozAppearance: "textfield", // Pour Firefox
-                                textAlign: "center", // Centrer horizontalement
-                              },
-                              "& input[type=number]": {
-                                MozAppearance: "textfield",
-                              },
-                              "& input[type=number]::-webkit-outer-spin-button":
-                                {
-                                  WebkitAppearance: "none",
-                                  margin: 0,
-                                },
-                              "& input[type=number]::-webkit-inner-spin-button":
-                                {
-                                  WebkitAppearance: "none",
-                                  margin: 0,
-                                },
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
-                          <TextField
-                            type="text" // Permet la saisie libre (montant ou pourcentage)
-                            // value={
-                            //   detail.discountPercent !== ""
-                            //     ? `${detail.discountPercent}%`
-                            //     : detail.discountValue || ""
-                            // } // Affiche soit le pourcentage, soit le montant
-                            // onChange={(e) => {
-                            //   const input = e.target.value.trim();
-
-                            //   let formattedValue = input; // Supprime le symbole %
-                            //   detail.discountValue = "";
-                            //   detail.discountPercent = "";
-
-                            //   let amount = parseFloat(formattedValue); // Tente de convertir en nombre
-
-                            //   // Gestion des cas de saisie valides
-                            //   if (input.includes("%") && !isNaN(amount)) {
-                            //     // Si l'utilisateur entre un pourcentage
-                            //     detail.discountPercent = amount; // Met à jour le pourcentage
-                            //     detail.discountValue = ""; // Réinitialise le montant
-                            //   } else if (!isNaN(amount)) {
-                            //     // Si l'utilisateur entre un montant
-                            //     detail.discountValue = amount; // Met à jour le montant
-                            //     detail.discountPercent = ""; // Réinitialise le pourcentage
-                            //   } else {
-                            //     // Si la saisie est invalide
-                            //     detail.discountValue = "";
-                            //     detail.discountPercent = "";
-                            //   }
-
-                            //   // Mise à jour de la valeur brute pour affichage
-                            //   detail.inputValue = input;
-
-                            //   // Appelle la fonction pour notifier le changement
-                            //   handleDetailChange(
-                            //     index,
-                            //     "discountValue",
-                            //     detail.discountValue
-                            //   );
-                            // }}
-                            inputProps={{
-                              inputMode: "decimal",
-                              pattern: "[0-9.,%]*",
-                            }}
-                            value={detail.inputValue || ""} // Affiche ce que l'utilisateur a saisi
-                            onChange={(e) =>
-                              handleDetailChange(
-                                index,
-                                "discountInput",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            fullWidth
-                            sx={{
-                              "& input": {
-                                MozAppearance: "textfield", // Pour Firefox
-                                textAlign: "center", // Centrer horizontalement
-                              },
-                              "& input::-webkit-outer-spin-button": {
-                                WebkitAppearance: "none", // Désactive les spinners dans Chrome, Safari, Edge
-                                margin: 0,
-                              },
-                              "& input::-webkit-inner-spin-button": {
-                                WebkitAppearance: "none",
-                                margin: 0,
-                              },
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {calculateLineTotal(detail).toFixed(2)}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.8rem", ...cellStyle }}>
-                          <Button onClick={() => removeDetailRow(index)}>
-                            SUPP
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-end",
-                mt: 2,
-              }}
-            >
-              <Button
-                onClick={handleAddDetail}
-                color="primary"
-                variant="contained"
-                sx={{ marginTop: 2 }}
-              >
-                Ajouter
-              </Button>
-
-              {/* Display totals */}
-              <Typography variant="h6" sx={{ marginTop: 2 }}>
-                Total TTC: {totalTTC?.toFixed(2) || 0.0} €
-              </Typography>
-              <Typography variant="h6">
-                Total HT: {totalHT?.toFixed(2) || 0.0} €
-              </Typography>
-              <Typography variant="h6">
-                Acompte :{" "}
-                {editedEvent?.deposit
+            <ForfaitSearch
+              initialDeposit={
+                editedEvent?.deposit
                   ? parseFloat(editedEvent?.deposit).toFixed(2)
-                  : "0.00"}{" "}
-                €
-              </Typography>
-            </Box>
+                  : "0.00"
+              }
+              initialDetails={details}
+              onChange={(newDetails, newDeposit) => {
+                setDetails(newDetails);
+                // setDeposit(newDeposit);
+              }}
+            ></ForfaitSearch>
             <Grid container spacing={2} item xs={12} md={12}>
               {/* Colonne 1: Infos  sur les travaux */}
               <Grid item xs={12} md={6}>

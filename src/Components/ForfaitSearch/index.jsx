@@ -1,5 +1,5 @@
 import { useTheme } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 
 import {
@@ -38,7 +38,11 @@ import {
  *   et modalForfaitsForLineIndex (null = contexte global).
  */
 
-export default function ForfaitSearch({ onChange }) {
+export default function ForfaitSearch({
+  onChange,
+  initialDetails = [],
+  initialDeposit = 0,
+}) {
   const [input, setInput] = useState("");
   const [categories, setCategories] = useState([]);
   const [forfaits, setForfaits] = useState([]);
@@ -53,16 +57,37 @@ export default function ForfaitSearch({ onChange }) {
   const [modalForfaitsForLineIndex, setModalForfaitsForLineIndex] =
     useState(null);
 
-  const [details, setDetails] = useState([]);
+  const [details, setDetails] = useState(initialDetails);
 
   const axios = useAxios();
+
+  useEffect(() => {
+    setDetails(initialDetails);
+    setDeposit(initialDeposit);
+  }, [initialDetails, initialDeposit]);
 
   // ------------------------------
   // UTIL : parse codes from a text (returns [code1, code2, code3])
   // ------------------------------
+  // const parseCodes = (text) => {
+  //   const parts = (text || "").trim().split(/\s+/).filter(Boolean);
+  //   return [parts[0] || null, parts[1] || null, parts[2] || null];
+  // };
   const parseCodes = (text) => {
-    const parts = (text || "").trim().split(/\s+/).filter(Boolean);
-    return [parts[0] || null, parts[1] || null, parts[2] || null];
+    if (!text) return [null, null, null];
+
+    // enlever espaces
+    const cleaned = text.replace(/\s+/g, "").trim();
+
+    // si format sans espace
+    if (cleaned.length >= 1) {
+      const code1 = cleaned[0] || null;
+      const code2 = cleaned.length >= 3 ? cleaned.slice(1, 3) : null;
+      const code3 = cleaned.length >= 5 ? cleaned.slice(3, 5) : null;
+      return [code1, code2, code3];
+    }
+
+    return [null, null, null];
   };
 
   // ------------------------------
@@ -70,9 +95,50 @@ export default function ForfaitSearch({ onChange }) {
   // ------------------------------
   // Recherche déclenchée depuis une ligne (index)
   // ------------------------------
+  // const handleSearchFromLine = async (index) => {
+  //   const value = (details[index]?.label || "").trim();
+  //   if (!value) return; // rien à chercher
+
+  //   const [code1, code2, code3] = parseCodes(value);
+
+  //   if (code1 && !code2) {
+  //     const { data } = await axios.get(
+  //       `/forfaits/codes-principaux/${code1}/categories`
+  //     );
+  //     setCategories(data || []);
+  //     setModalCategoriesForLineIndex(index);
+  //     setModalCategoriesOpen(true);
+  //     return;
+  //   }
+
+  //   if (code1 && code2 && !code3) {
+  //     const { data } = await axios.get(
+  //       `/forfaits/categories/${code2}/forfaits`
+  //     );
+  //     setForfaits(data || []);
+  //     setModalForfaitsForLineIndex(index);
+  //     setModalForfaitsOpen(true);
+  //     return;
+  //   }
+
+  //   if (code1 && code2 && code3) {
+  //     const { data } = await axios.get(
+  //       `/forfaits/libelle/${code1}/${code2}/${code3}`
+  //     );
+  //     addDetailFromForfait(
+  //       {
+  //         label: data.libelle,
+  //         quantity: data.temps,
+  //         unitPrice: data.prix,
+  //       },
+  //       index
+  //     );
+  //     return;
+  //   }
+  // };
   const handleSearchFromLine = async (index) => {
     const value = (details[index]?.label || "").trim();
-    if (!value) return; // rien à chercher
+    if (!value) return;
 
     const [code1, code2, code3] = parseCodes(value);
 
@@ -117,37 +183,69 @@ export default function ForfaitSearch({ onChange }) {
   // -> récupère code2, construit input pour le contexte (global ou ligne),
   //    puis charge les forfaits et ouvre la modal des forfaits
   // ------------------------------
+  // const handleSelectCategory = async (category) => {
+  //   const { code2 } = category;
+
+  //   // déterminer le code1 selon le contexte
+  //   let code1 = null;
+  //   if (modalCategoriesForLineIndex !== null) {
+  //     const parts = parseCodes(
+  //       details[modalCategoriesForLineIndex]?.label || ""
+  //     );
+  //     code1 = parts[0];
+  //     // on met à jour la ligne pour afficher le code1 + code2 (visuel)
+  //     setDetails((prev) =>
+  //       prev.map((d, i) =>
+  //         i === modalCategoriesForLineIndex
+  //           ? { ...d, label: `${code1 ?? ""} ${code2}`.trim() }
+  //           : d
+  //       )
+  //     );
+  //   } else {
+  //     const parts = parseCodes(input);
+  //     code1 = parts[0];
+  //     setInput(`${code1 ?? ""} ${code2}`.trim());
+  //   }
+
+  //   // fetch forfaits de la catégorie
+  //   const { data } = await axios.get(`/forfaits/categories/${code2}/forfaits`);
+  //   setForfaits(data || []);
+
+  //   // fermer catégories, ouvrir forfaits (conserver le contexte de ligne)
+  //   setModalCategoriesOpen(false);
+  //   setModalCategoriesForLineIndex(null); // on a déplacé le contexte (utilisé forfaits)
+  //   setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
+  //   setModalForfaitsOpen(true);
+  // };
   const handleSelectCategory = async (category) => {
     const { code2 } = category;
 
-    // déterminer le code1 selon le contexte
     let code1 = null;
+
     if (modalCategoriesForLineIndex !== null) {
-      const parts = parseCodes(
+      const [c1] = parseCodes(
         details[modalCategoriesForLineIndex]?.label || ""
       );
-      code1 = parts[0];
-      // on met à jour la ligne pour afficher le code1 + code2 (visuel)
+      code1 = c1;
+
       setDetails((prev) =>
         prev.map((d, i) =>
           i === modalCategoriesForLineIndex
-            ? { ...d, label: `${code1 ?? ""} ${code2}`.trim() }
+            ? { ...d, label: `${code1}${code2}` }
             : d
         )
       );
     } else {
-      const parts = parseCodes(input);
-      code1 = parts[0];
-      setInput(`${code1 ?? ""} ${code2}`.trim());
+      const [c1] = parseCodes(input);
+      code1 = c1;
+      setInput(`${code1}${code2}`);
     }
 
-    // fetch forfaits de la catégorie
     const { data } = await axios.get(`/forfaits/categories/${code2}/forfaits`);
     setForfaits(data || []);
 
-    // fermer catégories, ouvrir forfaits (conserver le contexte de ligne)
     setModalCategoriesOpen(false);
-    setModalCategoriesForLineIndex(null); // on a déplacé le contexte (utilisé forfaits)
+    setModalCategoriesForLineIndex(null);
     setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
     setModalForfaitsOpen(true);
   };
@@ -217,48 +315,6 @@ export default function ForfaitSearch({ onChange }) {
     setModalForfaitsForLineIndex(null);
     // updateDetails(details);
   };
-
-  // ------------------------------
-  // Ajouter / remplir une ligne à partir d'un forfait
-  // - si lineIndex !== null et la ligne existe et est vide -> on la met à jour
-  // - sinon -> on ajoute une nouvelle ligne
-  // ------------------------------
-  // const addDetailFromForfait = (forfait, lineIndex = null) => {
-  //   setDetails((prev) => {
-  //     let copy = [...prev];
-
-  //     const entry = {
-  //       label: forfait.label ?? "",
-  //       quantity: forfait.quantity ?? forfait.temps ?? 1,
-  //       unitPrice: forfait.unitPrice ?? forfait.prix ?? 0,
-  //       inputValue: "",
-  //       discountAmount: "",
-  //       discountPercent: "",
-  //     };
-
-  //     // 1️⃣ Si on a cliqué sur une ligne vide → on la remplace directement
-  //     if (
-  //       lineIndex !== null &&
-  //       Number.isInteger(lineIndex) &&
-  //       lineIndex >= 0 &&
-  //       lineIndex < copy.length &&
-  //       (!copy[lineIndex].label || copy[lineIndex].label.trim() === "")
-  //     ) {
-  //       copy[lineIndex] = {
-  //         ...copy[lineIndex],
-  //         ...entry,
-  //       };
-  //     } else {
-  //       // 2️⃣ Sinon : ajouter une nouvelle ligne propre
-  //       copy = [...copy, entry];
-  //     }
-
-  //     // 3️⃣ Nettoyage : supprimer toutes les lignes vides restantes
-  //     copy = copy.filter((d) => d.label && d.label.trim() !== "");
-
-  //     return copy;
-  //   });
-  // };
 
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -372,7 +428,7 @@ export default function ForfaitSearch({ onChange }) {
   const totalHT = details.reduce((acc, d) => acc + calculateLineTotal(d), 0);
   const totalTTC = totalHT;
 
-  const [deposit, setDeposit] = useState("");
+  const [deposit, setDeposit] = useState(initialDeposit);
 
   const updateDetails = (newDetails) => {
     setDetails(newDetails);
