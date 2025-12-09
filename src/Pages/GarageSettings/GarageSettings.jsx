@@ -1,15 +1,12 @@
 // export default GarageSettings;
 
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EmailIcon from "@mui/icons-material/Email";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
 import VerifiedIcon from "@mui/icons-material/Verified";
-import Chip from "@mui/material/Chip";
-import { useAxios } from "../../utils/hook/useAxios";
-
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import {
   Accordion,
   AccordionDetails,
@@ -37,8 +34,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import Chip from "@mui/material/Chip";
 import { useEffect, useState } from "react";
 import { SketchPicker } from "react-color";
+import ForfaitsConfigAdvanced from "../../Components/ForfaitsConfigAdvanced/ForfaitsConfigAdvanced";
+import { useAxios } from "../../utils/hook/useAxios";
 
 const GarageSettings = () => {
   const [garageInfo, setGarageInfo] = useState({
@@ -476,7 +476,6 @@ const GarageSettings = () => {
 
   return (
     <Box p={4}>
-      
       <Typography variant="h4" gutterBottom sx={{ px: 3 }}>
         Paramètres du Garage
       </Typography>
@@ -1124,6 +1123,11 @@ const GarageSettings = () => {
           </Fab>
         </Grid>
       </Grid>
+
+      <Grid sx={{ p: 3 }}>
+        <ForfaitsConfigAdvanced></ForfaitsConfigAdvanced>
+      </Grid>
+
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

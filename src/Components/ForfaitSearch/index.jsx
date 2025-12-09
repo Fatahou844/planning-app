@@ -404,7 +404,7 @@ export default function ForfaitSearch({
   const addDetailRow = () => {
     updateDetails((prev) => [
       ...prev,
-      { label: "", quantity: 1, unitPrice: 0, inputValue: "" },
+      { label: "", quantity: 0.5, unitPrice: 0, inputValue: "" },
     ]);
   };
 
@@ -425,8 +425,8 @@ export default function ForfaitSearch({
     return total > 0 ? total : 0;
   };
 
-  const totalHT = details.reduce((acc, d) => acc + calculateLineTotal(d), 0);
-  const totalTTC = totalHT;
+  const totalTTC = details.reduce((acc, d) => acc + calculateLineTotal(d), 0);
+  const totalHT = totalTTC / 1.2;
 
   const [deposit, setDeposit] = useState(initialDeposit);
 
