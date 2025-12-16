@@ -76,7 +76,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
   /* ---------------- CREATE CATEGORY ---------------- */
   const handleCreateCategory = async () => {
     if (!newCategory.name || !newCategory.code_principalId) return;
-    await axios.post("/category-forfaits", { ...newCategory, garageId });
+    await axios.post("/category-forfaits", { ...newCategory, garageId: garageId });
     setNewCategory({ name: "", code2: "", code_principalId: "" });
     loadCategories();
   };

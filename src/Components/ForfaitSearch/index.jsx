@@ -16,6 +16,8 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  Typography,
+  DialogActions,
   TableHead,
   TableRow,
   TextField,
@@ -50,6 +52,9 @@ export default function ForfaitSearch({
 
   const [modalCategoriesOpen, setModalCategoriesOpen] = useState(false);
   const [modalForfaitsOpen, setModalForfaitsOpen] = useState(false);
+  // Modal "Aucune donnée"
+  const [noDataModalOpen, setNoDataModalOpen] = useState(false);
+  const [noDataLineIndex, setNoDataLineIndex] = useState(null);
 
   // quel index de ligne a déclenché l'ouverture des modales (null = champ global)
   const [modalCategoriesForLineIndex, setModalCategoriesForLineIndex] =
@@ -90,14 +95,10 @@ export default function ForfaitSearch({
     return [null, null, null];
   };
 
-  // ------------------------------
-
-  // ------------------------------
-  // Recherche déclenchée depuis une ligne (index)
-  // ------------------------------
+ 
   // const handleSearchFromLine = async (index) => {
   //   const value = (details[index]?.label || "").trim();
-  //   if (!value) return; // rien à chercher
+  //   if (!value) return;
 
   //   const [code1, code2, code3] = parseCodes(value);
 
@@ -113,7 +114,7 @@ export default function ForfaitSearch({
 
   //   if (code1 && code2 && !code3) {
   //     const { data } = await axios.get(
-  //       `/forfaits/categories/${code2}/forfaits`
+  //       `/forfaits/code1/${code1}/code2/${code2}/forfaits`
   //     );
   //     setForfaits(data || []);
   //     setModalForfaitsForLineIndex(index);
@@ -136,47 +137,6 @@ export default function ForfaitSearch({
   //     return;
   //   }
   // };
-  const handleSearchFromLine = async (index) => {
-    const value = (details[index]?.label || "").trim();
-    if (!value) return;
-
-    const [code1, code2, code3] = parseCodes(value);
-
-    if (code1 && !code2) {
-      const { data } = await axios.get(
-        `/forfaits/codes-principaux/${code1}/categories`
-      );
-      setCategories(data || []);
-      setModalCategoriesForLineIndex(index);
-      setModalCategoriesOpen(true);
-      return;
-    }
-
-    if (code1 && code2 && !code3) {
-      const { data } = await axios.get(
-        `/forfaits/categories/${code2}/forfaits`
-      );
-      setForfaits(data || []);
-      setModalForfaitsForLineIndex(index);
-      setModalForfaitsOpen(true);
-      return;
-    }
-
-    if (code1 && code2 && code3) {
-      const { data } = await axios.get(
-        `/forfaits/libelle/${code1}/${code2}/${code3}`
-      );
-      addDetailFromForfait(
-        {
-          label: data.libelle,
-          quantity: data.temps,
-          unitPrice: data.prix,
-        },
-        index
-      );
-      return;
-    }
-  };
 
   // ------------------------------
   // Sélection d'une catégorie (depuis modal)
@@ -217,22 +177,120 @@ export default function ForfaitSearch({
   //   setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
   //   setModalForfaitsOpen(true);
   // };
+  
+  const openNoDataModal = (index) => {
+    setNoDataLineIndex(index);
+    setNoDataModalOpen(true);
+  };
+
+
+  const handleSearchFromLine = async (index) => {
+    const value = (details[index]?.label || "").trim();
+    if (!value) return;
+
+    const [code1, code2, code3] = parseCodes(value);
+
+    try {
+      if (code1 && !code2) {
+        const { data } = await axios.get(
+          `/forfaits/codes-principaux/${code1}/categories`
+        );
+
+        setCategories(data);
+        setModalCategoriesForLineIndex(index);
+        setModalCategoriesOpen(true);
+        return;
+      }
+
+      if (code1 && code2 && !code3) {
+        const { data } = await axios.get(
+          `/forfaits/code1/${code1}/code2/${code2}/forfaits`
+        );
+
+        setForfaits(data);
+        setModalForfaitsForLineIndex(index);
+        setModalForfaitsOpen(true);
+        return;
+      }
+
+      if (code1 && code2 && code3) {
+        const { data } = await axios.get(
+          `/forfaits/libelle/${code1}/${code2}/${code3}`
+        );
+
+        addDetailFromForfait(
+          {
+            label: data.libelle,
+            quantity: data.temps,
+            unitPrice: data.prix,
+          },
+          index
+        );
+        return;
+      }
+    } catch (error) {
+      
+        openNoDataModal(index);
+        return;
+      
+
+      console.error("Erreur API :", error);
+    }
+  };
+
+  
+  // const handleSelectCategory = async (category) => {
+  //   const { code2 } = category;
+
+  //   let code1 = null;
+
+  //   if (modalCategoriesForLineIndex !== null) {
+  //     const [c1] = parseCodes(
+  //       details[modalCategoriesForLineIndex]?.label || ""
+  //     );
+  //     code1 = c1;
+
+  //     setDetails((prev) =>
+  //       prev.map((d, i) =>
+  //         i === modalCategoriesForLineIndex
+  //           ? { ...d, label: `${code1}${code2}` }
+  //           : d
+  //       )
+  //     );
+  //   } else {
+  //     const [c1] = parseCodes(input);
+  //     code1 = c1;
+  //     setInput(`${code1}${code2}`);
+  //   }
+
+  //   const { data } = await axios.get(
+  //     `/forfaits/code1/${code1}/code2/${code2}/forfaits`
+  //   );
+  //   setForfaits(data || []);
+
+  //   setModalCategoriesOpen(false);
+  //   setModalCategoriesForLineIndex(null);
+  //   setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
+  //   setModalForfaitsOpen(true);
+  // };
+
+  // ------------------------------
+  // Gestion multi-sélection forfaits
+  // ------------------------------
+  
   const handleSelectCategory = async (category) => {
     const { code2 } = category;
-
     let code1 = null;
+    let lineIndex = modalCategoriesForLineIndex;
 
-    if (modalCategoriesForLineIndex !== null) {
-      const [c1] = parseCodes(
-        details[modalCategoriesForLineIndex]?.label || ""
-      );
+    // 1️⃣ Détermination du code1 + mise à jour du label/input
+    if (lineIndex !== null) {
+      const [c1] = parseCodes(details[lineIndex]?.label || "");
       code1 = c1;
 
       setDetails((prev) =>
         prev.map((d, i) =>
-          i === modalCategoriesForLineIndex
-            ? { ...d, label: `${code1}${code2}` }
-            : d
+          i === lineIndex ? { ...d, label: `${code1}${code2}` } : d
         )
       );
     } else {
@@ -241,18 +299,33 @@ export default function ForfaitSearch({
       setInput(`${code1}${code2}`);
     }
 
-    const { data } = await axios.get(`/forfaits/categories/${code2}/forfaits`);
-    setForfaits(data || []);
+    try {
+      // 2️⃣ Récupération des forfaits
+      const { data } = await axios.get(
+        `/forfaits/code1/${code1}/code2/${code2}/forfaits`
+      );
 
-    setModalCategoriesOpen(false);
-    setModalCategoriesForLineIndex(null);
-    setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
-    setModalForfaitsOpen(true);
+      setForfaits(data);
+      setModalCategoriesOpen(false);
+      setModalCategoriesForLineIndex(null);
+
+      setModalForfaitsForLineIndex(lineIndex);
+      setModalForfaitsOpen(true);
+    } catch (error) {
+      
+        // 🔴 Pas de forfaits → dialog "aucune donnée"
+        setModalCategoriesOpen(false);
+        setModalCategoriesForLineIndex(null);
+
+        openNoDataModal(lineIndex);
+        return;
+      
+
+      console.error("Erreur API :", error);
+    }
   };
 
-  // ------------------------------
-  // Gestion multi-sélection forfaits
-  // ------------------------------
+  
   const toggleSelectForfait = (f) => {
     setSelectedForfaits((prev) => {
       const exists = prev.some((p) => p.id === f.id);
@@ -659,6 +732,36 @@ export default function ForfaitSearch({
             </Button>
           </Box>
         </DialogContent>
+      </Dialog>
+      <Dialog
+        open={noDataModalOpen}
+        onClose={() => setNoDataModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Aucune donnée trouvée</DialogTitle>
+
+        <DialogContent>
+          <Typography variant="body1">
+            Aucun forfait ou catégorie ne correspond au code saisi.
+          </Typography>
+
+          {noDataLineIndex !== null && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Ligne concernée : {noDataLineIndex + 1}
+            </Typography>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => setNoDataModalOpen(false)}
+            variant="contained"
+            color="primary"
+          >
+            Compris
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
