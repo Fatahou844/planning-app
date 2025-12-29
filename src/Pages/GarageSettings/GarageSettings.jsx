@@ -1,11 +1,15 @@
 // export default GarageSettings;
 
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import DeleteIcon from "@mui/icons-material/Delete";
+import BuildIcon from "@mui/icons-material/Build";
+import CategoryIcon from "@mui/icons-material/Category";
+import DescriptionIcon from "@mui/icons-material/Description";
 import EmailIcon from "@mui/icons-material/Email";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import PeopleIcon from "@mui/icons-material/People";
+import PersonIcon from "@mui/icons-material/Person";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import {
   Accordion,
@@ -14,21 +18,17 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Fab,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   MenuItem,
   Paper,
-  Select,
   Stack,
   TextField,
   Tooltip,
@@ -473,660 +473,385 @@ const GarageSettings = () => {
     // Envoie au backend si besoin...
   };
   const [statusFilter, setStatusFilter] = useState(""); // "" = pas de filtre
+  const [activeSection, setActiveSection] = useState("garage");
 
-  return (
-    <Box p={4}>
-      <Typography variant="h4" gutterBottom sx={{ px: 3 }}>
-        Paramètres du Garage
+  const settingsMenu = [
+    { key: "garage", label: "Garage", icon: <BuildIcon /> },
+    { key: "documents", label: "Documents", icon: <DescriptionIcon /> },
+    { key: "planning", label: "Planning", icon: <ScheduleIcon /> },
+    { key: "categories", label: "Catégories", icon: <CategoryIcon /> },
+    { key: "users", label: "Utilisateurs", icon: <PeopleIcon /> },
+    { key: "account", label: "Mon compte", icon: <PersonIcon /> },
+    { key: "forfaits", label: "Forfaits", icon: <Inventory2Icon /> },
+  ];
+
+  const renderGarage = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <BuildIcon /> Informations générales du garage
       </Typography>
+
       {!isAuth && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          Certaines blocc, seul l'administrateur peut apporter des modifications
+          Seul un administrateur peut modifier ces paramètres
         </Alert>
       )}
-      <Grid container spacing={4} sx={{ p: 3 }}>
-        {/* Colonne Gauche */}
-        <Grid item xs={12} md={6}>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                🛠 Informations générales du garage
-              </Typography>
-            </AccordionSummary>
 
-            <AccordionDetails>
-              <Paper elevation={3} sx={{ p: 3 }}>
-                <Stack spacing={2}>
-                  <TextField
-                    name="name"
-                    placeholder="Nom du garage"
-                    fullWidth
-                    value={garageInfo.name}
-                    onChange={handleChange}
-                  />
-                  <TextField
-                    name="website"
-                    placeholder="Site web"
-                    fullWidth
-                    value={garageInfo.website}
-                    onChange={handleChange}
-                  />
-                  <TextField
-                    name="phone"
-                    placeholder="Téléphone"
-                    fullWidth
-                    value={garageInfo.phone}
-                    onChange={handleChange}
-                  />
-                  <TextField
-                    name="email"
-                    fullWidth
-                    value={garageInfo.email}
-                    onChange={handleChange}
-                  />
-                  <TextField
-                    name="address"
-                    placeholder="Adresse locale"
-                    fullWidth
-                    value={garageInfo.address}
-                    onChange={handleChange}
-                  />
-                  {/* <label htmlFor="code postale">Code postal</label> */}
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <TextField
+            name="name"
+            label="Nom du garage"
+            value={garageInfo.name}
+            onChange={handleChange}
+          />
+          <TextField
+            name="website"
+            label="Site web"
+            value={garageInfo.website}
+            onChange={handleChange}
+          />
+          <TextField
+            name="phone"
+            label="Téléphone"
+            value={garageInfo.phone}
+            onChange={handleChange}
+          />
+          <TextField
+            name="email"
+            label="Email"
+            value={garageInfo.email}
+            onChange={handleChange}
+          />
+          <TextField
+            name="address"
+            label="Adresse"
+            value={garageInfo.address}
+            onChange={handleChange}
+          />
+          <TextField
+            name="codePostal"
+            label="Code postal"
+            value={garageInfo.codePostal}
+            onChange={handleChange}
+          />
+          <TextField
+            name="ville"
+            label="Ville"
+            value={garageInfo.ville}
+            onChange={handleChange}
+          />
 
-                  <TextField
-                    name="codePostal"
-                    placeholder="Code postale"
-                    fullWidth
-                    value={garageInfo.codePostal}
-                    onChange={handleChange}
-                  />
-                  {/* <label htmlFor="ville">Ville</label> */}
-                  <TextField
-                    name="ville"
-                    placeholder="Ville"
-                    fullWidth
-                    value={garageInfo.ville}
-                    onChange={handleChange}
-                  />
-
-                  <div className="col-md-3 mb-3">
-                    <div className="userpicture">
-                      <img
-                        className="user-profil-avatar"
-                        src={imageUrl ? imageUrl : imageProfile}
-                        alt="user-avatar"
-                        style={{ width: "300px" }}
-                      />
-                      <label className="add-visual" id="userpicture">
-                        <input
-                          name="userpicture"
-                          accept="image/jpeg, image/webp, image/png"
-                          type="file"
-                          className="d-none"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </Stack>
-
-                <Box textAlign="right" mt={2}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ width: "100%" }}
-                    onClick={handleSave}
-                    disabled={!isAuth}
-                  >
-                    Enregistrer les modifications
-                  </Button>
-                </Box>
-              </Paper>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                🧾 Paramètres personnalisés à afficher dans les documents
-              </Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Paper elevation={3} sx={{ mt: 4, p: 3 }}>
-                <Stack spacing={2}>
-                  <TextField
-                    name="dayValidityQuote"
-                    placeHolder="Validité du devis en jours"
-                    fullWidth
-                    value={garageInfo.dayValidityQuote}
-                    onChange={handleChange}
-                  />
-                  <TextField
-                    placeHolder="Note légale"
-                    fullWidth
-                    multiline
-                    rows={4}
-                    name="noteLegal"
-                    value={garageInfo.noteLegal}
-                    onChange={handleChange}
-                  />
-                  <Box textAlign="right" mt={2}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      sx={{ width: "100%" }}
-                      onClick={handleSave}
-                      disabled={!isAuth}
-                    >
-                      Enregistrer les modifications
-                    </Button>
-                  </Box>
-                </Stack>
-              </Paper>
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                🕒 Paramètres Timeline pour le planning
-              </Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Paper elevation={3} sx={{ mt: 4, p: 3 }}>
-                <Stack spacing={3}>
-                  <Stack direction="row" spacing={2}>
-                    <TextField
-                      select
-                      name="startHourTimeline"
-                      label="Début - Heure"
-                      value={garageInfo.startHourTimeline}
-                      onChange={handleChange}
-                      fullWidth
-                    >
-                      {[...Array(25).keys()].map((hour) => (
-                        <MenuItem key={hour} value={hour}>
-                          {hour.toString().padStart(2, "0")} h
-                        </MenuItem>
-                      ))}
-                    </TextField>
-
-                    <TextField
-                      select
-                      name="startMinTimeline"
-                      label="Début - Minute"
-                      value={garageInfo.startMinTimeline}
-                      onChange={handleChange}
-                      fullWidth
-                    >
-                      {[0, 30].map((min) => (
-                        <MenuItem key={min} value={min}>
-                          {min.toString().padStart(2, "0")} min
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Stack>
-
-                  <Stack direction="row" spacing={2}>
-                    <TextField
-                      select
-                      name="endHourTimeline"
-                      label="Fin - Heure"
-                      value={garageInfo.endHourTimeline}
-                      onChange={handleChange}
-                      fullWidth
-                    >
-                      {[...Array(25).keys()].map((hour) => (
-                        <MenuItem key={hour} value={hour}>
-                          {hour.toString().padStart(2, "0")} h
-                        </MenuItem>
-                      ))}
-                    </TextField>
-
-                    <TextField
-                      select
-                      name="endMinTimeline"
-                      label="Fin - Minute"
-                      value={garageInfo.endMinTimeline}
-                      onChange={handleChange}
-                      fullWidth
-                    >
-                      {[0, 30].map((min) => (
-                        <MenuItem key={min} value={min}>
-                          {min.toString().padStart(2, "0")} min
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Stack>
-
-                  <Box textAlign="right">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      sx={{ width: "100%" }}
-                      onClick={handleSave}
-                      disabled={!isAuth}
-                    >
-                      Enregistrer les horaires
-                    </Button>
-                  </Box>
-                </Stack>
-              </Paper>
-            </AccordionDetails>
-          </Accordion>
-        </Grid>
-
-        {/* Colonne Droite */}
-        <Grid item xs={12} md={6}>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                👤 Informations de l'utilisateur connecté
-              </Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
-                <Stack spacing={2}>
-                  <TextField
-                    placeholder="Prénom"
-                    fullWidth
-                    value={userSession?.firstName}
-                  />
-                  <TextField
-                    placeholder="Nom"
-                    fullWidth
-                    value={userSession?.name}
-                  />
-                  <TextField
-                    placeholder="Email"
-                    fullWidth
-                    value={userSession?.email}
-                  />
-                  <TextField
-                    placeholder="Mot de passe"
-                    type="password"
-                    fullWidth
-                    value={userSession?.password}
-                  />
-                </Stack>
-                <Box textAlign="right" mt={2}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ width: "100%" }}
-                  >
-                    Enregistrer les modifications
-                  </Button>
-                </Box>
-              </Paper>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                🏷️ Gestion des catégories d'ordres de réparation
-              </Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Paper elevation={3} sx={{ mt: 4, p: 3 }}>
-                <Stack spacing={2}>
-                  {categories &&
-                    categories.map((category, index) => {
-                      const isSystem = category.type === "system";
-
-                      return (
-                        <Accordion key={index}>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "100%",
-                                gap: 2,
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                <Typography>
-                                  {category.name || "Nouvelle catégorie"}
-                                </Typography>
-                                {isSystem && (
-                                  <Chip
-                                    label="Catégorie système"
-                                    color="warning"
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                )}
-                              </Box>
-                              <Box
-                                sx={{
-                                  width: 24,
-                                  height: 24,
-                                  borderRadius: "50%",
-                                  backgroundColor: category.color,
-                                  border: "1px solid #ccc",
-                                }}
-                              />
-                            </Box>
-                          </AccordionSummary>
-
-                          <AccordionDetails>
-                            <Stack spacing={2}>
-                              <TextField
-                                label="Nom de la catégorie"
-                                value={category.name}
-                                onChange={(e) =>
-                                  handleCategoryChange(
-                                    index,
-                                    "name",
-                                    e.target.value
-                                  )
-                                }
-                                fullWidth
-                                disabled={isSystem}
-                              />
-
-                              <Box
-                                sx={{
-                                  pointerEvents: isSystem ? "none" : "auto",
-                                  opacity: isSystem ? 0.5 : 1,
-                                }}
-                              >
-                                <SketchPicker
-                                  color={category.color}
-                                  onChangeComplete={(color) =>
-                                    handleCategoryChange(
-                                      index,
-                                      "color",
-                                      color.hex
-                                    )
-                                  }
-                                />
-                              </Box>
-
-                              {!isSystem && (
-                                <Button
-                                  color="error"
-                                  onClick={() => handleRemoveCategory(index)}
-                                  disabled={!isAuth}
-                                >
-                                  Supprimer
-                                </Button>
-                              )}
-                            </Stack>
-                          </AccordionDetails>
-                        </Accordion>
-                      );
-                    })}
-
-                  <Button
-                    variant="outlined"
-                    onClick={handleAddCategory}
-                    disabled={!isAuth}
-                  >
-                    Ajouter une catégorie
-                  </Button>
-                </Stack>
-
-                <Box textAlign="right" mt={2}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ width: "100%" }}
-                    onClick={handleSaveCategories}
-                    disabled={!isAuth}
-                  >
-                    Enregistrer les modifications
-                  </Button>
-                </Box>
-              </Paper>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">👥 Gestion des utilisateurs"</Typography>
-            </AccordionSummary>
-
-            <AccordionDetails>
-              <Card sx={{ mt: 4, p: 3 }}>
-                {/* <CardHeader title="👥 Gestion des utilisateurs" /> */}
-                <CardContent>
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Attribue un rôle à chaque utilisateur pour gérer leurs
-                    droits d'accès. Approuver les nouveaux comptes
-                  </Alert>
-
-                  <Stack spacing={2}>
-                    <FormControl size="small" sx={{ mb: 2, minWidth: 250 }}>
-                      <InputLabel>Filtrer par statut</InputLabel>
-                      <Select
-                        value={statusFilter}
-                        label="Filtrer par statut"
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                      >
-                        <MenuItem value="">Tous les utilisateurs</MenuItem>
-                        <MenuItem value="0">
-                          En attente de vérification email
-                        </MenuItem>
-                        <MenuItem value="1">En attente d’approbation</MenuItem>
-                        <MenuItem value="2">Validé</MenuItem>
-                      </Select>
-                    </FormControl>
-                    {users &&
-                      users
-                        .filter((user) =>
-                          statusFilter === ""
-                            ? true
-                            : user.status === statusFilter
-                        )
-                        .map((user, index) => (
-                          <Accordion key={index}>
-                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  width: "100%",
-                                  gap: 2,
-                                }}
-                              >
-                                <Typography>
-                                  {user.firstName}{" "}
-                                  {user.name || "Nouvel utilisateur"}
-                                </Typography>
-                                {/* <Chip
-                                label={
-                                  user.level === "2"
-                                    ? "Administrateur"
-                                    : user.role === "1"
-                                    ? "Technicien"
-                                    : "Employé"
-                                }
-                                color={
-                                  user.role === "2"
-                                    ? "error"
-                                    : user.role === "1"
-                                    ? "primary"
-                                    : "default"
-                                }
-                                size="small"
-                              /> */}
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 1,
-                                  }}
-                                >
-                                  <Chip
-                                    label={
-                                      user.level === "2"
-                                        ? "Administrateur"
-                                        : user.level === "1"
-                                        ? "Technicien"
-                                        : "Employé"
-                                    }
-                                    color={
-                                      user.level === "2"
-                                        ? "error"
-                                        : user.level === "1"
-                                        ? "primary"
-                                        : "default"
-                                    }
-                                    size="small"
-                                  />
-                                  {renderStatusIcon(user.status)}
-                                </Box>
-                              </Box>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  gap: 2,
-                                  alignItems: "center",
-                                  flexWrap: "wrap",
-                                  flexDirection: "row",
-                                }}
-                              >
-                                <TextField
-                                  placeholder="Nom"
-                                  value={user.name}
-                                  onChange={(e) =>
-                                    handleUserChange(
-                                      index,
-                                      "name",
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                                <TextField
-                                  label="Prénom"
-                                  value={user.firstName}
-                                  onChange={(e) =>
-                                    handleUserChange(
-                                      index,
-                                      "firstName",
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                                <TextField
-                                  label="Email"
-                                  value={user.email}
-                                  onChange={(e) =>
-                                    handleUserChange(
-                                      index,
-                                      "email",
-                                      e.target.value
-                                    )
-                                  }
-                                  fullWidth
-                                />
-                                <FormControl sx={{ minWidth: 150 }}>
-                                  <InputLabel>Rôle</InputLabel>
-                                  <Select
-                                    value={user.level}
-                                    label="Rôle"
-                                    onChange={(e) =>
-                                      handleUserChange(
-                                        index,
-                                        "level",
-                                        e.target.value
-                                      )
-                                    }
-                                  >
-                                    <MenuItem value="2">
-                                      Administrateur
-                                    </MenuItem>
-                                    <MenuItem value="1">Technicien</MenuItem>
-                                    <MenuItem value="0">Employé</MenuItem>
-                                  </Select>
-                                </FormControl>
-                                {user.status !== "2" && (
-                                  <Tooltip title="Valider l'utilisateur">
-                                    <IconButton
-                                      color="success"
-                                      onClick={() => handleApproveUser(index)}
-                                      disabled={!isAuth}
-                                    >
-                                      <CheckCircleIcon />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                <IconButton
-                                  color="error"
-                                  onClick={() => confirmDeleteUser(index)}
-                                  disabled={!isAuth}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            </AccordionDetails>
-                          </Accordion>
-                        ))}
-
-                    <Button
-                      variant="outlined"
-                      onClick={handleAddUser}
-                      disabled={!isAuth}
-                    >
-                      ➕ Ajouter un utilisateur
-                    </Button>
-                  </Stack>
-
-                  <Box textAlign="right" mt={2}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      sx={{ width: "100%" }}
-                      disabled={!isAuth}
-                      onClick={handleSaveUsers}
-                    >
-                      Enregistrer les modifications
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </AccordionDetails>
-          </Accordion>
-          <Fab
-            color="seconday"
-            aria-label="add"
-            sx={{
-              position: "fixed",
-              bottom: 16,
-              right: 16,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
-              padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-              borderRadius: "8px", // Optionnel : ajoute un bord arrondi
-            }}
-            onClick={handleLogout}
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleSave}
+            disabled={!isAuth}
           >
-            <LogoutIcon />
-          </Fab>
-        </Grid>
-      </Grid>
+            Enregistrer
+          </Button>
+        </Stack>
+      </Paper>
+    </>
+  );
 
-      <Grid sx={{ p: 3 }}>
-        <ForfaitsConfigAdvanced></ForfaitsConfigAdvanced>
-      </Grid>
+  const renderDocuments = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <DescriptionIcon /> Paramètres des documents
+      </Typography>
+
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <TextField
+            name="dayValidityQuote"
+            label="Validité du devis (jours)"
+            value={garageInfo.dayValidityQuote}
+            onChange={handleChange}
+          />
+          <TextField
+            name="noteLegal"
+            label="Note légale"
+            multiline
+            rows={4}
+            value={garageInfo.noteLegal}
+            onChange={handleChange}
+          />
+          <Button variant="contained" onClick={handleSave} disabled={!isAuth}>
+            Enregistrer
+          </Button>
+        </Stack>
+      </Paper>
+    </>
+  );
+
+  const renderPlanning = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <ScheduleIcon /> Planning
+      </Typography>
+
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={3}>
+          <Stack direction="row" spacing={2}>
+            <TextField
+              select
+              label="Début (heure)"
+              name="startHourTimeline"
+              value={garageInfo.startHourTimeline}
+              onChange={handleChange}
+              fullWidth
+            >
+              {[...Array(25).keys()].map((h) => (
+                <MenuItem key={h} value={h}>
+                  {h}h
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="Début (minute)"
+              name="startMinTimeline"
+              value={garageInfo.startMinTimeline}
+              onChange={handleChange}
+              fullWidth
+            >
+              {[0, 30].map((m) => (
+                <MenuItem key={m} value={m}>
+                  {m} min
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
+
+          <Stack direction="row" spacing={2}>
+            <TextField
+              select
+              label="Fin (heure)"
+              name="endHourTimeline"
+              value={garageInfo.endHourTimeline}
+              onChange={handleChange}
+              fullWidth
+            >
+              {[...Array(25).keys()].map((h) => (
+                <MenuItem key={h} value={h}>
+                  {h}h
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="Fin (minute)"
+              name="endMinTimeline"
+              value={garageInfo.endMinTimeline}
+              onChange={handleChange}
+              fullWidth
+            >
+              {[0, 30].map((m) => (
+                <MenuItem key={m} value={m}>
+                  {m} min
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
+
+          <Button variant="contained" onClick={handleSave} disabled={!isAuth}>
+            Enregistrer
+          </Button>
+        </Stack>
+      </Paper>
+    </>
+  );
+
+  const renderCategories = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <CategoryIcon /> Catégories d’ordres de réparation
+      </Typography>
+
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          {categories.map((category, index) => {
+            const isSystem = category.type === "system";
+
+            return (
+              <Accordion key={index}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>{category.name}</Typography>
+                  {isSystem && (
+                    <Chip label="Système" size="small" sx={{ ml: 1 }} />
+                  )}
+                </AccordionSummary>
+
+                <AccordionDetails>
+                  <Stack spacing={2}>
+                    <TextField
+                      label="Nom"
+                      value={category.name}
+                      disabled={isSystem}
+                      onChange={(e) =>
+                        handleCategoryChange(index, "name", e.target.value)
+                      }
+                    />
+                    <SketchPicker
+                      color={category.color}
+                      onChangeComplete={(c) =>
+                        handleCategoryChange(index, "color", c.hex)
+                      }
+                    />
+                    {!isSystem && (
+                      <Button
+                        color="error"
+                        onClick={() => handleRemoveCategory(index)}
+                      >
+                        Supprimer
+                      </Button>
+                    )}
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+
+          <Button onClick={handleAddCategory} disabled={!isAuth}>
+            ➕ Ajouter une catégorie
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={handleSaveCategories}
+            disabled={!isAuth}
+          >
+            Enregistrer
+          </Button>
+        </Stack>
+      </Paper>
+    </>
+  );
+
+  const renderUsers = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <PeopleIcon /> Gestion des utilisateurs
+      </Typography>
+
+      <Paper sx={{ p: 3 }}>
+        {users.map((user, index) => (
+          <Accordion key={index}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>
+                {user.firstName} {user.name}
+              </Typography>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              <Stack spacing={2}>
+                <TextField label="Nom" value={user.name} />
+                <TextField label="Prénom" value={user.firstName} />
+                <TextField label="Email" value={user.email} />
+                <Button color="error" onClick={() => confirmDeleteUser(index)}>
+                  Supprimer
+                </Button>
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        ))}
+
+        <Button
+          variant="contained"
+          onClick={handleSaveUsers}
+          disabled={!isAuth}
+        >
+          Enregistrer
+        </Button>
+      </Paper>
+    </>
+  );
+
+  const renderAccount = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <PersonIcon /> Mon compte
+      </Typography>
+
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <TextField label="Prénom" value={userSession?.firstName} />
+          <TextField label="Nom" value={userSession?.name} />
+          <TextField label="Email" value={userSession?.email} />
+          <Button variant="contained">Mettre à jour</Button>
+        </Stack>
+      </Paper>
+    </>
+  );
+
+  const renderForfaits = () => (
+    <>
+      <Typography variant="h5" gutterBottom>
+        <Inventory2Icon /> Forfaits
+      </Typography>
+      <ForfaitsConfigAdvanced />
+    </>
+  );
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case "garage":
+        return renderGarage();
+      case "documents":
+        return renderDocuments();
+      case "planning":
+        return renderPlanning();
+      case "categories":
+        return renderCategories();
+      case "users":
+        return renderUsers();
+      case "account":
+        return renderAccount();
+      case "forfaits":
+        return renderForfaits();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Box p={4} sx={{ display: "flex", minHeight: "100vh" }}>
+      <Box
+        sx={{
+          width: 260,
+          p: 2,
+          borderRight: "1px solid #eee",
+          bgcolor: "#fafafa",
+        }}
+      >
+        <Typography variant="h6" gutterBottom>
+          Paramètres
+        </Typography>
+
+        <List>
+          {settingsMenu.map((item) => (
+            <ListItemButton
+              key={item.key}
+              selected={activeSection === item.key}
+              onClick={() => setActiveSection(item.key)}
+              sx={{
+                borderRadius: 1,
+                mb: 0.5,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+
+              <ListItemText primary={item.label} />
+            </ListItemButton>
+          ))}
+        </List>
+      </Box>
+
+      {/* CONTENT */}
+      <Box sx={{ flex: 1, p: 4 }}>{renderSection()}</Box>
 
       <Dialog
         open={deleteDialogOpen}

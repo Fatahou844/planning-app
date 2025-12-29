@@ -1,6 +1,5 @@
 // src/App.js
 import DeleteIcon from "@mui/icons-material/Delete";
-import LogoutIcon from "@mui/icons-material/Logout"; // Icone de plus pour le bouton flottant
 import {
   Box,
   Button,
@@ -12,7 +11,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Fab,
   FormControl,
   Grid,
   InputLabel,
@@ -1278,7 +1276,10 @@ function ManageClients() {
                   <DevisTemplate2 editedEvent={d} details={d?.Details} />
                 )}
                 {type == "Facture" && (
-                  <InvoiceTemplateWithoutOR2 NewEvent={d} details={d?.Details} />
+                  <InvoiceTemplateWithoutOR2
+                    NewEvent={d}
+                    details={d?.Details}
+                  />
                 )}
                 {type == "Réservation" && (
                   <ReservationTemplate2
@@ -1951,24 +1952,6 @@ function ManageClients() {
       <AddDocumentComponent
         onDocumentCreated={handleDocumentCreated}
       ></AddDocumentComponent>
-      <Fab
-        color="seconday"
-        aria-label="add"
-        sx={{
-          position: "fixed",
-          bottom: 16,
-          right: 16,
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
-          padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-          borderRadius: "8px", // Optionnel : ajoute un bord arrondi
-        }}
-        onClick={handleLogout}
-      >
-        <LogoutIcon />
-      </Fab>
     </>
   );
 }

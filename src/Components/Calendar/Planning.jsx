@@ -1,9 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import {
-  Badge,
   Box,
   Button,
   Card,
@@ -18,14 +16,10 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  List,
-  ListItem,
-  ListItemText,
   Menu,
   MenuItem,
   Modal,
   Paper,
-  Popover,
   Select,
   Table,
   TableBody,
@@ -2887,45 +2881,6 @@ const Planning = () => {
               <MenuItem value="day">Vue Journalière</MenuItem>
             </Select>
             {/* Icône de notification avec badge */}
-            <IconButton
-              color="primary"
-              onClick={handleNotificationClick}
-              sx={{ ml: 2 }}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-
-            {/* Popover pour notifications */}
-            <Popover
-              id={id}
-              open={openNotif}
-              anchorEl={anchorEl}
-              onClose={handleCloseNotif}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              PaperProps={{
-                sx: { width: 250, p: 1 },
-              }}
-            >
-              <Typography variant="subtitle1" sx={{ px: 2, py: 1 }}>
-                Notifications
-              </Typography>
-              <List dense>
-                {notifications.map((notif, index) => (
-                  <ListItem key={index} divider>
-                    <ListItemText primary={notif} />
-                  </ListItem>
-                ))}
-              </List>
-            </Popover>
           </Box>
 
           {/* 🔵 Logo à droite */}
@@ -3261,9 +3216,7 @@ const Planning = () => {
                       {/* Table: Détails de l'événement */}
                       <ForfaitSearch
                         initialDetails={details}
-                        initialDeposit={
-                          deposit
-                        }
+                        initialDeposit={deposit}
                         onChange={(newDetails, newDeposit) => {
                           setDetails(newDetails);
                           setDeposit(newDeposit);

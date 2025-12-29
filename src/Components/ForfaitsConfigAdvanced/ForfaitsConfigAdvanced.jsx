@@ -131,7 +131,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     <Grid item xs={12} md={6}>
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6">🏷️ Gestion avancée des forfaits</Typography>
+          <Typography variant="h6">Gestion avancée des forfaits</Typography>
         </AccordionSummary>
 
         <AccordionDetails>

@@ -1,4 +1,4 @@
-// Pour dev
+// Pour de
 //export const BASE_URL_API = "http://localhost:4001";
 
 // Pour prod (à décommenter en déploiement)

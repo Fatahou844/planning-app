@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   List,
@@ -16,11 +17,10 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  Typography,
-  DialogActions,
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from "@mui/material";
 
 /**
@@ -71,13 +71,6 @@ export default function ForfaitSearch({
     setDeposit(initialDeposit);
   }, [initialDetails, initialDeposit]);
 
-  // ------------------------------
-  // UTIL : parse codes from a text (returns [code1, code2, code3])
-  // ------------------------------
-  // const parseCodes = (text) => {
-  //   const parts = (text || "").trim().split(/\s+/).filter(Boolean);
-  //   return [parts[0] || null, parts[1] || null, parts[2] || null];
-  // };
   const parseCodes = (text) => {
     if (!text) return [null, null, null];
 
@@ -95,94 +88,10 @@ export default function ForfaitSearch({
     return [null, null, null];
   };
 
- 
-  // const handleSearchFromLine = async (index) => {
-  //   const value = (details[index]?.label || "").trim();
-  //   if (!value) return;
-
-  //   const [code1, code2, code3] = parseCodes(value);
-
-  //   if (code1 && !code2) {
-  //     const { data } = await axios.get(
-  //       `/forfaits/codes-principaux/${code1}/categories`
-  //     );
-  //     setCategories(data || []);
-  //     setModalCategoriesForLineIndex(index);
-  //     setModalCategoriesOpen(true);
-  //     return;
-  //   }
-
-  //   if (code1 && code2 && !code3) {
-  //     const { data } = await axios.get(
-  //       `/forfaits/code1/${code1}/code2/${code2}/forfaits`
-  //     );
-  //     setForfaits(data || []);
-  //     setModalForfaitsForLineIndex(index);
-  //     setModalForfaitsOpen(true);
-  //     return;
-  //   }
-
-  //   if (code1 && code2 && code3) {
-  //     const { data } = await axios.get(
-  //       `/forfaits/libelle/${code1}/${code2}/${code3}`
-  //     );
-  //     addDetailFromForfait(
-  //       {
-  //         label: data.libelle,
-  //         quantity: data.temps,
-  //         unitPrice: data.prix,
-  //       },
-  //       index
-  //     );
-  //     return;
-  //   }
-  // };
-
-  // ------------------------------
-  // Sélection d'une catégorie (depuis modal)
-  // -> récupère code2, construit input pour le contexte (global ou ligne),
-  //    puis charge les forfaits et ouvre la modal des forfaits
-  // ------------------------------
-  // const handleSelectCategory = async (category) => {
-  //   const { code2 } = category;
-
-  //   // déterminer le code1 selon le contexte
-  //   let code1 = null;
-  //   if (modalCategoriesForLineIndex !== null) {
-  //     const parts = parseCodes(
-  //       details[modalCategoriesForLineIndex]?.label || ""
-  //     );
-  //     code1 = parts[0];
-  //     // on met à jour la ligne pour afficher le code1 + code2 (visuel)
-  //     setDetails((prev) =>
-  //       prev.map((d, i) =>
-  //         i === modalCategoriesForLineIndex
-  //           ? { ...d, label: `${code1 ?? ""} ${code2}`.trim() }
-  //           : d
-  //       )
-  //     );
-  //   } else {
-  //     const parts = parseCodes(input);
-  //     code1 = parts[0];
-  //     setInput(`${code1 ?? ""} ${code2}`.trim());
-  //   }
-
-  //   // fetch forfaits de la catégorie
-  //   const { data } = await axios.get(`/forfaits/categories/${code2}/forfaits`);
-  //   setForfaits(data || []);
-
-  //   // fermer catégories, ouvrir forfaits (conserver le contexte de ligne)
-  //   setModalCategoriesOpen(false);
-  //   setModalCategoriesForLineIndex(null); // on a déplacé le contexte (utilisé forfaits)
-  //   setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
-  //   setModalForfaitsOpen(true);
-  // };
-  
   const openNoDataModal = (index) => {
     setNoDataLineIndex(index);
     setNoDataModalOpen(true);
   };
-
 
   const handleSearchFromLine = async (index) => {
     const value = (details[index]?.label || "").trim();
@@ -221,7 +130,8 @@ export default function ForfaitSearch({
         addDetailFromForfait(
           {
             label: data.libelle,
-            quantity: data.temps,
+            // quantity: data.temps,
+            quantity: 1,
             unitPrice: data.prix,
           },
           index
@@ -229,55 +139,11 @@ export default function ForfaitSearch({
         return;
       }
     } catch (error) {
-      
-        openNoDataModal(index);
-        return;
-      
-
-      console.error("Erreur API :", error);
+      openNoDataModal(index);
+      return;
     }
   };
 
-  
-  // const handleSelectCategory = async (category) => {
-  //   const { code2 } = category;
-
-  //   let code1 = null;
-
-  //   if (modalCategoriesForLineIndex !== null) {
-  //     const [c1] = parseCodes(
-  //       details[modalCategoriesForLineIndex]?.label || ""
-  //     );
-  //     code1 = c1;
-
-  //     setDetails((prev) =>
-  //       prev.map((d, i) =>
-  //         i === modalCategoriesForLineIndex
-  //           ? { ...d, label: `${code1}${code2}` }
-  //           : d
-  //       )
-  //     );
-  //   } else {
-  //     const [c1] = parseCodes(input);
-  //     code1 = c1;
-  //     setInput(`${code1}${code2}`);
-  //   }
-
-  //   const { data } = await axios.get(
-  //     `/forfaits/code1/${code1}/code2/${code2}/forfaits`
-  //   );
-  //   setForfaits(data || []);
-
-  //   setModalCategoriesOpen(false);
-  //   setModalCategoriesForLineIndex(null);
-  //   setModalForfaitsForLineIndex(modalCategoriesForLineIndex);
-  //   setModalForfaitsOpen(true);
-  // };
-
-  // ------------------------------
-  // Gestion multi-sélection forfaits
-  // ------------------------------
-  
   const handleSelectCategory = async (category) => {
     const { code2 } = category;
     let code1 = null;
@@ -312,20 +178,15 @@ export default function ForfaitSearch({
       setModalForfaitsForLineIndex(lineIndex);
       setModalForfaitsOpen(true);
     } catch (error) {
-      
-        // 🔴 Pas de forfaits → dialog "aucune donnée"
-        setModalCategoriesOpen(false);
-        setModalCategoriesForLineIndex(null);
+      // 🔴 Pas de forfaits → dialog "aucune donnée"
+      setModalCategoriesOpen(false);
+      setModalCategoriesForLineIndex(null);
 
-        openNoDataModal(lineIndex);
-        return;
-      
-
-      console.error("Erreur API :", error);
+      openNoDataModal(lineIndex);
+      return;
     }
   };
 
-  
   const toggleSelectForfait = (f) => {
     setSelectedForfaits((prev) => {
       const exists = prev.some((p) => p.id === f.id);
@@ -339,54 +200,104 @@ export default function ForfaitSearch({
   // - Si context lineIndex !== null and that line is empty -> fill first selected in that line
   // - All other selected forfaits become new lines
   // ------------------------------
+  // const confirmSelection = () => {
+  //   const lineIndex = modalForfaitsForLineIndex; // null = global
+  //   if (selectedForfaits.length === 0) {
+  //     setModalForfaitsOpen(false);
+  //     setModalForfaitsForLineIndex(null);
+  //     return;
+  //   }
+
+  //   // if there is a target line and it's empty => fill it with the FIRST selected
+  //   let firstUsedForLine = false;
+  //   const currentDetails = [...details];
+
+  //   if (
+  //     lineIndex !== null &&
+  //     lineIndex >= 0 &&
+  //     lineIndex < currentDetails.length &&
+  //     !currentDetails[lineIndex].label // empty label
+  //   ) {
+  //     const f = selectedForfaits[0];
+  //     addDetailFromForfait(
+  //       {
+  //         label: f.libelle,
+  //         quantity: 1, //f.temps,
+  //         unitPrice: f.prix,
+  //       },
+  //       lineIndex
+  //     );
+  //     firstUsedForLine = true;
+  //   }
+
+  //   // add remaining (or all if no line used)
+  //   selectedForfaits.forEach((f, idx) => {
+  //     if (firstUsedForLine && idx === 0) return; // skip first (already used)
+  //     addDetailFromForfait(
+  //       {
+  //         label: f.libelle,
+  //         quantity: 1, // f.temps,
+  //         unitPrice: f.prix,
+  //       },
+  //       null
+  //     );
+  //   });
+
+  //   // reset selection & close modal
+  //   setSelectedForfaits([]);
+  //   setModalForfaitsOpen(false);
+  //   setModalForfaitsForLineIndex(null);
+  //   // updateDetails(details);
+  // };
+
   const confirmSelection = () => {
-    const lineIndex = modalForfaitsForLineIndex; // null = global
+    const lineIndex = modalForfaitsForLineIndex;
+
     if (selectedForfaits.length === 0) {
-      setModalForfaitsOpen(false);
-      setModalForfaitsForLineIndex(null);
+      closeForfaitModal();
       return;
     }
 
-    // if there is a target line and it's empty => fill it with the FIRST selected
-    let firstUsedForLine = false;
-    const currentDetails = [...details];
+    let firstUsed = false;
 
-    if (
-      lineIndex !== null &&
-      lineIndex >= 0 &&
-      lineIndex < currentDetails.length &&
-      !currentDetails[lineIndex].label // empty label
-    ) {
+    // 🔁 1️⃣ Remplacer la ligne de recherche
+    if (lineIndex !== null) {
       const f = selectedForfaits[0];
+
       addDetailFromForfait(
         {
           label: f.libelle,
-          quantity: f.temps,
+          quantity: 1,
           unitPrice: f.prix,
         },
         lineIndex
       );
-      firstUsedForLine = true;
+
+      firstUsed = true;
     }
 
-    // add remaining (or all if no line used)
+    // ➕ 2️⃣ Ajouter les autres forfaits
     selectedForfaits.forEach((f, idx) => {
-      if (firstUsedForLine && idx === 0) return; // skip first (already used)
+      if (firstUsed && idx === 0) return;
+
       addDetailFromForfait(
         {
           label: f.libelle,
-          quantity: f.temps,
+          quantity: 1,
           unitPrice: f.prix,
         },
         null
       );
     });
 
-    // reset selection & close modal
+    // 🧹 reset
     setSelectedForfaits([]);
+    closeForfaitModal();
+  };
+
+  const closeForfaitModal = () => {
     setModalForfaitsOpen(false);
     setModalForfaitsForLineIndex(null);
-    // updateDetails(details);
   };
 
   const theme = useTheme();
@@ -415,7 +326,7 @@ export default function ForfaitSearch({
       // 2️⃣ Ajouter la nouvelle ligne avec le forfait
       const entry = {
         label: forfait.label ?? "",
-        quantity: forfait.quantity ?? forfait.temps ?? 1,
+        quantity: forfait.quantity ?? 1,
         unitPrice: forfait.unitPrice ?? forfait.prix ?? 0,
         inputValue: "",
         discountAmount: "",
@@ -477,7 +388,7 @@ export default function ForfaitSearch({
   const addDetailRow = () => {
     updateDetails((prev) => [
       ...prev,
-      { label: "", quantity: 0.5, unitPrice: 0, inputValue: "" },
+      { label: "", quantity: 1, unitPrice: 0, inputValue: "" },
     ]);
   };
 
