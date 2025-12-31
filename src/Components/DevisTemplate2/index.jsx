@@ -80,8 +80,8 @@ const DevisTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
       lastCheck: Vehicle?.lastCheck ? Vehicle?.lastCheck : "",
     },
     client: {
-      name: `${Client?.firstName ? Client.firstName : ""} ${
-        Client?.name ? Client.name : ""
+      name: `${Client?.name ? Client.name : ""} ${
+        Client?.firstName ? Client.firstName : ""
       }`,
       adresse: `${Client?.address ? Client?.address : ""}`, // Si une adresse client est disponible, l'ajouter ici
       phone: Client?.phone ? Client.phone : "",
