@@ -310,7 +310,7 @@ function AtelierSearch({ onSaveStatus }) {
       quantity: "",
       unitPrice: "",
       discountPercent: "",
-      discountAmount: "",
+      discountValue: "",
     },
   ]);
   const [isModalOpen, setIsModalOpen] = useState(false);

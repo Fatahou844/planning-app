@@ -329,7 +329,7 @@ export default function ForfaitSearch({
         quantity: forfait.quantity ?? 1,
         unitPrice: forfait.unitPrice ?? forfait.prix ?? 0,
         inputValue: "",
-        discountAmount: "",
+        discountValue: "",
         discountPercent: "",
       };
 
@@ -350,10 +350,10 @@ export default function ForfaitSearch({
         if (i !== index) return detail;
 
         // Gestion spéciale pour la colonne remise
-        if (name === "discountAmount") {
+        if (name === "discountValue") {
           let val = value.trim();
           let normalized = val.replace(",", ".");
-          let discountAmount = "";
+          let discountValue = "";
           let discountPercent = "";
 
           if (normalized.includes("%")) {
@@ -361,13 +361,13 @@ export default function ForfaitSearch({
             if (!isNaN(perc)) discountPercent = perc;
           } else if (normalized !== "") {
             const amt = parseFloat(normalized);
-            if (!isNaN(amt)) discountAmount = amt;
+            if (!isNaN(amt)) discountValue = amt;
           }
 
           return {
             ...detail,
             inputValue: val,
-            discountAmount,
+            discountValue,
             discountPercent,
           };
         }
@@ -400,8 +400,8 @@ export default function ForfaitSearch({
     const price = parseFloat(detail.unitPrice) || 0;
     let total = qty * price;
 
-    if (detail.discountAmount) {
-      total -= parseFloat(detail.discountAmount);
+    if (detail.discountValue) {
+      total -= parseFloat(detail.discountValue);
     } else if (detail.discountPercent) {
       total -= (total * parseFloat(detail.discountPercent)) / 100;
     }
@@ -493,7 +493,7 @@ export default function ForfaitSearch({
                 </TableCell>
                 <TableCell sx={{ ...cellStyle }}>
                   <TextField
-                    name="discountAmount"
+                    name="discountValue"
                     type="text"
                     value={detail.inputValue || ""}
                     onChange={(e) => handleDetailChange(e, index)}
