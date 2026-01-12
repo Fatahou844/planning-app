@@ -790,7 +790,7 @@ const GarageSettings = () => {
   const renderForfaits = () => (
     <>
       <Typography variant="h5" gutterBottom>
-        <Inventory2Icon /> Forfaits
+        <Inventory2Icon /> Gestion avancée des forfaits
       </Typography>
       <ForfaitsConfigAdvanced />
     </>

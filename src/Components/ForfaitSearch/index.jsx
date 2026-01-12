@@ -131,6 +131,7 @@ export default function ForfaitSearch({
           {
             label: data.libelle,
             // quantity: data.temps,
+            code: `${data.CategoryForfait.codes_principaux.code1}${data.CategoryForfait.code2}${data.code3}`,
             quantity: 1,
             unitPrice: data.prix,
           },
@@ -195,61 +196,6 @@ export default function ForfaitSearch({
     });
   };
 
-  // ------------------------------
-  // Confirmation sélection forfaits dans la modal
-  // - Si context lineIndex !== null and that line is empty -> fill first selected in that line
-  // - All other selected forfaits become new lines
-  // ------------------------------
-  // const confirmSelection = () => {
-  //   const lineIndex = modalForfaitsForLineIndex; // null = global
-  //   if (selectedForfaits.length === 0) {
-  //     setModalForfaitsOpen(false);
-  //     setModalForfaitsForLineIndex(null);
-  //     return;
-  //   }
-
-  //   // if there is a target line and it's empty => fill it with the FIRST selected
-  //   let firstUsedForLine = false;
-  //   const currentDetails = [...details];
-
-  //   if (
-  //     lineIndex !== null &&
-  //     lineIndex >= 0 &&
-  //     lineIndex < currentDetails.length &&
-  //     !currentDetails[lineIndex].label // empty label
-  //   ) {
-  //     const f = selectedForfaits[0];
-  //     addDetailFromForfait(
-  //       {
-  //         label: f.libelle,
-  //         quantity: 1, //f.temps,
-  //         unitPrice: f.prix,
-  //       },
-  //       lineIndex
-  //     );
-  //     firstUsedForLine = true;
-  //   }
-
-  //   // add remaining (or all if no line used)
-  //   selectedForfaits.forEach((f, idx) => {
-  //     if (firstUsedForLine && idx === 0) return; // skip first (already used)
-  //     addDetailFromForfait(
-  //       {
-  //         label: f.libelle,
-  //         quantity: 1, // f.temps,
-  //         unitPrice: f.prix,
-  //       },
-  //       null
-  //     );
-  //   });
-
-  //   // reset selection & close modal
-  //   setSelectedForfaits([]);
-  //   setModalForfaitsOpen(false);
-  //   setModalForfaitsForLineIndex(null);
-  //   // updateDetails(details);
-  // };
-
   const confirmSelection = () => {
     const lineIndex = modalForfaitsForLineIndex;
 
@@ -268,6 +214,7 @@ export default function ForfaitSearch({
         {
           label: f.libelle,
           quantity: 1,
+          code: `${f.CategoryForfait.codes_principaux.code1}${f.CategoryForfait.code2}${f.code3}`,
           unitPrice: f.prix,
         },
         lineIndex
@@ -283,6 +230,7 @@ export default function ForfaitSearch({
       addDetailFromForfait(
         {
           label: f.libelle,
+          code: `${f.CategoryForfait.codes_principaux.code1}${f.CategoryForfait.code2}${f.code3}`,
           quantity: 1,
           unitPrice: f.prix,
         },
@@ -313,6 +261,8 @@ export default function ForfaitSearch({
     updateDetails((prev) => {
       let copy = [...prev];
 
+      console.log("FORFAIT: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", forfait);
+
       // 1️⃣ Supprimer la ligne de saisie ciblée si lineIndex est défini
       if (
         lineIndex !== null &&
@@ -326,6 +276,8 @@ export default function ForfaitSearch({
       // 2️⃣ Ajouter la nouvelle ligne avec le forfait
       const entry = {
         label: forfait.label ?? "",
+        code: forfait.code ?? "xxx",
+
         quantity: forfait.quantity ?? 1,
         unitPrice: forfait.unitPrice ?? forfait.prix ?? 0,
         inputValue: "",
@@ -337,7 +289,6 @@ export default function ForfaitSearch({
 
       return copy;
     });
-    // updateDetails([...details, { ...forfait, inputValue: "" }]);
   };
 
   // ------------------------------
@@ -388,7 +339,7 @@ export default function ForfaitSearch({
   const addDetailRow = () => {
     updateDetails((prev) => [
       ...prev,
-      { label: "", quantity: 1, unitPrice: 0, inputValue: "" },
+      { label: "", code: "---", quantity: 1, unitPrice: 0, inputValue: "" },
     ]);
   };
 

@@ -1071,6 +1071,7 @@ const Planning = () => {
       const validDetails = details.filter((detail) => {
         return (
           detail.label?.trim() ||
+          detail.code?.trim() ||
           detail.quantity ||
           detail.unitPrice ||
           detail.discountPercent ||
@@ -1088,6 +1089,7 @@ const Planning = () => {
       for (const detail of validDetails) {
         await axios.post("/details", {
           label: detail.label || "",
+          code: detail.code || "---",
           quantity: detail.quantity || 0,
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
@@ -1130,6 +1132,8 @@ const Planning = () => {
         for (const detail of validDetails) {
           await axios.post("/details", {
             label: detail.label || "",
+            code: detail.code || "---",
+
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
@@ -1142,6 +1146,8 @@ const Planning = () => {
         for (const detail of validDetails) {
           await axios.post("/details", {
             label: detail.label || "",
+            code: detail.code || "---",
+
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
@@ -1154,6 +1160,8 @@ const Planning = () => {
         for (const detail of validDetails) {
           await axios.post("/details", {
             label: detail.label || "",
+            code: detail.code || "---",
+
             quantity: detail.quantity || 0,
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
@@ -1173,10 +1181,6 @@ const Planning = () => {
   };
 
   // Fonction pour générer un numéro de commande formaté à 5 chiffres
-  const generateOrderNumber = (lastOrderNumber) => {
-    const newOrderNumber = lastOrderNumber + 1;
-    return newOrderNumber.toString().padStart(5, "0"); // Format à 5 chiffres
-  };
 
   const addSingleEvent = async (event, newOrderNumber, nextDay) => {
     try {
@@ -1881,6 +1885,7 @@ const Planning = () => {
   const [details, setDetails] = useState([
     {
       label: "",
+      code: "",
       quantity: "",
       unitPrice: "",
       discountPercent: "",
@@ -1888,48 +1893,6 @@ const Planning = () => {
     },
   ]);
   const [deposit, setDeposit] = useState(0);
-
-  const handleDetailChange = (event, index) => {
-    const { name, value } = event.target;
-    const updatedDetails = [...details];
-
-    let rawValue = value.trim();
-    const normalizedValue = rawValue.replace(",", ".");
-
-    if (name === "discountValue" || name === "discountPercent") {
-      // (Pas besoin de changer ici, ça marche déjà bien)
-      updatedDetails[index].discountValue = "";
-      updatedDetails[index].discountPercent = "";
-
-      if (normalizedValue.includes("%")) {
-        const percent = parseFloat(normalizedValue.replace("%", ""));
-        if (!isNaN(percent)) {
-          updatedDetails[index].discountPercent = percent;
-        }
-      } else if (normalizedValue !== "") {
-        const amount = parseFloat(normalizedValue);
-        if (!isNaN(amount)) {
-          updatedDetails[index].discountValue = amount;
-        }
-      }
-
-      updatedDetails[index].inputValue = rawValue;
-    } else if (name === "quantity" || name === "unitPrice") {
-      updatedDetails[index][`${name}Input`] = rawValue; // pour afficher ce que tape l’utilisateur
-
-      const numericValue = parseFloat(normalizedValue);
-      if (!isNaN(numericValue)) {
-        updatedDetails[index][name] = numericValue; // la vraie valeur utilisée pour les calculs
-      } else {
-        updatedDetails[index][name] = 0; // ou null si tu préfères
-      }
-    } else {
-      updatedDetails[index][name] = value || "";
-    }
-
-    setDetails(updatedDetails);
-    setNewEvent({ ...newEvent, price: totalTTC });
-  };
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -1948,26 +1911,8 @@ const Planning = () => {
   };
 
   // Fonction pour ajouter une nouvelle ligne de détails
-  const addDetailRow = () => {
-    setDetails((prevDetails) => [
-      ...prevDetails,
-      {
-        label: "",
-        quantity: 0,
-        quantityInput: "",
-        unitPrice: 0,
-        unitPriceInput: "",
-        discountValue: "",
-        discountPercent: "",
-        inputValue: "",
-      },
-    ]);
-  };
 
   // Fonction pour supprimer une ligne de détails
-  const removeDetailRow = (index) => {
-    setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
-  };
 
   // Calcul des totaux HT et TT
 
@@ -2535,19 +2480,6 @@ const Planning = () => {
     return hour.toString().padStart(2, "0") + ":00";
   };
 
-  const updateEventTime = (
-    eventId,
-    { startHour, startMinute, endHour, endMinute }
-  ) => {
-    setDataEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === eventId
-          ? { ...event, startHour, startMinute, endHour, endMinute }
-          : event
-      )
-    );
-  };
-
   const handleConfirmUpdate = async () => {
     try {
       // await updateEvent(draggedEvent.id, {
@@ -2576,13 +2508,7 @@ const Planning = () => {
     }
   };
 
-  const handleNotificationClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
 
-  const handleCloseNotif = () => {
-    setAnchorEl(null);
-  };
 
   const openNotif = Boolean(anchorEl);
   const id = openNotif ? "notification-popover" : undefined;

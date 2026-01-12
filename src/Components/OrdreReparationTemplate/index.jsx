@@ -83,9 +83,9 @@ const OrdreReparationTemplate = ({
       lastCheck: Vehicle?.lastCheck ? Vehicle?.lastCheck : "",
     },
     client: {
-      name: `${
-        Client?.name ? Client.name : ""
-      } ${Client?.firstName ? Client.firstName : ""}`,
+      name: `${Client?.name ? Client.name : ""} ${
+        Client?.firstName ? Client.firstName : ""
+      }`,
       adresse: `${Client?.address ? Client?.address : ""}`, // Si une adresse client est disponible, l'ajouter ici
       phone: Client?.phone ? Client.phone : "",
       email: Client?.email ? Client.email : "",
@@ -97,6 +97,7 @@ const OrdreReparationTemplate = ({
     },
     items: details.map((item) => ({
       description: item.label,
+      code: item.code,
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,

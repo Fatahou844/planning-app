@@ -160,7 +160,6 @@ function EventDialog({
             };
           });
           setDetails(initialDetails2);
-          // setDetails(editedEvent.Details);
 
           const operator = await axios.get(
             `/users/userid/${editedEvent.operatorId}`
@@ -365,126 +364,6 @@ function EventDialog({
         severity: "error",
       });
     }
-  };
-
-  // const handleDetailChange = (index, field, rawValue) => {
-  //   const updatedDetails = [...details];
-
-  //   const detail = updatedDetails[index];
-
-  //   const raw = String(rawValue).trim(); // 🔁 conversion propre
-  //   const normalizedValue = raw.replace(",", ".");
-  //   // Toujours mettre à jour ce que l'utilisateur tape
-
-  //   if (field === "quantity" || field === "unitPrice") {
-  //     updatedDetails[index][`${field}Input`] = raw;
-  //     const numericValue = parseFloat(normalizedValue);
-  //     updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
-  //   } else if (field === "discountInput") {
-  //     detail.inputValue = raw;
-
-  //     // Réinitialiser d'abord
-  //     detail.discountValue = "";
-  //     detail.discountPercent = "";
-
-  //     const cleaned = normalizedValue.replace("%", "");
-  //     const value = parseFloat(cleaned);
-
-  //     if (normalizedValue.includes("%") && !isNaN(value)) {
-  //       detail.discountPercent = value;
-  //     } else if (!isNaN(value)) {
-  //       detail.discountValue = value;
-  //     }
-
-  //     // detail.inputValue = raw;
-  //     // updatedDetails[index].inputValue = value;
-  //   } else {
-  //     updatedDetails[index][field] = raw;
-  //   }
-
-  //   setDetails(updatedDetails);
-  //   setEditedEvent((prev) => ({
-  //     ...prev,
-  //     Details: updatedDetails,
-  //   }));
-  // };
-
-  const handleDetailChange = (index, field, rawValue) => {
-    const updatedDetails = [...details];
-    const detail = updatedDetails[index];
-
-    // Pas de trim par défaut → sauf pour les champs numériques
-    const raw = String(rawValue);
-    const normalizedValue = raw.replace(",", ".");
-
-    if (field === "quantity" || field === "unitPrice") {
-      updatedDetails[index][`${field}Input`] = raw;
-      const numericValue = parseFloat(normalizedValue.trim());
-      updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
-    } else if (field === "discountInput") {
-      detail.inputValue = raw.trim();
-
-      detail.discountValue = "";
-      detail.discountPercent = "";
-
-      const cleaned = normalizedValue.replace("%", "").trim();
-      const value = parseFloat(cleaned);
-
-      if (normalizedValue.includes("%") && !isNaN(value)) {
-        detail.discountPercent = value;
-      } else if (!isNaN(value)) {
-        detail.discountValue = value;
-      }
-    } else {
-      updatedDetails[index][field] = raw; // garder les espaces pour le texte
-    }
-
-    setDetails(updatedDetails);
-    setEditedEvent((prev) => ({
-      ...prev,
-      Details: updatedDetails,
-    }));
-  };
-
-  const removeDetailRow = async (index) => {
-    // Récupère le détail à supprimer avant de modifier le state
-    const detailToDelete = details[index];
-
-    // Met à jour l'affichage en supprimant la ligne localement
-    setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
-
-    // Si le détail est déjà en base, on le supprime
-    if (detailToDelete && detailToDelete.id) {
-      try {
-        await axios.deleteData(`/details/${detailToDelete.id}`);
-
-        console.log(
-          `Détail avec l'id ${detailToDelete.id} supprimé de la base de données.`
-        );
-      } catch (error) {
-        console.error("Erreur lors de la suppression du détail :", error);
-      }
-    } else {
-      console.warn(
-        "Aucun ID trouvé pour ce détail, suppression uniquement locale."
-      );
-    }
-  };
-
-  const handleAddDetail = () => {
-    setDetails([
-      ...details,
-      {
-        label: "",
-        quantity: 0,
-        quantityInput: "",
-        unitPrice: 0,
-        unitPriceInput: "",
-        discountValue: "",
-        discountPercent: "",
-        inputValue: "",
-      },
-    ]);
   };
 
   const [openOr, setOpenOr] = useState(false);

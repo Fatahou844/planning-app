@@ -86,6 +86,7 @@ const DevisTemplate = ({
       unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
       unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
       quantity: item.quantity,
+      code: item.code,
 
       discount:
         item.discountPercent && item.discountPercent !== ""
