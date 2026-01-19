@@ -127,7 +127,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
   /* ---------------- FILTERED FORFAITS ---------------- */
   let filteredForfaits = forfaits
     .filter((f) =>
-      categoryFilter ? f.categoryForfaitId === categoryFilter : true
+      categoryFilter ? f.categoryForfaitId === categoryFilter : true,
     )
     .filter((f) => f.libelle.toLowerCase().includes(searchText.toLowerCase()));
 
@@ -137,7 +137,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
   filteredForfaits = useMemo(() => {
     return forfaits
       .filter((f) =>
-        categoryFilter ? f.categoryForfaitId === categoryFilter : true
+        categoryFilter ? f.categoryForfaitId === categoryFilter : true,
       )
       .filter((f) => f.libelle.toLowerCase().includes(normalizedSearch));
   }, [forfaits, categoryFilter, normalizedSearch]);
@@ -174,7 +174,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     // 2) Sinon, si recherche -> n’afficher que les catégories qui ont des résultats
     if (normalizedSearch) {
       return categories.filter(
-        (cat) => (forfaitsByCategory.get(cat.id) || []).length > 0
+        (cat) => (forfaitsByCategory.get(cat.id) || []).length > 0,
       );
     }
 
@@ -212,108 +212,127 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     <Grid item xs={12} md={6}>
       <Paper elevation={3} sx={{ p: 3 }}>
         {/* -------- CREATE CATEGORY -------- */}
-        <Typography variant="subtitle1">➕ Ajouter une catégorie</Typography>
-        <Stack spacing={2} sx={{ mb: 3 }}>
-          <TextField
-            label="Nom de la catégorie"
-            value={newCategory.name}
-            onChange={(e) =>
-              setNewCategory({ ...newCategory, name: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            select
-            label="Code principal"
-            fullWidth
-            value={newCategory.code_principalId}
-            onChange={(e) =>
-              setNewCategory({
-                ...newCategory,
-                code_principalId: e.target.value,
-              })
-            }
-          >
-            {codesPrincipaux.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.code1} – {c.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            label="Code 2 (optionnel)"
-            value={newCategory.code2}
-            onChange={(e) =>
-              setNewCategory({ ...newCategory, code2: e.target.value })
-            }
-            fullWidth
-          />
-          <Button variant="contained" onClick={handleCreateCategory}>
-            Ajouter la catégorie
-          </Button>
-        </Stack>
+        <Grid container spacing={4}>
+          {/* -------- CREATE CATEGORY -------- */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              ➕ Ajouter une catégorie
+            </Typography>
 
-        <Divider sx={{ my: 3 }} />
+            <Stack spacing={2}>
+              <TextField
+                label="Nom de la catégorie"
+                value={newCategory.name}
+                onChange={(e) =>
+                  setNewCategory({ ...newCategory, name: e.target.value })
+                }
+                fullWidth
+              />
 
-        {/* -------- CREATE FORFAIT -------- */}
-        <Typography variant="subtitle1">➕ Ajouter un forfait</Typography>
-        <Stack spacing={2} sx={{ mb: 3 }}>
-          <TextField
-            label="Libellé"
-            fullWidth
-            value={newForfait.libelle}
-            onChange={(e) =>
-              setNewForfait({ ...newForfait, libelle: e.target.value })
-            }
-          />
-          <TextField
-            label="Code 3 (optionnel)"
-            fullWidth
-            value={newForfait.code3}
-            onChange={(e) =>
-              setNewForfait({ ...newForfait, code3: e.target.value })
-            }
-          />
-          <TextField
-            label="Prix (€)"
-            fullWidth
-            type="number"
-            value={newForfait.prix}
-            onChange={(e) =>
-              setNewForfait({ ...newForfait, prix: e.target.value })
-            }
-          />
-          <TextField
-            label="Temps (heures)"
-            fullWidth
-            type="number"
-            value={newForfait.temps}
-            onChange={(e) =>
-              setNewForfait({ ...newForfait, temps: e.target.value })
-            }
-          />
-          <TextField
-            select
-            label="Catégorie"
-            fullWidth
-            value={newForfait.categoryForfaitId}
-            onChange={(e) =>
-              setNewForfait({
-                ...newForfait,
-                categoryForfaitId: e.target.value,
-              })
-            }
-          >
-            {categories.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <Button variant="contained" onClick={handleCreateForfait}>
-            Ajouter le forfait
-          </Button>
-        </Stack>
+              <TextField
+                select
+                label="Code principal"
+                fullWidth
+                value={newCategory.code_principalId}
+                onChange={(e) =>
+                  setNewCategory({
+                    ...newCategory,
+                    code_principalId: e.target.value,
+                  })
+                }
+              >
+                {codesPrincipaux.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.code1} – {c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                label="Code 2 (optionnel)"
+                value={newCategory.code2}
+                onChange={(e) =>
+                  setNewCategory({ ...newCategory, code2: e.target.value })
+                }
+                fullWidth
+              />
+
+              <Button variant="contained" onClick={handleCreateCategory}>
+                Ajouter la catégorie
+              </Button>
+            </Stack>
+          </Grid>
+
+          {/* -------- CREATE FORFAIT -------- */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              ➕ Ajouter un forfait
+            </Typography>
+
+            <Stack spacing={2}>
+              <TextField
+                label="Libellé"
+                fullWidth
+                value={newForfait.libelle}
+                onChange={(e) =>
+                  setNewForfait({ ...newForfait, libelle: e.target.value })
+                }
+              />
+
+              <TextField
+                label="Code 3 (optionnel)"
+                fullWidth
+                value={newForfait.code3}
+                onChange={(e) =>
+                  setNewForfait({ ...newForfait, code3: e.target.value })
+                }
+              />
+
+              <TextField
+                label="Prix (€)"
+                fullWidth
+                type="number"
+                value={newForfait.prix}
+                onChange={(e) =>
+                  setNewForfait({ ...newForfait, prix: e.target.value })
+                }
+              />
+
+              <TextField
+                label="Temps (heures)"
+                fullWidth
+                type="number"
+                value={newForfait.temps}
+                onChange={(e) =>
+                  setNewForfait({ ...newForfait, temps: e.target.value })
+                }
+              />
+
+              <TextField
+                select
+                label="Catégorie"
+                fullWidth
+                value={newForfait.categoryForfaitId}
+                onChange={(e) =>
+                  setNewForfait({
+                    ...newForfait,
+                    categoryForfaitId: e.target.value,
+                  })
+                }
+              >
+                {categories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <Button variant="contained" onClick={handleCreateForfait}>
+                Ajouter le forfait
+              </Button>
+            </Stack>
+          </Grid>
+        </Grid>
 
         <Divider sx={{ my: 3 }} />
 

@@ -36,7 +36,7 @@ export default function Atelier() {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
         // si ton backend renvoie un objet avec des clés numériques, on transforme en array
         const data = Object.values(res.data.data);
@@ -59,13 +59,13 @@ export default function Atelier() {
       prevOrders.map((order) =>
         order.id === id
           ? { ...order, OrderStatus: newStatus, datePointage: localDateTime }
-          : order
-      )
+          : order,
+      ),
     );
 
     // 💬 2. (Optionnel) Affiche un feedback ou une alerte
     console.log(
-      `✅ Commande ${id} mise à jour en "${newStatus}" à ${localDateTime}`
+      `✅ Commande ${id} mise à jour en "${newStatus}" à ${localDateTime}`,
     );
   };
 
@@ -105,7 +105,7 @@ export default function Atelier() {
   }, [localOrders]);
   return (
     <>
-      <Box sx={{ height: "100vh", px: 4, bgcolor: "#f5f5f5" }}>
+      <Box sx={{ height: "100vh", px: 4 }}>
         <Grid container spacing={2} sx={{ height: "100%" }}>
           {/* Gauche - 25% */}
           <Grid item xs={12} md={3} sx={{ pl: "2.5rem !important" }}>
@@ -190,7 +190,6 @@ export default function Atelier() {
                           <Typography
                             variant="body2"
                             sx={{
-                              bgcolor: "white",
                               color: "black",
                               px: 1.5,
                               borderRadius: 1,
@@ -212,8 +211,7 @@ export default function Atelier() {
                   justifyContent: "flex-end",
                   alignItems: "center",
                   p: 2,
-                  borderTop: "1px solid #ddd",
-                  backgroundColor: "#fff",
+
                   position: "sticky",
                   bottom: 0,
                   zIndex: 1,
@@ -250,7 +248,6 @@ export default function Atelier() {
                 flexDirection: "column",
                 alignItems: "center",
                 p: 2,
-                bgcolor: "white",
                 borderRadius: 2,
                 boxShadow: 2,
               }}
@@ -307,8 +304,6 @@ export default function Atelier() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   p: 2,
-                  borderBottom: "1px solid #ddd",
-                  backgroundColor: "#fff",
                   position: "sticky",
                   top: 0,
                   zIndex: 1,
@@ -350,7 +345,6 @@ export default function Atelier() {
                         p: 1,
                         mb: 1,
                         borderRadius: 1,
-                        bgcolor: "#E3F2FD",
                       }}
                     >
                       <Typography variant="body2">
@@ -398,8 +392,7 @@ export default function Atelier() {
                   justifyContent: "flex-end",
                   alignItems: "center",
                   p: 2,
-                  borderTop: "1px solid #ddd",
-                  backgroundColor: "#fff",
+
                   position: "sticky",
                   bottom: 0,
                   zIndex: 1,

@@ -19,7 +19,6 @@ import {
   ListItemText,
   MenuItem,
   Paper,
-  Popover,
   Select,
   Tab,
   Table,
@@ -35,19 +34,14 @@ import {
   useTheme,
 } from "@mui/material";
 import dayjs from "dayjs"; // ou luxon selon ta préférence
-import Cookies from "js-cookie";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
-import DevisTemplate2 from "../../Components/DevisTemplate2";
 import DocModal from "../../Components/DocModal";
 import DocumentModal from "../../Components/DocumentModal";
 import EventModal from "../../Components/EventModal";
-import InvoiceTemplateWithoutOR2 from "../../Components/InvoiceTemplateWithoutOR2";
 import Notification from "../../Components/Notification";
-import OrdreReparationTemplate2 from "../../Components/OrdreReparationTemplate2";
-import PreviewDocument from "../../Components/PreviewDocument";
-import ReservationTemplate2 from "../../Components/ReservationTemplate2";
+import TableSkeleton from "../../Components/TableSkeleton";
 
 import "../../Styles/style.css";
 import { useAxios } from "../../utils/hook/useAxios";
@@ -69,6 +63,24 @@ function ManageClients() {
   const [entretiensData, setEntretiensData] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedData, setSelectedData] = useState(null);
+  const HIST_KEYS = ["factures", "devis", "or", "reservations", "entretiens"];
+  const [selected, setSelected] = useState("clients");
+  const [tabHist, setTabHist] = useState(0);
+
+  const currentHistKey = HIST_KEYS[tabHist];
+  const [histPagination, setHistPagination] = useState({
+    factures: { page: 0, rowsPerPage: 10 },
+    devis: { page: 0, rowsPerPage: 10 },
+    or: { page: 0, rowsPerPage: 10 },
+    reservations: { page: 0, rowsPerPage: 10 },
+    entretiens: { page: 0, rowsPerPage: 10 },
+  });
+  const [loading, setLoading] = useState({
+    clients: true,
+    vehicules: true,
+    historiques: true,
+    categories: true,
+  });
   const [errors, setErrors] = useState({
     phone: "",
     email: "",
@@ -164,7 +176,7 @@ function ManageClients() {
       if (!selectedClient?.id) return alert("Aucun client sélectionné.");
       const res = await axios.put(
         `/clients/${selectedClient.id}`,
-        selectedClient
+        selectedClient,
       );
 
       if (res.data) {
@@ -184,7 +196,7 @@ function ManageClients() {
       if (!selectedVehicule?.id) return alert("Aucun client sélectionné.");
       const res = await axios.put(
         `/vehicles/${selectedVehicule.id}`,
-        selectedVehicule
+        selectedVehicule,
       );
       if (res.data) {
         setOpenEditVehiculeDialog(false);
@@ -249,185 +261,69 @@ function ManageClients() {
   }
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    let mounted = true;
+
+    (async () => {
       try {
-        const response = await axios.get(
-          "/categories/garage/" + getCurrentUser().garageId
-        );
+        const garageId = getCurrentUser().garageId;
 
-        // Récupérer les données
-        const categoriesData = response.data;
+        setLoading((p) => ({
+          ...p,
+          categories: true,
+          clients: true,
+          vehicules: true,
+          historiques: true,
+        }));
 
-        setCategories(categoriesData.data);
+        const [
+          categoriesRes,
+          clientsRes,
+          vehiclesRes,
+          ordresRes,
+          devisRes,
+          resaRes,
+          facturesRes,
+        ] = await Promise.all([
+          axios.get(`/categories/garage/${garageId}`),
+          axios.get(`/clients/search/garage/${garageId}`),
+          axios.get(`/vehicles`),
+          axios.get(`/documents-garage/order/${garageId}/details`),
+          axios.get(`/documents-garage/quote/${garageId}/details`),
+          axios.get(`/documents-garage/reservation/${garageId}/details`),
+          axios.get(`/documents-garage/invoice/${garageId}/details`),
+        ]);
 
-        const clients = await axios.get(
-          "/clients/search/garage/" + getCurrentUser().garageId
-        );
-        const vehicules = await axios.get("/vehicles");
+        if (!mounted) return;
 
-        setClientsData(clients.data.data);
-        setVehiculesData(vehicules.data.data);
+        setCategories(categoriesRes?.data?.data ?? []);
+        setLoading((p) => ({ ...p, categories: false }));
 
-        const ordres = await axios.get(
-          "/documents-garage/order/" + getCurrentUser().garageId + "/details"
-        );
+        setClientsData(clientsRes?.data?.data ?? []);
+        setLoading((p) => ({ ...p, clients: false }));
 
-        const devis = await axios.get(
-          "/documents-garage/quote/" + getCurrentUser().garageId + "/details"
-        );
+        setVehiculesData(vehiclesRes?.data?.data ?? []);
+        setLoading((p) => ({ ...p, vehicules: false }));
 
-        const resa = await axios.get(
-          "/documents-garage/reservation/" +
-            getCurrentUser().garageId +
-            "/details"
-        );
-
-        const factures = await axios.get(
-          "/documents-garage/invoice/" + getCurrentUser().garageId + "/details"
-        );
-
-        setOrData(ordres.data.data);
-        setDevisData(devis.data.data);
-        setReservationsData(resa.data.data);
-        setFacturesData(factures.data.data);
-
-        console.log("categoriesData", categoriesData.data);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des catégories :", error);
+        setOrData(ordresRes?.data?.data ?? []);
+        setDevisData(devisRes?.data?.data ?? []);
+        setReservationsData(resaRes?.data?.data ?? []);
+        setFacturesData(facturesRes?.data?.data ?? []);
+        setLoading((p) => ({ ...p, historiques: false }));
+      } catch (e) {
+        console.error(e);
+        setLoading({
+          clients: false,
+          vehicules: false,
+          historiques: false,
+          categories: false,
+        });
       }
-    };
+    })();
 
-    fetchCategories();
+    return () => {
+      mounted = false;
+    };
   }, []);
-  async function handleSearchClick() {
-    const keyword = searchQuery.trim().toLowerCase();
-
-    // Liste des collections à rechercher
-    const collections = {
-      reservations: "reservation",
-      devis: "quote",
-      factures: "invoice",
-      events: "order",
-    };
-
-    try {
-      // Préparer les requêtes pour chaque collection
-      const collectionPromises = Object.entries(collections).map(
-        async ([collectionKey, apiEndpoint]) => {
-          const url = `/documents-garage/${apiEndpoint}/${
-            getCurrentUser().garageId
-          }/details`;
-
-          // Effectuer la requête GET
-          const response = await axios.get(url);
-
-          if (!response || !response.data) {
-            console.log(`Aucune donnée trouvée pour ${collectionKey}`);
-            return [];
-          }
-
-          let filtResults = response.data.data.map((item) => ({
-            ...item,
-            collectionName: collectionKey,
-          }));
-
-          // Filtrer les résultats en fonction du mot-clé
-          const filteredResults = filtResults.filter((item) => {
-            return (
-              item?.Client?.firstName?.toLowerCase().includes(keyword) ||
-              item?.Client?.name?.toLowerCase().includes(keyword) ||
-              item?.Client?.email?.toLowerCase().includes(keyword)
-            );
-          });
-
-          console.log(
-            "############  filteredResults ####################",
-            filtResults
-          );
-
-          // Appliquer le filtre "isClosed === false" pour toutes sauf factures
-          return collectionKey !== "factures"
-            ? filteredResults.filter((item) => item.isClosed === false)
-            : filteredResults;
-        }
-      );
-
-      // Attendre les résultats de toutes les collections
-      const allCollectionsResults = (
-        await Promise.all(collectionPromises)
-      ).flat();
-
-      // Suppression des doublons
-      const uniqueResults = allCollectionsResults.filter(
-        (value, index, self) =>
-          index ===
-          self.findIndex(
-            (t) =>
-              t.id === value.id && t.collectionName === value.collectionName
-          )
-      );
-
-      console.log("Résultats combinés :", uniqueResults);
-
-      // Mettre à jour l'état avec les résultats
-      setDataEventsAll(uniqueResults);
-      setFilteredEvents(
-        uniqueResults.filter((event) => {
-          const matchesDocument =
-            documentFilter === "all" || event.collectionName === documentFilter;
-
-          const searchLower = searchQueryInterior.toLowerCase();
-
-          const matchesSearch =
-            event.Client.name?.toLowerCase().includes(searchLower) ||
-            event.Client.firstName?.toLowerCase().includes(searchLower) ||
-            event.Client.email?.toLowerCase().includes(searchLower) ||
-            event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
-            event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
-
-          const eventDate = new Date(event.createdAt); // ou event.createdAt
-
-          const matchesDate =
-            (!dateMin || eventDate >= new Date(dateMin)) &&
-            (!dateMax || eventDate <= new Date(dateMax));
-
-          return matchesDocument && matchesSearch && matchesDate;
-        })
-      );
-
-      const paginatedData = uniqueResults.filter((event) => {
-        const matchesDocument =
-          documentFilter === "all" || event.collectionName === documentFilter;
-
-        const searchLower = searchQueryInterior.toLowerCase();
-
-        const matchesSearch =
-          event.Client.name?.toLowerCase().includes(searchLower) ||
-          event.Client.firstName?.toLowerCase().includes(searchLower) ||
-          event.Client.email?.toLowerCase().includes(searchLower) ||
-          event.Vehicle?.model?.toLowerCase().includes(searchLower) ||
-          event.Vehicle?.plateNumber?.toLowerCase().includes(searchLower);
-
-        const eventDate = new Date(event.createdAt); // ou event.createdAt
-
-        const matchesDate =
-          (!dateMin || eventDate >= new Date(dateMin)) &&
-          (!dateMax || eventDate <= new Date(dateMax));
-
-        return matchesDocument && matchesSearch && matchesDate;
-      });
-
-      setPaginatedEvents(
-        paginatedData.slice(
-          page * rowsPerPage,
-          page * rowsPerPage + rowsPerPage
-        )
-      );
-      setOpen(true); // Ouvre le dialogue après la recherche
-    } catch (error) {
-      console.error("Erreur lors de la recherche des collections :", error);
-    }
-  }
 
   async function handleSearchClick() {
     const keyword = searchQuery.trim().toLowerCase();
@@ -482,7 +378,7 @@ function ManageClients() {
           return collectionKey !== "factures"
             ? filteredResults.filter((item) => item.isClosed === false)
             : filteredResults;
-        }
+        },
       );
 
       // Attendre les résultats de toutes les collections
@@ -496,8 +392,8 @@ function ManageClients() {
           index ===
           self.findIndex(
             (t) =>
-              t.id === value.id && t.collectionName === value.collectionName
-          )
+              t.id === value.id && t.collectionName === value.collectionName,
+          ),
       );
 
       console.log("Résultats combinés :", uniqueResults);
@@ -525,7 +421,7 @@ function ManageClients() {
             (!dateMax || eventDate <= new Date(dateMax));
 
           return matchesDocument && matchesSearch && matchesDate;
-        })
+        }),
       );
 
       const paginatedData = uniqueResults.filter((event) => {
@@ -553,8 +449,8 @@ function ManageClients() {
       setPaginatedEvents(
         paginatedData.slice(
           page * rowsPerPage,
-          page * rowsPerPage + rowsPerPage
-        )
+          page * rowsPerPage + rowsPerPage,
+        ),
       );
     } catch (error) {
       console.error("Erreur lors de la recherche des collections :", error);
@@ -572,14 +468,14 @@ function ManageClients() {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
 
         // Filtrer les événements si nécessaire
         const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
+          (event) => event.date === selectedDate && !event.isClosed,
         );
 
         setDataEvents(filteredEvents);
@@ -638,40 +534,9 @@ function ManageClients() {
     }
     handleShowPopup();
   };
-  const [details, setDetails] = useState([
-    {
-      label: "",
-      quantity: "",
-      unitPrice: "",
-      discountPercent: "",
-      discountAmount: "",
-    },
-  ]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      const token = Cookies.get("jwtToken"); // si encore présent avant remove
-      if (token) {
-        try {
-          const payloadBase64 = token.split(".")[1];
-          const payload = JSON.parse(atob(payloadBase64));
-          const userEmail = payload?.sub;
-          if (userEmail) {
-            localStorage.removeItem(`hasSeenNotification_${userEmail}`);
-          }
-        } catch (e) {
-          console.error("Erreur décodage JWT :", e);
-        }
-      }
-      await axios.get("/logout"); // pour envoyer les cookies
-      document.cookie =
-        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      window.location.href = "/"; // redirection après logout
-    } catch (error) {
-      console.error("Erreur de déconnexion :", error);
-    }
-  };
   const handleModalClose = () => {
     setModalOpen(false);
     console.log("FERMETURE");
@@ -680,7 +545,7 @@ function ManageClients() {
   const handleEditedEventChange = (updatedEvent) => {
     console.log(
       "########### updatedEvent updatedEvent #################",
-      updatedEvent
+      updatedEvent,
     );
     setSelectedEvent(updatedEvent);
   };
@@ -696,14 +561,14 @@ function ManageClients() {
       const fetchEvents = async () => {
         try {
           const response = await axios.get(
-            `/documents-garage/order/${getCurrentUser().garageId}/details`
+            `/documents-garage/order/${getCurrentUser().garageId}/details`,
           );
 
           const eventsData = response.data.data;
 
           // Filtrer les événements si nécessaire
           const filteredEvents = eventsData.filter(
-            (event) => event.date === selectedDate && !event.isClosed
+            (event) => event.date === selectedDate && !event.isClosed,
           );
 
           setDataEvents(filteredEvents);
@@ -712,7 +577,7 @@ function ManageClients() {
         } catch (error) {
           console.error(
             "Erreur lors de la récupération des événements :",
-            error
+            error,
           );
         }
       };
@@ -736,14 +601,14 @@ function ManageClients() {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
 
         // Filtrer les événements si nécessaire
         const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
+          (event) => event.date === selectedDate && !event.isClosed,
         );
 
         setDataEvents(filteredEvents);
@@ -775,7 +640,7 @@ function ManageClients() {
 
       console.log(
         "##############################Facture reçue du child: #################################################",
-        factureData.data
+        factureData.data,
       );
       handleOpenNotif("Facture");
     }
@@ -833,14 +698,14 @@ function ManageClients() {
 
           console.log(
             "############  filteredResults ####################",
-            filtResults
+            filtResults,
           );
 
           // Appliquer le filtre "isClosed === false" pour toutes sauf factures
           return collectionKey !== "factures"
             ? filteredResults.filter((item) => item.isClosed === false)
             : filteredResults;
-        }
+        },
       );
 
       // Attendre les résultats de toutes les collections
@@ -854,8 +719,8 @@ function ManageClients() {
           index ===
           self.findIndex(
             (t) =>
-              t.id === value.id && t.collectionName === value.collectionName
-          )
+              t.id === value.id && t.collectionName === value.collectionName,
+          ),
       );
 
       console.log("Résultats combinés :", uniqueResults);
@@ -863,8 +728,8 @@ function ManageClients() {
       // Mettre à jour l'état avec les résultats
       setDataEventsAll(
         uniqueResults.filter((item) =>
-          dayjs(item.createdAt).isSame(today, "day")
-        )
+          dayjs(item.createdAt).isSame(today, "day"),
+        ),
       );
       // setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
@@ -917,17 +782,12 @@ function ManageClients() {
         (!dateMax || eventDate <= new Date(dateMax));
 
       return matchesDocument && matchesSearch && matchesDate;
-    })
+    }),
   );
-
-  // useEffect(() => {
-  //   handleSearchClick();
-  // }, [documentFilter]);
 
   // 👉 À l'intérieur de ton composant
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [selectedIds, setSelectedIds] = useState([]);
 
   const [selectedItems, setSelectedItems] = useState([]); // [{ id, collectionName }]
 
@@ -1005,11 +865,11 @@ function ManageClients() {
       }
 
       const remaining = filteredEvents.filter(
-        (event) => !selectedItems.some((sel) => sel.id === event.id)
+        (event) => !selectedItems.some((sel) => sel.id === event.id),
       );
       setFilteredEvents(remaining);
       setPaginatedEvents(
-        remaining.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+        remaining.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
       );
       setDataEventsAll(remaining);
       setSelectedItems([]);
@@ -1029,7 +889,8 @@ function ManageClients() {
     }
   };
 
-  const isSelected = (id) => selectedIds.includes(id);
+  // const isSelected = (id) => selectedIds.includes(id);
+  const isSelected = (id) => selectedItems.some((x) => x.id === id);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -1042,7 +903,7 @@ function ManageClients() {
 
   // Pagination appliquée
   const [paginatedEvents, setPaginatedEvents] = useState(
-    filteredEvents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    filteredEvents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
   );
 
   useEffect(() => {
@@ -1050,10 +911,6 @@ function ManageClients() {
     const endIndex = startIndex + rowsPerPage;
     setPaginatedEvents(filteredEvents.slice(startIndex, endIndex));
   }, [filteredEvents, page, rowsPerPage]);
-
-  // useEffect(() => {
-  //   handleSearchClick();
-  // }, [searchQueryInterior]);
 
   const handleFilterDocuments = () => {
     handleSearchClick();
@@ -1066,9 +923,41 @@ function ManageClients() {
     // - Déclencher un re-render ou recalculer la semaine
   };
 
-  const [selected, setSelected] = useState("clients");
-  const [openDialog, setOpenDialog] = useState(false);
-  const [tabHist, setTabHist] = useState(0);
+  const paginatedHistData = useMemo(() => {
+    const { page, rowsPerPage } = histPagination[currentHistKey];
+    let source = [];
+
+    switch (currentHistKey) {
+      case "factures":
+        source = facturesData;
+        break;
+      case "devis":
+        source = devisData;
+        break;
+      case "or":
+        source = orData;
+        break;
+      case "reservations":
+        source = reservationsData;
+        break;
+      case "entretiens":
+        source = entretiensData;
+        break;
+      default:
+        source = [];
+    }
+
+    const start = page * rowsPerPage;
+    return source.slice(start, start + rowsPerPage);
+  }, [
+    currentHistKey,
+    histPagination,
+    facturesData,
+    devisData,
+    orData,
+    reservationsData,
+    entretiensData,
+  ]);
 
   const renderContent = () => {
     switch (selected) {
@@ -1087,52 +976,74 @@ function ManageClients() {
               Créer un client
             </Button>
             <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
-              <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Nom</TableCell>
-                      <TableCell>Prénom</TableCell>
-                      <TableCell>Téléphone</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Adresse</TableCell>
-                      <TableCell>Code postal</TableCell>
-                      <TableCell>Ville</TableCell>
-                      <TableCell>Nb véhicules</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {clientsData.map((c) => (
-                      <TableRow key={c.id} hover>
-                        <TableCell>{c.id}</TableCell>
-                        <TableCell>{c.name}</TableCell>
-                        <TableCell>{c.firstname}</TableCell>
-                        <TableCell>{c.phone}</TableCell>
-                        <TableCell>{c.email}</TableCell>
-                        <TableCell>{c?.adress}</TableCell>
-                        <TableCell>{c?.postalCode}</TableCell>
-                        <TableCell>{c?.city}</TableCell>
-
-                        <TableCell>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="secondary"
-                            onClick={() => {
-                              setSelectedClient(c); // pour clients
-                              setOpenEditClientDialog(true);
-                            }}
-                          >
-                            Modifier
-                          </Button>
+              {loading.clients ? (
+                <TableSkeleton columns={9} rows={5} />
+              ) : (
+                <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ ...cellStyle }}>ID</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Nom</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Prénom</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Téléphone</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Email</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Adresse</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Code postal</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Ville</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          Nb véhicules
                         </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Actions</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedClients.map((c) => (
+                        <TableRow key={c.id} hover>
+                          <TableCell sx={{ ...cellStyle }}>{c.id}</TableCell>
+                          <TableCell sx={{ ...cellStyle }}>{c.name}</TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            {c.firstname}
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle }}>{c.phone}</TableCell>
+                          <TableCell sx={{ ...cellStyle }}>{c.email}</TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            {c?.adress}
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            {c?.postalCode}
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle }}>{c?.city}</TableCell>
+
+                          <TableCell sx={{ ...cellStyle }}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              sx={{ ...cellStyle }}
+                              color="secondary"
+                              onClick={() => {
+                                setSelectedClient(c);
+                                setOpenEditClientDialog(true);
+                              }}
+                            >
+                              Modifier
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <TablePagination
+                    rowsPerPageOptions={[10, 25, 50, 100]}
+                    component="div"
+                    count={clientsData.length}
+                    rowsPerPage={clientsRowsPerPage}
+                    page={clientsPage}
+                    onPageChange={handleChangeClientsPage}
+                    onRowsPerPageChange={handleChangeClientsRowsPerPage}
+                  />
+                </TableContainer>
+              )}
             </Paper>
           </Box>
         );
@@ -1152,44 +1063,67 @@ function ManageClients() {
               Créer un véhicule
             </Button>
             <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
-              <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Immatriculation</TableCell>
-                      <TableCell>Modèle</TableCell>
-                      <TableCell>Client</TableCell>
-                      <TableCell>Kilométrage</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {vehiculesData.map((v) => (
-                      <TableRow key={v.id} hover>
-                        <TableCell>{v.id}</TableCell>
-                        <TableCell>{v.plateNumber}</TableCell>
-                        <TableCell>{v.model}</TableCell>
-                        <TableCell>{v.Client?.name}</TableCell>
-                        <TableCell>{v.mileage}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="secondary"
-                            onClick={() => {
-                              setSelectedVehicule(v); // pour véhicules
-                              setOpenEditVehiculeDialog(true);
-                            }}
-                          >
-                            Modifier
-                          </Button>
+              {loading.vehicules ? (
+                <Typography sx={{ p: 2 }}>
+                  Chargement des vehicules...
+                </Typography>
+              ) : (
+                <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ ...cellStyle }}>ID</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>
+                          Immatriculation
                         </TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Modèle</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Client</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Kilométrage</TableCell>
+                        <TableCell sx={{ ...cellStyle }}>Actions</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedVehicules.map((v) => (
+                        <TableRow key={v.id} hover>
+                          <TableCell sx={{ ...cellStyle }}>{v.id}</TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            {v.plateNumber}
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle }}>{v.model}</TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            {v.Client?.name}
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            {v.mileage}
+                          </TableCell>
+                          <TableCell sx={{ ...cellStyle }}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="secondary"
+                              onClick={() => {
+                                setSelectedVehicule(v);
+                                setOpenEditVehiculeDialog(true);
+                              }}
+                            >
+                              Modifier
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <TablePagination
+                    rowsPerPageOptions={[10, 25, 50, 100]}
+                    component="div"
+                    count={vehiculesData.length}
+                    rowsPerPage={vehiculesRowsPerPage}
+                    page={vehiculesPage}
+                    onPageChange={handleChangeVehiculesPage}
+                    onRowsPerPageChange={handleChangeVehiculesRowsPerPage}
+                  />
+                </TableContainer>
+              )}
             </Paper>
           </Box>
         );
@@ -1216,11 +1150,28 @@ function ManageClients() {
               <Tab label="Entretiens" />
             </Tabs>
 
-            {tabHist === 0 && renderTable(facturesData, "Facture")}
-            {tabHist === 1 && renderTable(devisData, "Devis")}
-            {tabHist === 2 && renderTable(orData, "OR")}
-            {tabHist === 3 && renderTable(reservationsData, "Réservation")}
-            {tabHist === 4 && renderTable(entretiensData, "Entretien")}
+            {tabHist === 0 &&
+              renderTable(paginatedHistData, "Facture", facturesData.length)}
+
+            {tabHist === 1 &&
+              renderTable(paginatedHistData, "Devis", devisData.length)}
+
+            {tabHist === 2 &&
+              renderTable(paginatedHistData, "OR", orData.length)}
+
+            {tabHist === 3 &&
+              renderTable(
+                paginatedHistData,
+                "Réservation",
+                reservationsData.length,
+              )}
+
+            {tabHist === 4 &&
+              renderTable(
+                paginatedHistData,
+                "Entretien",
+                entretiensData.length,
+              )}
           </Box>
         );
 
@@ -1230,87 +1181,63 @@ function ManageClients() {
   };
 
   // ------------------ Helper pour Historique ------------------
-  const renderTable = (data, type) => (
-    <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Liste des {type}s
-      </Typography>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>N° {type}</TableCell>
-            <TableCell>Client</TableCell>
-            <TableCell>Véhicule</TableCell>
+  const renderTable = (data, type, totalCount) => {
+    const { page, rowsPerPage } = histPagination[currentHistKey];
 
-            <TableCell>Date</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((d) => (
-            <TableRow key={d.id} hover>
-              <TableCell>{d?.id}</TableCell>
-              <TableCell>{d?.Client?.name}</TableCell>
-              <TableCell>{d?.Vehicle?.plateNumber}</TableCell>
+    return (
+      <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Liste des {type}s
+        </Typography>
 
-              <TableCell>
-                {new Date(d.createdAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{ mr: 1 }}
-                  onClick={(event) => HandleViewDocument(event, d)}
-                >
-                  Voir
-                </Button>
-
-                {type == "OR" && (
-                  <OrdreReparationTemplate2
-                    editedEvent={d}
-                    details={d?.Details}
-                  />
-                )}
-                {type == "Devis" && (
-                  <DevisTemplate2 editedEvent={d} details={d?.Details} />
-                )}
-                {type == "Facture" && (
-                  <InvoiceTemplateWithoutOR2
-                    NewEvent={d}
-                    details={d?.Details}
-                  />
-                )}
-                {type == "Réservation" && (
-                  <ReservationTemplate2
-                    editedEvent={d}
-                    details={d?.Details || []}
-                  />
-                )}
-              </TableCell>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ ...cellStyle }}>N° {type}</TableCell>
+              <TableCell sx={{ ...cellStyle }}>Client</TableCell>
+              <TableCell sx={{ ...cellStyle }}>Véhicule</TableCell>
+              <TableCell sx={{ ...cellStyle }}>Date</TableCell>
+              <TableCell sx={{ ...cellStyle }}>Actions</TableCell>
             </TableRow>
-          ))}
-          <Popover
-            id={id}
-            open={openView}
-            anchorEl={anchorEl}
-            onClose={handleCloseViewDocument}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "left",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "left",
-            }}
-          >
-            {/* On passe les données sélectionnées au composant PreviewDocument */}
-            {selectedData && <PreviewDocument DocumentData={selectedData} />}
-          </Popover>
-        </TableBody>
-      </Table>
-    </Paper>
-  );
+          </TableHead>
+
+          <TableBody>
+            {data.map((d) => (
+              <TableRow key={d.id} hover>
+                <TableCell sx={{ ...cellStyle }}>{d.id}</TableCell>
+                <TableCell sx={{ ...cellStyle }}>{d?.Client?.name}</TableCell>
+                <TableCell sx={{ ...cellStyle }}>
+                  {d?.Vehicle?.plateNumber}
+                </TableCell>
+                <TableCell sx={{ ...cellStyle }}>
+                  {new Date(d.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell sx={{ ...cellStyle }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={(event) => HandleViewDocument(event, d)}
+                  >
+                    Voir
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          component="div"
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangeHistPage}
+          onRowsPerPageChange={handleChangeHistRowsPerPage}
+        />
+      </Paper>
+    );
+  };
 
   // Renommé selon ta demande
   const HandleViewDocument = (event, data) => {
@@ -1325,6 +1252,71 @@ function ManageClients() {
 
   const openView = Boolean(anchorEl);
   const id = openView ? "preview-popover" : undefined;
+
+  // -------------------------
+  // PAGINATION: Clients
+  // -------------------------
+  const [clientsPage, setClientsPage] = useState(0);
+  const [clientsRowsPerPage, setClientsRowsPerPage] = useState(25);
+
+  const handleChangeClientsPage = (event, newPage) => {
+    setClientsPage(newPage);
+  };
+
+  const handleChangeClientsRowsPerPage = (event) => {
+    setClientsRowsPerPage(parseInt(event.target.value, 10));
+    setClientsPage(0);
+  };
+
+  const paginatedClients = useMemo(() => {
+    const start = clientsPage * clientsRowsPerPage;
+    return clientsData.slice(start, start + clientsRowsPerPage);
+  }, [clientsData, clientsPage, clientsRowsPerPage]);
+
+  // -------------------------
+  // PAGINATION: Véhicules
+  // -------------------------
+  const [vehiculesPage, setVehiculesPage] = useState(0);
+  const [vehiculesRowsPerPage, setVehiculesRowsPerPage] = useState(25);
+
+  const handleChangeVehiculesPage = (event, newPage) => {
+    setVehiculesPage(newPage);
+  };
+
+  const handleChangeVehiculesRowsPerPage = (event) => {
+    setVehiculesRowsPerPage(parseInt(event.target.value, 10));
+    setVehiculesPage(0);
+  };
+
+  const paginatedVehicules = useMemo(() => {
+    const start = vehiculesPage * vehiculesRowsPerPage;
+    return vehiculesData.slice(start, start + vehiculesRowsPerPage);
+  }, [vehiculesData, vehiculesPage, vehiculesRowsPerPage]);
+
+  // -------------------------
+  // PAGINATION: Historiques (par onglet)
+  // Onglets: 0 Factures, 1 Devis, 2 OR, 3 Réservations, 4 Entretiens
+  // -------------------------
+
+  const handleChangeHistPage = (event, newPage) => {
+    setHistPagination((prev) => ({
+      ...prev,
+      [currentHistKey]: {
+        ...prev[currentHistKey],
+        page: newPage,
+      },
+    }));
+  };
+
+  const handleChangeHistRowsPerPage = (event) => {
+    setHistPagination((prev) => ({
+      ...prev,
+      [currentHistKey]: {
+        page: 0,
+        rowsPerPage: parseInt(event.target.value, 10),
+      },
+    }));
+  };
 
   return (
     <>
@@ -1386,7 +1378,6 @@ function ManageClients() {
             placeholder="Rechercher"
             size="small"
             sx={{
-              backgroundColor: "white",
               borderRadius: "16x",
               width: "50%", // Ajustable selon besoin
               ml: 2,
@@ -1556,7 +1547,7 @@ function ManageClients() {
                         >
                           <Checkbox
                             checked={selectedItems.some(
-                              (item) => item.id === event.id
+                              (item) => item.id === event.id,
                             )}
                             onChange={() =>
                               handleSelectClick(event.id, event.collectionName)
@@ -1703,7 +1694,6 @@ function ManageClients() {
                 flexDirection: "column",
                 alignItems: "left",
                 p: 2,
-                bgcolor: "white",
                 borderRadius: 2,
                 boxShadow: 2,
               }}

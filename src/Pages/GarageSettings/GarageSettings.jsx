@@ -3,14 +3,11 @@
 import BuildIcon from "@mui/icons-material/Build";
 import CategoryIcon from "@mui/icons-material/Category";
 import DescriptionIcon from "@mui/icons-material/Description";
-import EmailIcon from "@mui/icons-material/Email";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import VerifiedIcon from "@mui/icons-material/Verified";
 import {
   Accordion,
   AccordionDetails,
@@ -23,6 +20,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Grid,
   List,
   ListItemButton,
   ListItemIcon,
@@ -31,7 +29,6 @@ import {
   Paper,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import Chip from "@mui/material/Chip";
@@ -58,18 +55,6 @@ const GarageSettings = () => {
     ville: "",
   });
 
-  const [userInfo, setUserInfo] = useState({
-    firstName: "",
-    name: "",
-    email: "",
-    password: "",
-  });
-
-  const [garageParams, setGarageParams] = useState({
-    note: "",
-    description: "",
-  });
-
   const [categories, setCategories] = useState([
     { name: "Vidange", color: "#1976d2", type: "system", garageId: null },
   ]);
@@ -89,11 +74,11 @@ const GarageSettings = () => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          "/categories/garage/" + getCurrentUser().garageId
+          "/categories/garage/" + getCurrentUser().garageId,
         );
 
         const responseGarage = await axios.get(
-          "/garages/userid/" + getCurrentUser().garageId
+          "/garages/userid/" + getCurrentUser().garageId,
         );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);
@@ -104,7 +89,7 @@ const GarageSettings = () => {
         const categoriesData = response.data;
 
         const responseGarageUsers = await axios.get(
-          "/users/garageId/" + getCurrentUser().garageId
+          "/users/garageId/" + getCurrentUser().garageId,
         );
 
         setGarageUsers(responseGarageUsers.data);
@@ -138,57 +123,11 @@ const GarageSettings = () => {
     { firstName: "", name: "", email: "", level: "0" },
   ]);
 
-  const handleUserChange = (index, field, value) => {
-    const newUsers = [...users];
-    newUsers[index][field] = value;
-    newUsers[index].isModified = true;
-    console.log("newUsers[index].isModified = true;", newUsers[index]);
-    setUsers(newUsers);
-  };
-
-  const handleAddUser = () => {
-    setUsers([
-      ...users,
-      { firstName: "", name: "", email: "", level: "0", isNew: true },
-    ]);
-  };
-
   // const handleRemoveUser = async (index) => {
   //   const newUsers = [...users];
   //   newUsers.splice(index, 1);
   //   setUsers(newUsers);
   // };
-
-  const handleRemoveUser = async (index) => {
-    const user = users[index];
-
-    const confirmDelete = window.confirm(
-      `Es-tu sûr(e) de vouloir supprimer ${user.firstName || ""} ${
-        user.name || ""
-      } ?`
-    );
-
-    if (!confirmDelete) return;
-
-    try {
-      // S’il s’agit d’un utilisateur déjà enregistré (ayant un id)
-      if (user.id && !user.isNew) {
-        await axios.deleteData(`/users/${user.id}`);
-        console.log("✅ Utilisateur supprimé avec succès !");
-      }
-
-      // Mise à jour locale : suppression de l'élément du tableau
-      const newUsers = [...users];
-      newUsers.splice(index, 1);
-      setUsers(newUsers);
-    } catch (error) {
-      console.error(
-        "❌ Erreur lors de la suppression de l'utilisateur :",
-        error
-      );
-      alert("Une erreur est survenue lors de la suppression.");
-    }
-  };
 
   function getCurrentUser() {
     const storedUser = localStorage.getItem("me");
@@ -239,7 +178,7 @@ const GarageSettings = () => {
     // 1. Séparer les nouvelles catégories et celles existantes modifiées
     const newCategories = categories.filter((cat) => cat.isNew);
     const updatedCategories = categories.filter(
-      (cat) => !cat.isNew && cat.isModified
+      (cat) => !cat.isNew && cat.isModified,
     );
 
     if (newCategories.length === 0 && updatedCategories.length === 0) {
@@ -255,7 +194,7 @@ const GarageSettings = () => {
           color: cat.color,
           garageId: cat.garageId,
           type: cat.type,
-        })
+        }),
       );
 
       // 3. Traiter la mise à jour des catégories existantes (PUT)
@@ -265,7 +204,7 @@ const GarageSettings = () => {
           color: cat.color,
           garageId: cat.garageId,
           type: cat.type,
-        })
+        }),
       );
 
       // 4. Exécuter toutes les requêtes en parallèle
@@ -276,40 +215,13 @@ const GarageSettings = () => {
 
       // 5. Recharger la liste complète après enregistrement
       const res = await axios.get(
-        "/categories/garage/" + getCurrentUser().garageId
+        "/categories/garage/" + getCurrentUser().garageId,
       );
 
       setCategories(res.data.data);
       console.log("✅ Catégories sauvegardées avec succès !");
     } catch (error) {
       console.error("❌ Erreur lors de la sauvegarde des catégories :", error);
-    }
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const previewImageUrl = URL.createObjectURL(file);
-      setPreviewImage(previewImageUrl);
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "VeritaTrust_x2023Upload_preset_name");
-
-      fetch("https://api.cloudinary.com/v1_1/dnbpmsofq/image/upload", {
-        method: "POST",
-        body: formData,
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          //.log("Success:", result);
-          setImageUrl(result.url);
-        })
-        .catch((error) => {
-          //.error("Error:", error);
-        });
-
-      //.log(imageUrl);
     }
   };
 
@@ -341,7 +253,7 @@ const GarageSettings = () => {
           endMinTimeline: garageInfo.endMinTimeline,
           codePostal: garageInfo.codePostal,
           ville: garageInfo.ville,
-        }
+        },
       );
 
       // Tu peux ajouter une notification ici
@@ -350,17 +262,6 @@ const GarageSettings = () => {
     } catch (error) {
       console.error("Erreur lors de l'enregistrement :", error);
       alert("Erreur lors de l'enregistrement !");
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.get("/logout"); // pour envoyer les cookies
-      document.cookie =
-        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      window.location.href = "/"; // redirection après logout
-    } catch (error) {
-      console.error("Erreur de déconnexion :", error);
     }
   };
 
@@ -383,7 +284,7 @@ const GarageSettings = () => {
           email: user.email.trim().toLowerCase(),
           level: user.level,
           garageId: getCurrentUser().garageId, // si nécessaire
-        })
+        }),
       );
 
       // 3. Mise à jour des utilisateurs existants (PUT)
@@ -393,7 +294,7 @@ const GarageSettings = () => {
           name: user.name?.trim(),
           email: user.email?.trim()?.toLowerCase() || null,
           level: user.level,
-        })
+        }),
       );
 
       // 4. Exécuter toutes les requêtes en parallèle
@@ -407,7 +308,7 @@ const GarageSettings = () => {
     } catch (error) {
       console.error(
         "❌ Erreur lors de la sauvegarde des utilisateurs :",
-        error
+        error,
       );
     }
   };
@@ -433,7 +334,7 @@ const GarageSettings = () => {
     } catch (error) {
       console.error(
         "❌ Erreur lors de la suppression de l'utilisateur :",
-        error
+        error,
       );
       alert("Une erreur est survenue lors de la suppression.");
     } finally {
@@ -442,37 +343,6 @@ const GarageSettings = () => {
     }
   };
 
-  const renderStatusIcon = (status) => {
-    switch (status) {
-      case "0":
-        return (
-          <Tooltip title="En attente de vérification email">
-            <EmailIcon color="warning" fontSize="small" />
-          </Tooltip>
-        );
-      case "1":
-        return (
-          <Tooltip title="En attente d’approbation">
-            <HourglassEmptyIcon color="info" fontSize="small" />
-          </Tooltip>
-        );
-      case "2":
-        return (
-          <Tooltip title="Compte validé">
-            <VerifiedIcon color="success" fontSize="small" />
-          </Tooltip>
-        );
-      default:
-        return null;
-    }
-  };
-  const handleApproveUser = (index) => {
-    const updatedUsers = [...users];
-    updatedUsers[index].status = "2"; // ou appel backend ici
-    setUsers(updatedUsers);
-    // Envoie au backend si besoin...
-  };
-  const [statusFilter, setStatusFilter] = useState(""); // "" = pas de filtre
   const [activeSection, setActiveSection] = useState("garage");
 
   const settingsMenu = [
@@ -823,35 +693,37 @@ const GarageSettings = () => {
         sx={{
           width: 260,
           p: 2,
-          borderRight: "1px solid #eee",
-          bgcolor: "#fafafa",
         }}
       >
-        <Typography variant="h6" gutterBottom>
-          Paramètres
-        </Typography>
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="h6" gutterBottom>
+              Paramètres
+            </Typography>
 
-        <List>
-          {settingsMenu.map((item) => (
-            <ListItemButton
-              key={item.key}
-              selected={activeSection === item.key}
-              onClick={() => setActiveSection(item.key)}
-              sx={{
-                borderRadius: 1,
-                mb: 0.5,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+            <List>
+              {settingsMenu.map((item) => (
+                <ListItemButton
+                  key={item.key}
+                  selected={activeSection === item.key}
+                  onClick={() => setActiveSection(item.key)}
+                  sx={{
+                    borderRadius: 1,
+                    mb: 0.5,
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
 
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          ))}
-        </List>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Grid>
+        </Paper>
       </Box>
 
       {/* CONTENT */}
-      <Box sx={{ flex: 1, p: 4 }}>{renderSection()}</Box>
+      <Box sx={{ flex: 1, p: 2 }}>{renderSection()}</Box>
 
       <Dialog
         open={deleteDialogOpen}
