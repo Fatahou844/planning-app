@@ -66,6 +66,14 @@ export default function ForfaitSearch({
 
   const axios = useAxios();
 
+  function getCurrentUser() {
+    const storedUser = localStorage.getItem("me");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  }
+
   useEffect(() => {
     setDetails(initialDetails);
     setDeposit(initialDeposit);
@@ -102,7 +110,7 @@ export default function ForfaitSearch({
     try {
       if (code1 && !code2) {
         const { data } = await axios.get(
-          `/forfaits/codes-principaux/${code1}/categories`
+          `/forfaits/codes-principaux/${code1}/categories?garageId=${getCurrentUser().garageId}`,
         );
 
         setCategories(data);
@@ -113,7 +121,7 @@ export default function ForfaitSearch({
 
       if (code1 && code2 && !code3) {
         const { data } = await axios.get(
-          `/forfaits/code1/${code1}/code2/${code2}/forfaits`
+          `/forfaits/code1/${code1}/code2/${code2}/forfaits?garageId=${getCurrentUser().garageId}`,
         );
 
         setForfaits(data);
@@ -124,7 +132,7 @@ export default function ForfaitSearch({
 
       if (code1 && code2 && code3) {
         const { data } = await axios.get(
-          `/forfaits/libelle/${code1}/${code2}/${code3}`
+          `/forfaits/libelle/${code1}/${code2}/${code3}?garageId=${getCurrentUser().garageId}`,
         );
 
         addDetailFromForfait(
@@ -135,7 +143,7 @@ export default function ForfaitSearch({
             quantity: 1,
             unitPrice: data.prix,
           },
-          index
+          index,
         );
         return;
       }
@@ -157,8 +165,8 @@ export default function ForfaitSearch({
 
       setDetails((prev) =>
         prev.map((d, i) =>
-          i === lineIndex ? { ...d, label: `${code1}${code2}` } : d
-        )
+          i === lineIndex ? { ...d, label: `${code1}${code2}` } : d,
+        ),
       );
     } else {
       const [c1] = parseCodes(input);
@@ -169,7 +177,7 @@ export default function ForfaitSearch({
     try {
       // 2️⃣ Récupération des forfaits
       const { data } = await axios.get(
-        `/forfaits/code1/${code1}/code2/${code2}/forfaits`
+        `/forfaits/code1/${code1}/code2/${code2}/forfaits?garageId=${getCurrentUser().garageId}`,
       );
 
       setForfaits(data);
@@ -217,7 +225,7 @@ export default function ForfaitSearch({
           code: `${f.CategoryForfait.codes_principaux.code1}${f.CategoryForfait.code2}${f.code3}`,
           unitPrice: f.prix,
         },
-        lineIndex
+        lineIndex,
       );
 
       firstUsed = true;
@@ -234,7 +242,7 @@ export default function ForfaitSearch({
           quantity: 1,
           unitPrice: f.prix,
         },
-        null
+        null,
       );
     });
 
@@ -328,7 +336,7 @@ export default function ForfaitSearch({
           ...detail,
           [name]: value,
         };
-      })
+      }),
     );
   };
 

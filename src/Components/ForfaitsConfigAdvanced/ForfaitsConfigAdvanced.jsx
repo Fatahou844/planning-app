@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Button,
   Dialog,
@@ -17,7 +18,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -43,49 +44,64 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     categoryForfaitId: "",
   });
 
-  // --- EDIT MODAL ---
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editForfait, setEditForfait] = useState(null);
 
-  // --- FILTER / SEARCH ---
   const [categoryFilter, setCategoryFilter] = useState("");
   const [searchText, setSearchText] = useState("");
 
   const axios = useAxios();
 
+  // Refs pour scroller vers les formulaires
+  const categoryFormRef = useRef(null);
+  const forfaitFormRef = useRef(null);
+
   useEffect(() => {
     loadCodesPrincipaux();
     loadCategories();
     loadForfaits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCodesPrincipaux = async () => {
-    const response = await axios.get("/codes-principaux");
-    setCodesPrincipaux(response.data.data);
+    try {
+      const response = await axios.get("/codes-principaux");
+      setCodesPrincipaux(
+        Array.isArray(response?.data?.data) ? response.data.data : [],
+      );
+    } catch {
+      setCodesPrincipaux([]);
+    }
   };
 
   const loadCategories = async () => {
-    const response = await axios.get(`/category-forfaits?garageId=${garageId}`);
-    setCategories(response.data.data);
+    try {
+      const response = await axios.get(
+        `/category-forfaits/garageId/${garageId}`,
+      );
+      setCategories(Array.isArray(response?.data) ? response.data : []);
+      console.log("RAW categories response:", response.data);
+    } catch {
+      setCategories([]);
+    }
   };
 
   const loadForfaits = async () => {
-    const response = await axios.get(`/forfaits?garageId=${garageId}`);
-    setForfaits(response.data.data);
+    try {
+      const response = await axios.get(`/forfaits/garageId/${garageId}`);
+      setForfaits(Array.isArray(response?.data) ? response.data : []);
+    } catch {
+      setForfaits([]);
+    }
   };
 
-  /* ---------------- CREATE CATEGORY ---------------- */
   const handleCreateCategory = async () => {
     if (!newCategory.name || !newCategory.code_principalId) return;
-    await axios.post("/category-forfaits", {
-      ...newCategory,
-      garageId: garageId,
-    });
+    await axios.post("/category-forfaits", { ...newCategory, garageId });
     setNewCategory({ name: "", code2: "", code_principalId: "" });
     loadCategories();
   };
 
-  /* ---------------- CREATE FORFAIT ---------------- */
   const handleCreateForfait = async () => {
     const { libelle, categoryForfaitId } = newForfait;
     if (!libelle || !categoryForfaitId) return;
@@ -100,21 +116,19 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     loadForfaits();
   };
 
-  /* ---------------- DELETE FORFAIT ---------------- */
   const handleDeleteForfait = async (id) => {
     if (!window.confirm("Supprimer ce forfait ?")) return;
     await axios.deleteData(`/forfaits/${id}`);
     loadForfaits();
   };
 
-  /* ---------------- EDIT FORFAIT ---------------- */
   const handleOpenEditModal = (forfait) => {
     setEditForfait({ ...forfait });
     setOpenEditModal(true);
   };
 
   const handleEditChange = (field, value) => {
-    setEditForfait({ ...editForfait, [field]: value });
+    setEditForfait((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSaveEdit = async () => {
@@ -124,25 +138,25 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     loadForfaits();
   };
 
-  /* ---------------- FILTERED FORFAITS ---------------- */
-  let filteredForfaits = forfaits
-    .filter((f) =>
-      categoryFilter ? f.categoryForfaitId === categoryFilter : true,
-    )
-    .filter((f) => f.libelle.toLowerCase().includes(searchText.toLowerCase()));
+  // --- Safe arrays (évite bugs map/filter)
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeForfaits = Array.isArray(forfaits) ? forfaits : [];
+  const safeCodesPrincipaux = Array.isArray(codesPrincipaux)
+    ? codesPrincipaux
+    : [];
 
   const normalizedSearch = searchText.trim().toLowerCase();
 
-  // Forfaits filtrés (catégorie + recherche)
-  filteredForfaits = useMemo(() => {
-    return forfaits
+  const filteredForfaits = useMemo(() => {
+    return safeForfaits
       .filter((f) =>
         categoryFilter ? f.categoryForfaitId === categoryFilter : true,
       )
-      .filter((f) => f.libelle.toLowerCase().includes(normalizedSearch));
-  }, [forfaits, categoryFilter, normalizedSearch]);
+      .filter((f) =>
+        (f?.libelle || "").toLowerCase().includes(normalizedSearch),
+      );
+  }, [safeForfaits, categoryFilter, normalizedSearch]);
 
-  // Map: categoryId => forfaits correspondants
   const forfaitsByCategory = useMemo(() => {
     const map = new Map();
     for (const f of filteredForfaits) {
@@ -153,34 +167,17 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
     return map;
   }, [filteredForfaits]);
 
-  // Catégories à afficher:
-  // - si searchText non vide -> uniquement celles qui ont des résultats
-  // - sinon -> toutes (ou celles du filtre si tu veux, mais ici c’est déjà géré via filteredForfaits)
-  // const visibleCategories = useMemo(() => {
-  //   if (normalizedSearch) {
-  //     return categories.filter(
-  //       (cat) => (forfaitsByCategory.get(cat.id) || []).length > 0
-  //     );
-  //   }
-  //   return categories;
-  // }, [categories, normalizedSearch, forfaitsByCategory]);
-
   const visibleCategories = useMemo(() => {
-    // 1) Si une catégorie est choisie -> n’afficher QUE celle-là
     if (categoryFilter) {
-      return categories.filter((cat) => cat.id === categoryFilter);
+      return safeCategories.filter((cat) => cat.id === categoryFilter);
     }
-
-    // 2) Sinon, si recherche -> n’afficher que les catégories qui ont des résultats
     if (normalizedSearch) {
-      return categories.filter(
+      return safeCategories.filter(
         (cat) => (forfaitsByCategory.get(cat.id) || []).length > 0,
       );
     }
-
-    // 3) Sinon -> toutes les catégories
-    return categories;
-  }, [categories, categoryFilter, normalizedSearch, forfaitsByCategory]);
+    return safeCategories;
+  }, [safeCategories, categoryFilter, normalizedSearch, forfaitsByCategory]);
 
   useEffect(() => {
     if (!categoryFilter) return;
@@ -189,32 +186,89 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
 
   useEffect(() => {
     if (!normalizedSearch) return;
-
     const next = {};
-    for (const cat of visibleCategories) {
-      next[cat.id] = true; // ouvre toutes les catégories visibles (donc matchées)
-    }
+    for (const cat of visibleCategories) next[cat.id] = true;
     setExpandedCats(next);
   }, [normalizedSearch, visibleCategories]);
 
   useEffect(() => {
-    if (!categoryFilter || normalizedSearch) return;
-    setExpandedCats({ [categoryFilter]: true });
-  }, [categoryFilter, normalizedSearch]);
-  useEffect(() => {
-    if (!normalizedSearch) {
-      // Quand le champ de recherche est vidé → on ferme tout
-      setExpandedCats({});
-    }
+    if (!normalizedSearch) setExpandedCats({});
   }, [normalizedSearch]);
+
+  // --- États “empty” pour afficher des messages propres
+  const hasCategories = safeCategories.length > 0;
+  const hasForfaits = safeForfaits.length > 0;
+  const hasFilteredResults = filteredForfaits.length > 0;
+  const isFiltering = Boolean(categoryFilter) || Boolean(normalizedSearch);
+
+  const scrollToRef = (ref) => {
+    if (!ref?.current) return;
+    ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const resetFilters = () => {
+    setCategoryFilter("");
+    setSearchText("");
+    setExpandedCats({});
+  };
 
   return (
     <Grid item xs={12} md={6}>
       <Paper elevation={3} sx={{ p: 3 }}>
+        {/* -------- EMPTY STATES (GLOBAL) -------- */}
+        {!hasCategories && (
+          <Alert
+            severity="info"
+            sx={{ mb: 2 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => scrollToRef(categoryFormRef)}
+              >
+                Créer une catégorie
+              </Button>
+            }
+          >
+            Aucune catégorie de forfait n’a été créée pour l’instant.
+          </Alert>
+        )}
+
+        {hasCategories && !hasForfaits && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 2 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => scrollToRef(forfaitFormRef)}
+              >
+                Créer un forfait
+              </Button>
+            }
+          >
+            Des catégories existent, mais aucun forfait n’a encore été ajouté.
+          </Alert>
+        )}
+
+        {hasCategories && hasForfaits && isFiltering && !hasFilteredResults && (
+          <Alert
+            severity="info"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={resetFilters}>
+                Réinitialiser
+              </Button>
+            }
+          >
+            Aucun forfait ne correspond au filtre / à la recherche.
+          </Alert>
+        )}
+
         {/* -------- CREATE CATEGORY -------- */}
         <Grid container spacing={4}>
-          {/* -------- CREATE CATEGORY -------- */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} ref={categoryFormRef}>
             <Typography variant="subtitle1" sx={{ mb: 2 }}>
               ➕ Ajouter une catégorie
             </Typography>
@@ -241,7 +295,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
                   })
                 }
               >
-                {codesPrincipaux.map((c) => (
+                {safeCodesPrincipaux.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
                     {c.code1} – {c.name}
                   </MenuItem>
@@ -264,7 +318,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
           </Grid>
 
           {/* -------- CREATE FORFAIT -------- */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} ref={forfaitFormRef}>
             <Typography variant="subtitle1" sx={{ mb: 2 }}>
               ➕ Ajouter un forfait
             </Typography>
@@ -319,15 +373,23 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
                     categoryForfaitId: e.target.value,
                   })
                 }
+                disabled={!hasCategories}
+                helperText={
+                  !hasCategories ? "Créez d’abord une catégorie." : ""
+                }
               >
-                {categories.map((cat) => (
+                {safeCategories.map((cat) => (
                   <MenuItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </MenuItem>
                 ))}
               </TextField>
 
-              <Button variant="contained" onClick={handleCreateForfait}>
+              <Button
+                variant="contained"
+                onClick={handleCreateForfait}
+                disabled={!hasCategories}
+              >
                 Ajouter le forfait
               </Button>
             </Stack>
@@ -344,50 +406,43 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
             fullWidth
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
+            disabled={!hasCategories}
+            helperText={!hasCategories ? "Aucune catégorie disponible." : ""}
           >
             <MenuItem value="">Toutes les catégories</MenuItem>
-            {categories.map((cat) => (
+            {safeCategories.map((cat) => (
               <MenuItem key={cat.id} value={cat.id}>
                 {cat.name}
               </MenuItem>
             ))}
           </TextField>
+
           <TextField
             label="Rechercher un forfait"
             fullWidth
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            disabled={!hasForfaits}
+            helperText={!hasForfaits ? "Aucun forfait à rechercher." : ""}
           />
         </Stack>
 
         {/* -------- LIST FORFAITS -------- */}
         {visibleCategories.map((cat) => {
           const catForfaits = forfaitsByCategory.get(cat.id) || [];
-
-          // Option: si searchText est vide, on laisse l’utilisateur contrôler.
-          // Si searchText non vide, on force l’ouverture (via expandedCats).
-          const isExpanded = normalizedSearch
-            ? !!expandedCats[cat.id]
-            : !!expandedCats[cat.id];
+          const isExpanded = !!expandedCats[cat.id];
 
           return (
             <Accordion
               key={cat.id}
               expanded={isExpanded}
               onChange={(_, expanded) => {
-                // Si search en cours, tu peux choisir:
-                // - soit permettre le toggle quand même
-                // - soit bloquer l’ouverture/fermeture (ici on autorise)
-                setExpandedCats((prev) => ({
-                  ...prev,
-                  [cat.id]: expanded,
-                }));
+                setExpandedCats((prev) => ({ ...prev, [cat.id]: expanded }));
               }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>
-                  {cat.code2} {"- "}
-                  {cat.name}
+                  {cat.code2} {"- "} {cat.name}
                   {normalizedSearch && (
                     <Typography
                       component="span"
@@ -401,41 +456,64 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
               </AccordionSummary>
 
               <AccordionDetails>
-                <Stack spacing={1}>
-                  {catForfaits.map((f) => (
-                    <Paper
-                      key={f.id}
-                      sx={{
-                        p: 2,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Box>
-                        <Typography>
-                          {f.code3} {" - "}
-                          {f.libelle}
-                        </Typography>
-                        <Typography variant="caption">
-                          {f.prix}€ • {f.temps}h
-                        </Typography>
-                      </Box>
+                {catForfaits.length === 0 ? (
+                  <Alert
+                    severity="info"
+                    sx={{ mb: 1 }}
+                    action={
+                      <Button
+                        color="inherit"
+                        size="small"
+                        onClick={() => {
+                          scrollToRef(forfaitFormRef);
+                          setNewForfait((prev) => ({
+                            ...prev,
+                            categoryForfaitId: cat.id,
+                          }));
+                        }}
+                      >
+                        Ajouter un forfait ici
+                      </Button>
+                    }
+                  >
+                    Aucun forfait dans cette catégorie.
+                  </Alert>
+                ) : (
+                  <Stack spacing={1}>
+                    {catForfaits.map((f) => (
+                      <Paper
+                        key={f.id}
+                        sx={{
+                          p: 2,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Box>
+                          <Typography>
+                            {f.code3} {" - "} {f.libelle}
+                          </Typography>
+                          <Typography variant="caption">
+                            {f.prix}€ • {f.temps}h
+                          </Typography>
+                        </Box>
 
-                      <Box>
-                        <IconButton onClick={() => handleOpenEditModal(f)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          onClick={() => handleDeleteForfait(f.id)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    </Paper>
-                  ))}
-                </Stack>
+                        <Box>
+                          <IconButton onClick={() => handleOpenEditModal(f)}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDeleteForfait(f.id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
               </AccordionDetails>
             </Accordion>
           );
@@ -483,7 +561,7 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
                   handleEditChange("categoryForfaitId", e.target.value)
                 }
               >
-                {categories.map((cat) => (
+                {safeCategories.map((cat) => (
                   <MenuItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </MenuItem>

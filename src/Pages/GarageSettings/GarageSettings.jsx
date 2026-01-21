@@ -662,7 +662,7 @@ const GarageSettings = () => {
       <Typography variant="h5" gutterBottom>
         <Inventory2Icon /> Gestion avancée des forfaits
       </Typography>
-      <ForfaitsConfigAdvanced />
+      <ForfaitsConfigAdvanced garageId={getCurrentUser().garageId} />
     </>
   );
 
