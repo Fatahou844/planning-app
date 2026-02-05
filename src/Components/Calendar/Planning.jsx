@@ -55,7 +55,6 @@ import ForfaitSearch from "../ForfaitSearch";
 import NotificationsModal from "../NotificationsModal/NotificationsModal";
 import PlateNumberSearch from "../PlateNumberSearch/PlateNumberSearch";
 import UserSearch from "../UserSearch/UserSearch";
-
 function generateTimeSlots({ startHour, startMinute, endHour, endMinute }) {
   const start = startHour * 60 + startMinute;
   const end = endHour * 60 + endMinute;
@@ -68,7 +67,7 @@ const Timeline = ({ config }) => {
   const timeSlots = generateTimeSlots(config);
   console.log(
     "2.------------------------------ TIMESLOTS CONFIG -------------------------------",
-    config
+    config,
   );
   const theme = useTheme();
   return (
@@ -350,7 +349,7 @@ const Planning = () => {
       console.log(
         `🕒 Heure actuelle glissée: ${hour}:${minute
           .toString()
-          .padStart(2, "0")}`
+          .padStart(2, "0")}`,
       );
     };
 
@@ -380,7 +379,7 @@ const Planning = () => {
           .toString()
           .padStart(2, "0")} → ${endHour}:${endMinute
           .toString()
-          .padStart(2, "0")}`
+          .padStart(2, "0")}`,
       );
 
       setDraggingEvent(null);
@@ -419,7 +418,7 @@ const Planning = () => {
     const fetchCategories = async () => {
       try {
         const responseGarage = await axios.get(
-          "/garages/userid/" + getCurrentUser().garageId
+          "/garages/userid/" + getCurrentUser().garageId,
         );
         if (responseGarage.data) {
           setGarageInfo(responseGarage.data.data);
@@ -431,7 +430,7 @@ const Planning = () => {
           });
           console.log(
             "0.-------------------------------- GARAGE INFO global-----------------------",
-            responseGarage.data.data
+            responseGarage.data.data,
           );
           console.log(
             "1.-------------------------------- GARAGE INFO TIMELINE-----------------------",
@@ -440,7 +439,7 @@ const Planning = () => {
               startMinute: responseGarage.data.data.startMinTimeline | 0,
               endHour: responseGarage.data.data.endHourTimeline | 18,
               endMinute: responseGarage.data.data.endMinTimeline | 0,
-            }
+            },
           );
         }
       } catch (error) {
@@ -459,7 +458,7 @@ const Planning = () => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          "/categories/garage/" + getCurrentUser().garageId
+          "/categories/garage/" + getCurrentUser().garageId,
         );
 
         // Récupérer les données
@@ -467,7 +466,7 @@ const Planning = () => {
 
         // Extraire les noms des catégories
         const categoryNames = categoriesData.data.map(
-          (category) => category.name
+          (category) => category.name,
         );
 
         // Mettre à jour les états
@@ -489,7 +488,7 @@ const Planning = () => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
@@ -562,7 +561,7 @@ const Planning = () => {
   const handleRefrechData = async () => {
     try {
       const response = await axios.get(
-        `/documents-garage/order/${getCurrentUser().garageId}/details`
+        `/documents-garage/order/${getCurrentUser().garageId}/details`,
       );
 
       const eventsData = response.data.data;
@@ -624,7 +623,7 @@ const Planning = () => {
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des événements après refresh:",
-        error
+        error,
       );
     }
   };
@@ -723,7 +722,7 @@ const Planning = () => {
       const singleEventDocRef = await addSingleEvent(
         singleEvent,
         newOrderNumber,
-        false
+        false,
       ); // Ajout à Firestore
       const validDetails = details.filter((detail) => {
         return (
@@ -747,7 +746,7 @@ const Planning = () => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
@@ -869,7 +868,7 @@ const Planning = () => {
       singleResa,
       newOrderNumber,
       "reservation",
-      false
+      false,
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
       return (
@@ -942,7 +941,7 @@ const Planning = () => {
       singleResa,
       newOrderNumber,
       "devis",
-      false
+      false,
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
       return (
@@ -1015,7 +1014,7 @@ const Planning = () => {
       singleResa,
       newOrderNumber,
       "facture",
-      true
+      true,
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
       return (
@@ -1103,7 +1102,7 @@ const Planning = () => {
     } catch (error) {
       console.error(
         "Erreur lors de l'ajout des détails à l'événement : ",
-        error
+        error,
       );
     }
   };
@@ -1175,7 +1174,7 @@ const Planning = () => {
     } catch (error) {
       console.error(
         "Erreur lors de l'ajout des détails à l'événement : ",
-        error
+        error,
       );
     }
   };
@@ -1490,7 +1489,7 @@ const Planning = () => {
           return collectionKey !== "factures"
             ? filteredResults.filter((item) => item.isClosed === false)
             : filteredResults;
-        }
+        },
       );
 
       // Attendre les résultats de toutes les collections
@@ -1504,8 +1503,8 @@ const Planning = () => {
           index ===
           self.findIndex(
             (t) =>
-              t.id === value.id && t.collectionName === value.collectionName
-          )
+              t.id === value.id && t.collectionName === value.collectionName,
+          ),
       );
 
       console.log("Résultats combinés :", uniqueResults);
@@ -1513,8 +1512,8 @@ const Planning = () => {
       // Mettre à jour l'état avec les résultats
       setDataEventsAll(
         uniqueResults.filter((item) =>
-          dayjs(item.createdAt).isSame(today, "day")
-        )
+          dayjs(item.createdAt).isSame(today, "day"),
+        ),
       );
       setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
@@ -1568,7 +1567,7 @@ const Planning = () => {
           return collectionKey !== "factures"
             ? filteredResults.filter((item) => item.isClosed === false)
             : filteredResults;
-        }
+        },
       );
 
       // Attendre les résultats de toutes les collections
@@ -1582,8 +1581,8 @@ const Planning = () => {
           index ===
           self.findIndex(
             (t) =>
-              t.id === value.id && t.collectionName === value.collectionName
-          )
+              t.id === value.id && t.collectionName === value.collectionName,
+          ),
       );
 
       console.log("Résultats combinés :", uniqueResults);
@@ -1591,8 +1590,8 @@ const Planning = () => {
       // Mettre à jour l'état avec les résultats
       setDataEventsAll(
         uniqueResults.filter((item) =>
-          dayjs(item.createdAt).isSame(today, "day")
-        )
+          dayjs(item.createdAt).isSame(today, "day"),
+        ),
       );
       // setOpen(true); // Ouvre le dialogue après la recherche
     } catch (error) {
@@ -1694,7 +1693,7 @@ const Planning = () => {
       const fetchEvents = async () => {
         try {
           const response = await axios.get(
-            `/documents-garage/order/${getCurrentUser().garageId}/details`
+            `/documents-garage/order/${getCurrentUser().garageId}/details`,
           );
 
           const eventsData = response.data.data;
@@ -1757,7 +1756,7 @@ const Planning = () => {
         } catch (error) {
           console.error(
             "Erreur lors de la récupération des événements :",
-            error
+            error,
           );
         }
       };
@@ -1807,7 +1806,7 @@ const Planning = () => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
@@ -1918,7 +1917,7 @@ const Planning = () => {
 
   const totalTTC = details.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
-    0
+    0,
   );
   const totalHT = totalTTC / 1.2; // Ajouter 20% de TVA
 
@@ -1978,7 +1977,7 @@ const Planning = () => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
@@ -2168,7 +2167,7 @@ const Planning = () => {
     setFacture(factureData?.data);
     console.log(
       "---------------------------------- Call handleFactureReceived ------------------------------",
-      factureData?.data
+      factureData?.data,
     );
 
     if (factureData) {
@@ -2208,7 +2207,7 @@ const Planning = () => {
 
     console.log(
       "*************************************** handleOnNotficationSuccess ******************************** ",
-      valeur
+      valeur,
     );
 
     setNotification({
@@ -2345,7 +2344,7 @@ const Planning = () => {
             mouseY: event.clientY - 6,
             eventData: currentEvent,
           }
-        : null
+        : null,
     );
     setContextMenuPaste(null);
   };
@@ -2358,7 +2357,7 @@ const Planning = () => {
             mouseX: event.clientX + 2,
             mouseY: event.clientY - 6,
           }
-        : null
+        : null,
     );
 
     console.log("mouseX: ", event.mouseX);
@@ -2491,7 +2490,7 @@ const Planning = () => {
 
       console.log(
         "---------------------- draggedEvent.id ----------------",
-        draggedEvent.id
+        draggedEvent.id,
       );
       console.log("---------------------- draggedEvent.id ----------------", {
         startHour: draggedEvent.newStart.hour,
@@ -2507,8 +2506,6 @@ const Planning = () => {
       console.error("Erreur de mise à jour de l'événement :", error);
     }
   };
-
-
 
   const openNotif = Boolean(anchorEl);
   const id = openNotif ? "notification-popover" : undefined;
@@ -2526,7 +2523,7 @@ const Planning = () => {
       const payload = JSON.parse(atob(payloadBase64));
       console.log(
         "*********************************** PAYLOAD ********************************************",
-        payload
+        payload,
       );
 
       const userEmail = payload?.sub; // ici sub = email ("marya@amount.com")
@@ -2587,6 +2584,7 @@ const Planning = () => {
         </MenuItem>
         <MenuItem onClick={handleCopy}>Déposer clé</MenuItem>
       </Menu>
+      {/* <FloatingSupport phone="212665947911" /> */}
 
       {selectedEvent && (
         <EventModal
@@ -2857,7 +2855,7 @@ const Planning = () => {
                       sx={{
                         backgroundColor: getCategoryColor(category),
                         color: getContrastTextColor(
-                          getCategoryColor(category) || "#05AFC1"
+                          getCategoryColor(category) || "#05AFC1",
                         ),
                         marginTop: "16px",
                         borderRadius: "8px",
@@ -3715,7 +3713,7 @@ const Planning = () => {
                     const lines = calculateEventLines(categoryEvents); // Calculer les lignes
                     console.log(
                       "***********************************lines************************************",
-                      lines
+                      lines,
                     );
 
                     const backgroundColor = category?.color || "#05AFC1";
@@ -3834,12 +3832,12 @@ const Planning = () => {
                                       gridColumnStart: calculateTimeValue(
                                         event.startHour,
                                         event.startMinute,
-                                        configExample
+                                        configExample,
                                       ),
                                       gridColumnEnd: calculateTimeValue(
                                         event.endHour,
                                         event.endMinute,
-                                        configExample
+                                        configExample,
                                       ),
 
                                       height: "40px",
@@ -3847,7 +3845,7 @@ const Planning = () => {
                                         event.Category?.color || "#05AFC1",
                                       border: "1px solid #90caf9",
                                       color: getContrastTextColor(
-                                        event.Category?.color || "#05AFC1"
+                                        event.Category?.color || "#05AFC1",
                                       ),
                                       borderRadius: "10px",
                                       display: "flex",
@@ -3893,7 +3891,8 @@ const Planning = () => {
                                             fontWeight: "bold",
                                             fontSize: "1rem",
                                             color: getContrastTextColor(
-                                              event.Category?.color || "#05AFC1"
+                                              event.Category?.color ||
+                                                "#05AFC1",
                                             ),
                                           }}
                                         >
@@ -3903,7 +3902,8 @@ const Planning = () => {
                                         <span
                                           style={{
                                             color: getContrastTextColor(
-                                              event.Category?.color || "#05AFC1"
+                                              event.Category?.color ||
+                                                "#05AFC1",
                                             ),
                                             fontWeight: "bold",
                                           }}
@@ -3914,7 +3914,8 @@ const Planning = () => {
                                         <span
                                           style={{
                                             color: getContrastTextColor(
-                                              event.Category?.color || "#05AFC1"
+                                              event.Category?.color ||
+                                                "#05AFC1",
                                             ),
                                           }}
                                         >
@@ -3923,7 +3924,8 @@ const Planning = () => {
                                         <span
                                           style={{
                                             color: getContrastTextColor(
-                                              event.Category?.color || "#05AFC1"
+                                              event.Category?.color ||
+                                                "#05AFC1",
                                             ),
                                           }}
                                         >
@@ -3936,7 +3938,8 @@ const Planning = () => {
                                           fontSize="medium"
                                           sx={{
                                             color: getContrastTextColor(
-                                              event.Category?.color || "#05AFC1"
+                                              event.Category?.color ||
+                                                "#05AFC1",
                                             ),
                                             transition:
                                               "transform 0.3s ease, color 0.3s ease",
@@ -4153,7 +4156,7 @@ const Planning = () => {
             <strong>
               {formatHourMinute(
                 draggedEvent?.startHour,
-                draggedEvent?.startMinute
+                draggedEvent?.startMinute,
               )}
             </strong>{" "}
             à{" "}
@@ -4164,14 +4167,14 @@ const Planning = () => {
             <strong>
               {formatHourMinute(
                 draggedEvent?.newStart?.hour,
-                draggedEvent?.newStart?.minute
+                draggedEvent?.newStart?.minute,
               )}
             </strong>{" "}
             à{" "}
             <strong>
               {formatHourMinute(
                 draggedEvent?.newEnd?.hour,
-                draggedEvent?.newEnd?.minute
+                draggedEvent?.newEnd?.minute,
               )}
             </strong>
           </Typography>

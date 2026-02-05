@@ -116,7 +116,7 @@ function DocModal({
       });
 
       console.log(
-        `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`
+        `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`,
       );
 
       // Notifier l'utilisateur via l'état
@@ -129,11 +129,11 @@ function DocModal({
       if (onDelete) {
         onDelete();
         console.log(
-          `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`
+          `Événement avec l'ID ${eventId} et ses détails ont été supprimés avec succès.`,
         );
       } else {
         console.error(
-          "❌ ERREUR : onDelete est undefined dans le Child ! onDelete"
+          "❌ ERREUR : onDelete est undefined dans le Child ! onDelete",
         );
       }
 
@@ -160,19 +160,10 @@ function DocModal({
     handleEventFromChild();
   };
 
-  const formatDate = (date) => {
-    return date.toISOString().split("T")[0];
-  };
-
-  // Réinitialiser le formulaire
-  const resetForm = () => {
-    setFinDate(""); // Réinitialiser la date de fin
-  };
-
   useEffect(() => {
     console.log(
       "DocModal: #############################categories***************************************",
-      categories
+      categories,
     );
     if (editedEvent) {
       const fetchDetails = async () => {
@@ -209,11 +200,6 @@ function DocModal({
   }, [editedEvent.id]);
 
   // Handle input change for end date
-  const handleChangeFinDate = (e) => {
-    const value = e.target.value;
-    setFinDate(value);
-    setEditedEvent((prev) => ({ ...prev, finDate: value }));
-  };
 
   function getCurrentUser() {
     const storedUser = localStorage.getItem("me");
@@ -372,55 +358,7 @@ function DocModal({
     setEditedEvent(updatedEvent);
   };
 
-  const addEventDetailsGeneric = async (eventId, details, collectionName) => {
-    try {
-      const batch = writeBatch(db); // Crée un batch pour les opérations
-
-      // Référence directe au document de l'événement avec l'ID existant
-      const eventRef = doc(db, collectionName, eventId);
-
-      // Filtre les détails valides (exclut ceux où tous les champs sont vides ou non valides)
-      const validDetails = details.filter((detail) => {
-        return (
-          detail.label?.trim() ||
-          detail.quantity?.toString().trim() ||
-          detail.unitPrice?.toString().trim() ||
-          detail.discountPercent?.toString().trim() ||
-          detail.discountValue?.toString().trim()
-        );
-      });
-
-      console.log("##############lidDetails####################", validDetails);
-
-      // Si aucun détail valide, on sort sans erreur
-      if (validDetails.length === 0) {
-        console.log("Aucun détail valide à enregistrer.");
-        return;
-      }
-
-      // Boucle sur chaque détail filtré et ajout à la sous-collection "details" de cet événement
-      for (const detail of validDetails) {
-        const detailRef = doc(collection(eventRef, "details")); // Crée un nouveau document dans "details"
-        batch.set(detailRef, {
-          label: detail.label || "",
-          quantity: detail.quantity || 0,
-          unitPrice: detail.unitPrice || 0,
-          discountPercent: detail.discountPercent || 0,
-          discountValue: detail.discountValue || 0,
-        });
-      }
-
-      // Engager toutes les écritures dans le batch
-      await batch.commit();
-
-      console.log("Détails ajoutés avec succès à l'événement");
-    } catch (error) {
-      console.error(
-        "Erreur lors de l'ajout des détails à l'événement : ",
-        error
-      );
-    }
-  };
+  
 
   const handleCreerCollection = async () => {
     if (!editedEvent) return;
@@ -449,11 +387,11 @@ function DocModal({
         setNewOrder(newReservation);
         console.log(
           "Add reservation Component: RESA reçue dans DocModal onNotificationSuccess :",
-          newReservation
+          newReservation,
         );
       } else {
         console.error(
-          "❌ ERREUR : onNotificationSuccess  est undefined dans le Child ! AddOrdeReparationModal"
+          "❌ ERREUR : onNotificationSuccess  est undefined dans le Child ! AddOrdeReparationModal",
         );
       }
 
@@ -491,122 +429,6 @@ function DocModal({
     }
   };
 
-  // const handleDetailChange = (index, field, rawValue) => {
-  //   const updatedDetails = [...details];
-
-  //   const detail = updatedDetails[index];
-
-  //   const raw = String(rawValue).trim(); // 🔁 conversion propre
-  //   const normalizedValue = raw.replace(",", ".");
-  //   // Toujours mettre à jour ce que l'utilisateur tape
-
-  //   if (field === "quantity" || field === "unitPrice") {
-  //     updatedDetails[index][`${field}Input`] = raw;
-  //     const numericValue = parseFloat(normalizedValue);
-  //     updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
-  //   } else if (field === "discountInput") {
-  //     detail.inputValue = raw;
-
-  //     // Réinitialiser d'abord
-  //     detail.discountValue = "";
-  //     detail.discountPercent = "";
-
-  //     const cleaned = normalizedValue.replace("%", "");
-  //     const value = parseFloat(cleaned);
-
-  //     if (normalizedValue.includes("%") && !isNaN(value)) {
-  //       detail.discountPercent = value;
-  //     } else if (!isNaN(value)) {
-  //       detail.discountValue = value;
-  //     }
-
-  //     // detail.inputValue = raw;
-  //     // updatedDetails[index].inputValue = value;
-  //   } else {
-  //     updatedDetails[index][field] = raw;
-  //   }
-
-  //   setDetails(updatedDetails);
-  // };
-
-  const handleDetailChange = (index, field, rawValue) => {
-    const updatedDetails = [...details];
-    const detail = updatedDetails[index];
-
-    // Pas de trim par défaut → sauf pour les champs numériques
-    const raw = String(rawValue);
-    const normalizedValue = raw.replace(",", ".");
-
-    if (field === "quantity" || field === "unitPrice") {
-      updatedDetails[index][`${field}Input`] = raw;
-      const numericValue = parseFloat(normalizedValue.trim());
-      updatedDetails[index][field] = !isNaN(numericValue) ? numericValue : 0;
-    } else if (field === "discountInput") {
-      detail.inputValue = raw.trim();
-
-      detail.discountValue = "";
-      detail.discountPercent = "";
-
-      const cleaned = normalizedValue.replace("%", "").trim();
-      const value = parseFloat(cleaned);
-
-      if (normalizedValue.includes("%") && !isNaN(value)) {
-        detail.discountPercent = value;
-      } else if (!isNaN(value)) {
-        detail.discountValue = value;
-      }
-    } else {
-      updatedDetails[index][field] = raw; // garder les espaces pour le texte
-    }
-
-    setDetails(updatedDetails);
-    setEditedEvent((prev) => ({
-      ...prev,
-      Details: updatedDetails,
-    }));
-  };
-
-  const removeDetailRow = async (index) => {
-    // Récupère le détail à supprimer avant de modifier le state
-    const detailToDelete = details[index];
-
-    // Met à jour l'affichage en supprimant la ligne localement
-    setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
-
-    // Si le détail est déjà en base, on le supprime
-    if (detailToDelete && detailToDelete.id) {
-      try {
-        await axios.deleteData(`/details/${detailToDelete.id}`);
-
-        console.log(
-          `Détail avec l'id ${detailToDelete.id} supprimé de la base de données.`
-        );
-      } catch (error) {
-        console.error("Erreur lors de la suppression du détail :", error);
-      }
-    } else {
-      console.warn(
-        "Aucun ID trouvé pour ce détail, suppression uniquement locale."
-      );
-    }
-  };
-
-  const handleAddDetail = () => {
-    setDetails([
-      ...details,
-      {
-        label: "",
-        quantity: 0,
-        quantityInput: "",
-        unitPrice: 0,
-        unitPriceInput: "",
-        discountValue: "",
-        discountPercent: "",
-        inputValue: "",
-      },
-    ]);
-  };
-
   const calculateLineTotal = (detail) => {
     let discount = 0;
 
@@ -624,7 +446,7 @@ function DocModal({
   };
   const totalTTC = details?.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
-    0
+    0,
   );
   const totalHT = totalTTC / 1.2 || 0.0; // Ajouter 20% de TVA
 
@@ -634,7 +456,7 @@ function DocModal({
   useEffect(() => {
     console.log(
       " *************** AFFICHER COLLECTION NAME **************",
-      collectionName
+      collectionName,
     );
     if (collectionName == "events") setCollectName("Ordre de réparation");
     else if (collectionName == "devis") setCollectName("devis");
@@ -710,21 +532,21 @@ function DocModal({
       try {
         // Utilisation de l'API pour récupérer les événements par userId et date
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
 
         // Filtrer les événements si nécessaire
         const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
+          (event) => event.date === selectedDate && !event.isClosed,
         );
 
         setDataEvents(filteredEvents);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des événements : ",
-          error
+          error,
         );
       }
     };
@@ -761,18 +583,18 @@ function DocModal({
         const updateTasks = tasks.map(async (task) => {
           try {
             console.log(
-              `🔁 Mise à jour en cours pour ${task.collection} (ID: ${task.id})...`
+              `🔁 Mise à jour en cours pour ${task.collection} (ID: ${task.id})...`,
             );
             await axios.put(`/${task.collection}/${task.id}`, {
               isClosed: true,
             });
             console.log(
-              `✅ Mise à jour réussie pour ${task.collection} (ID: ${task.id})`
+              `✅ Mise à jour réussie pour ${task.collection} (ID: ${task.id})`,
             );
           } catch (error) {
             console.error(
               `❌ Erreur lors de la mise à jour de ${task.collection} (ID: ${task.id}) :`,
-              error
+              error,
             );
           }
         });
@@ -785,7 +607,7 @@ function DocModal({
           } else {
             console.error(
               `❌ Échec de la mise à jour pour ${collection} :`,
-              result.reason
+              result.reason,
             );
           }
         });
@@ -804,13 +626,13 @@ function DocModal({
       onFactureReceive(facture);
       console.log(
         "Facture reçue dans DocumentModal handleFactureGenerated handleFactureGenerated:",
-        facture
+        facture,
       );
       setFacture(facture);
     } // Envoie la facture au Grand-parent (Planning)
     else {
       console.error(
-        "❌ ERREUR : onFactureGenerated  est undefined dans le Child !"
+        "❌ ERREUR : onFactureGenerated  est undefined dans le Child !",
       );
     }
   };
@@ -823,14 +645,14 @@ function DocModal({
       setNewOrder(valeur);
       console.log(
         "DocModal file: ***********************################################************************* NEWORDER **********************#####################********************",
-        valeur
+        valeur,
       );
 
       console.log("OR reçue dans DocumentModal handleORCReated :");
     } // Envoie la facture au Grand-parent (Planning)
     else {
       console.error(
-        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child !"
+        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child !",
       );
     }
   };
@@ -846,7 +668,7 @@ function DocModal({
     } // Envoie la facture au Grand-parent (Planning)
     else {
       console.error(
-        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child !"
+        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child !",
       );
     }
   };
@@ -1183,7 +1005,7 @@ function DocModal({
                     typeof editedEvent.createdAt.toDate === "function" &&
                     dayjs(editedEvent?.createdAt?.toDate()).isBefore(
                       dayjs(),
-                      "day"
+                      "day",
                     ) &&
                     collectionName === "factures"
                   }
@@ -1220,7 +1042,7 @@ function DocModal({
                     typeof editedEvent.createdAt.toDate === "function" &&
                     dayjs(editedEvent?.createdAt?.toDate()).isBefore(
                       dayjs(),
-                      "day"
+                      "day",
                     ) &&
                     collectionName === "factures"
                   }
@@ -1258,7 +1080,7 @@ function DocModal({
                       typeof editedEvent.createdAt.toDate === "function" &&
                       dayjs(editedEvent?.createdAt?.toDate()).isBefore(
                         dayjs(),
-                        "day"
+                        "day",
                       ) &&
                       collectionName === "factures"
                     }
@@ -1281,7 +1103,7 @@ function DocModal({
                       typeof editedEvent.createdAt.toDate === "function" &&
                       dayjs(editedEvent?.createdAt?.toDate()).isBefore(
                         dayjs(),
-                        "day"
+                        "day",
                       ) &&
                       collectionName === "factures"
                     }

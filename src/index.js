@@ -24,6 +24,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import FloatingSupport from "./Components/FloatingSupport";
 import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
 import AccountApprove from "./Pages/AccountApprove.jsx/AccountApprove";
@@ -59,7 +60,7 @@ const DashboardTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = tabLabels.findIndex(
-    (tab) => tab.path === location.pathname
+    (tab) => tab.path === location.pathname,
   );
 
   const handleChange = (event, newValue) => {
@@ -90,7 +91,7 @@ const DashboardTabs = () => {
       try {
         const res = await axios.get(
           `${BASE_URL_API}/v1/auth/check-auth`,
-          config
+          config,
         );
         setIsAuthenticated(res.data.isAuthenticated);
         const response = await axios.get(`${BASE_URL_API}/v1`, config);
@@ -226,7 +227,7 @@ const ActivitySidebar = () => {
       try {
         const res = await axios.get(
           `${BASE_URL_API}/v1/auth/check-auth`,
-          config
+          config,
         );
         setIsAuthenticated(res.data.isAuthenticated);
         const response = await axios.get(`${BASE_URL_API}/v1`, config);
@@ -400,6 +401,7 @@ const App = () => {
               <ThemeToggle />
             </header>
             <ActivitySidebar />
+            <FloatingSupport phone="212665947911" />
 
             <DashboardTabs />
 
@@ -410,10 +412,7 @@ const App = () => {
               />
               {/* <Route path="/connexion" element={<AuthPages />} /> */}
               <Route path="/register" element={<AccountCreationSteps />} />
-              <Route
-                path="/reset-password"
-                element={<ResetPasswordPage />}
-              />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               <Route
                 path="/weekly-planning"

@@ -46,7 +46,6 @@ function AddOrdreReparationModal({
   const [dataEvents, setDataEvents] = useState([]);
   const axios = useAxios();
 
-  const [invoiceExecuted, setInvoiceExecuted] = useState(false);
   const [vehicleUpdated, setVehicleUpdated] = useState(false);
 
   const [Vehicle, setVehicle] = useState(editedEvent?.Vehicle);
@@ -80,32 +79,15 @@ function AddOrdreReparationModal({
     console.log("receptor sélectionné :", receptor);
   };
 
-  const formatDate = (date) => {
-    return date.toISOString().split("T")[0];
-  };
-
   // Réinitialiser le formulaire
   const resetForm = () => {
     setFinDate(""); // Réinitialiser la date de fin
   };
 
-  const addDetailRow = () => {
-    setDetails((prevDetails) => [
-      ...prevDetails,
-      {
-        label: "",
-        quantity: "",
-        unitPrice: "",
-        discountPercent: "",
-        discountValue: "",
-      },
-    ]);
-  };
-
   useEffect(() => {
     console.log(
       "AddOrderReparationModam: #############################categories***************************************",
-      categories
+      categories,
     );
     if (editedEvent && collectionNameOpen == "reservations") {
       const fetchDetails = async () => {
@@ -205,106 +187,16 @@ function AddOrdreReparationModal({
     });
   };
 
-  // const handleDetailChange = (index, field, value) => {
-  //   // Vérifiez si l'index existe dans le tableau
-  //   if (index >= 0 && index < details.length) {
-  //     const updatedDetails = [...details];
-  //     updatedDetails[index] = { ...updatedDetails[index], [field]: value }; // Mise à jour propre de l'objet
-  //     setDetails(updatedDetails);
-  //   } else {
-  //     console.error(`Index ${index} hors limites pour le tableau details.`);
-  //   }
-  // };
-  const handleDetailChange = (index, field, rawValue) => {
-    if (index < 0 || index >= details.length) {
-      console.error(`Index ${index} hors limites pour le tableau details.`);
-      return;
-    }
-
-    const updatedDetails = [...details];
-    const detail = { ...updatedDetails[index] };
-
-    // Normaliser les décimales : remplacer virgule par point
-    let normalizedValue =
-      typeof rawValue === "string" ? rawValue.replace(",", ".") : rawValue;
-
-    // Logique spécifique pour remise (discount)
-    if (field === "discountValue") {
-      const value = normalizedValue.trim();
-      detail.inputValue = rawValue; // garde la valeur brute pour affichage
-
-      detail.discountValue = "";
-      detail.discountPercent = "";
-
-      if (value.includes("%")) {
-        const percentage = parseFloat(value.replace("%", ""));
-        if (!isNaN(percentage)) {
-          detail.discountPercent = percentage;
-        }
-      } else {
-        const amount = parseFloat(value);
-        if (!isNaN(amount)) {
-          detail.discountValue = amount;
-        }
-      }
-    } else if (field === "quantity" || field === "unitPrice") {
-      // Ne pas convertir la valeur à ce moment-là ! Juste stocker le texte tel quel
-      detail[field] = rawValue; // ← garde "1,", "2.5", etc.
-    }
-
-    // Pour les autres champs
-    else {
-      detail[field] = rawValue;
-    }
-
-    updatedDetails[index] = detail;
-    setDetails(updatedDetails);
-  };
-
-  const removeDetailRow = async (index) => {
-    // Récupère le détail à supprimer avant de modifier le state
-    const detailToDelete = details[index];
-
-    // Met à jour l'affichage en supprimant la ligne localement
-    setDetails((prevDetails) => prevDetails.filter((_, i) => i !== index));
-
-    // Si le détail est déjà en base, on le supprime
-    if (detailToDelete && detailToDelete.id) {
-      try {
-        await axios.deleteData(`/details/${detailToDelete.id}`);
-
-        console.log(
-          `Détail avec l'id ${detailToDelete.id} supprimé de la base de données.`
-        );
-      } catch (error) {
-        console.error("Erreur lors de la suppression du détail :", error);
-      }
-    } else {
-      console.warn(
-        "Aucun ID trouvé pour ce détail, suppression uniquement locale."
-      );
-    }
-  };
-
   const calculateLineTotal = (detail) => {
     // let discount = 0;
-
-    // if (detail.discountPercent > 0) {
-    //   // Priorité au pourcentage
-    //   discount =
-    //     detail.unitPrice * detail.quantity * (detail.discountPercent / 100);
-    // } else if (detail.discountValue > 0) {
-    //   // Sinon, utilise le montant fixe
-    //   discount = detail.discountValue;
-    // }
 
     // // Calcul du total après remise
     // return detail.quantity * detail.unitPrice - discount;
     const quantity = parseFloat(
-      String(detail.quantity || "").replace(",", ".")
+      String(detail.quantity || "").replace(",", "."),
     );
     const unitPrice = parseFloat(
-      String(detail.unitPrice || "").replace(",", ".")
+      String(detail.unitPrice || "").replace(",", "."),
     );
     const discountPercent = detail.discountPercent || 0;
     const discountValue = detail.discountValue || 0;
@@ -323,7 +215,7 @@ function AddOrdreReparationModal({
   };
   const totalTTC = details?.reduce(
     (sum, detail) => sum + calculateLineTotal(detail),
-    0
+    0,
   );
   const totalHT = totalTTC / 1.2 || 0; // Ajouter 20% de TVA
 
@@ -373,7 +265,7 @@ function AddOrdreReparationModal({
     } catch (error) {
       console.error(
         "Erreur lors de l'ajout des détails à l'événement : ",
-        error
+        error,
       );
     }
   };
@@ -423,7 +315,7 @@ function AddOrdreReparationModal({
         } catch (error) {
           console.error(
             "❌ Erreur lors de la fermeture du devis après création de OR :",
-            error
+            error,
           );
         }
       };
@@ -437,7 +329,7 @@ function AddOrdreReparationModal({
         } catch (error) {
           console.error(
             "❌ Erreur lors de la fermeture du résa après création de OR :",
-            error
+            error,
           );
         }
       };
@@ -483,7 +375,7 @@ function AddOrdreReparationModal({
     const singleEventDocRef = await addSingleEvent(
       singleEvent,
       newOrderNumber,
-      false
+      false,
     ); // Ajout à Firestore
     const validDetails = details.filter((detail) => {
       return (
@@ -508,14 +400,14 @@ function AddOrdreReparationModal({
     const fetchEvents = async () => {
       try {
         const response = await axios.get(
-          `/documents-garage/order/${getCurrentUser().garageId}/details`
+          `/documents-garage/order/${getCurrentUser().garageId}/details`,
         );
 
         const eventsData = response.data.data;
 
         // Filtrer les événements si nécessaire
         const filteredEvents = eventsData.filter(
-          (event) => event.date === selectedDate && !event.isClosed
+          (event) => event.date === selectedDate && !event.isClosed,
         );
 
         setDataEvents(filteredEvents);
@@ -534,11 +426,11 @@ function AddOrdreReparationModal({
       onNotificationSuccess(singleEventDocRef);
       console.log(
         "AddOrdreReparationModal Component: OR reçue dans DocumentModal onNotificationSuccess :",
-        singleEventDocRef
+        singleEventDocRef,
       );
     } else {
       console.error(
-        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child ! AddOrdeReparationModal"
+        "❌ ERREUR : onNotificationSuccess  est undefined dans le Child ! AddOrdeReparationModal",
       );
     }
     if (onEventTriggered) {
