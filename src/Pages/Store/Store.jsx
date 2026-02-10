@@ -1,3 +1,4 @@
+import AppLayout from "../../App/AppLayout";
 import AddDocumentComponent from "../../Components/AddDocumentComponent";
 
 export default function Store() {
@@ -13,6 +14,7 @@ export default function Store() {
       <AddDocumentComponent
         onDocumentCreated={handleDocumentCreated}
       ></AddDocumentComponent>
+      <AppLayout />
     </>
   );
 }
