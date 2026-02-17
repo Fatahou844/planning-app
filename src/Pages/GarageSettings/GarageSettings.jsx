@@ -35,6 +35,7 @@ import Chip from "@mui/material/Chip";
 import { useEffect, useState } from "react";
 import { SketchPicker } from "react-color";
 import ForfaitsConfigAdvanced from "../../Components/ForfaitsConfigAdvanced/ForfaitsConfigAdvanced";
+import ConfigurationArticles from "../../Components/renderConfigurationArticles";
 import { useAxios } from "../../utils/hook/useAxios";
 
 const GarageSettings = () => {
@@ -353,6 +354,7 @@ const GarageSettings = () => {
     { key: "users", label: "Utilisateurs", icon: <PeopleIcon /> },
     { key: "account", label: "Mon compte", icon: <PersonIcon /> },
     { key: "forfaits", label: "Forfaits", icon: <Inventory2Icon /> },
+    { key: "articles", label: "Articles", icon: <Inventory2Icon /> },
   ];
 
   const renderGarage = () => (
@@ -666,6 +668,12 @@ const GarageSettings = () => {
     </>
   );
 
+  const renderConfigArticles = () => (
+    <>
+      <ConfigurationArticles />
+    </>
+  );
+
   const renderSection = () => {
     switch (activeSection) {
       case "garage":
@@ -682,6 +690,8 @@ const GarageSettings = () => {
         return renderAccount();
       case "forfaits":
         return renderForfaits();
+      case "articles":
+        return renderConfigArticles();
       default:
         return null;
     }
