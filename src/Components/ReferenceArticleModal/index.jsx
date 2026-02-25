@@ -14,30 +14,11 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import BlocPneus from "../BlocPneus";
 
 export default function ReferenceArticleModal({ open, onClose }) {
-  /* ================= USER DATA ================= */
-
-  const userTVA = [0, 7, 10, 14, 20];
-  const typesArticle = ["Pneus", "Pièces", "Accessoires", "Consommable"];
-
-  const [newEmplacement, setNewEmplacement] = useState("");
-
-  const [userData, setUserData] = useState({
-    fournisseurs: ["Michelin", "Bosch"],
-    marques: ["Valeo", "Brembo"],
-    groupes: ["Freinage", "Filtration"],
-    familles: {
-      Freinage: ["Plaquettes", "Disques"],
-      Filtration: ["Huile", "Air"],
-    },
-    emplacements: ["A1", "B2", "Rayon pneus", "Étagère 3"],
-  });
-  const [oems, setOems] = useState([""]);
-
-  /* ================= FORM ================= */
-
   const [form, setForm] = useState({
+    type: "",
     libelle1: "",
     libelle2: "",
     libelle3: "",
@@ -59,7 +40,76 @@ export default function ReferenceArticleModal({ open, onClose }) {
     garantie: "",
     composantLot: false,
     conditionnement: "",
+    pneus: {
+      largeur: "",
+      hauteur: "",
+      diametre: "",
+      charge: "",
+      vitesse: "",
+      carburant: "",
+      solMouille: "",
+      bruit: "",
+      valeurBruit: "",
+    },
   });
+  /* ================= USER DATA ================= */
+  const typeConfig = {
+    Pneus: {
+      pricing: {
+        vente: true,
+        achat: true,
+      },
+      oem: true,
+      photos: true,
+      documents: true,
+    },
+    Consommable: {
+      pricing: {
+        vente: false,
+        achat: true,
+      },
+      oem: false,
+      photos: false,
+      documents: false,
+    },
+    Pièces: {
+      pricing: {
+        vente: true,
+        achat: true,
+      },
+      oem: true,
+      photos: true,
+      documents: true,
+    },
+    Accessoires: {
+      pricing: {
+        vente: true,
+        achat: true,
+      },
+      oem: true,
+      photos: true,
+      documents: true,
+    },
+  };
+  const config = typeConfig[form.type] || {};
+  const userTVA = [0, 7, 10, 14, 20];
+  const typesArticle = ["Pneus", "Pièces", "Accessoires", "Consommable"];
+
+  const [newEmplacement, setNewEmplacement] = useState("");
+
+  const [userData, setUserData] = useState({
+    fournisseurs: ["Michelin", "Bosch"],
+    marques: ["Valeo", "Brembo"],
+    groupes: ["Freinage", "Filtration"],
+    familles: {
+      Freinage: ["Plaquettes", "Disques"],
+      Filtration: ["Huile", "Air"],
+    },
+    emplacements: ["A1", "B2", "Rayon pneus", "Étagère 3"],
+  });
+  const [oems, setOems] = useState([""]);
+
+  /* ================= FORM ================= */
 
   /* ================= ADD OPTION ================= */
 
@@ -106,44 +156,6 @@ export default function ReferenceArticleModal({ open, onClose }) {
   const removeOEM = (index) => {
     setOems(oems.filter((_, i) => i !== index));
   };
-
-  // const recalcMargin = (field, value) => {
-  //   const ht = parseFloat(form.prixHT) || 0;
-  //   const achat =
-  //     field === "prixAchat"
-  //       ? parseFloat(value) || 0
-  //       : parseFloat(form.prixAchat) || 0;
-  //   const port =
-  //     field === "fraisPort"
-  //       ? parseFloat(value) || 0
-  //       : parseFloat(form.fraisPort) || 0;
-
-  //   const marge = ht - (achat + port);
-  //   const margePct = ht ? (marge / ht) * 100 : 0;
-
-  //   setForm((prev) => ({
-  //     ...prev,
-  //     [field]: value,
-  //     marge: marge.toFixed(2),
-  //     margePct: margePct.toFixed(2),
-  //   }));
-  // };
-  // const recalcMargin = (field, value) => {
-  //   // On garde la valeur brute pour le champ
-  //   let ht = parseFloat(field === "prixHT" ? value : form.prixHT) || 0;
-  //   let achat = parseFloat(field === "prixAchat" ? value : form.prixAchat) || 0;
-  //   let port = parseFloat(field === "fraisPort" ? value : form.fraisPort) || 0;
-
-  //   const marge = ht - (achat + port);
-  //   const margePct = ht ? (marge / ht) * 100 : 0;
-
-  //   setForm((prev) => ({
-  //     ...prev,
-  //     [field]: value, // valeur brute, pour que la saisie reste fluide
-  //     marge,
-  //     margePct,
-  //   }));
-  // };
 
   const recalcMargin = (field, value) => {
     // Remplacer la virgule par un point pour que le calcul fonctionne si l'utilisateur tape "10,5"
@@ -254,6 +266,12 @@ export default function ReferenceArticleModal({ open, onClose }) {
     onClose();
   };
 
+  const typeComponents = {
+    Pneus: BlocPneus,
+  };
+
+  const SpecificComponent = typeComponents[form.type];
+
   /* ================= UI ================= */
 
   return (
@@ -279,6 +297,14 @@ export default function ReferenceArticleModal({ open, onClose }) {
           </TextField>
         </Grid>
 
+        {/* {form.type === "Pneus" && (
+          <BlocPneus pneus={form.pneus} setForm={setForm} />
+        )} */}
+
+        {SpecificComponent && (
+          <SpecificComponent pneus={form.pneus} setForm={setForm} />
+        )}
+
         <Grid container spacing={2}>
           {[
             "libelle1",
@@ -288,7 +314,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
             "refExt",
             "refInt",
           ].map((name) => (
-            <Grid item xs={12} md={6} key={name}>
+            <Grid item xs={12} md={6} key={name} sx={{ mb: 2 }}>
               <TextField
                 label={name}
                 value={form[name]}
@@ -300,112 +326,151 @@ export default function ReferenceArticleModal({ open, onClose }) {
           ))}
         </Grid>
 
-        <Typography fontWeight="bold" sx={{ mt: 2 }}>
-          Références OEM
-        </Typography>
+        {config.oem && (
+          <>
+            <Typography fontWeight="bold" sx={{ mt: 2 }}>
+              Références OEM
+            </Typography>
 
-        {oems.map((oem, index) => (
-          <Box key={index} display="flex" gap={1} mt={1}>
-            <TextField
-              label={`OEM ${index + 1}`}
-              value={oem}
-              onChange={(e) => updateOEM(index, e.target.value)}
-              size="small"
-              fullWidth
-            />
+            <Grid container spacing={2} mt={1}>
+              {oems.map((oem, index) => (
+                <Grid item xs={12} md={4} key={index}>
+                  <Box display="flex" gap={1}>
+                    <TextField
+                      label={`OEM ${index + 1}`}
+                      value={oem}
+                      onChange={(e) => updateOEM(index, e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
 
-            <Button color="error" onClick={() => removeOEM(index)}>
-              ✕
+                    <Button
+                      color="error"
+                      onClick={() => removeOEM(index)}
+                      sx={{ minWidth: 40 }}
+                    >
+                      ✕
+                    </Button>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+
+            <Button startIcon={<AddIcon />} sx={{ mt: 2 }} onClick={addOEM}>
+              Ajouter OEM
             </Button>
-          </Box>
-        ))}
 
-        <Button startIcon={<AddIcon />} sx={{ mt: 1 }} onClick={addOEM}>
-          Ajouter OEM
-        </Button>
-
-        <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3 }} />
+          </>
+        )}
 
         {/* TARIFICATION */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
-            <TextField
-              label="Prix de vente HT"
-              value={form.prixHT}
-              onChange={(e) => calcPrices("prixHT", e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
+        {config.pricing && (
+          <>
+            <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
+              Prix
+            </Typography>
 
-          <Grid item xs={12} md={3}>
-            <TextField
-              label="Prix de vente TTC"
-              value={form.prixTTC}
-              onChange={(e) => calcPrices("prixTTC", e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
+            <Grid container spacing={2}>
+              {config.pricing.vente && (
+                <>
+                  <Grid item xs={12} md={3}>
+                    <TextField
+                      label="Prix de vente HT"
+                      value={form.prixHT}
+                      onChange={(e) => calcPrices("prixHT", e.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
 
-          <Grid item xs={12} md={2}>
-            <TextField
-              select
-              label="TVA"
-              value={form.tva}
-              onChange={(e) => setForm({ ...form, tva: e.target.value })}
-              fullWidth
-              size="small"
-            >
-              {userTVA.map((v) => (
-                <MenuItem key={v} value={v}>
-                  {v}%
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+                  <Grid item xs={12} md={3}>
+                    <TextField
+                      label="Prix de vente TTC"
+                      value={form.prixTTC}
+                      onChange={(e) => calcPrices("prixTTC", e.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
 
-          <Grid item xs={12} md={2}>
-            <TextField
-              label="Prix d'achat HT"
-              value={form.prixAchat}
-              onChange={(e) => recalcMargin("prixAchat", e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
+                  <Grid item xs={12} md={2}>
+                    <TextField
+                      select
+                      label="TVA"
+                      value={form.tva}
+                      onChange={(e) =>
+                        setForm({ ...form, tva: e.target.value })
+                      }
+                      fullWidth
+                      size="small"
+                    >
+                      {userTVA.map((v) => (
+                        <MenuItem key={v} value={v}>
+                          {v}%
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </>
+              )}
 
-          <Grid item xs={12} md={2}>
-            <TextField
-              label="Frais de port HT"
-              value={form.fraisPort}
-              onChange={(e) => recalcMargin("fraisPort", e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
+              {config.pricing.achat && (
+                <>
+                  <Grid item xs={12} sx={{ mt: 0 }} md={2}>
+                    <TextField
+                      label="Prix d'achat HT"
+                      value={form.prixAchat}
+                      onChange={(e) =>
+                        recalcMargin("prixAchat", e.target.value)
+                      }
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
 
-          <Grid item xs={6} md={2}>
-            <TextField
-              label="Marge"
-              value={form.marge}
-              fullWidth
-              size="small"
-            />
-          </Grid>
+                  <Grid item xs={12} md={2}>
+                    <TextField
+                      label="Frais de port HT"
+                      value={form.fraisPort}
+                      onChange={(e) =>
+                        recalcMargin("fraisPort", e.target.value)
+                      }
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
+                </>
+              )}
 
-          <Grid item xs={6} md={2}>
-            <TextField
-              label="Marge %"
-              value={form.margePct}
-              fullWidth
-              size="small"
-            />
-          </Grid>
-        </Grid>
+              {config.pricing.vente && (
+                <>
+                  <Grid item xs={6} md={2}>
+                    <TextField
+                      label="Marge"
+                      value={form.marge}
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
 
+                  <Grid item xs={6} md={2}>
+                    <TextField
+                      label="Marge %"
+                      value={form.margePct}
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          </>
+        )}
         <Divider sx={{ my: 3 }} />
-
+        <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
+          Fournisseur & Marque
+        </Typography>
         {/* FOURNISSEUR */}
         <Autocomplete
           freeSolo
@@ -430,7 +495,6 @@ export default function ReferenceArticleModal({ open, onClose }) {
             Ajouter "{newFournisseur}"
           </Button>
         )}
-
         <Divider sx={{ my: 2 }} />
 
         {/* MARQUE */}
@@ -488,6 +552,10 @@ export default function ReferenceArticleModal({ open, onClose }) {
           />
         )}
         <Divider sx={{ my: 2 }} />
+
+        <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
+          Groupe & famille
+        </Typography>
 
         {/* GROUPE */}
         <Autocomplete
@@ -582,23 +650,73 @@ export default function ReferenceArticleModal({ open, onClose }) {
         />
 
         {/* PHOTOS */}
-        <Typography fontWeight="bold">Photos</Typography>
+        {config.photos && (
+          <>
+            <Typography fontWeight="bold">Photos</Typography>
 
-        <Box display="flex" gap={2} mt={1} flexWrap="wrap">
-          {/* 3 zones principales */}
-          {[0, 1, 2].map((slot) => (
-            <Box key={slot} position="relative">
-              {photos[slot] ? (
-                <>
+            <Box display="flex" gap={2} mt={1} flexWrap="wrap">
+              {/* 3 zones principales */}
+              {[0, 1, 2].map((slot) => (
+                <Box key={slot} position="relative">
+                  {photos[slot] ? (
+                    <>
+                      <img
+                        src={photos[slot].preview}
+                        width={90}
+                        height={90}
+                        style={{ objectFit: "cover", borderRadius: 6 }}
+                      />
+
+                      <DeleteIcon
+                        onClick={() => removePhoto(slot)}
+                        sx={{
+                          position: "absolute",
+                          top: 2,
+                          right: 2,
+                          color: "#fff",
+                          background: "#0008",
+                          borderRadius: "50%",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      sx={{
+                        width: 90,
+                        height: 90,
+                        borderStyle: "dashed",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      +
+                      <input
+                        hidden
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileAdd}
+                      />
+                    </Button>
+                  )}
+                </Box>
+              ))}
+
+              {/* Photos supplémentaires */}
+              {photos.slice(3).map((p, i) => (
+                <Box key={i + 3} position="relative">
                   <img
-                    src={photos[slot].preview}
-                    width={90}
-                    height={90}
+                    src={p.preview}
+                    width={70}
+                    height={70}
                     style={{ objectFit: "cover", borderRadius: 6 }}
                   />
 
                   <DeleteIcon
-                    onClick={() => removePhoto(slot)}
+                    onClick={() => removePhoto(i + 3)}
                     sx={{
                       position: "absolute",
                       top: 2,
@@ -609,95 +727,114 @@ export default function ReferenceArticleModal({ open, onClose }) {
                       cursor: "pointer",
                     }}
                   />
-                </>
-              ) : (
-                <Button
-                  variant="outlined"
-                  component="label"
-                  sx={{
-                    width: 90,
-                    height: 90,
-                    borderStyle: "dashed",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  +
-                  <input
-                    hidden
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileAdd}
-                  />
-                </Button>
-              )}
-            </Box>
-          ))}
+                </Box>
+              ))}
 
-          {/* Photos supplémentaires */}
-          {photos.slice(3).map((p, i) => (
-            <Box key={i + 3} position="relative">
-              <img
-                src={p.preview}
-                width={70}
-                height={70}
-                style={{ objectFit: "cover", borderRadius: 6 }}
-              />
-
-              <DeleteIcon
-                onClick={() => removePhoto(i + 3)}
+              {/* bouton ajouter plus */}
+              <Button
+                component="label"
+                variant="outlined"
                 sx={{
-                  position: "absolute",
-                  top: 2,
-                  right: 2,
-                  color: "#fff",
-                  background: "#0008",
-                  borderRadius: "50%",
-                  cursor: "pointer",
+                  width: 70,
+                  height: 70,
+                  minWidth: 0,
+                  borderStyle: "dashed",
                 }}
-              />
+              >
+                +
+                <input
+                  hidden
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileAdd}
+                />
+              </Button>
             </Box>
-          ))}
 
-          {/* bouton ajouter plus */}
-          <Button
-            component="label"
-            variant="outlined"
-            sx={{
-              width: 70,
-              height: 70,
-              minWidth: 0,
-              borderStyle: "dashed",
-            }}
-          >
-            +
-            <input
-              hidden
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleFileAdd}
-            />
-          </Button>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
+            <Divider sx={{ my: 3 }} />
+          </>
+        )}
         {/* DOCUMENTS */}
         {/* DOCUMENTS */}
-        <Typography fontWeight="bold" mt={3}>
-          Documents
-        </Typography>
 
-        <Box display="flex" gap={2} mt={1} flexWrap="wrap">
-          {/* 3 documents principaux */}
-          {[0, 1, 2].map((slot) => (
-            <Box key={slot} position="relative">
-              {documents[slot] ? (
+        {config.documents && (
+          <>
+            <Typography fontWeight="bold" mt={3}>
+              Documents
+            </Typography>
+
+            <Box display="flex" gap={2} mt={1} flexWrap="wrap">
+              {/* 3 documents principaux */}
+              {[0, 1, 2].map((slot) => (
+                <Box key={slot} position="relative">
+                  {documents[slot] ? (
+                    <Box
+                      sx={{
+                        width: 140,
+                        border: "1px solid #ddd",
+                        borderRadius: 2,
+                        p: 1,
+                        background: "#fafafa",
+                        position: "relative",
+                      }}
+                    >
+                      <DeleteIcon
+                        onClick={() => removeDocument(slot)}
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          cursor: "pointer",
+                          fontSize: 18,
+                        }}
+                      />
+
+                      <Typography variant="body2" fontWeight="bold" noWrap>
+                        {documents[slot].name}
+                      </Typography>
+
+                      <Typography variant="caption" color="text.secondary">
+                        {(documents[slot].size / 1024).toFixed(1)} KB
+                      </Typography>
+
+                      <Button
+                        size="small"
+                        href={documents[slot].preview}
+                        target="_blank"
+                        sx={{ mt: 1 }}
+                      >
+                        Voir
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      sx={{
+                        width: 140,
+                        height: 70,
+                        borderStyle: "dashed",
+                      }}
+                    >
+                      +
+                      <input
+                        hidden
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                        onChange={handleDocumentUpload}
+                      />
+                    </Button>
+                  )}
+                </Box>
+              ))}
+
+              {/* documents supplémentaires */}
+              {documents.slice(3).map((doc, i) => (
                 <Box
+                  key={i + 3}
                   sx={{
-                    width: 140,
+                    width: 120,
                     border: "1px solid #ddd",
                     borderRadius: 2,
                     p: 1,
@@ -706,108 +843,47 @@ export default function ReferenceArticleModal({ open, onClose }) {
                   }}
                 >
                   <DeleteIcon
-                    onClick={() => removeDocument(slot)}
+                    onClick={() => removeDocument(i + 3)}
                     sx={{
                       position: "absolute",
                       top: 4,
                       right: 4,
                       cursor: "pointer",
-                      fontSize: 18,
+                      fontSize: 16,
                     }}
                   />
 
-                  <Typography variant="body2" fontWeight="bold" noWrap>
-                    {documents[slot].name}
+                  <Typography variant="caption" fontWeight="bold" noWrap>
+                    {doc.name}
                   </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    {(documents[slot].size / 1024).toFixed(1)} KB
-                  </Typography>
-
-                  <Button
-                    size="small"
-                    href={documents[slot].preview}
-                    target="_blank"
-                    sx={{ mt: 1 }}
-                  >
-                    Voir
-                  </Button>
                 </Box>
-              ) : (
-                <Button
-                  variant="outlined"
-                  component="label"
-                  sx={{
-                    width: 140,
-                    height: 70,
-                    borderStyle: "dashed",
-                  }}
-                >
-                  +
-                  <input
-                    hidden
-                    type="file"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onChange={handleDocumentUpload}
-                  />
-                </Button>
-              )}
-            </Box>
-          ))}
+              ))}
 
-          {/* documents supplémentaires */}
-          {documents.slice(3).map((doc, i) => (
-            <Box
-              key={i + 3}
-              sx={{
-                width: 120,
-                border: "1px solid #ddd",
-                borderRadius: 2,
-                p: 1,
-                background: "#fafafa",
-                position: "relative",
-              }}
-            >
-              <DeleteIcon
-                onClick={() => removeDocument(i + 3)}
+              {/* bouton ajouter plus */}
+              <Button
+                component="label"
+                variant="outlined"
                 sx={{
-                  position: "absolute",
-                  top: 4,
-                  right: 4,
-                  cursor: "pointer",
-                  fontSize: 16,
+                  width: 70,
+                  height: 70,
+                  minWidth: 0,
+                  borderStyle: "dashed",
                 }}
-              />
-
-              <Typography variant="caption" fontWeight="bold" noWrap>
-                {doc.name}
-              </Typography>
+              >
+                +
+                <input
+                  hidden
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                  onChange={handleDocumentUpload}
+                />
+              </Button>
             </Box>
-          ))}
 
-          {/* bouton ajouter plus */}
-          <Button
-            component="label"
-            variant="outlined"
-            sx={{
-              width: 70,
-              height: 70,
-              minWidth: 0,
-              borderStyle: "dashed",
-            }}
-          >
-            +
-            <input
-              hidden
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-              onChange={handleDocumentUpload}
-            />
-          </Button>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3 }} />
+          </>
+        )}
 
         {/* ACTIONS */}
         <Box display="flex" justifyContent="space-between">
