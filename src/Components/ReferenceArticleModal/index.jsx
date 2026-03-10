@@ -4,6 +4,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -14,7 +15,89 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { BASE_URL_API } from "../../config";
+import { useApiAutocomplete } from "../../hooks/Useapiautocomplete";
 import BlocPneus from "../BlocPneus";
+import FormRow from "../FormRow";
+// ─────────────────────────────────────────────────────────────
+// Composant réutilisable : un champ Autocomplete + API
+// ─────────────────────────────────────────────────────────────
+export function ApiAutocompleteField({ resource, label, value, onChange }) {
+  const { options, loading, search, create } = useApiAutocomplete(resource);
+  const [inputValue, setInputValue] = useState("");
+
+  // value est { id, nom } — on compare sur le nom pour détecter une nouvelle saisie
+  const isNew =
+    inputValue.trim().length > 0 &&
+    !options.some(
+      (o) => o.nom.toLowerCase() === inputValue.trim().toLowerCase(),
+    );
+
+  const handleCreate = async () => {
+    const created = await create(inputValue.trim()); // retourne { id, nom }
+    if (created) {
+      onChange({ id: created.id, nom: created.nom });
+      setInputValue(created.nom);
+    }
+  };
+
+  return (
+    <>
+      <Autocomplete
+        freeSolo
+        options={options}
+        // MUI utilise cette fn pour afficher le label dans le dropdown et l'input
+        getOptionLabel={(option) =>
+          typeof option === "string" ? option : (option.nom ?? "")
+        }
+        loading={loading}
+        value={value || null}
+        inputValue={inputValue}
+        onInputChange={(e, val) => {
+          setInputValue(val);
+          search(val);
+        }}
+        onChange={(e, selected) => {
+          if (!selected) {
+            onChange(null);
+            setInputValue("");
+          } else if (typeof selected === "string") {
+            // freeSolo : l'utilisateur a validé sa saisie libre sans choisir une option
+            onChange({ id: null, nom: selected });
+
+            setInputValue(selected);
+          } else {
+            // Option choisie dans le dropdown → objet { id, nom }
+            onChange({ id: selected.id, nom: selected.nom });
+            setInputValue(selected.nom);
+          }
+        }}
+        isOptionEqualToValue={(option, val) => option.id === val?.id}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            size="small"
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading && <CircularProgress size={14} />}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+      />
+
+      {isNew && (
+        <Button startIcon={<AddIcon />} size="small" onClick={handleCreate}>
+          Ajouter "{inputValue.trim()}"
+        </Button>
+      )}
+    </>
+  );
+}
 
 export default function ReferenceArticleModal({ open, onClose }) {
   const [form, setForm] = useState({
@@ -51,7 +134,10 @@ export default function ReferenceArticleModal({ open, onClose }) {
       bruit: "",
       valeurBruit: "",
     },
+    oems: [], // ← ajouter ici
   });
+  const setField = (field) => (value) =>
+    setForm((f) => ({ ...f, [field]: value }));
   /* ================= USER DATA ================= */
   const typeConfig = {
     Pneus: {
@@ -107,7 +193,6 @@ export default function ReferenceArticleModal({ open, onClose }) {
     },
     emplacements: ["A1", "B2", "Rayon pneus", "Étagère 3"],
   });
-  const [oems, setOems] = useState([""]);
 
   /* ================= FORM ================= */
 
@@ -143,19 +228,23 @@ export default function ReferenceArticleModal({ open, onClose }) {
 
   /* ================= CALCULS ================= */
 
-  const addOEM = () => {
-    setOems([...oems, ""]);
-  };
+  // Ajouter un OEM vide
+  const addOEM = () => setForm((f) => ({ ...f, oems: [...f.oems, ""] }));
 
-  const updateOEM = (index, value) => {
-    const updated = [...oems];
-    updated[index] = value;
-    setOems(updated);
-  };
+  // Modifier un OEM à l'index donné
+  const updateOEM = (index, value) =>
+    setForm((f) => {
+      const oems = [...f.oems];
+      oems[index] = value;
+      return { ...f, oems };
+    });
 
-  const removeOEM = (index) => {
-    setOems(oems.filter((_, i) => i !== index));
-  };
+  // Supprimer un OEM
+  const removeOEM = (index) =>
+    setForm((f) => ({
+      ...f,
+      oems: f.oems.filter((_, i) => i !== index),
+    }));
 
   const recalcMargin = (field, value) => {
     // Remplacer la virgule par un point pour que le calcul fonctionne si l'utilisateur tape "10,5"
@@ -246,7 +335,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
 
     const mapped = files.map((file) => ({
       file,
-      name: file.name,
+      nom: file.nom,
       size: file.size,
       preview: URL.createObjectURL(file),
     }));
@@ -261,8 +350,66 @@ export default function ReferenceArticleModal({ open, onClose }) {
     setDocuments(updated);
   };
 
-  const handleSave = () => {
-    console.log(form);
+  const handleSave = async () => {
+    const payload = {
+      article: {
+        type: form.type,
+        libelle1: form.libelle1,
+        libelle2: form.libelle2,
+        libelle3: form.libelle3,
+        codeBarre: form.codeBarre,
+        refExt: form.refExt,
+        refInt: form.refInt,
+        garantie: form.garantie,
+        composantLot: form.composantLot,
+        conditionnement: form.conditionnement,
+        fournisseurId: form.fournisseur?.id ?? null,
+        marqueId: form.marque?.id ?? null,
+        groupeId: form.groupe?.id ?? null,
+        familleId: form.famille?.id ?? null,
+        emplacementId: form.emplacement?.id ?? null,
+      },
+
+      pricing: {
+        prixHT: parseFloat(form.prixHT) || null,
+        prixTTC: parseFloat(form.prixTTC) || null,
+        tva: parseFloat(form.tva) || 20,
+        marge: parseFloat(form.marge) || null,
+        margePct: parseFloat(form.margePct) || null,
+        prixAchat: parseFloat(form.prixAchat) || null,
+        fraisPort: parseFloat(form.fraisPort) || null,
+      },
+
+      purchase: {
+        prixAchat: parseFloat(form.prixAchat) || null,
+        fraisPort: parseFloat(form.fraisPort) || null,
+      },
+
+      // Seulement si type Pneus
+      pneuSpec:
+        form.type === "Pneus"
+          ? {
+              largeur: form.pneus.largeur,
+              hauteur: form.pneus.hauteur,
+              diametre: form.pneus.diametre,
+              charge: form.pneus.charge,
+              vitesse: form.pneus.vitesse,
+              carburant: form.pneus.carburant,
+              solMouille: form.pneus.solMouille,
+              bruit: form.pneus.bruit,
+              valeurBruit: form.pneus.valeurBruit,
+            }
+          : null,
+
+      // Tableau de strings bruts
+      oem: form.oems.filter((ref) => ref.trim() !== ""),
+    };
+
+    await fetch(BASE_URL_API + "/v1/stock/articles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     onClose();
   };
 
@@ -280,21 +427,32 @@ export default function ReferenceArticleModal({ open, onClose }) {
 
       <DialogContent>
         {/* INFOS */}
-        <Grid item xs={12} md={4} mb={2}>
-          <TextField
-            select
-            label="Type"
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            fullWidth
-            size="small"
-          >
-            {typesArticle.map((type) => (
-              <MenuItem key={type} value={type}>
-                {type}
-              </MenuItem>
-            ))}
-          </TextField>
+        <Grid item xs={12} mb={2}>
+          <Grid container alignItems="center" spacing={2}>
+            {/* Libellé */}
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" fontWeight={500}>
+                <strong>Type</strong>
+              </Typography>
+            </Grid>
+
+            {/* Select */}
+            <Grid item xs={12} md={8}>
+              <TextField
+                select
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                fullWidth
+                size="small"
+              >
+                {typesArticle.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
         </Grid>
 
         {/* {form.type === "Pneus" && (
@@ -313,15 +471,29 @@ export default function ReferenceArticleModal({ open, onClose }) {
             "codeBarre",
             "refExt",
             "refInt",
-          ].map((name) => (
-            <Grid item xs={12} md={6} key={name} sx={{ mb: 2 }}>
-              <TextField
-                label={name}
-                value={form[name]}
-                onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-                fullWidth
-                size="small"
-              />
+          ].map((nom) => (
+            <Grid item xs={12} key={nom}>
+              <Grid container alignItems="center" spacing={2}>
+                {/* Libellé à gauche */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" fontWeight={500}>
+                    {" "}
+                    <strong>{nom}</strong>
+                  </Typography>
+                </Grid>
+
+                {/* Champ à droite */}
+                <Grid item xs={12} md={8}>
+                  <TextField
+                    value={form[nom]}
+                    onChange={(e) =>
+                      setForm({ ...form, [nom]: e.target.value })
+                    }
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
             </Grid>
           ))}
         </Grid>
@@ -333,27 +505,28 @@ export default function ReferenceArticleModal({ open, onClose }) {
             </Typography>
 
             <Grid container spacing={2} mt={1}>
-              {oems.map((oem, index) => (
-                <Grid item xs={12} md={4} key={index}>
-                  <Box display="flex" gap={1}>
-                    <TextField
-                      label={`OEM ${index + 1}`}
-                      value={oem}
-                      onChange={(e) => updateOEM(index, e.target.value)}
-                      size="small"
-                      fullWidth
-                    />
+              {form.oems &&
+                form.oems.map((oem, index) => (
+                  <Grid item xs={12} md={4} key={index}>
+                    <Box display="flex" gap={1}>
+                      <TextField
+                        label={`OEM ${index + 1}`}
+                        value={oem}
+                        onChange={(e) => updateOEM(index, e.target.value)}
+                        size="small"
+                        fullWidth
+                      />
 
-                    <Button
-                      color="error"
-                      onClick={() => removeOEM(index)}
-                      sx={{ minWidth: 40 }}
-                    >
-                      ✕
-                    </Button>
-                  </Box>
-                </Grid>
-              ))}
+                      <Button
+                        color="error"
+                        onClick={() => removeOEM(index)}
+                        sx={{ minWidth: 40 }}
+                      >
+                        ✕
+                      </Button>
+                    </Box>
+                  </Grid>
+                ))}
             </Grid>
 
             <Button startIcon={<AddIcon />} sx={{ mt: 2 }} onClick={addOEM}>
@@ -371,10 +544,10 @@ export default function ReferenceArticleModal({ open, onClose }) {
               Prix
             </Typography>
 
-            <Grid container spacing={2}>
-              {config.pricing.vente && (
-                <>
-                  <Grid item xs={12} md={3}>
+            {config.pricing.vente && (
+              <FormRow label="Vente">
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
                     <TextField
                       label="Prix de vente HT"
                       value={form.prixHT}
@@ -384,7 +557,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={3}>
+                  <Grid item xs={12} md={4}>
                     <TextField
                       label="Prix de vente TTC"
                       value={form.prixTTC}
@@ -394,7 +567,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={2}>
+                  <Grid item xs={12} md={4}>
                     <TextField
                       select
                       label="TVA"
@@ -412,12 +585,14 @@ export default function ReferenceArticleModal({ open, onClose }) {
                       ))}
                     </TextField>
                   </Grid>
-                </>
-              )}
+                </Grid>
+              </FormRow>
+            )}
 
-              {config.pricing.achat && (
-                <>
-                  <Grid item xs={12} sx={{ mt: 0 }} md={2}>
+            {config.pricing.achat && (
+              <FormRow label="Achat">
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
                     <TextField
                       label="Prix d'achat HT"
                       value={form.prixAchat}
@@ -429,7 +604,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={2}>
+                  <Grid item xs={12} md={6}>
                     <TextField
                       label="Frais de port HT"
                       value={form.fraisPort}
@@ -440,12 +615,14 @@ export default function ReferenceArticleModal({ open, onClose }) {
                       size="small"
                     />
                   </Grid>
-                </>
-              )}
+                </Grid>
+              </FormRow>
+            )}
 
-              {config.pricing.vente && (
-                <>
-                  <Grid item xs={6} md={2}>
+            {config.pricing.vente && (
+              <FormRow label="Marge">
+                <Grid container spacing={2}>
+                  <Grid item xs={6} md={3}>
                     <TextField
                       label="Marge"
                       value={form.marge}
@@ -454,7 +631,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
                     />
                   </Grid>
 
-                  <Grid item xs={6} md={2}>
+                  <Grid item xs={6} md={3}>
                     <TextField
                       label="Marge %"
                       value={form.margePct}
@@ -462,26 +639,21 @@ export default function ReferenceArticleModal({ open, onClose }) {
                       size="small"
                     />
                   </Grid>
-                </>
-              )}
-            </Grid>
+                </Grid>
+              </FormRow>
+            )}
           </>
         )}
+
         <Divider sx={{ my: 3 }} />
-        <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
-          Fournisseur & Marque
-        </Typography>
-        {/* FOURNISSEUR */}
-        <Autocomplete
-          freeSolo
-          options={userData.fournisseurs}
-          value={form.fournisseur || null}
-          onInputChange={(e, v) => setNewFournisseur(v)}
-          onChange={(e, v) => setForm({ ...form, fournisseur: v })}
-          renderInput={(params) => (
-            <TextField {...params} label="Fournisseur" size="small" />
-          )}
-        />
+        <FormRow label="Fournisseur">
+          <ApiAutocompleteField
+            resource="fournisseurs"
+            value={form.fournisseur}
+            onChange={setField("fournisseur")}
+          />
+        </FormRow>
+
         {newFournisseur && !userData.fournisseurs.includes(newFournisseur) && (
           <Button
             startIcon={<AddIcon />}
@@ -495,19 +667,18 @@ export default function ReferenceArticleModal({ open, onClose }) {
             Ajouter "{newFournisseur}"
           </Button>
         )}
-        <Divider sx={{ my: 2 }} />
+
+        {/* <Divider sx={{ my: 2 }} /> */}
 
         {/* MARQUE */}
-        <Autocomplete
-          freeSolo
-          options={userData.marques}
-          value={form.marque || null}
-          onInputChange={(e, v) => setNewMarque(v)}
-          onChange={(e, v) => setForm({ ...form, marque: v })}
-          renderInput={(params) => (
-            <TextField {...params} label="Marque" size="small" />
-          )}
-        />
+        <FormRow label="Marque">
+          <ApiAutocompleteField
+            resource="marques"
+            value={form.marque}
+            onChange={setField("marque")}
+          />
+        </FormRow>
+
         {newMarque && !userData.marques.includes(newMarque) && (
           <Button
             startIcon={<AddIcon />}
@@ -525,32 +696,34 @@ export default function ReferenceArticleModal({ open, onClose }) {
         <Divider sx={{ my: 3 }} />
 
         {/* LOT */}
-        <TextField
-          select
-          label="Composant d'un lot"
-          value={form.composantLot ? "oui" : "non"}
-          onChange={(e) =>
-            setForm({ ...form, composantLot: e.target.value === "oui" })
-          }
-          fullWidth
-          size="small"
-        >
-          <MenuItem value="non">Non</MenuItem>
-          <MenuItem value="oui">Oui</MenuItem>
-        </TextField>
-
-        {form.composantLot && (
+        <FormRow label="Composant d'un lot">
           <TextField
-            label="Conditionnement"
-            value={form.conditionnement}
+            select
+            value={form.composantLot ? "oui" : "non"}
             onChange={(e) =>
-              setForm({ ...form, conditionnement: e.target.value })
+              setForm({ ...form, composantLot: e.target.value === "oui" })
             }
             fullWidth
             size="small"
-            sx={{ mt: 2 }}
-          />
+          >
+            <MenuItem value="non">Non</MenuItem>
+            <MenuItem value="oui">Oui</MenuItem>
+          </TextField>
+        </FormRow>
+
+        {form.composantLot && (
+          <FormRow label="Conditionnement">
+            <TextField
+              value={form.conditionnement}
+              onChange={(e) =>
+                setForm({ ...form, conditionnement: e.target.value })
+              }
+              fullWidth
+              size="small"
+            />
+          </FormRow>
         )}
+
         <Divider sx={{ my: 2 }} />
 
         <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
@@ -558,16 +731,14 @@ export default function ReferenceArticleModal({ open, onClose }) {
         </Typography>
 
         {/* GROUPE */}
-        <Autocomplete
-          freeSolo
-          options={userData.groupes}
-          value={form.groupe || null}
-          onInputChange={(e, v) => setNewGroupe(v)}
-          onChange={(e, v) => setForm({ ...form, groupe: v, famille: "" })}
-          renderInput={(params) => (
-            <TextField {...params} label="Groupe" size="small" />
-          )}
-        />
+        <FormRow label="Groupe">
+          <ApiAutocompleteField
+            resource="groupes"
+            value={form.fournisseur}
+            onChange={setField("groupe")}
+          />
+        </FormRow>
+
         {newGroupe && !userData.groupes.includes(newGroupe) && (
           <Button
             startIcon={<AddIcon />}
@@ -582,20 +753,17 @@ export default function ReferenceArticleModal({ open, onClose }) {
           </Button>
         )}
 
-        <Divider sx={{ my: 2 }} />
+        {/* <Divider sx={{ my: 2 }} /> */}
 
         {/* FAMILLE */}
-        <Autocomplete
-          freeSolo
-          disabled={!form.groupe}
-          options={userData.familles[form.groupe] || []}
-          value={form.famille || null}
-          onInputChange={(e, v) => setNewFamille(v)}
-          onChange={(e, v) => setForm({ ...form, famille: v })}
-          renderInput={(params) => (
-            <TextField {...params} label="Famille" size="small" />
-          )}
-        />
+        <FormRow label="Famille">
+          <ApiAutocompleteField
+            resource="familles"
+            value={form.fournisseur}
+            onChange={setField("famille")}
+          />
+        </FormRow>
+
         {form.groupe &&
           newFamille &&
           !(userData.familles[form.groupe] || []).includes(newFamille) && (
@@ -613,16 +781,13 @@ export default function ReferenceArticleModal({ open, onClose }) {
           )}
 
         <Divider sx={{ my: 3 }} />
-        <Autocomplete
-          freeSolo
-          options={userData.emplacements}
-          value={form.emplacement || null}
-          onInputChange={(e, value) => setNewEmplacement(value)}
-          onChange={(e, value) => setForm({ ...form, emplacement: value })}
-          renderInput={(params) => (
-            <TextField {...params} label="Emplacement / Casier" size="small" />
-          )}
-        />
+        <FormRow label="Emplacement / Casier">
+          <ApiAutocompleteField
+            resource="emplacements"
+            value={form.emplacement}
+            onChange={setField("emplacement")}
+          />
+        </FormRow>
 
         {newEmplacement && !userData.emplacements.includes(newEmplacement) && (
           <Button
@@ -639,15 +804,16 @@ export default function ReferenceArticleModal({ open, onClose }) {
         )}
         <Divider sx={{ my: 3 }} />
 
-        <TextField
-          label="SAV / Conditions de garantie"
-          value={form.garantie}
-          onChange={(e) => setForm({ ...form, garantie: e.target.value })}
-          multiline
-          rows={4}
-          fullWidth
-          size="small"
-        />
+        <FormRow label="SAV / Conditions de garantie" alignTop>
+          <TextField
+            value={form.garantie}
+            onChange={(e) => setForm({ ...form, garantie: e.target.value })}
+            multiline
+            rows={4}
+            fullWidth
+            size="small"
+          />
+        </FormRow>
 
         {/* PHOTOS */}
         {config.photos && (
@@ -791,7 +957,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
                       />
 
                       <Typography variant="body2" fontWeight="bold" noWrap>
-                        {documents[slot].name}
+                        {documents[slot].nom}
                       </Typography>
 
                       <Typography variant="caption" color="text.secondary">
@@ -854,7 +1020,7 @@ export default function ReferenceArticleModal({ open, onClose }) {
                   />
 
                   <Typography variant="caption" fontWeight="bold" noWrap>
-                    {doc.name}
+                    {doc.nom}
                   </Typography>
                 </Box>
               ))}

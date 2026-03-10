@@ -1,12 +1,16 @@
 import { Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
 import ReferenceArticleModal from "../ReferenceArticleModal";
+import { useArticleSearch } from "../UserArticleSearch";
 
 export default function ModalManager({ open, onClose, modalType }) {
+  const { openSearch, SearchDialogs } = useArticleSearch({ open, onClose });
+
   const renderContent = () => {
     switch (modalType) {
       // ARTICLE
-      case "searchArticle":
-        return <Typography>Recherche d’article</Typography>;
+      case "searchArticle": {
+        return <SearchDialogs />;
+      }
 
       case "referenceArticle":
         return <ReferenceArticleModal open={open} onClose={onClose} />;
