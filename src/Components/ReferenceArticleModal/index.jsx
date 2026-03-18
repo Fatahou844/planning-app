@@ -1,40 +1,94 @@
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
+import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
+import SearchIcon from "@mui/icons-material/Search";
 import {
+  Alert,
+  alpha,
   Autocomplete,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { useState } from "react";
 import { BASE_URL_API } from "../../config";
 import { useApiAutocomplete } from "../../hooks/Useapiautocomplete";
+import { useArticleLookup } from "../../hooks/useArticleLookup";
+import { useCloudinaryUpload } from "../../hooks/useCloudinaryUpload";
 import BlocPneus from "../BlocPneus";
-import FormRow from "../FormRow";
-// ─────────────────────────────────────────────────────────────
-// Composant réutilisable : un champ Autocomplete + API
-// ─────────────────────────────────────────────────────────────
-export function ApiAutocompleteField({ resource, label, value, onChange }) {
+
+// ─── Section title ────────────────────────────────────────────
+function SectionTitle({ children }) {
+  return (
+    <Box display="flex" alignItems="center" gap={1.5} mb={2} mt={1}>
+      <Typography
+        variant="caption"
+        sx={{
+          fontWeight: 700,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          color: "primary.main",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {children}
+      </Typography>
+      <Box flex={1} height="1px" bgcolor="divider" />
+    </Box>
+  );
+}
+
+// ─── Field row (label + input) ────────────────────────────────
+function Field({ label, children, required }) {
+  return (
+    <Grid container alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
+      <Grid item xs={12} md={4}>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+          {label}
+          {required && (
+            <Typography component="span" color="error.main" ml={0.5}>*</Typography>
+          )}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} md={8}>
+        {children}
+      </Grid>
+    </Grid>
+  );
+}
+
+// ─── ApiAutocompleteField ─────────────────────────────────────
+export function ApiAutocompleteField({ resource, value, onChange, readOnly }) {
   const { options, loading, search, create } = useApiAutocomplete(resource);
   const [inputValue, setInputValue] = useState("");
 
-  // value est { id, nom } — on compare sur le nom pour détecter une nouvelle saisie
   const isNew =
+    !readOnly &&
     inputValue.trim().length > 0 &&
     !options.some(
-      (o) => o.nom.toLowerCase() === inputValue.trim().toLowerCase(),
+      (o) => o.nom.toLowerCase() === inputValue.trim().toLowerCase()
     );
 
   const handleCreate = async () => {
-    const created = await create(inputValue.trim()); // retourne { id, nom }
+    const created = await create(inputValue.trim());
     if (created) {
       onChange({ id: created.id, nom: created.nom });
       setInputValue(created.nom);
@@ -46,7 +100,6 @@ export function ApiAutocompleteField({ resource, label, value, onChange }) {
       <Autocomplete
         freeSolo
         options={options}
-        // MUI utilise cette fn pour afficher le label dans le dropdown et l'input
         getOptionLabel={(option) =>
           typeof option === "string" ? option : (option.nom ?? "")
         }
@@ -62,12 +115,9 @@ export function ApiAutocompleteField({ resource, label, value, onChange }) {
             onChange(null);
             setInputValue("");
           } else if (typeof selected === "string") {
-            // freeSolo : l'utilisateur a validé sa saisie libre sans choisir une option
             onChange({ id: null, nom: selected });
-
             setInputValue(selected);
           } else {
-            // Option choisie dans le dropdown → objet { id, nom }
             onChange({ id: selected.id, nom: selected.nom });
             setInputValue(selected.nom);
           }
@@ -89,9 +139,13 @@ export function ApiAutocompleteField({ resource, label, value, onChange }) {
           />
         )}
       />
-
       {isNew && (
-        <Button startIcon={<AddIcon />} size="small" onClick={handleCreate}>
+        <Button
+          startIcon={<AddIcon />}
+          size="small"
+          sx={{ mt: 0.5 }}
+          onClick={handleCreate}
+        >
           Ajouter "{inputValue.trim()}"
         </Button>
       )}
@@ -99,7 +153,29 @@ export function ApiAutocompleteField({ resource, label, value, onChange }) {
   );
 }
 
+// ─── Main modal ───────────────────────────────────────────────
+const TYPES_ARTICLE = ["Pneus", "Pièces", "Accessoires", "Consommable"];
+const TVA_OPTIONS = [0, 7, 10, 14, 20];
+
+const TYPE_CONFIG = {
+  Pneus:       { pricing: { vente: true,  achat: true  }, oem: true,  photos: true,  documents: true  },
+  Consommable: { pricing: { vente: false, achat: true  }, oem: false, photos: false, documents: false },
+  Pièces:      { pricing: { vente: true,  achat: true  }, oem: true,  photos: true,  documents: true  },
+  Accessoires: { pricing: { vente: true,  achat: true  }, oem: true,  photos: true,  documents: true  },
+};
+
+const FIELD_LABELS = {
+  libelle1: "Désignation principale",
+  libelle2: "Désignation 2",
+  libelle3: "Désignation 3",
+  codeBarre: "Code barre",
+  refExt: "Réf. externe",
+  refInt: "Réf. interne",
+};
+
 export default function ReferenceArticleModal({ open, onClose }) {
+  const theme = useTheme();
+
   const [form, setForm] = useState({
     type: "",
     libelle1: "",
@@ -115,251 +191,142 @@ export default function ReferenceArticleModal({ open, onClose }) {
     fraisPort: "",
     marge: "",
     margePct: "",
-    fournisseur: "",
-    marque: "",
-    groupe: "",
-    famille: "",
-    emplacement: "",
+    fournisseur: null,
+    marque: null,
+    groupe: null,
+    famille: null,
+    emplacement: null,
     garantie: "",
     composantLot: false,
     conditionnement: "",
     pneus: {
-      largeur: "",
-      hauteur: "",
-      diametre: "",
-      charge: "",
-      vitesse: "",
-      carburant: "",
-      solMouille: "",
-      bruit: "",
-      valeurBruit: "",
+      largeur: "", hauteur: "", diametre: "", charge: "",
+      vitesse: "", carburant: "", solMouille: "", bruit: "", valeurBruit: "",
     },
-    oems: [], // ← ajouter ici
+    oems: [],
   });
+
+  // photos / documents : tableaux d'objets { file, preview (objectURL), url (cloudinary) }
+  const [photos, setPhotos] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [lookupResult, setLookupResult] = useState(null);
+
+  const { lookup, loading: lookupLoading } = useArticleLookup();
+  const { uploadFiles, uploading } = useCloudinaryUpload();
+
+  const config = TYPE_CONFIG[form.type] || {};
+
+  const handleLookup = async (code) => {
+    const result = await lookup(code);
+    if (result) {
+      setLookupResult(result);
+    } else {
+      setLookupResult({ source: "notfound", label: null, formData: null });
+      setTimeout(() => setLookupResult(null), 3000);
+    }
+  };
+
+  const applyLookup = () => {
+    setForm((prev) => ({ ...prev, ...lookupResult.formData }));
+    setLookupResult(null);
+  };
+
   const setField = (field) => (value) =>
     setForm((f) => ({ ...f, [field]: value }));
-  /* ================= USER DATA ================= */
-  const typeConfig = {
-    Pneus: {
-      pricing: {
-        vente: true,
-        achat: true,
-      },
-      oem: true,
-      photos: true,
-      documents: true,
-    },
-    Consommable: {
-      pricing: {
-        vente: false,
-        achat: true,
-      },
-      oem: false,
-      photos: false,
-      documents: false,
-    },
-    Pièces: {
-      pricing: {
-        vente: true,
-        achat: true,
-      },
-      oem: true,
-      photos: true,
-      documents: true,
-    },
-    Accessoires: {
-      pricing: {
-        vente: true,
-        achat: true,
-      },
-      oem: true,
-      photos: true,
-      documents: true,
-    },
-  };
-  const config = typeConfig[form.type] || {};
-  const userTVA = [0, 7, 10, 14, 20];
-  const typesArticle = ["Pneus", "Pièces", "Accessoires", "Consommable"];
 
-  const [newEmplacement, setNewEmplacement] = useState("");
-
-  const [userData, setUserData] = useState({
-    fournisseurs: ["Michelin", "Bosch"],
-    marques: ["Valeo", "Brembo"],
-    groupes: ["Freinage", "Filtration"],
-    familles: {
-      Freinage: ["Plaquettes", "Disques"],
-      Filtration: ["Huile", "Air"],
-    },
-    emplacements: ["A1", "B2", "Rayon pneus", "Étagère 3"],
-  });
-
-  /* ================= FORM ================= */
-
-  /* ================= ADD OPTION ================= */
-
-  const addOption = (type, value, groupe = null) => {
-    if (!value) return;
-
-    setUserData((prev) => {
-      if (type === "famille") {
-        return {
-          ...prev,
-          familles: {
-            ...prev.familles,
-            [groupe]: [...(prev.familles[groupe] || []), value],
-          },
-        };
-      }
-
-      return {
-        ...prev,
-        [type]: [...prev[type], value],
-      };
-    });
-  };
-
-  /* ================= NEW VALUES ================= */
-
-  const [newFournisseur, setNewFournisseur] = useState("");
-  const [newMarque, setNewMarque] = useState("");
-  const [newGroupe, setNewGroupe] = useState("");
-  const [newFamille, setNewFamille] = useState("");
-
-  /* ================= CALCULS ================= */
-
-  // Ajouter un OEM vide
-  const addOEM = () => setForm((f) => ({ ...f, oems: [...f.oems, ""] }));
-
-  // Modifier un OEM à l'index donné
-  const updateOEM = (index, value) =>
-    setForm((f) => {
-      const oems = [...f.oems];
-      oems[index] = value;
-      return { ...f, oems };
-    });
-
-  // Supprimer un OEM
-  const removeOEM = (index) =>
-    setForm((f) => ({
-      ...f,
-      oems: f.oems.filter((_, i) => i !== index),
-    }));
-
+  /* ── Calculs ── */
   const recalcMargin = (field, value) => {
-    // Remplacer la virgule par un point pour que le calcul fonctionne si l'utilisateur tape "10,5"
-    const cleanValue = value.replace(",", ".");
-
+    const clean = value.replace(",", ".");
     setForm((prev) => {
-      // On crée une copie avec la nouvelle valeur brute pour ne pas bloquer l'input
-      const updatedForm = {
-        ...prev,
-        [field]: cleanValue,
-      };
-
-      // On extrait les valeurs pour le calcul (on utilise 0 si ce n'est pas un nombre valide)
-      const ht = parseFloat(updatedForm.prixHT) || 0;
-      const achat = parseFloat(updatedForm.prixAchat) || 0;
-      const port = parseFloat(updatedForm.fraisPort) || 0;
-
-      // Calcul de la marge
+      const updated = { ...prev, [field]: clean };
+      const ht = parseFloat(updated.prixHT) || 0;
+      const achat = parseFloat(updated.prixAchat) || 0;
+      const port = parseFloat(updated.fraisPort) || 0;
       const marge = ht - (achat + port);
       const margePct = ht ? (marge / ht) * 100 : 0;
-
-      return {
-        ...updatedForm,
-        marge: marge.toFixed(2), // On arrondit pour l'affichage
-        margePct: margePct.toFixed(2),
-      };
+      return { ...updated, marge: marge.toFixed(2), margePct: margePct.toFixed(2) };
     });
   };
 
   const calcPrices = (field, value) => {
-    // On accepte la virgule et le point pour la saisie
-    const cleanValue = value.replace(",", ".");
-
+    const clean = value.replace(",", ".");
     setForm((prev) => {
-      // 1. On met à jour la valeur brute immédiatement pour ne pas bloquer le curseur
-      const newForm = { ...prev, [field]: cleanValue };
-
-      // 2. Préparation des variables pour le calcul (TVA par défaut à 20% si vide)
-      const tvaRate = parseFloat(newForm.tva) || 0;
-
-      let updatedHT = newForm.prixHT;
-      let updatedTTC = newForm.prixTTC;
-
-      // 3. Logique : Si on change le TTC, on calcule le HT automatiquement
+      const nf = { ...prev, [field]: clean };
+      const tvaRate = parseFloat(nf.tva) || 0;
       if (field === "prixTTC") {
-        const ttcNum = parseFloat(cleanValue) || 0;
-        updatedHT = (ttcNum / (1 + tvaRate / 100)).toFixed(2);
+        nf.prixHT = ((parseFloat(clean) || 0) / (1 + tvaRate / 100)).toFixed(2);
+      } else if (field === "prixHT") {
+        nf.prixTTC = ((parseFloat(clean) || 0) * (1 + tvaRate / 100)).toFixed(2);
       }
-      // Si on change le HT, on calcule le TTC
-      else if (field === "prixHT") {
-        const htNum = parseFloat(cleanValue) || 0;
-        updatedTTC = (htNum * (1 + tvaRate / 100)).toFixed(2);
-      }
-
-      return {
-        ...newForm,
-        prixHT: updatedHT,
-        prixTTC: updatedTTC,
-      };
+      return nf;
     });
   };
 
-  /* ================= UPLOAD ================= */
+  /* ── OEM ── */
+  const addOEM = () => setForm((f) => ({ ...f, oems: [...f.oems, ""] }));
+  const updateOEM = (i, v) =>
+    setForm((f) => { const o = [...f.oems]; o[i] = v; return { ...f, oems: o }; });
+  const removeOEM = (i) =>
+    setForm((f) => ({ ...f, oems: f.oems.filter((_, idx) => idx !== i) }));
 
-  const [photos, setPhotos] = useState([]);
-  const [documents, setDocuments] = useState([]);
-
+  /* ── Photos ── */
   const handleFileAdd = (e) => {
     const files = Array.from(e.target.files);
-
-    const mapped = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-
-    setPhotos((prev) => [...prev, ...mapped]);
+    setPhotos((prev) => [
+      ...prev,
+      ...files.map((file) => ({ file, preview: URL.createObjectURL(file), url: null })),
+    ]);
+  };
+  const removePhoto = (i) => {
+    setPhotos((prev) => {
+      const updated = [...prev];
+      URL.revokeObjectURL(updated[i].preview);
+      updated.splice(i, 1);
+      return updated;
+    });
   };
 
-  const removePhoto = (index) => {
-    const updated = [...photos];
-    URL.revokeObjectURL(updated[index].preview);
-    updated.splice(index, 1);
-    setPhotos(updated);
-  };
-
+  /* ── Documents ── */
   const handleDocumentUpload = (e) => {
     const files = Array.from(e.target.files);
-
-    const mapped = files.map((file) => ({
-      file,
-      nom: file.nom,
-      size: file.size,
-      preview: URL.createObjectURL(file),
-    }));
-
-    setDocuments((prev) => [...prev, ...mapped]);
+    setDocuments((prev) => [
+      ...prev,
+      ...files.map((file) => ({ file, nom: file.name, size: file.size, preview: URL.createObjectURL(file), url: null })),
+    ]);
+  };
+  const removeDocument = (i) => {
+    setDocuments((prev) => {
+      const updated = [...prev];
+      URL.revokeObjectURL(updated[i].preview);
+      updated.splice(i, 1);
+      return updated;
+    });
   };
 
-  const removeDocument = (index) => {
-    const updated = [...documents];
-    URL.revokeObjectURL(updated[index].preview);
-    updated.splice(index, 1);
-    setDocuments(updated);
-  };
-
+  /* ── Save ── */
   const handleSave = async () => {
+    // 1. Upload photos vers Cloudinary
+    const photosToUpload = photos.filter((p) => !p.url).map((p) => p.file);
+    const existingPhotoUrls = photos.filter((p) => p.url).map((p) => p.url);
+    const newPhotoUrls = photosToUpload.length
+      ? await uploadFiles(photosToUpload, "image")
+      : [];
+    const allPhotoUrls = [...existingPhotoUrls, ...newPhotoUrls];
+
+    // 2. Upload documents vers Cloudinary
+    const docsToUpload = documents.filter((d) => !d.url).map((d) => d.file);
+    const existingDocUrls = documents.filter((d) => d.url).map((d) => d.url);
+    const newDocUrls = docsToUpload.length
+      ? await uploadFiles(docsToUpload, "raw")
+      : [];
+    const allDocUrls = [...existingDocUrls, ...newDocUrls];
+
+    // 3. Envoi à l'API
     const payload = {
       article: {
         type: form.type,
-        libelle1: form.libelle1,
-        libelle2: form.libelle2,
-        libelle3: form.libelle3,
-        codeBarre: form.codeBarre,
-        refExt: form.refExt,
-        refInt: form.refInt,
+        libelle1: form.libelle1, libelle2: form.libelle2, libelle3: form.libelle3,
+        codeBarre: form.codeBarre, refExt: form.refExt, refInt: form.refInt,
         garantie: form.garantie,
         composantLot: form.composantLot,
         conditionnement: form.conditionnement,
@@ -369,7 +336,6 @@ export default function ReferenceArticleModal({ open, onClose }) {
         familleId: form.famille?.id ?? null,
         emplacementId: form.emplacement?.id ?? null,
       },
-
       pricing: {
         prixHT: parseFloat(form.prixHT) || null,
         prixTTC: parseFloat(form.prixTTC) || null,
@@ -379,30 +345,14 @@ export default function ReferenceArticleModal({ open, onClose }) {
         prixAchat: parseFloat(form.prixAchat) || null,
         fraisPort: parseFloat(form.fraisPort) || null,
       },
-
       purchase: {
         prixAchat: parseFloat(form.prixAchat) || null,
         fraisPort: parseFloat(form.fraisPort) || null,
       },
-
-      // Seulement si type Pneus
-      pneuSpec:
-        form.type === "Pneus"
-          ? {
-              largeur: form.pneus.largeur,
-              hauteur: form.pneus.hauteur,
-              diametre: form.pneus.diametre,
-              charge: form.pneus.charge,
-              vitesse: form.pneus.vitesse,
-              carburant: form.pneus.carburant,
-              solMouille: form.pneus.solMouille,
-              bruit: form.pneus.bruit,
-              valeurBruit: form.pneus.valeurBruit,
-            }
-          : null,
-
-      // Tableau de strings bruts
-      oem: form.oems.filter((ref) => ref.trim() !== ""),
+      pneuSpec: form.type === "Pneus" ? { ...form.pneus } : null,
+      oem: form.oems.filter((r) => r.trim() !== ""),
+      photos: allPhotoUrls,       // tableau d'URLs Cloudinary
+      documents: allDocUrls,      // tableau d'URLs Cloudinary
     };
 
     await fetch(BASE_URL_API + "/v1/stock/articles", {
@@ -413,656 +363,515 @@ export default function ReferenceArticleModal({ open, onClose }) {
     onClose();
   };
 
-  const typeComponents = {
-    Pneus: BlocPneus,
-  };
-
-  const SpecificComponent = typeComponents[form.type];
-
-  /* ================= UI ================= */
-
+  /* ── UI ── */
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Créer / Référencer un article</DialogTitle>
 
-      <DialogContent>
-        {/* INFOS */}
-        <Grid item xs={12} mb={2}>
-          <Grid container alignItems="center" spacing={2}>
-            {/* Libellé */}
-            <Grid item xs={12} md={4}>
-              <Typography variant="body2" fontWeight={500}>
-                <strong>Type</strong>
-              </Typography>
-            </Grid>
+      {/* ── Header ── */}
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          bgcolor: "background.default",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          py: 1.5,
+          px: 2.5,
+        }}
+      >
+        <InventoryOutlinedIcon sx={{ color: "primary.main", fontSize: 20 }} />
+        <Box flex={1}>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Référencer un article
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Créer une nouvelle fiche article
+          </Typography>
+        </Box>
+        {form.type && (
+          <Chip label={form.type} color="primary" size="small" sx={{ mr: 1 }} />
+        )}
+        <IconButton size="small" onClick={onClose}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
 
-            {/* Select */}
-            <Grid item xs={12} md={8}>
-              <TextField
-                select
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                fullWidth
-                size="small"
+      <DialogContent sx={{ px: 3, pt: 3 }}>
+
+        {/* ── TYPE ── */}
+        <SectionTitle>Type d'article</SectionTitle>
+        <Box mb={3}>
+          <ToggleButtonGroup
+            value={form.type}
+            exclusive
+            onChange={(_, v) => v && setForm((f) => ({ ...f, type: v }))}
+            size="small"
+            sx={{ flexWrap: "wrap", gap: 0.5 }}
+          >
+            {TYPES_ARTICLE.map((t) => (
+              <ToggleButton
+                key={t}
+                value={t}
+                sx={{
+                  px: 2.5,
+                  textTransform: "none",
+                  fontWeight: 500,
+                  borderRadius: "8px !important",
+                  border: `1px solid ${theme.palette.divider} !important`,
+                  "&.Mui-selected": {
+                    bgcolor: "primary.main",
+                    color: "#fff",
+                    borderColor: "primary.main !important",
+                    "&:hover": { bgcolor: "primary.dark" },
+                  },
+                }}
               >
-                {typesArticle.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-          </Grid>
-        </Grid>
+                {t}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
 
-        {/* {form.type === "Pneus" && (
-          <BlocPneus pneus={form.pneus} setForm={setForm} />
-        )} */}
-
-        {SpecificComponent && (
-          <SpecificComponent pneus={form.pneus} setForm={setForm} />
-        )}
-
-        <Grid container spacing={2}>
-          {[
-            "libelle1",
-            "libelle2",
-            "libelle3",
-            "codeBarre",
-            "refExt",
-            "refInt",
-          ].map((nom) => (
-            <Grid item xs={12} key={nom}>
-              <Grid container alignItems="center" spacing={2}>
-                {/* Libellé à gauche */}
-                <Grid item xs={12} md={4}>
-                  <Typography variant="body2" fontWeight={500}>
-                    {" "}
-                    <strong>{nom}</strong>
-                  </Typography>
-                </Grid>
-
-                {/* Champ à droite */}
-                <Grid item xs={12} md={8}>
-                  <TextField
-                    value={form[nom]}
-                    onChange={(e) =>
-                      setForm({ ...form, [nom]: e.target.value })
-                    }
-                    fullWidth
-                    size="small"
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-          ))}
-        </Grid>
-
-        {config.oem && (
+        {/* ── SPÉCIFICATIONS PNEU ── */}
+        {form.type === "Pneus" && (
           <>
-            <Typography fontWeight="bold" sx={{ mt: 2 }}>
-              Références OEM
-            </Typography>
-
-            <Grid container spacing={2} mt={1}>
-              {form.oems &&
-                form.oems.map((oem, index) => (
-                  <Grid item xs={12} md={4} key={index}>
-                    <Box display="flex" gap={1}>
-                      <TextField
-                        label={`OEM ${index + 1}`}
-                        value={oem}
-                        onChange={(e) => updateOEM(index, e.target.value)}
-                        size="small"
-                        fullWidth
-                      />
-
-                      <Button
-                        color="error"
-                        onClick={() => removeOEM(index)}
-                        sx={{ minWidth: 40 }}
-                      >
-                        ✕
-                      </Button>
-                    </Box>
-                  </Grid>
-                ))}
-            </Grid>
-
-            <Button startIcon={<AddIcon />} sx={{ mt: 2 }} onClick={addOEM}>
-              Ajouter OEM
-            </Button>
-
-            <Divider sx={{ my: 3 }} />
+            <SectionTitle>Spécifications pneu</SectionTitle>
+            <Box mb={2}>
+              <BlocPneus pneus={form.pneus} setForm={setForm} />
+            </Box>
           </>
         )}
 
-        {/* TARIFICATION */}
-        {config.pricing && (
-          <>
-            <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
-              Prix
-            </Typography>
+        {/* ── IDENTIFICATION ── */}
+        <SectionTitle>Identification</SectionTitle>
 
-            {config.pricing.vente && (
-              <FormRow label="Vente">
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      label="Prix de vente HT"
-                      value={form.prixHT}
-                      onChange={(e) => calcPrices("prixHT", e.target.value)}
-                      fullWidth
-                      size="small"
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      label="Prix de vente TTC"
-                      value={form.prixTTC}
-                      onChange={(e) => calcPrices("prixTTC", e.target.value)}
-                      fullWidth
-                      size="small"
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      select
-                      label="TVA"
-                      value={form.tva}
-                      onChange={(e) =>
-                        setForm({ ...form, tva: e.target.value })
-                      }
-                      fullWidth
-                      size="small"
-                    >
-                      {userTVA.map((v) => (
-                        <MenuItem key={v} value={v}>
-                          {v}%
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                </Grid>
-              </FormRow>
-            )}
-
-            {config.pricing.achat && (
-              <FormRow label="Achat">
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Prix d'achat HT"
-                      value={form.prixAchat}
-                      onChange={(e) =>
-                        recalcMargin("prixAchat", e.target.value)
-                      }
-                      fullWidth
-                      size="small"
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label="Frais de port HT"
-                      value={form.fraisPort}
-                      onChange={(e) =>
-                        recalcMargin("fraisPort", e.target.value)
-                      }
-                      fullWidth
-                      size="small"
-                    />
-                  </Grid>
-                </Grid>
-              </FormRow>
-            )}
-
-            {config.pricing.vente && (
-              <FormRow label="Marge">
-                <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      label="Marge"
-                      value={form.marge}
-                      fullWidth
-                      size="small"
-                    />
-                  </Grid>
-
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      label="Marge %"
-                      value={form.margePct}
-                      fullWidth
-                      size="small"
-                    />
-                  </Grid>
-                </Grid>
-              </FormRow>
-            )}
-          </>
-        )}
-
-        <Divider sx={{ my: 3 }} />
-        <FormRow label="Fournisseur">
-          <ApiAutocompleteField
-            resource="fournisseurs"
-            value={form.fournisseur}
-            onChange={setField("fournisseur")}
-          />
-        </FormRow>
-
-        {newFournisseur && !userData.fournisseurs.includes(newFournisseur) && (
-          <Button
-            startIcon={<AddIcon />}
-            size="small"
-            onClick={() => {
-              addOption("fournisseurs", newFournisseur);
-              setForm({ ...form, fournisseur: newFournisseur });
-              setNewFournisseur("");
-            }}
-          >
-            Ajouter "{newFournisseur}"
-          </Button>
-        )}
-
-        {/* <Divider sx={{ my: 2 }} /> */}
-
-        {/* MARQUE */}
-        <FormRow label="Marque">
-          <ApiAutocompleteField
-            resource="marques"
-            value={form.marque}
-            onChange={setField("marque")}
-          />
-        </FormRow>
-
-        {newMarque && !userData.marques.includes(newMarque) && (
-          <Button
-            startIcon={<AddIcon />}
-            size="small"
-            onClick={() => {
-              addOption("marques", newMarque);
-              setForm({ ...form, marque: newMarque });
-              setNewMarque("");
-            }}
-          >
-            Ajouter "{newMarque}"
-          </Button>
-        )}
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* LOT */}
-        <FormRow label="Composant d'un lot">
+        <Field label={FIELD_LABELS.libelle1} required>
+          <TextField value={form.libelle1} onChange={(e) => setForm({ ...form, libelle1: e.target.value })} fullWidth size="small" placeholder="Désignation principale" />
+        </Field>
+        <Field label={FIELD_LABELS.libelle2}>
+          <TextField value={form.libelle2} onChange={(e) => setForm({ ...form, libelle2: e.target.value })} fullWidth size="small" />
+        </Field>
+        <Field label={FIELD_LABELS.libelle3}>
+          <TextField value={form.libelle3} onChange={(e) => setForm({ ...form, libelle3: e.target.value })} fullWidth size="small" />
+        </Field>
+        <Field label={FIELD_LABELS.codeBarre}>
           <TextField
-            select
-            value={form.composantLot ? "oui" : "non"}
-            onChange={(e) =>
-              setForm({ ...form, composantLot: e.target.value === "oui" })
-            }
-            fullWidth
-            size="small"
+            value={form.codeBarre}
+            onChange={(e) => setForm({ ...form, codeBarre: e.target.value })}
+            onKeyDown={(e) => e.key === "Enter" && handleLookup(form.codeBarre)}
+            fullWidth size="small"
+            placeholder="Scanner ou saisir le code-barre"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Rechercher et pré-remplir">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleLookup(form.codeBarre)}
+                      disabled={!form.codeBarre || lookupLoading}
+                    >
+                      {lookupLoading
+                        ? <CircularProgress size={16} />
+                        : <SearchIcon fontSize="small" />}
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Field>
+        <Field label={FIELD_LABELS.refExt}>
+          <TextField
+            value={form.refExt}
+            onChange={(e) => setForm({ ...form, refExt: e.target.value })}
+            onKeyDown={(e) => e.key === "Enter" && handleLookup(form.refExt)}
+            fullWidth size="small"
+            placeholder="Référence constructeur / fournisseur"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Rechercher et pré-remplir">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleLookup(form.refExt)}
+                      disabled={!form.refExt || lookupLoading}
+                    >
+                      {lookupLoading
+                        ? <CircularProgress size={16} />
+                        : <SearchIcon fontSize="small" />}
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Field>
+        <Field label={FIELD_LABELS.refInt}>
+          <TextField value={form.refInt} onChange={(e) => setForm({ ...form, refInt: e.target.value })} fullWidth size="small" />
+        </Field>
+
+        {/* ── CLASSIFICATION ── */}
+        <SectionTitle>Classification</SectionTitle>
+
+        <Field label="Fournisseur">
+          <ApiAutocompleteField resource="fournisseurs" value={form.fournisseur} onChange={setField("fournisseur")} />
+        </Field>
+        <Field label="Marque">
+          <ApiAutocompleteField resource="marques" value={form.marque} onChange={setField("marque")} />
+        </Field>
+        <Field label="Groupe">
+          <ApiAutocompleteField resource="groupes" value={form.groupe} onChange={setField("groupe")} />
+        </Field>
+        <Field label="Famille">
+          <ApiAutocompleteField resource="familles" value={form.famille} onChange={setField("famille")} />
+        </Field>
+        <Field label="Emplacement / Casier">
+          <ApiAutocompleteField resource="emplacements" value={form.emplacement} onChange={setField("emplacement")} />
+        </Field>
+        <Field label="Composant d'un lot">
+          <TextField
+            select value={form.composantLot ? "oui" : "non"}
+            onChange={(e) => setForm({ ...form, composantLot: e.target.value === "oui" })}
+            fullWidth size="small"
           >
             <MenuItem value="non">Non</MenuItem>
             <MenuItem value="oui">Oui</MenuItem>
           </TextField>
-        </FormRow>
-
+        </Field>
         {form.composantLot && (
-          <FormRow label="Conditionnement">
-            <TextField
-              value={form.conditionnement}
-              onChange={(e) =>
-                setForm({ ...form, conditionnement: e.target.value })
-              }
-              fullWidth
-              size="small"
-            />
-          </FormRow>
+          <Field label="Conditionnement">
+            <TextField value={form.conditionnement} onChange={(e) => setForm({ ...form, conditionnement: e.target.value })} fullWidth size="small" />
+          </Field>
         )}
 
-        <Divider sx={{ my: 2 }} />
+        {/* ── TARIFICATION ── */}
+        {config.pricing && (
+          <>
+            <SectionTitle>Tarification</SectionTitle>
 
-        <Typography fontWeight="bold" sx={{ mt: 2, mb: 2 }}>
-          Groupe & famille
-        </Typography>
+            {config.pricing.vente && (
+              <>
+                <Field label="Prix de vente HT">
+                  <TextField value={form.prixHT} onChange={(e) => calcPrices("prixHT", e.target.value)} fullWidth size="small"
+                    InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">€</Typography> }} />
+                </Field>
+                <Field label="Prix de vente TTC">
+                  <TextField value={form.prixTTC} onChange={(e) => calcPrices("prixTTC", e.target.value)} fullWidth size="small"
+                    InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">€</Typography> }} />
+                </Field>
+                <Field label="TVA">
+                  <TextField select value={form.tva} onChange={(e) => setForm({ ...form, tva: e.target.value })} fullWidth size="small">
+                    {TVA_OPTIONS.map((v) => <MenuItem key={v} value={v}>{v} %</MenuItem>)}
+                  </TextField>
+                </Field>
+              </>
+            )}
 
-        {/* GROUPE */}
-        <FormRow label="Groupe">
-          <ApiAutocompleteField
-            resource="groupes"
-            value={form.fournisseur}
-            onChange={setField("groupe")}
-          />
-        </FormRow>
+            {config.pricing.achat && (
+              <>
+                <Field label="Prix d'achat HT">
+                  <TextField value={form.prixAchat} onChange={(e) => recalcMargin("prixAchat", e.target.value)} fullWidth size="small"
+                    InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">€</Typography> }} />
+                </Field>
+                <Field label="Frais de port HT">
+                  <TextField value={form.fraisPort} onChange={(e) => recalcMargin("fraisPort", e.target.value)} fullWidth size="small"
+                    InputProps={{ endAdornment: <Typography variant="caption" color="text.secondary">€</Typography> }} />
+                </Field>
+              </>
+            )}
 
-        {newGroupe && !userData.groupes.includes(newGroupe) && (
-          <Button
-            startIcon={<AddIcon />}
-            size="small"
-            onClick={() => {
-              addOption("groupes", newGroupe);
-              setForm({ ...form, groupe: newGroupe });
-              setNewGroupe("");
-            }}
-          >
-            Ajouter "{newGroupe}"
-          </Button>
+            {config.pricing.vente && (form.marge || form.margePct) && (
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1.5,
+                  p: 1.5,
+                  mb: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" alignSelf="center">
+                  Marge calculée :
+                </Typography>
+                <Chip
+                  label={`${form.marge} €`}
+                  size="small"
+                  color={parseFloat(form.marge) >= 0 ? "success" : "error"}
+                  variant="outlined"
+                />
+                <Chip
+                  label={`${form.margePct} %`}
+                  size="small"
+                  color={parseFloat(form.margePct) >= 0 ? "success" : "error"}
+                  variant="outlined"
+                />
+              </Box>
+            )}
+          </>
         )}
 
-        {/* <Divider sx={{ my: 2 }} /> */}
-
-        {/* FAMILLE */}
-        <FormRow label="Famille">
-          <ApiAutocompleteField
-            resource="familles"
-            value={form.fournisseur}
-            onChange={setField("famille")}
-          />
-        </FormRow>
-
-        {form.groupe &&
-          newFamille &&
-          !(userData.familles[form.groupe] || []).includes(newFamille) && (
-            <Button
-              startIcon={<AddIcon />}
-              size="small"
-              onClick={() => {
-                addOption("famille", newFamille, form.groupe);
-                setForm({ ...form, famille: newFamille });
-                setNewFamille("");
-              }}
-            >
-              Ajouter "{newFamille}"
+        {/* ── OEM ── */}
+        {config.oem && (
+          <>
+            <SectionTitle>Références OEM</SectionTitle>
+            <Grid container spacing={2} mb={1}>
+              {form.oems.map((oem, index) => (
+                <Grid item xs={12} md={4} key={index}>
+                  <Box display="flex" gap={1} alignItems="center">
+                    <TextField
+                      label={`OEM ${index + 1}`}
+                      value={oem}
+                      onChange={(e) => updateOEM(index, e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                    <Tooltip title="Supprimer">
+                      <IconButton size="small" color="error" onClick={() => removeOEM(index)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+            <Button startIcon={<AddIcon />} size="small" sx={{ mb: 2 }} onClick={addOEM}>
+              Ajouter une référence OEM
             </Button>
-          )}
-
-        <Divider sx={{ my: 3 }} />
-        <FormRow label="Emplacement / Casier">
-          <ApiAutocompleteField
-            resource="emplacements"
-            value={form.emplacement}
-            onChange={setField("emplacement")}
-          />
-        </FormRow>
-
-        {newEmplacement && !userData.emplacements.includes(newEmplacement) && (
-          <Button
-            startIcon={<AddIcon />}
-            size="small"
-            onClick={() => {
-              addOption("emplacements", newEmplacement);
-              setForm({ ...form, emplacement: newEmplacement });
-              setNewEmplacement("");
-            }}
-          >
-            Ajouter "{newEmplacement}"
-          </Button>
+          </>
         )}
-        <Divider sx={{ my: 3 }} />
 
-        <FormRow label="SAV / Conditions de garantie" alignTop>
-          <TextField
-            value={form.garantie}
-            onChange={(e) => setForm({ ...form, garantie: e.target.value })}
-            multiline
-            rows={4}
-            fullWidth
-            size="small"
-          />
-        </FormRow>
+        {/* ── GARANTIE ── */}
+        <SectionTitle>SAV / Garantie</SectionTitle>
+        <TextField
+          value={form.garantie}
+          onChange={(e) => setForm({ ...form, garantie: e.target.value })}
+          multiline rows={3}
+          fullWidth size="small"
+          placeholder="Conditions de garantie, notes SAV..."
+          sx={{ mb: 3 }}
+        />
 
-        {/* PHOTOS */}
+        {/* ── PHOTOS ── */}
         {config.photos && (
           <>
-            <Typography fontWeight="bold">Photos</Typography>
-
-            <Box display="flex" gap={2} mt={1} flexWrap="wrap">
-              {/* 3 zones principales */}
-              {[0, 1, 2].map((slot) => (
-                <Box key={slot} position="relative">
-                  {photos[slot] ? (
-                    <>
-                      <img
-                        src={photos[slot].preview}
-                        width={90}
-                        height={90}
-                        style={{ objectFit: "cover", borderRadius: 6 }}
-                      />
-
-                      <DeleteIcon
-                        onClick={() => removePhoto(slot)}
-                        sx={{
-                          position: "absolute",
-                          top: 2,
-                          right: 2,
-                          color: "#fff",
-                          background: "#0008",
-                          borderRadius: "50%",
-                          cursor: "pointer",
-                        }}
-                      />
-                    </>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      sx={{
-                        width: 90,
-                        height: 90,
-                        borderStyle: "dashed",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      +
-                      <input
-                        hidden
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileAdd}
-                      />
-                    </Button>
-                  )}
-                </Box>
-              ))}
-
-              {/* Photos supplémentaires */}
-              {photos.slice(3).map((p, i) => (
-                <Box key={i + 3} position="relative">
+            <SectionTitle>Photos</SectionTitle>
+            <Box display="flex" gap={1.5} flexWrap="wrap" mb={3}>
+              {photos.map((p, i) => (
+                <Box key={i} position="relative">
                   <img
                     src={p.preview}
-                    width={70}
-                    height={70}
-                    style={{ objectFit: "cover", borderRadius: 6 }}
+                    width={88}
+                    height={88}
+                    style={{ objectFit: "cover", borderRadius: 8, display: "block" }}
                   />
-
-                  <DeleteIcon
-                    onClick={() => removePhoto(i + 3)}
+                  <IconButton
+                    size="small"
+                    onClick={() => removePhoto(i)}
                     sx={{
-                      position: "absolute",
-                      top: 2,
-                      right: 2,
-                      color: "#fff",
-                      background: "#0008",
-                      borderRadius: "50%",
-                      cursor: "pointer",
+                      position: "absolute", top: 2, right: 2,
+                      bgcolor: alpha("#000", 0.5), color: "#fff",
+                      "&:hover": { bgcolor: alpha("#000", 0.7) },
+                      p: 0.3,
                     }}
-                  />
+                  >
+                    <CloseIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
                 </Box>
               ))}
-
-              {/* bouton ajouter plus */}
               <Button
                 component="label"
                 variant="outlined"
                 sx={{
-                  width: 70,
-                  height: 70,
-                  minWidth: 0,
-                  borderStyle: "dashed",
+                  width: 88, height: 88, minWidth: 0,
+                  borderStyle: "dashed", borderRadius: 2,
+                  display: "flex", flexDirection: "column", gap: 0.5,
+                  color: "text.secondary",
                 }}
               >
-                +
-                <input
-                  hidden
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileAdd}
-                />
+                <AddIcon fontSize="small" />
+                <Typography variant="caption">Photo</Typography>
+                <input hidden type="file" multiple accept="image/*" onChange={handleFileAdd} />
               </Button>
             </Box>
-
-            <Divider sx={{ my: 3 }} />
           </>
         )}
-        {/* DOCUMENTS */}
-        {/* DOCUMENTS */}
 
+        {/* ── DOCUMENTS ── */}
         {config.documents && (
           <>
-            <Typography fontWeight="bold" mt={3}>
-              Documents
-            </Typography>
-
-            <Box display="flex" gap={2} mt={1} flexWrap="wrap">
-              {/* 3 documents principaux */}
-              {[0, 1, 2].map((slot) => (
-                <Box key={slot} position="relative">
-                  {documents[slot] ? (
-                    <Box
-                      sx={{
-                        width: 140,
-                        border: "1px solid #ddd",
-                        borderRadius: 2,
-                        p: 1,
-                        background: "#fafafa",
-                        position: "relative",
-                      }}
-                    >
-                      <DeleteIcon
-                        onClick={() => removeDocument(slot)}
-                        sx={{
-                          position: "absolute",
-                          top: 4,
-                          right: 4,
-                          cursor: "pointer",
-                          fontSize: 18,
-                        }}
-                      />
-
-                      <Typography variant="body2" fontWeight="bold" noWrap>
-                        {documents[slot].nom}
-                      </Typography>
-
-                      <Typography variant="caption" color="text.secondary">
-                        {(documents[slot].size / 1024).toFixed(1)} KB
-                      </Typography>
-
-                      <Button
-                        size="small"
-                        href={documents[slot].preview}
-                        target="_blank"
-                        sx={{ mt: 1 }}
-                      >
-                        Voir
-                      </Button>
-                    </Box>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      sx={{
-                        width: 140,
-                        height: 70,
-                        borderStyle: "dashed",
-                      }}
-                    >
-                      +
-                      <input
-                        hidden
-                        type="file"
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                        onChange={handleDocumentUpload}
-                      />
-                    </Button>
-                  )}
-                </Box>
-              ))}
-
-              {/* documents supplémentaires */}
-              {documents.slice(3).map((doc, i) => (
+            <SectionTitle>Documents</SectionTitle>
+            <Box display="flex" gap={1.5} flexWrap="wrap" mb={2}>
+              {documents.map((doc, i) => (
                 <Box
-                  key={i + 3}
+                  key={i}
                   sx={{
-                    width: 120,
-                    border: "1px solid #ddd",
+                    width: 130,
+                    border: "1px solid",
+                    borderColor: "divider",
                     borderRadius: 2,
-                    p: 1,
-                    background: "#fafafa",
+                    p: 1.5,
+                    bgcolor: "background.default",
                     position: "relative",
                   }}
                 >
-                  <DeleteIcon
-                    onClick={() => removeDocument(i + 3)}
-                    sx={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      cursor: "pointer",
-                      fontSize: 16,
-                    }}
-                  />
-
-                  <Typography variant="caption" fontWeight="bold" noWrap>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => removeDocument(i)}
+                    sx={{ position: "absolute", top: 4, right: 4, p: 0.3 }}
+                  >
+                    <CloseIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
+                  <InsertDriveFileOutlinedIcon sx={{ color: "primary.main", fontSize: 22, mb: 0.5 }} />
+                  <Typography variant="caption" display="block" fontWeight={600} noWrap>
                     {doc.nom}
                   </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {(doc.size / 1024).toFixed(1)} KB
+                  </Typography>
+                  <Button size="small" href={doc.preview} target="_blank" sx={{ mt: 0.5, p: 0 }}>
+                    Voir
+                  </Button>
                 </Box>
               ))}
-
-              {/* bouton ajouter plus */}
               <Button
                 component="label"
                 variant="outlined"
                 sx={{
-                  width: 70,
-                  height: 70,
-                  minWidth: 0,
-                  borderStyle: "dashed",
+                  width: 130, height: 80, minWidth: 0,
+                  borderStyle: "dashed", borderRadius: 2,
+                  display: "flex", flexDirection: "column", gap: 0.5,
+                  color: "text.secondary",
                 }}
               >
-                +
+                <AddIcon fontSize="small" />
+                <Typography variant="caption">Document</Typography>
                 <input
-                  hidden
-                  type="file"
-                  multiple
+                  hidden type="file" multiple
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                   onChange={handleDocumentUpload}
                 />
               </Button>
             </Box>
-
-            <Divider sx={{ my: 3 }} />
           </>
         )}
 
-        {/* ACTIONS */}
-        <Box display="flex" justifyContent="space-between">
-          <Button onClick={onClose}>Quitter</Button>
-          <Button variant="contained" onClick={handleSave}>
-            Modifier
-          </Button>
-
-          <Button variant="contained" onClick={handleSave}>
-            Enregistrer
-          </Button>
-        </Box>
       </DialogContent>
+
+      {/* ── Dialog confirmation lookup ── */}
+      <Dialog
+        open={!!lookupResult && lookupResult.source !== "notfound"}
+        onClose={() => setLookupResult(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "background.default",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            py: 1.5, px: 2.5,
+            display: "flex", alignItems: "center", gap: 1,
+          }}
+        >
+          <SearchIcon sx={{ color: "primary.main", fontSize: 18 }} />
+          <Typography variant="subtitle1" fontWeight={600}>Article trouvé</Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, px: 2.5 }}>
+          <Alert
+            severity={lookupResult?.source === "local" ? "success" : "info"}
+            sx={{ mb: 2 }}
+          >
+            {lookupResult?.label}
+          </Alert>
+          {lookupResult?.formData && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              {lookupResult.formData.libelle1 && (
+                <Typography variant="body2">
+                  <strong>Désignation :</strong> {lookupResult.formData.libelle1}
+                </Typography>
+              )}
+              {lookupResult.formData.type && (
+                <Typography variant="body2">
+                  <strong>Type :</strong> {lookupResult.formData.type}
+                </Typography>
+              )}
+              {lookupResult.formData.marque?.nom && (
+                <Typography variant="body2">
+                  <strong>Marque :</strong> {lookupResult.formData.marque.nom}
+                </Typography>
+              )}
+              {lookupResult.formData.prixHT && (
+                <Typography variant="body2">
+                  <strong>Prix HT :</strong> {lookupResult.formData.prixHT} €
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions
+          sx={{
+            bgcolor: "background.default",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            px: 2.5, py: 1.5,
+          }}
+        >
+          <Button variant="outlined" color="inherit" onClick={() => setLookupResult(null)}>
+            Ignorer
+          </Button>
+          <Button variant="contained" onClick={applyLookup}>
+            Pré-remplir le formulaire
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Snackbar "rien trouvé" ── */}
+      {lookupResult?.source === "notfound" && (
+        <Alert
+          severity="warning"
+          sx={{ position: "absolute", bottom: 80, left: 24, right: 24, zIndex: 10 }}
+          onClose={() => setLookupResult(null)}
+        >
+          Aucun article trouvé pour ce code. Vous pouvez saisir manuellement.
+        </Alert>
+      )}
+
+      {/* ── Footer ── */}
+      <DialogActions
+        sx={{
+          px: 3, py: 2,
+          bgcolor: "background.default",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" color="inherit" onClick={onClose} disabled={uploading}>
+          Quitter
+        </Button>
+        <Box flex={1} />
+        {uploading && (
+          <Box display="flex" alignItems="center" gap={1}>
+            <CircularProgress size={16} />
+            <Typography variant="caption" color="text.secondary">
+              Upload en cours…
+            </Typography>
+          </Box>
+        )}
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={uploading}
+          startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : null}
+        >
+          Enregistrer
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

@@ -1,22 +1,28 @@
 // src/App.js
 import DeleteIcon from "@mui/icons-material/Delete";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import EditIcon from "@mui/icons-material/Edit";
+import HistoryIcon from "@mui/icons-material/History";
+import PeopleIcon from "@mui/icons-material/People";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import SearchIcon from "@mui/icons-material/Search";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
+  Avatar,
   Box,
   Button,
-  Card,
-  CardContent,
   Checkbox,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
   Grid,
+  IconButton,
+  InputAdornment,
   InputLabel,
-  List,
-  ListItem,
-  ListItemText,
   MenuItem,
   Paper,
   Select,
@@ -30,9 +36,12 @@ import {
   TableRow,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
+  alpha,
   useTheme,
 } from "@mui/material";
+// Note: Card, CardContent, List, ListItem, ListItemText removed (replaced by custom nav)
 import dayjs from "dayjs"; // ou luxon selon ta préférence
 import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
@@ -959,78 +968,186 @@ function ManageClients() {
     entretiensData,
   ]);
 
+  /* ── shared table header cell ── */
+  const thCell = {
+    fontWeight: 700,
+    fontSize: 12,
+    color: "text.secondary",
+    bgcolor: alpha(theme.palette.primary.main, 0.06),
+    borderBottom: `2px solid ${theme.palette.divider}`,
+    py: 1.25,
+  };
+
+  /* ── shared table body cell ── */
+  const tdCell = {
+    fontSize: 13,
+    color: theme.palette.text.primary,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    py: 1,
+  };
+
+  /* ── section header (title + action button) ── */
+  const SectionHeader = ({ icon, title, count, action }) => (
+    <Box display="flex" alignItems="center" mb={2.5}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 36,
+          height: 36,
+          borderRadius: 1.5,
+          bgcolor: alpha(theme.palette.primary.main, 0.1),
+          mr: 1.5,
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </Box>
+      <Box flex={1}>
+        <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
+          {title}
+        </Typography>
+        {count != null && (
+          <Typography variant="caption" color="text.secondary">
+            {count} enregistrement{count !== 1 ? "s" : ""}
+          </Typography>
+        )}
+      </Box>
+      {action}
+    </Box>
+  );
+
+  /* ── empty state ── */
+  const EmptyState = ({ label }) => (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      py={6}
+      color="text.disabled"
+    >
+      <SearchIcon sx={{ fontSize: 40, mb: 1, opacity: 0.4 }} />
+      <Typography variant="body2">{label}</Typography>
+    </Box>
+  );
+
+  /* ── initials avatar ── */
+  const nameToColor = (name = "") => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h},50%,45%)`;
+  };
+
   const renderContent = () => {
     switch (selected) {
-      // ------------------ Clients ------------------
+      // ─────────────────── Clients ───────────────────
       case "clients":
         return (
           <Box>
-            <Typography variant="h5" gutterBottom>
-              Gestion des clients
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => setOpenCreateClientDialog(true)}
-              sx={{ mb: 2 }}
+            <SectionHeader
+              icon={<PeopleIcon sx={{ fontSize: 18, color: "primary.main" }} />}
+              title="Clients"
+              count={clientsData.length}
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<PersonAddIcon />}
+                  onClick={() => setOpenCreateClientDialog(true)}
+                  sx={{ textTransform: "none", borderRadius: 1.5 }}
+                >
+                  Nouveau client
+                </Button>
+              }
+            />
+
+            <Paper
+              variant="outlined"
+              sx={{ borderRadius: 2, overflow: "hidden" }}
             >
-              Créer un client
-            </Button>
-            <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
               {loading.clients ? (
-                <TableSkeleton columns={9} rows={5} />
+                <TableSkeleton columns={8} rows={6} />
               ) : (
-                <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
-                  <Table stickyHeader>
+                <TableContainer sx={{ maxHeight: 520 }}>
+                  <Table stickyHeader size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ ...cellStyle }}>ID</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Nom</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Prénom</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Téléphone</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Email</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Adresse</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Code postal</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Ville</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          Nb véhicules
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Actions</TableCell>
+                        <TableCell sx={thCell}>Client</TableCell>
+                        <TableCell sx={thCell}>Téléphone</TableCell>
+                        <TableCell sx={thCell}>Email</TableCell>
+                        <TableCell sx={thCell}>Adresse</TableCell>
+                        <TableCell sx={thCell}>CP</TableCell>
+                        <TableCell sx={thCell}>Ville</TableCell>
+                        <TableCell sx={{ ...thCell, textAlign: "center" }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedClients.map((c) => (
-                        <TableRow key={c.id} hover>
-                          <TableCell sx={{ ...cellStyle }}>{c.id}</TableCell>
-                          <TableCell sx={{ ...cellStyle }}>{c.name}</TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            {c.firstname}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>{c.phone}</TableCell>
-                          <TableCell sx={{ ...cellStyle }}>{c.email}</TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            {c?.adress}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            {c?.postalCode}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>{c?.city}</TableCell>
-
-                          <TableCell sx={{ ...cellStyle }}>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              sx={{ ...cellStyle }}
-                              color="secondary"
-                              onClick={() => {
-                                setSelectedClient(c);
-                                setOpenEditClientDialog(true);
-                              }}
-                            >
-                              Modifier
-                            </Button>
+                      {paginatedClients.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7}>
+                            <EmptyState label="Aucun client enregistré" />
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        paginatedClients.map((c) => (
+                          <TableRow
+                            key={c.id}
+                            hover
+                            sx={{
+                              "&:hover": {
+                                bgcolor: alpha(theme.palette.primary.main, 0.04),
+                              },
+                            }}
+                          >
+                            <TableCell sx={tdCell}>
+                              <Box display="flex" alignItems="center" gap={1.2}>
+                                <Avatar
+                                  sx={{
+                                    width: 30,
+                                    height: 30,
+                                    fontSize: 12,
+                                    bgcolor: nameToColor(c.name),
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {(c.name?.[0] ?? "").toUpperCase()}
+                                  {(c.firstname?.[0] ?? "").toUpperCase()}
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
+                                    {c.name} {c.firstname}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    #{c.id}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell sx={tdCell}>{c.phone || "—"}</TableCell>
+                            <TableCell sx={tdCell}>{c.email || "—"}</TableCell>
+                            <TableCell sx={tdCell}>{c?.adress || "—"}</TableCell>
+                            <TableCell sx={tdCell}>{c?.postalCode || "—"}</TableCell>
+                            <TableCell sx={tdCell}>{c?.city || "—"}</TableCell>
+                            <TableCell sx={{ ...tdCell, textAlign: "center" }}>
+                              <Tooltip title="Modifier">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setSelectedClient(c);
+                                    setOpenEditClientDialog(true);
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                   <TablePagination
@@ -1041,6 +1158,7 @@ function ManageClients() {
                     page={clientsPage}
                     onPageChange={handleChangeClientsPage}
                     onRowsPerPageChange={handleChangeClientsRowsPerPage}
+                    sx={{ borderTop: `1px solid ${theme.palette.divider}` }}
                   />
                 </TableContainer>
               )}
@@ -1048,69 +1166,97 @@ function ManageClients() {
           </Box>
         );
 
-      // ------------------ Véhicules ------------------
+      // ─────────────────── Véhicules ───────────────────
       case "vehicules":
         return (
           <Box>
-            <Typography variant="h5" gutterBottom>
-              Gestion des véhicules
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => setOpenCreateVehiculeDialog(true)}
-              sx={{ mb: 2 }}
-            >
-              Créer un véhicule
-            </Button>
-            <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
+            <SectionHeader
+              icon={<DirectionsCarIcon sx={{ fontSize: 18, color: "primary.main" }} />}
+              title="Véhicules"
+              count={vehiculesData.length}
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<DirectionsCarIcon />}
+                  onClick={() => setOpenCreateVehiculeDialog(true)}
+                  sx={{ textTransform: "none", borderRadius: 1.5 }}
+                >
+                  Nouveau véhicule
+                </Button>
+              }
+            />
+
+            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
               {loading.vehicules ? (
-                <Typography sx={{ p: 2 }}>
-                  Chargement des vehicules...
-                </Typography>
+                <TableSkeleton columns={5} rows={6} />
               ) : (
-                <TableContainer sx={{ maxHeight: 500, overflowY: "auto" }}>
-                  <Table stickyHeader>
+                <TableContainer sx={{ maxHeight: 520 }}>
+                  <Table stickyHeader size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ ...cellStyle }}>ID</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          Immatriculation
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Modèle</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Client</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Kilométrage</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>Actions</TableCell>
+                        <TableCell sx={thCell}>Immatriculation</TableCell>
+                        <TableCell sx={thCell}>Modèle</TableCell>
+                        <TableCell sx={thCell}>Couleur</TableCell>
+                        <TableCell sx={thCell}>Client</TableCell>
+                        <TableCell sx={thCell}>Kilométrage</TableCell>
+                        <TableCell sx={{ ...thCell, textAlign: "center" }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedVehicules.map((v) => (
-                        <TableRow key={v.id} hover>
-                          <TableCell sx={{ ...cellStyle }}>{v.id}</TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            {v.plateNumber}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>{v.model}</TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            {v.Client?.name}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            {v.mileage}
-                          </TableCell>
-                          <TableCell sx={{ ...cellStyle }}>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              color="secondary"
-                              onClick={() => {
-                                setSelectedVehicule(v);
-                                setOpenEditVehiculeDialog(true);
-                              }}
-                            >
-                              Modifier
-                            </Button>
+                      {paginatedVehicules.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6}>
+                            <EmptyState label="Aucun véhicule enregistré" />
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        paginatedVehicules.map((v) => (
+                          <TableRow
+                            key={v.id}
+                            hover
+                            sx={{
+                              "&:hover": {
+                                bgcolor: alpha(theme.palette.primary.main, 0.04),
+                              },
+                            }}
+                          >
+                            <TableCell sx={tdCell}>
+                              <Chip
+                                label={v.plateNumber || "—"}
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                                sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: 11 }}
+                              />
+                            </TableCell>
+                            <TableCell sx={tdCell}>{v.model || "—"}</TableCell>
+                            <TableCell sx={tdCell}>{v.color || "—"}</TableCell>
+                            <TableCell sx={tdCell}>
+                              <Typography variant="body2" fontSize={12}>
+                                {v.Client?.name || "—"}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={tdCell}>
+                              {v.mileage ? `${v.mileage} km` : "—"}
+                            </TableCell>
+                            <TableCell sx={{ ...tdCell, textAlign: "center" }}>
+                              <Tooltip title="Modifier">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setSelectedVehicule(v);
+                                    setOpenEditVehiculeDialog(true);
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                   <TablePagination
@@ -1121,6 +1267,7 @@ function ManageClients() {
                     page={vehiculesPage}
                     onPageChange={handleChangeVehiculesPage}
                     onRowsPerPageChange={handleChangeVehiculesRowsPerPage}
+                    sx={{ borderTop: `1px solid ${theme.palette.divider}` }}
                   />
                 </TableContainer>
               )}
@@ -1128,103 +1275,127 @@ function ManageClients() {
           </Box>
         );
 
-      // ------------------ Historiques ------------------
+      // ─────────────────── Historiques ───────────────────
       case "historiques":
         return (
           <Box>
-            <Typography variant="h5" gutterBottom>
-              Historiques
-            </Typography>
+            <SectionHeader
+              icon={<HistoryIcon sx={{ fontSize: 18, color: "primary.main" }} />}
+              title="Historiques"
+            />
 
-            <Tabs
-              value={tabHist}
-              onChange={(e, v) => setTabHist(v)}
-              textColor="primary"
-              indicatorColor="primary"
-              sx={{ mb: 3 }}
-            >
-              <Tab label="Factures" />
-              <Tab label="Devis" />
-              <Tab label="Ordres de Réparation" />
-              <Tab label="Réservations" />
-              <Tab label="Entretiens" />
-            </Tabs>
+            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", mb: 2 }}>
+              <Tabs
+                value={tabHist}
+                onChange={(e, v) => setTabHist(v)}
+                textColor="primary"
+                indicatorColor="primary"
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  px: 1,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  bgcolor: "background.default",
+                  minHeight: 44,
+                  "& .MuiTab-root": { minHeight: 44, fontSize: 13, textTransform: "none", fontWeight: 500 },
+                }}
+              >
+                <Tab label="Factures" />
+                <Tab label="Devis" />
+                <Tab label="Ordres de Réparation" />
+                <Tab label="Réservations" />
+                <Tab label="Entretiens" />
+              </Tabs>
 
-            {tabHist === 0 &&
-              renderTable(paginatedHistData, "Facture", facturesData.length)}
-
-            {tabHist === 1 &&
-              renderTable(paginatedHistData, "Devis", devisData.length)}
-
-            {tabHist === 2 &&
-              renderTable(paginatedHistData, "OR", orData.length)}
-
-            {tabHist === 3 &&
-              renderTable(
-                paginatedHistData,
-                "Réservation",
-                reservationsData.length,
-              )}
-
-            {tabHist === 4 &&
-              renderTable(
-                paginatedHistData,
-                "Entretien",
-                entretiensData.length,
-              )}
+              {tabHist === 0 && renderTable(paginatedHistData, "Facture", facturesData.length)}
+              {tabHist === 1 && renderTable(paginatedHistData, "Devis", devisData.length)}
+              {tabHist === 2 && renderTable(paginatedHistData, "OR", orData.length)}
+              {tabHist === 3 && renderTable(paginatedHistData, "Réservation", reservationsData.length)}
+              {tabHist === 4 && renderTable(paginatedHistData, "Entretien", entretiensData.length)}
+            </Paper>
           </Box>
         );
 
       default:
-        return <Typography>Choisissez une section</Typography>;
+        return (
+          <EmptyState label="Choisissez une section dans le menu" />
+        );
     }
   };
 
-  // ------------------ Helper pour Historique ------------------
+  // ─── helper Historique ───────────────────────────────────────────────────
   const renderTable = (data, type, totalCount) => {
     const { page, rowsPerPage } = histPagination[currentHistKey];
 
     return (
-      <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2, mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Liste des {type}s
-        </Typography>
-
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ ...cellStyle }}>N° {type}</TableCell>
-              <TableCell sx={{ ...cellStyle }}>Client</TableCell>
-              <TableCell sx={{ ...cellStyle }}>Véhicule</TableCell>
-              <TableCell sx={{ ...cellStyle }}>Date</TableCell>
-              <TableCell sx={{ ...cellStyle }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {data.map((d) => (
-              <TableRow key={d.id} hover>
-                <TableCell sx={{ ...cellStyle }}>{d.id}</TableCell>
-                <TableCell sx={{ ...cellStyle }}>{d?.Client?.name}</TableCell>
-                <TableCell sx={{ ...cellStyle }}>
-                  {d?.Vehicle?.plateNumber}
-                </TableCell>
-                <TableCell sx={{ ...cellStyle }}>
-                  {new Date(d.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell sx={{ ...cellStyle }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={(event) => HandleViewDocument(event, d)}
-                  >
-                    Voir
-                  </Button>
-                </TableCell>
+      <>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={thCell}>N° {type}</TableCell>
+                <TableCell sx={thCell}>Client</TableCell>
+                <TableCell sx={thCell}>Véhicule</TableCell>
+                <TableCell sx={thCell}>Date</TableCell>
+                <TableCell sx={{ ...thCell, textAlign: "center" }}>Action</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {data.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <EmptyState label={`Aucun(e) ${type} trouvé(e)`} />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data.map((d) => (
+                  <TableRow
+                    key={d.id}
+                    hover
+                    sx={{
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.04),
+                      },
+                    }}
+                  >
+                    <TableCell sx={tdCell}>
+                      <Typography variant="body2" fontWeight={600} fontFamily="monospace">
+                        #{d.id}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      {d?.Client?.name || "—"} {d?.Client?.firstName || ""}
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      {d?.Vehicle?.plateNumber ? (
+                        <Chip
+                          label={d.Vehicle.plateNumber}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontFamily: "monospace", fontSize: 11 }}
+                        />
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      {new Date(d.createdAt).toLocaleDateString("fr-FR")}
+                    </TableCell>
+                    <TableCell sx={{ ...tdCell, textAlign: "center" }}>
+                      <Tooltip title="Consulter">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(event) => HandleViewDocument(event, d)}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
@@ -1234,8 +1405,9 @@ function ManageClients() {
           page={page}
           onPageChange={handleChangeHistPage}
           onRowsPerPageChange={handleChangeHistRowsPerPage}
+          sx={{ borderTop: `1px solid ${theme.palette.divider}` }}
         />
-      </Paper>
+      </>
     );
   };
 
@@ -1318,219 +1490,329 @@ function ManageClients() {
     }));
   };
 
+  /* ── dialog form helper ── */
+  const FormDialog = ({ open, onClose, title, children, onSave, saveLabel = "Enregistrer" }) => (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          bgcolor: "background.default",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          py: 1.5,
+          px: 2.5,
+        }}
+      >
+        <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3, pb: 1, px: 2.5 }}>
+        <Box display="flex" flexDirection="column" gap={2}>
+          {children}
+        </Box>
+      </DialogContent>
+      <Divider />
+      <DialogActions
+        sx={{
+          bgcolor: "background.default",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          px: 2.5,
+          py: 1.5,
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" size="small" onClick={onClose} sx={{ textTransform: "none" }}>
+          Annuler
+        </Button>
+        <Button variant="contained" size="small" onClick={onSave} sx={{ textTransform: "none" }}>
+          {saveLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  const navItems = [
+    { key: "clients", label: "Clients", icon: <PeopleIcon fontSize="small" /> },
+    { key: "vehicules", label: "Véhicules", icon: <DirectionsCarIcon fontSize="small" /> },
+    { key: "historiques", label: "Historiques", icon: <HistoryIcon fontSize="small" /> },
+  ];
+
   return (
     <>
-      <div className="">
-        {/* 🔍 Barre de recherche centrée */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            alignItems: "flex-start", // ⬅️ aligne les enfants en haut
-            justifyContent: "center", // ⬅️ centre horizontalement
-            mx: 3,
-            mt: 5, // marge top pour respirer
-          }}
-        >
-          {selectedEvent && (
-            <EventModal
-              open={modalOpen}
-              onClose={handleModalClose}
-              editedEvent={selectedEvent}
-              setEditedEvent={handleEditedEventChange}
-              categories={categories}
-              handleSave={handleSaveEvent}
-              handleEventDetailClick={handleEventDetailClick}
-              onEventTriggered={handleEventFromChild}
-              onFactureReceive={handleFactureReceived}
-            />
-          )}
-          {facture && (
-            <DocumentModal
-              open={modalOpen3}
-              onClose={handleModalClose3}
-              editedEvent={facture}
-              setEditedEvent={handleEditedEventChange}
-              collectionName={"factures"}
-              setCollectionName={setCollectionName}
-              categories={categories}
-              onFactureReceive={handleFactureReceived}
-            />
-          )}
+      {/* ── Modals ── */}
+      {selectedEvent && (
+        <EventModal
+          open={modalOpen}
+          onClose={handleModalClose}
+          editedEvent={selectedEvent}
+          setEditedEvent={handleEditedEventChange}
+          categories={categories}
+          handleSave={handleSaveEvent}
+          handleEventDetailClick={handleEventDetailClick}
+          onEventTriggered={handleEventFromChild}
+          onFactureReceive={handleFactureReceived}
+        />
+      )}
+      {facture && (
+        <DocumentModal
+          open={modalOpen3}
+          onClose={handleModalClose3}
+          editedEvent={facture}
+          setEditedEvent={handleEditedEventChange}
+          collectionName="factures"
+          setCollectionName={setCollectionName}
+          categories={categories}
+          onFactureReceive={handleFactureReceived}
+        />
+      )}
+      {selectedEvent && selectedEvent.collection !== "events" && (
+        <DocModal
+          open={modalOpen2}
+          onClose={handleModalClose2}
+          editedEvent={selectedEvent}
+          setEditedEvent={handleEditedEventChange}
+          collectionName={collectionName}
+          setCollectionName={setCollectionName}
+          categories={categories}
+          onFactureReceive={handleFactureReceived}
+          onDelete={handleSearchClickFull}
+          onNotificationSuccess={handleOnNotficationSuccess}
+          onSearchAfterDevisResa={handleSearchClickFull}
+        />
+      )}
 
-          {selectedEvent && selectedEvent.collection !== "events" && (
-            <DocModal
-              open={modalOpen2}
-              onClose={handleModalClose2}
-              editedEvent={selectedEvent}
-              setEditedEvent={handleEditedEventChange}
-              collectionName={collectionName}
-              setCollectionName={setCollectionName}
-              categories={categories}
-              onFactureReceive={handleFactureReceived}
-              onDelete={handleSearchClickFull}
-              onNotificationSuccess={handleOnNotficationSuccess}
-              onSearchAfterDevisResa={handleSearchClickFull}
+      {/* ── Page layout ── */}
+      <Box sx={{ minHeight: "100vh", bgcolor: "background.default", px: { xs: 2, md: 4 }, pt: 3, pb: 6 }}>
+
+        {/* Page header */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Box>
+            <Typography variant="h5" fontWeight={800} lineHeight={1.2}>
+              Gestion clients
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Clients, véhicules et historiques de documents
+            </Typography>
+          </Box>
+
+          {/* Search bar */}
+          <Box display="flex" gap={1} alignItems="center" sx={{ width: { xs: "100%", md: 440 } }}>
+            <TextField
+              variant="outlined"
+              placeholder="Rechercher un client, document…"
+              size="small"
+              fullWidth
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                  </InputAdornment>
+                ),
+              }}
             />
-          )}
-          <TextField
-            variant="outlined"
-            placeholder="Rechercher"
-            size="small"
-            sx={{
-              borderRadius: "16x",
-              width: "50%", // Ajustable selon besoin
-              ml: 2,
-            }}
-            onChange={handleSearchChange}
-            value={searchQuery}
-            onKeyDown={handleKeyDown}
-          />
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => {
-              handleSearchClick();
-              setOpenPage(false);
-            }}
-            sx={{ ml: 2 }}
-          >
-            Rechercher
-          </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => { handleSearchClick(); setOpenPage(false); }}
+              sx={{ textTransform: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              Rechercher
+            </Button>
+          </Box>
         </Box>
-      </div>
+
+        <Grid container spacing={3}>
+          {/* ── Left nav ── */}
+          <Grid item xs={12} md={2}>
+            <Paper
+              variant="outlined"
+              sx={{ borderRadius: 2, overflow: "hidden", position: "sticky", top: 16 }}
+            >
+              {navItems.map((item, i) => (
+                <Box key={item.key}>
+                  <Box
+                    onClick={() => setSelected(item.key)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.2,
+                      px: 2,
+                      py: 1.4,
+                      cursor: "pointer",
+                      bgcolor:
+                        selected === item.key
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : "transparent",
+                      borderLeft:
+                        selected === item.key
+                          ? `3px solid ${theme.palette.primary.main}`
+                          : "3px solid transparent",
+                      transition: "all 0.15s ease",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.06),
+                      },
+                    }}
+                  >
+                    <Box sx={{ color: selected === item.key ? "primary.main" : "text.secondary" }}>
+                      {item.icon}
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight={selected === item.key ? 700 : 400}
+                      color={selected === item.key ? "primary.main" : "text.primary"}
+                    >
+                      {item.label}
+                    </Typography>
+                  </Box>
+                  {i < navItems.length - 1 && <Divider />}
+                </Box>
+              ))}
+            </Paper>
+          </Grid>
+
+          {/* ── Content ── */}
+          <Grid item xs={12} md={10}>
+            <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5 }}>
+              {renderContent()}
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* ── Search results dialog ── */}
       <Dialog
         open={open && !openPage}
         onClose={handleClose}
-        PaperProps={{
-          style: {
-            width: "1200px",
-            maxWidth: "none",
-          },
-        }}
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <DialogTitle>Résultats de la recherche</DialogTitle>
-        <DialogContent>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
-            mt={2}
-          >
+        <DialogTitle
+          sx={{
+            bgcolor: "background.default",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            py: 1.5,
+            px: 2.5,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <SearchIcon sx={{ fontSize: 18, color: "primary.main" }} />
+            <Typography variant="subtitle1" fontWeight={700} flex={1}>
+              Résultats de la recherche
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {filteredEvents.length} résultat{filteredEvents.length !== 1 ? "s" : ""}
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 2.5, px: 2.5 }}>
+          {/* Filters row */}
+          <Box display="flex" gap={1.5} flexWrap="wrap" mb={2}>
             <TextField
-              label="Recherche"
-              variant="outlined"
               size="small"
+              placeholder="Nom, Prénom, Email, Véhicule…"
               value={searchQueryInterior}
               onChange={(e) => setSearchQueryInterior(e.target.value)}
-              placeholder="Nom, Prénom, Email, Marque, Modèle"
-              style={{ marginRight: 16, flexGrow: 1 }}
+              sx={{ flex: 2, minWidth: 180 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+                  </InputAdornment>
+                ),
+              }}
             />
-            <FormControl
-              variant="outlined"
-              size="small"
-              style={{ marginRight: "0.2rem", flexGrow: 1 }}
-            >
-              <InputLabel>Type de document</InputLabel>
-              <Select
-                value={documentFilter}
-                onChange={(e) => setDocumentFilter(e.target.value)}
-                label="Type de document"
-                style={{ minWidth: 200 }}
-              >
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel>Type</InputLabel>
+              <Select value={documentFilter} onChange={(e) => setDocumentFilter(e.target.value)} label="Type">
                 <MenuItem value="all">Tous</MenuItem>
                 <MenuItem value="events">O.R</MenuItem>
-                <MenuItem value="reservations">Reservations</MenuItem>
+                <MenuItem value="reservations">Réservations</MenuItem>
                 <MenuItem value="devis">Devis</MenuItem>
                 <MenuItem value="factures">Factures</MenuItem>
-                {/* Ajoute d'autres types si nécessaire */}
               </Select>
             </FormControl>
             <TextField
+              size="small"
               label="Date min"
               type="date"
-              size="small"
               InputLabelProps={{ shrink: true }}
               value={dateMin || ""}
               onChange={(e) => setDateMin(e.target.value)}
-              style={{ marginRight: "0.2rem", flexGrow: 1 }}
+              sx={{ flex: 1, minWidth: 140 }}
             />
-
             <TextField
+              size="small"
               label="Date max"
               type="date"
-              size="small"
               InputLabelProps={{ shrink: true }}
               value={dateMax || ""}
               onChange={(e) => setDateMax(e.target.value)}
-              style={{ marginRight: "0.2rem", flexGrow: 1 }}
+              sx={{ flex: 1, minWidth: 140 }}
             />
           </Box>
+
           {selectedItems.length > 0 && (
             <Button
               variant="outlined"
               color="error"
+              size="small"
               startIcon={<DeleteIcon />}
               onClick={handleDeleteSelected}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, textTransform: "none" }}
             >
               Supprimer la sélection ({selectedItems.length})
             </Button>
           )}
 
           {dataEventsAll.length === 0 ? (
-            <Typography>Aucun événement trouvé.</Typography>
+            <Box py={5} textAlign="center" color="text.disabled">
+              <SearchIcon sx={{ fontSize: 40, opacity: 0.3, mb: 1 }} />
+              <Typography variant="body2">Aucun document trouvé.</Typography>
+            </Box>
           ) : (
-            <TableContainer
-              component={Paper}
-              sx={{
-                backgroundColor: theme.palette.background.paper,
-                borderRadius: 2,
-                boxShadow: isDark
-                  ? "0 0 12px rgba(255, 255, 255, 0.05)"
-                  : "0 0 12px rgba(0, 0, 0, 0.05)",
-              }}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox" sx={{ ...cellStyle }}>
-                      <Checkbox
-                        checked={
-                          selectedItems.length > 0 &&
-                          selectedItems.length === filteredEvents.length
-                        }
-                        indeterminate={
-                          selectedItems.length > 0 &&
-                          selectedItems.length < filteredEvents.length
-                        }
-                        onChange={handleSelectAllClick}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Document</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>N°</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Date</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Nom</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Prénom</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Téléphone</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Email</TableCell>
-                    <TableCell sx={{ ...cellStyle }}>Véhicule</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {paginatedEvents.map((event) => {
-                    const selected = isSelected(event.id);
-
-                    return (
+            <Paper variant="outlined" sx={{ borderRadius: 1.5, overflow: "hidden" }}>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox" sx={thCell}>
+                        <Checkbox
+                          size="small"
+                          checked={selectedItems.length > 0 && selectedItems.length === filteredEvents.length}
+                          indeterminate={selectedItems.length > 0 && selectedItems.length < filteredEvents.length}
+                          onChange={handleSelectAllClick}
+                        />
+                      </TableCell>
+                      <TableCell sx={thCell}>Type</TableCell>
+                      <TableCell sx={thCell}>N°</TableCell>
+                      <TableCell sx={thCell}>Date</TableCell>
+                      <TableCell sx={thCell}>Client</TableCell>
+                      <TableCell sx={thCell}>Téléphone</TableCell>
+                      <TableCell sx={thCell}>Email</TableCell>
+                      <TableCell sx={thCell}>Véhicule</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedEvents.map((event) => (
                       <TableRow
                         key={event.id}
                         hover
-                        selected={selected}
-                        style={{ cursor: "pointer" }}
+                        selected={isSelected(event.id)}
+                        sx={{
+                          cursor: "pointer",
+                          "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.04) },
+                          "&.Mui-selected": { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+                        }}
                         onClick={() => {
-                          setSelectedEvent({ ...event, lastEventId: event.id }); // Met à jour l'événement sélectionné
+                          setSelectedEvent({ ...event, lastEventId: event.id });
                           setCollectionName(event.collectionName);
                           if (event.collectionName !== "events") {
                             setModalOpen2(true);
@@ -1540,56 +1822,40 @@ function ManageClients() {
                           }
                         }}
                       >
-                        <TableCell
-                          padding="checkbox"
-                          onClick={(e) => e.stopPropagation()}
-                          sx={{ ...cellStyle }}
-                        >
+                        <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()} sx={tdCell}>
                           <Checkbox
-                            checked={selectedItems.some(
-                              (item) => item.id === event.id,
-                            )}
-                            onChange={() =>
-                              handleSelectClick(event.id, event.collectionName)
-                            }
+                            size="small"
+                            checked={selectedItems.some((item) => item.id === event.id)}
+                            onChange={() => handleSelectClick(event.id, event.collectionName)}
                           />
                         </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
+                        <TableCell sx={tdCell}>
                           <Chip
                             label={event.collectionName}
                             color={getBadgeColor(event.collectionName)}
-                            style={{
-                              fontWeight: "bold",
-                              textTransform: "capitalize",
-                            }}
+                            size="small"
+                            sx={{ fontSize: 11, fontWeight: 600, textTransform: "capitalize" }}
                           />
                         </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>{event.id}</TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
+                        <TableCell sx={{ ...tdCell, fontFamily: "monospace", fontWeight: 600 }}>
+                          #{event.id}
+                        </TableCell>
+                        <TableCell sx={tdCell}>
                           {moment(event.createdAt).format("DD/MM/YYYY")}
                         </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {event.Client.name}
+                        <TableCell sx={tdCell}>
+                          {event.Client.name} {event.Client.firstName}
                         </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {event.Client.firstName}
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {event.Client.phone || ""}
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {event.Client.email}
-                        </TableCell>
-                        <TableCell sx={{ ...cellStyle }}>
-                          {event.Vehicle.model || ""} -{" "}
-                          {event.Vehicle.plateNumber || ""}
+                        <TableCell sx={tdCell}>{event.Client.phone || "—"}</TableCell>
+                        <TableCell sx={tdCell}>{event.Client.email}</TableCell>
+                        <TableCell sx={tdCell}>
+                          {event.Vehicle?.model || ""}{event.Vehicle?.plateNumber ? ` · ${event.Vehicle.plateNumber}` : ""}
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
@@ -1598,15 +1864,28 @@ function ManageClients() {
                 page={page}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
+                sx={{ borderTop: `1px solid ${theme.palette.divider}` }}
               />
-            </TableContainer>
+            </Paper>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleFilterDocuments} color="primary">
-            Appliquer
+
+        <Divider />
+        <DialogActions
+          sx={{
+            bgcolor: "background.default",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            px: 2.5,
+            py: 1.25,
+            gap: 1,
+          }}
+        >
+          <Button size="small" variant="outlined" onClick={handleFilterDocuments} sx={{ textTransform: "none" }}>
+            Appliquer filtres
           </Button>
-          <Button onClick={handleClose} color="primary">
+          <Box flex={1} />
+          <Button size="small" variant="contained" onClick={handleClose} sx={{ textTransform: "none" }}>
             Fermer
           </Button>
         </DialogActions>
@@ -1621,327 +1900,89 @@ function ManageClients() {
           />
         )}
       </Dialog>
-      <Box sx={{ height: "100vh", px: 4 }}>
-        <Grid container spacing={2} sx={{ height: "100%", mt: 3 }}>
-          {/* 🟦 Colonne gauche — sidebar locale */}
-          <Grid
-            item
-            xs={12}
-            md={2}
-            sx={{
-              pl: "2.5rem !important",
-            }}
-          >
-            <Card
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <CardContent sx={{ flex: 1, overflowY: "auto" }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 2,
-                    ml: 3,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ mb: 2, textAlign: "center" }}>
-                    Menu
-                  </Typography>
 
-                  <List>
-                    {menuItems.map((item) => (
-                      <ListItem
-                        button
-                        key={item.key}
-                        selected={selected === item.key}
-                        onClick={() => setSelected(item.key)}
-                        sx={{
-                          borderRadius: 1,
-                          mb: 1,
-                          bgcolor:
-                            selected === item.key
-                              ? "primary.main"
-                              : "transparent",
-                          color:
-                            selected === item.key ? "white" : "text.primary",
-                          "&:hover": {
-                            bgcolor:
-                              selected === item.key
-                                ? "primary.dark"
-                                : "grey.100",
-                          },
-                        }}
-                      >
-                        <ListItemText primary={item.label} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+      {/* ── Create client ── */}
+      <FormDialog
+        open={openCreateClientDialog}
+        onClose={() => setOpenCreateClientDialog(false)}
+        title="Nouveau client"
+        onSave={handleCreateClient}
+      >
+        <TextField name="name" onChange={handleNewClientChange} label="Nom" size="small" fullWidth />
+        <TextField name="firstName" onChange={handleNewClientChange} label="Prénom" size="small" fullWidth />
+        <TextField name="phone" onChange={handleNewClientChange} label="Téléphone" size="small" fullWidth />
+        <TextField name="email" onChange={handleNewClientChange} label="Email" size="small" fullWidth />
+        <TextField name="address" onChange={handleNewClientChange} label="Adresse" size="small" fullWidth />
+        <Box display="flex" gap={1.5}>
+          <TextField name="postalCode" onChange={handleNewClientChange} label="Code postal" size="small" sx={{ flex: 1 }} />
+          <TextField name="city" onChange={handleNewClientChange} label="Ville" size="small" sx={{ flex: 2 }} />
+        </Box>
+      </FormDialog>
 
-          {/* 🟩 Colonne droite — contenu principal */}
-          <Grid item xs={12} md={10}>
-            <Box
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "left",
-                p: 2,
-                borderRadius: 2,
-                boxShadow: 2,
-              }}
-            >
-              {renderContent()}
-            </Box>
-          </Grid>
-        </Grid>
+      {/* ── Edit client ── */}
+      <FormDialog
+        open={openEditClientDialog}
+        onClose={() => setOpenEditClientDialog(false)}
+        title="Modifier le client"
+        onSave={handleUpdateClients}
+      >
+        <TextField name="name" onChange={handleNewClientChange} label="Nom" size="small" fullWidth value={selectedClient?.name || ""} />
+        <TextField name="firstName" onChange={handleNewClientChange} label="Prénom" size="small" fullWidth value={selectedClient?.firstName || ""} />
+        <TextField name="phone" onChange={handleNewClientChange} label="Téléphone" size="small" fullWidth value={selectedClient?.phone || ""} />
+        <TextField name="email" onChange={handleNewClientChange} label="Email" size="small" fullWidth value={selectedClient?.email || ""} />
+        <TextField name="address" onChange={handleNewClientChange} label="Adresse" size="small" fullWidth value={selectedClient?.address || ""} />
+        <Box display="flex" gap={1.5}>
+          <TextField name="postalCode" onChange={handleNewClientChange} label="Code postal" size="small" sx={{ flex: 1 }} value={selectedClient?.postalCode || ""} />
+          <TextField name="city" onChange={handleNewClientChange} label="Ville" size="small" sx={{ flex: 2 }} value={selectedClient?.city || ""} />
+        </Box>
+      </FormDialog>
 
-        {/* Dialog (création / modif) */}
-        <Dialog
-          open={openCreateClientDialog}
-          onClose={() => setOpenCreateClientDialog(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Créer un client</DialogTitle>
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <TextField
-              name="name"
-              onChange={handleNewClientChange}
-              label="Nom"
-              fullWidth
-            />
-            <TextField
-              name="firstName"
-              onChange={handleNewClientChange}
-              label="Prénom"
-              fullWidth
-            />
-            <TextField
-              name="phone"
-              onChange={handleNewClientChange}
-              label="Téléphone"
-              fullWidth
-            />
-            <TextField
-              name="email"
-              onChange={handleNewClientChange}
-              label="Email"
-              fullWidth
-            />
-            <TextField
-              name="address"
-              onChange={handleNewClientChange}
-              label="Adresse"
-              fullWidth
-            />
-            <TextField name="postalCode" label="Code postal" fullWidth />
-            <TextField
-              name="city"
-              onChange={handleNewClientChange}
-              label="Ville"
-              fullWidth
-            />
-            <Button variant="contained" onClick={handleCreateClient}>
-              Enregistrer
-            </Button>
-          </DialogContent>
-        </Dialog>
-        <Dialog
-          open={openEditClientDialog}
-          onClose={() => setOpenEditClientDialog(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Modifier le client</DialogTitle>
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <TextField
-              label="Nom"
-              fullWidth
-              name="name"
-              onChange={handleNewClientChange}
-              value={selectedClient?.name || ""}
-            />
-            <TextField
-              label="Prénom"
-              name="firstName"
-              onChange={handleNewClientChange}
-              fullWidth
-              value={selectedClient?.firstName || ""}
-            />
-            <TextField
-              label="Téléphone"
-              name="phone"
-              onChange={handleNewClientChange}
-              fullWidth
-              value={selectedClient?.phone || ""}
-            />
-            <TextField
-              label="Email"
-              name="email"
-              onChange={handleNewClientChange}
-              fullWidth
-              value={selectedClient?.email || ""}
-            />
-            <TextField
-              label="Addresse"
-              name="address"
-              onChange={handleNewClientChange}
-              fullWidth
-              value={selectedClient?.address || ""}
-            />
-            <TextField
-              label="Code postal"
-              name="postalCode"
-              onChange={handleNewClientChange}
-              fullWidth
-              value={selectedClient?.postalCode || ""}
-            />
-            <TextField
-              label="Ville"
-              name="city"
-              onChange={handleNewClientChange}
-              fullWidth
-              value={selectedClient?.city || ""}
-            />
-            <Button variant="contained" onClick={handleUpdateClients}>
-              Enregistrer
-            </Button>
-          </DialogContent>
-        </Dialog>
-        <Dialog
-          open={openCreateVehiculeDialog}
-          onClose={() => setOpenCreateVehiculeDialog(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Créer un véhicule</DialogTitle>
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <TextField
-              name="plateNumber"
-              onChange={handleNewVehiculeChange}
-              label="Immatriculation"
-              fullWidth
-            />
-            <TextField
-              name="model"
-              onChange={handleNewVehiculeChange}
-              label="Modèle"
-              fullWidth
-            />
-            <TextField
-              name="color"
-              onChange={handleNewVehiculeChange}
-              label="Couleur"
-              fullWidth
-            />
-            {/* 🔹 Sélecteur de client */}
-            <FormControl fullWidth>
-              <InputLabel>Client</InputLabel>
-              <Select
-                name="clientId"
-                value={formData.clientId}
-                onChange={handleNewVehiculeChange}
-                label="Client"
-              >
-                {clientsData.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              name="mileage"
-              onChange={handleNewVehiculeChange}
-              label="Kilométrage"
-              fullWidth
-            />
-            <TextField
-              name="vin"
-              onChange={handleNewVehiculeChange}
-              label="VIN"
-              fullWidth
-            />
-            <Button variant="contained" onClick={createVehicule}>
-              Enregistrer
-            </Button>
-          </DialogContent>
-        </Dialog>
-        <Dialog
-          open={openEditVehiculeDialog}
-          onClose={() => setOpenEditVehiculeDialog(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Modifier le véhicule</DialogTitle>
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <TextField
-              label="Immatriculation"
-              name="plateNumber"
-              onChange={handleNewVehiculeChange}
-              fullWidth
-              value={selectedVehicule?.plateNumber || ""}
-            />
+      {/* ── Create véhicule ── */}
+      <FormDialog
+        open={openCreateVehiculeDialog}
+        onClose={() => setOpenCreateVehiculeDialog(false)}
+        title="Nouveau véhicule"
+        onSave={createVehicule}
+      >
+        <TextField name="plateNumber" onChange={handleNewVehiculeChange} label="Immatriculation" size="small" fullWidth />
+        <Box display="flex" gap={1.5}>
+          <TextField name="model" onChange={handleNewVehiculeChange} label="Modèle" size="small" sx={{ flex: 2 }} />
+          <TextField name="color" onChange={handleNewVehiculeChange} label="Couleur" size="small" sx={{ flex: 1 }} />
+        </Box>
+        <FormControl fullWidth size="small">
+          <InputLabel>Client</InputLabel>
+          <Select name="clientId" value={formData.clientId} onChange={handleNewVehiculeChange} label="Client">
+            {clientsData.map((c) => (
+              <MenuItem key={c.id} value={c.id}>{c.name} {c.firstname}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Box display="flex" gap={1.5}>
+          <TextField name="mileage" onChange={handleNewVehiculeChange} label="Kilométrage" size="small" sx={{ flex: 1 }} />
+          <TextField name="vin" onChange={handleNewVehiculeChange} label="VIN" size="small" sx={{ flex: 2 }} />
+        </Box>
+      </FormDialog>
 
-            <TextField
-              label="Modèle"
-              fullWidth
-              name="model"
-              onChange={handleNewVehiculeChange}
-              value={selectedVehicule?.model || ""}
-            />
-            <TextField
-              label="Couleur"
-              name="color"
-              onChange={handleNewVehiculeChange}
-              fullWidth
-              value={selectedVehicule?.color || ""}
-            />
-            <TextField
-              label="Client"
-              fullWidth
-              value={selectedVehicule?.Client.name || ""}
-              disabled="true"
-            />
-            <TextField
-              label="Kilométrage"
-              name="mileage"
-              onChange={handleNewVehiculeChange}
-              fullWidth
-              value={selectedVehicule?.mileage || ""}
-            />
-            <TextField
-              label="VIN"
-              name="vin"
-              onChange={handleNewVehiculeChange}
-              fullWidth
-              value={selectedVehicule?.vin || ""}
-            />
-            <Button variant="contained" onClick={handleUpdateVehicule}>
-              Enregistrer
-            </Button>
-          </DialogContent>
-        </Dialog>
-      </Box>
-      <AddDocumentComponent
-        onDocumentCreated={handleDocumentCreated}
-      ></AddDocumentComponent>
+      {/* ── Edit véhicule ── */}
+      <FormDialog
+        open={openEditVehiculeDialog}
+        onClose={() => setOpenEditVehiculeDialog(false)}
+        title="Modifier le véhicule"
+        onSave={handleUpdateVehicule}
+      >
+        <TextField name="plateNumber" onChange={handleNewVehiculeChange} label="Immatriculation" size="small" fullWidth value={selectedVehicule?.plateNumber || ""} />
+        <Box display="flex" gap={1.5}>
+          <TextField name="model" onChange={handleNewVehiculeChange} label="Modèle" size="small" sx={{ flex: 2 }} value={selectedVehicule?.model || ""} />
+          <TextField name="color" onChange={handleNewVehiculeChange} label="Couleur" size="small" sx={{ flex: 1 }} value={selectedVehicule?.color || ""} />
+        </Box>
+        <TextField label="Client" size="small" fullWidth disabled value={selectedVehicule?.Client?.name || ""} />
+        <Box display="flex" gap={1.5}>
+          <TextField name="mileage" onChange={handleNewVehiculeChange} label="Kilométrage" size="small" sx={{ flex: 1 }} value={selectedVehicule?.mileage || ""} />
+          <TextField name="vin" onChange={handleNewVehiculeChange} label="VIN" size="small" sx={{ flex: 2 }} value={selectedVehicule?.vin || ""} />
+        </Box>
+      </FormDialog>
+
+      <AddDocumentComponent onDocumentCreated={handleDocumentCreated} />
     </>
   );
 }

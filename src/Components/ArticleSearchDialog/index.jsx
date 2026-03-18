@@ -15,6 +15,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
 import { BASE_URL_API } from "../../config";
@@ -22,7 +23,7 @@ import { ApiAutocompleteField } from "../ReferenceArticleModal";
 
 const API_BASE = BASE_URL_API + "/v1";
 
-const TYPES = ["Pneus", "Pièces", "Accessoires", "Consommable atelier"];
+const TYPES = ["Pneus", "Pièces", "Accessoires", "Consommable"];
 
 const ROW_LABEL_WIDTH = 160;
 
@@ -31,7 +32,11 @@ function SearchRow({ label, children }) {
     <Box display="flex" alignItems="center" gap={2} mb={1.5}>
       <Typography
         variant="body2"
-        sx={{ minWidth: ROW_LABEL_WIDTH, fontWeight: 500, color: "#444" }}
+        sx={{
+          minWidth: ROW_LABEL_WIDTH,
+          fontWeight: 500,
+          color: "text.secondary",
+        }}
       >
         {label}
       </Typography>
@@ -41,6 +46,7 @@ function SearchRow({ label, children }) {
 }
 
 export default function ArticleSearchDialog({ open, onClose, onResults }) {
+  const theme = useTheme();
   const [filters, setFilters] = useState({
     reference: "",
     types: [],
@@ -80,7 +86,7 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
 
       const res = await fetch(`${API_BASE}/stock/articles/search?${params}`);
       const data = await res.json();
-      onResults(data); // passe les résultats au parent
+      onResults(data);
       onClose();
     } catch (err) {
       console.error("Search error:", err);
@@ -108,13 +114,14 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
           display: "flex",
           alignItems: "center",
           gap: 1,
-          bgcolor: "#e8e8e8",
-          borderBottom: "1px solid #ccc",
-          py: 1.2,
-          px: 2,
+          bgcolor: "background.default",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          py: 1.5,
+          px: 2.5,
         }}
       >
-        <SearchIcon sx={{ fontSize: 18, color: "#555" }} />
+        <SearchIcon sx={{ fontSize: 18, color: "primary.main" }} />
         <Typography variant="subtitle1" fontWeight={600} sx={{ flex: 1 }}>
           Recherche d'une fiche article
         </Typography>
@@ -152,12 +159,12 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
                   px: 2,
                   textTransform: "none",
                   fontSize: 13,
-                  borderRadius: "4px !important",
-                  border: "1px solid #bbb !important",
+                  borderRadius: "8px !important",
+                  border: `1px solid ${theme.palette.divider} !important`,
                   "&.Mui-selected": {
-                    bgcolor: "#1565c0",
+                    bgcolor: "primary.main",
                     color: "#fff",
-                    "&:hover": { bgcolor: "#0d47a1" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   },
                 }}
               >
@@ -192,7 +199,6 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Champs avec autocomplete */}
         {[
           { label: "Marque", field: "marque", resource: "marques" },
           { label: "Famille articles", field: "famille", resource: "familles" },
@@ -213,26 +219,28 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
               resource={resource}
               value={filters[field]}
               onChange={setField(field)}
-              readOnly // pas de bouton "Ajouter" en mode recherche
+              readOnly
             />
           </SearchRow>
         ))}
       </DialogContent>
 
-      <Divider />
-
-      <DialogActions sx={{ px: 3, py: 1.5, bgcolor: "#f5f5f5", gap: 1 }}>
-        <Button
-          variant="contained"
-          color="inherit"
-          onClick={onClose}
-          sx={{ bgcolor: "#9e9e9e", color: "#fff" }}
-        >
+      <DialogActions
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          bgcolor: "background.default",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" color="inherit" onClick={onClose}>
           Quitter
         </Button>
         <Box flex={1} display="flex" justifyContent="center">
-          <IconButton onClick={handleReset} title="Réinitialiser">
-            <HelpOutlineIcon sx={{ color: "#e53935" }} />
+          <IconButton onClick={handleReset} title="Réinitialiser" color="error">
+            <HelpOutlineIcon />
           </IconButton>
         </Box>
         <Button
@@ -242,7 +250,6 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
           startIcon={
             loading ? <CircularProgress size={14} color="inherit" /> : null
           }
-          sx={{ bgcolor: "#78909c", "&:hover": { bgcolor: "#546e7a" } }}
         >
           Rechercher
         </Button>

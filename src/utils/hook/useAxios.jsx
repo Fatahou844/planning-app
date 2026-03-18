@@ -64,9 +64,16 @@ function useProvideAxios() {
   };
 
   const put = async (url, data, config) => {
-    //    setHeader();
     try {
       return await axios.put(baseUrl + url, data, config);
+    } catch (error) {
+      // console.log(error);
+    }
+  };
+
+  const patch = async (url, data, config = configDefaullt) => {
+    try {
+      return await axios.patch(baseUrl + url, data, config);
     } catch (error) {
       // console.log(error);
     }
@@ -76,6 +83,7 @@ function useProvideAxios() {
     post,
     get,
     put,
+    patch,
     deleteData,
   };
 }

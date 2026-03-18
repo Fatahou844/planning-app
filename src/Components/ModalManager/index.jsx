@@ -3,7 +3,14 @@ import ReferenceArticleModal from "../ReferenceArticleModal";
 import { useArticleSearch } from "../UserArticleSearch";
 
 export default function ModalManager({ open, onClose, modalType }) {
-  const { openSearch, SearchDialogs } = useArticleSearch({ open, onClose });
+  const { SearchDialogs } = useArticleSearch(
+    modalType === "searchArticle" ? { open, onClose } : {}
+  );
+
+  // Pour searchArticle, les dialogs gèrent eux-mêmes leur ouverture
+  if (modalType === "searchArticle") {
+    return <SearchDialogs />;
+  }
 
   const renderContent = () => {
     switch (modalType) {

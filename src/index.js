@@ -200,8 +200,10 @@ const DashboardTabs = () => {
   );
 };
 
-const ActivitySidebar = () => {
-  const [open, setOpen] = useState(false);
+const SIDEBAR_OPEN_WIDTH = 250;
+const SIDEBAR_CLOSED_WIDTH = 40;
+
+const ActivitySidebar = ({ open, onToggle }) => {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -281,15 +283,14 @@ const ActivitySidebar = () => {
           anchor="left"
           open={open}
           variant="permanent"
-          onClick={() => setOpen(!open)}
           sx={{
             position: "fixed",
             height: "100vh",
-            width: open ? 250 : 40,
+            width: open ? SIDEBAR_OPEN_WIDTH : SIDEBAR_CLOSED_WIDTH,
             flexShrink: 0,
             zIndex: 1300,
             "& .MuiDrawer-paper": {
-              width: open ? 250 : 40,
+              width: open ? SIDEBAR_OPEN_WIDTH : SIDEBAR_CLOSED_WIDTH,
               height: "100vh",
               transition: "width 0.3s",
               overflow: "hidden",
@@ -349,7 +350,6 @@ const ActivitySidebar = () => {
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  // 🔒 Appelle ici ta fonction de logout
                   handleLogout();
                 }}
                 sx={{
@@ -373,7 +373,7 @@ const ActivitySidebar = () => {
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  setOpen(!open);
+                  onToggle();
                 }}
                 sx={{
                   display: "flex",
@@ -392,6 +392,8 @@ const ActivitySidebar = () => {
 };
 
 const App = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <ProvideAxios>
       <UserProvider>
@@ -400,68 +402,67 @@ const App = () => {
             <header style={{ padding: "1rem" }}>
               <ThemeToggle />
             </header>
-            <ActivitySidebar />
-            <FloatingSupport phone="212665947911" />
 
+            <ActivitySidebar
+              open={sidebarOpen}
+              onToggle={() => setSidebarOpen((prev) => !prev)}
+            />
+
+            <FloatingSupport phone="212665947911" />
             <DashboardTabs />
 
-            <Routes>
-              <Route
-                path="/"
-                element={<PrivateRoute Component={Dashboard} />}
-              />
-              {/* <Route path="/connexion" element={<AuthPages />} /> */}
-              <Route path="/register" element={<AccountCreationSteps />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+            {/* ── Content wrapper : se décale avec la sidebar ── */}
+            <Box
+              sx={{
+                marginLeft: `${sidebarOpen ? SIDEBAR_OPEN_WIDTH : SIDEBAR_CLOSED_WIDTH}px`,
+                transition: "margin-left 0.3s ease",
+                minHeight: "100vh",
+              }}
+            >
+              <Routes>
+                <Route
+                  path="/"
+                  element={<PrivateRoute Component={Dashboard} />}
+                />
+                <Route path="/register" element={<AccountCreationSteps />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              <Route
-                path="/weekly-planning"
-                element={<PrivateRoute Component={WeeklyPlanning} />}
-              />
-
-              <Route
-                path="/store"
-                element={<PrivateRoute Component={Store} />}
-              />
-              <Route
-                path="/atelier"
-                element={<PrivateRoute Component={Atelier} />}
-              />
-
-              <Route
-                path="/account-verification"
-                element={<PrivateRoute Component={AccountVerificationSteps} />}
-              />
-
-              <Route
-                path="/account-approbation"
-                element={<PrivateRoute Component={AccountApprove} />}
-              />
-              <Route path="*" element={<NotFoundPage />} />
-
-              {/* Routes protégées */}
-
-              {/* <Route
-                path="/planning/categories"
-                element={<PrivateRoute Component={Dashboard} />}
-              /> */}
-
-              <Route
-                path="/clients"
-                element={<PrivateRoute Component={ManageClients} />}
-              />
-
-              <Route
-                path="/planning/customers"
-                element={<PrivateRoute Component={UserDashboard} />}
-              />
-
-              <Route
-                path="/parametres"
-                element={<PrivateRoute Component={GarageSettings} />}
-              />
-            </Routes>
-          </CustomThemeProvider>{" "}
+                <Route
+                  path="/weekly-planning"
+                  element={<PrivateRoute Component={WeeklyPlanning} />}
+                />
+                <Route
+                  path="/store"
+                  element={<PrivateRoute Component={Store} />}
+                />
+                <Route
+                  path="/atelier"
+                  element={<PrivateRoute Component={Atelier} />}
+                />
+                <Route
+                  path="/account-verification"
+                  element={<PrivateRoute Component={AccountVerificationSteps} />}
+                />
+                <Route
+                  path="/account-approbation"
+                  element={<PrivateRoute Component={AccountApprove} />}
+                />
+                <Route path="*" element={<NotFoundPage />} />
+                <Route
+                  path="/clients"
+                  element={<PrivateRoute Component={ManageClients} />}
+                />
+                <Route
+                  path="/planning/customers"
+                  element={<PrivateRoute Component={UserDashboard} />}
+                />
+                <Route
+                  path="/parametres"
+                  element={<PrivateRoute Component={GarageSettings} />}
+                />
+              </Routes>
+            </Box>
+          </CustomThemeProvider>
         </Router>
       </UserProvider>
     </ProvideAxios>

@@ -34,7 +34,7 @@ import {
 import dayjs from "dayjs"; // ou luxon selon ta préférence
 import { doc, updateDoc } from "firebase/firestore";
 import Cookies from "js-cookie";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import logoGarage from "../../assets/images/garageLogo.jpg";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import eventsData from "../../data/eventsData.json";
@@ -190,10 +190,13 @@ const Planning = () => {
   const [modalOpen2, setModalOpen2] = useState(false);
   const [modalOpen3, setModalOpen3] = useState(false);
   const [facture, setFacture] = useState(null);
-  const [draggingEvent, setDraggingEvent] = useState(null); // contient l’event en déplacement
+  const [draggingEvent, setDraggingEvent] = useState(null);
   const [dragStartX, setDragStartX] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragX, setDragX] = useState(0); // position x de la souris
+  const dragXRef = useRef(0); // position x courante (pas de re-render)
+  const mouseMovedRef = useRef(false); // distingue click vs drag
+  const [ghostStyle, setGhostStyle] = useState(null); // { left, width, top }
+  const [dragPreview, setDragPreview] = useState(null); // "10:00 → 11:30"
   const [collectionName, setCollectionName] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -326,66 +329,139 @@ const Planning = () => {
   useEffect(() => {
     if (!draggingEvent) return;
 
+    const p = (n) => String(n).padStart(2, "0");
+
     const handleMouseMove = (e) => {
-      if (!timelineRef.current || !draggingEvent) return;
-
-      const timelineRect = timelineRef.current.getBoundingClientRect();
-      const delta = e.clientX - dragStartX; // déplacement souris
-      const newX = draggingEvent.initialLeft + delta;
-
-      const clampedX = Math.max(0, Math.min(newX, timelineRect.width));
-      console.log(`🕒 clampedX: ${clampedX}`);
-
-      setDragX(clampedX);
-
-      // Affichage en temps réel
-      const timeSlots = generateTimeSlots(configExample);
-      const columnWidth = timelineRect.width / timeSlots.length;
-      const index = Math.floor(clampedX / columnWidth);
-      const minutes = timeSlots[index];
-      const hour = Math.floor(minutes / 60);
-      const minute = minutes % 60;
-
-      console.log(
-        `🕒 Heure actuelle glissée: ${hour}:${minute
-          .toString()
-          .padStart(2, "0")}`,
-      );
-    };
-
-    const handleMouseUp = () => {
       if (!timelineRef.current) return;
 
       const timelineRect = timelineRef.current.getBoundingClientRect();
-      const timeSlots = generateTimeSlots(configExample);
-      const slotWidth = timelineRect.width / timeSlots.length;
-      const index = Math.floor(dragX / slotWidth);
-      const startMinutes = timeSlots[index];
+      const delta = e.clientX - dragStartX;
+      const newX = draggingEvent.initialLeft + delta;
+      const clampedX = Math.max(
+        0,
+        Math.min(newX, timelineRect.width - draggingEvent.width),
+      );
 
+      dragXRef.current = clampedX;
+
+      // Activer le drag seulement après 5px de mouvement (évite conflit avec click)
+      if (Math.abs(delta) > 5 && !isDragging) setIsDragging(true);
+      if (Math.abs(delta) <= 5) return;
+      mouseMovedRef.current = true;
+
+      // Snap au slot le plus proche
+      const timeSlots = generateTimeSlots(configExample);
+      const colWidth = timelineRect.width / timeSlots.length;
+      const slotIndex = Math.max(
+        0,
+        Math.min(Math.round(clampedX / colWidth), timeSlots.length - 1),
+      );
+      const startMins = timeSlots[slotIndex];
       const duration =
         draggingEvent.endHour * 60 +
         draggingEvent.endMinute -
         (draggingEvent.startHour * 60 + draggingEvent.startMinute);
+      const endMins = startMins + duration;
 
-      const endMinutes = startMinutes + duration;
+      const snappedLeft = slotIndex * colWidth;
+      const durationSlots = Math.ceil(duration / 30);
+      const snappedWidth = Math.max(
+        durationSlots * colWidth,
+        draggingEvent.width,
+      );
 
-      const startHour = Math.floor(startMinutes / 60);
-      const startMinute = startMinutes % 60;
-      const endHour = Math.floor(endMinutes / 60);
-      const endMinute = endMinutes % 60;
+      setGhostStyle({
+        left: snappedLeft,
+        width: snappedWidth,
+        top: draggingEvent.ghostTop,
+      });
+      setDragPreview(
+        `${p(Math.floor(startMins / 60))}:${p(startMins % 60)} → ${p(Math.floor(endMins / 60))}:${p(endMins % 60)}`,
+      );
+    };
 
-      console.log(
-        `✅ Relâché → Nouvelle plage : ${startHour}:${startMinute
-          .toString()
-          .padStart(2, "0")} → ${endHour}:${endMinute
-          .toString()
-          .padStart(2, "0")}`,
+    const handleMouseUp = async () => {
+      if (!timelineRef.current) return;
+
+      // Simple click (pas de mouvement) → laisser onClick gérer
+      if (!mouseMovedRef.current) {
+        setDraggingEvent(null);
+        setIsDragging(false);
+        setDragStartX(null);
+        setGhostStyle(null);
+        setDragPreview(null);
+        dragXRef.current = 0;
+        mouseMovedRef.current = false;
+        return;
+      }
+
+      const timelineRect = timelineRef.current.getBoundingClientRect();
+      const timeSlots = generateTimeSlots(configExample);
+      const colWidth = timelineRect.width / timeSlots.length;
+      const slotIndex = Math.max(
+        0,
+        Math.min(Math.round(dragXRef.current / colWidth), timeSlots.length - 1),
+      );
+      const startMins = timeSlots[slotIndex];
+      const duration =
+        draggingEvent.endHour * 60 +
+        draggingEvent.endMinute -
+        (draggingEvent.startHour * 60 + draggingEvent.startMinute);
+      const endMins = startMins + duration;
+
+      const newStartHour = Math.floor(startMins / 60);
+      const newStartMinute = startMins % 60;
+      const newEndHour = Math.floor(endMins / 60);
+      const newEndMinute = endMins % 60;
+
+      const updatedId = draggingEvent.id;
+
+      // Mise à jour optimiste (affichage immédiat)
+      setDataEvents((prev) =>
+        prev.map((ev) =>
+          ev.id === updatedId
+            ? {
+                ...ev,
+                startHour: newStartHour,
+                startMinute: newStartMinute,
+                endHour: newEndHour,
+                endMinute: newEndMinute,
+              }
+            : ev,
+        ),
       );
 
       setDraggingEvent(null);
-      setDragX(0);
       setIsDragging(false);
       setDragStartX(null);
+      setGhostStyle(null);
+      setDragPreview(null);
+      dragXRef.current = 0;
+      mouseMovedRef.current = false;
+
+      // Persistance en base
+      console.log("📅 PATCH planning →", `/orders/${updatedId}/time`, {
+        startHour: newStartHour,
+        startMinute: newStartMinute,
+        endHour: newEndHour,
+        endMinute: newEndMinute,
+      });
+      try {
+        const res = await axios.patch(`/orders/${updatedId}/time`, {
+          startHour: newStartHour,
+          startMinute: newStartMinute,
+          endHour: newEndHour,
+          endMinute: newEndMinute,
+        });
+        if (!res)
+          throw new Error(
+            "Pas de réponse — route introuvable ou erreur serveur",
+          );
+        console.log("✅ Planning mis à jour en base", res.data);
+      } catch (err) {
+        console.error("❌ Erreur mise à jour planning :", err);
+        handleRefrechData(); // rollback
+      }
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -395,7 +471,7 @@ const Planning = () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [draggingEvent, dragX, dragStartX]);
+  }, [draggingEvent, dragStartX]); // ← PAS dragX dans les deps
 
   const [garageInfo, setGarageInfo] = useState({
     name: "",
@@ -3791,40 +3867,36 @@ const Planning = () => {
                                 >
                                   <Box
                                     onMouseDown={(e) => {
-                                      if (!timelineRef.current) return; // 🔒 Sécurité anti-null
-                                      if (!isDragging) setIsDragging(true); // active le vrai drag
+                                      if (!timelineRef.current) return;
+                                      e.preventDefault(); // évite la sélection de texte
                                       const containerRect =
                                         timelineRef.current.getBoundingClientRect();
-                                      const offsetX =
-                                        e.clientX -
-                                        e.currentTarget.getBoundingClientRect()
-                                          .left;
                                       const blockRect =
                                         e.currentTarget.getBoundingClientRect();
-
-                                      const width =
-                                        e.currentTarget.getBoundingClientRect()
-                                          .width;
-
+                                      const offsetX =
+                                        e.clientX - blockRect.left;
+                                      const width = blockRect.width;
                                       const initialLeft =
                                         blockRect.left - containerRect.left;
+                                      const ghostTop =
+                                        blockRect.top - containerRect.top;
+
+                                      mouseMovedRef.current = false;
+                                      dragXRef.current = initialLeft;
 
                                       setDraggingEvent({
                                         ...event,
-                                        id: event.id,
                                         offsetX,
                                         width,
                                         initialLeft,
+                                        ghostTop,
                                       });
-
-                                      const initialX =
-                                        e.clientX -
-                                        containerRect.left -
-                                        offsetX;
-                                      // setDragX(initialX);
-                                      setDragStartX(e.clientX); // 👈 Juste stocker le point de départ
+                                      setDragStartX(e.clientX);
                                     }}
-                                    onClick={() => handleEventClick(event)}
+                                    onClick={() => {
+                                      if (!mouseMovedRef.current)
+                                        handleEventClick(event);
+                                    }}
                                     onContextMenu={(e) =>
                                       handleContextMenu(e, event)
                                     }
@@ -3852,31 +3924,22 @@ const Planning = () => {
                                       alignItems: "center",
                                       justifyContent: "center",
 
-                                      transform:
+                                      opacity:
                                         draggingEvent?.id === event.id &&
                                         isDragging
-                                          ? `translateX(${dragX}px)`
-                                          : "none",
-                                      position: "relative", // reste tout le temps en flux
-                                      top: 0,
-                                      zIndex:
-                                        draggingEvent?.id === event.id &&
-                                        isDragging
-                                          ? 10
-                                          : "auto",
-                                      width:
-                                        draggingEvent?.id === event.id &&
-                                        isDragging
-                                          ? `${draggingEvent.width}px`
-                                          : "auto",
+                                          ? 0.35
+                                          : 1,
+                                      position: "relative",
+                                      zIndex: "auto",
                                       minWidth: 0,
                                       overflow: "hidden",
-                                      transition: isDragging
-                                        ? "none"
-                                        : "left 0.2s ease",
-                                      cursor: draggingEvent
-                                        ? "grabbing"
-                                        : "pointer",
+                                      transition: "opacity 0.15s ease",
+                                      cursor:
+                                        isDragging &&
+                                        draggingEvent?.id === event.id
+                                          ? "grabbing"
+                                          : "grab",
+                                      userSelect: "none",
                                     }}
                                   >
                                     <Box
@@ -3966,6 +4029,36 @@ const Planning = () => {
                       </>
                     );
                   })}
+                </Box>
+              )}
+
+              {/* ── Ghost de drag (aperçu flottant pendant le déplacement) ── */}
+              {ghostStyle && dragPreview && draggingEvent && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: ghostStyle.left,
+                    width: ghostStyle.width,
+                    top: ghostStyle.top + 45, // offset header timeline (~2.8rem)
+                    height: 40,
+                    bgcolor: draggingEvent.Category?.color || "#05AFC1",
+                    opacity: 0.92,
+                    borderRadius: "10px",
+                    border: "2px dashed rgba(255,255,255,0.85)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    pointerEvents: "none",
+                    zIndex: 200,
+                    boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#fff", fontWeight: 700, fontSize: 12, px: 1 }}
+                  >
+                    {dragPreview}
+                  </Typography>
                 </Box>
               )}
             </Box>
