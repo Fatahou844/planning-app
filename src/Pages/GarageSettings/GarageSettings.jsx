@@ -8,6 +8,7 @@ import Inventory2Icon from "@mui/icons-material/Inventory2";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 import {
   Accordion,
   AccordionDetails,
@@ -36,6 +37,7 @@ import { useEffect, useState } from "react";
 import { SketchPicker } from "react-color";
 import ForfaitsConfigAdvanced from "../../Components/ForfaitsConfigAdvanced/ForfaitsConfigAdvanced";
 import ConfigurationArticles from "../../Components/renderConfigurationArticles";
+import Stock from "../Stock";
 import { useAxios } from "../../utils/hook/useAxios";
 
 const GarageSettings = () => {
@@ -355,6 +357,7 @@ const GarageSettings = () => {
     { key: "account", label: "Mon compte", icon: <PersonIcon /> },
     { key: "forfaits", label: "Forfaits", icon: <Inventory2Icon /> },
     { key: "articles", label: "Articles", icon: <Inventory2Icon /> },
+    { key: "stock", label: "Groupes & Familles", icon: <WarehouseIcon /> },
   ];
 
   const renderGarage = () => (
@@ -674,6 +677,15 @@ const GarageSettings = () => {
     </>
   );
 
+  const renderStock = () => (
+    <>
+      <Typography variant="h5" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <WarehouseIcon /> Groupes &amp; Familles d'articles
+      </Typography>
+      <Stock />
+    </>
+  );
+
   const renderSection = () => {
     switch (activeSection) {
       case "garage":
@@ -692,6 +704,8 @@ const GarageSettings = () => {
         return renderForfaits();
       case "articles":
         return renderConfigArticles();
+      case "stock":
+        return renderStock();
       default:
         return null;
     }
