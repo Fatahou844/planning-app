@@ -68,6 +68,7 @@ export default function Stock() {
   const [editFamille, setEditFamille] = useState(null); // objet famille à éditer
   const [deleteGroupe, setDeleteGroupe] = useState(null);
   const [deleteFamille, setDeleteFamille] = useState(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   /* ── Formulaires ── */
   const [newGroupeNom, setNewGroupeNom] = useState("");
@@ -246,6 +247,25 @@ export default function Stock() {
     }
   };
 
+  /* ─────────────────── TOUT SUPPRIMER ─────────────────── */
+  const handleDeleteAll = async () => {
+    setSaving(true);
+    try {
+      await Promise.all(
+        groupes.map((g) => axios.deleteData(`/stock/groupes/${g.id}`))
+      );
+      showSnack("Tous les groupes et familles ont été supprimés");
+      setDeleteAllOpen(false);
+      setSelectedGroupe(null);
+      setFamilleData(null);
+      loadGroupes();
+    } catch {
+      showSnack("Erreur lors de la suppression", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   /* ─────────────────── Dérivés ─────────────────── */
   const groupe = familleData?.groupe;
   const familles = familleData?.familles || [];
@@ -259,244 +279,218 @@ export default function Stock() {
   /* ─────────────────── Rendu ─────────────────── */
   return (
     <Box display="flex" flexDirection="column" gap={3}>
+
       {/* ══════════════════════════════
-          SECTION GROUPES
+          BARRE D'ACTIONS GLOBALE
       ══════════════════════════════ */}
-      <CardSection icon={WarehouseIcon} title="Groupes" subtitle="Catégories de premier niveau">
-        <Box display="flex" justifyContent="flex-end" gap={1} mb={2}>
-          <ImportExcel garageId={garageId} onSuccess={loadGroupes} />
+      <Box display="flex" justifyContent="flex-end" gap={1}>
+        <ImportExcel garageId={garageId} onSuccess={loadGroupes} />
+        {groupes.length > 0 && (
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setAddGroupeOpen(true)}
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={() => setDeleteAllOpen(true)}
           >
-            Ajouter un groupe
+            Tout supprimer
           </Button>
-        </Box>
-
-        {loadingGroupes ? (
-          <Box display="flex" justifyContent="center" py={4}>
-            <CircularProgress />
-          </Box>
-        ) : groupes.length === 0 ? (
-          <Typography color="text.secondary" align="center" py={3}>
-            Aucun groupe créé pour ce garage.
-          </Typography>
-        ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Code</TableCell>
-                <TableCell>Nom</TableCell>
-                <TableCell>Plage familles</TableCell>
-                <TableCell align="center">Familles</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groupes.map((g) => {
-                const range = g.familleCodeRange || getFamilleCodeRange(g.code);
-                const isSelected = selectedGroupe?.id === g.id;
-                return (
-                  <TableRow
-                    key={g.id}
-                    hover
-                    selected={isSelected}
-                    onClick={() =>
-                      setSelectedGroupe(isSelected ? null : g)
-                    }
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <TableCell>
-                      <Chip label={g.code} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell>
-                      <Typography fontWeight={isSelected ? 700 : 400}>
-                        {g.nom}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {range.min} – {range.max}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2">
-                        {g.familleCount ?? 0} / {g.totalSlots ?? "—"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title="Renommer">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setEditGroupe(g);
-                            setEditNom(g.nom);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Supprimer">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => setDeleteGroupe(g)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
         )}
-      </CardSection>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setAddGroupeOpen(true)}
+        >
+          Ajouter un groupe
+        </Button>
+      </Box>
 
       {/* ══════════════════════════════
-          SECTION FAMILLES
+          SPLIT : GROUPES | FAMILLES
       ══════════════════════════════ */}
-      {selectedGroupe && (
-        <CardSection
-          icon={CategoryIcon}
-          title={`Familles — ${selectedGroupe.nom} (${selectedGroupe.code})`}
-          subtitle={
-            groupe
-              ? `Plage : ${groupe.familleCodeRange?.min} – ${groupe.familleCodeRange?.max} • ${groupe.familleCount} / ${groupe.totalSlots} codes utilisés`
-              : "Chargement…"
-          }
-        >
-          {/* Barre de progression */}
-          {groupe && (
-            <Box mb={2}>
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Taux de remplissage
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {usagePercent}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={usagePercent}
-                color={usagePercent >= 90 ? "error" : usagePercent >= 70 ? "warning" : "primary"}
-              />
-            </Box>
-          )}
+      <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} alignItems="start">
 
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <FolderOpenIcon color="action" fontSize="small" />
-              <Typography variant="body2" color="text.secondary">
-                Cliquez sur "Ajouter" pour créer une famille dans ce groupe.
-              </Typography>
+        {/* ── Colonne GROUPES ── */}
+        <CardSection icon={WarehouseIcon} title="Groupes" subtitle="Cliquez sur un groupe pour voir ses familles">
+          {loadingGroupes ? (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress />
             </Box>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => setAddFamilleOpen(true)}
-              disabled={groupe && groupe.familleCount >= groupe.totalSlots}
-            >
-              Ajouter une famille
-            </Button>
-          </Box>
-
-          {loadingFamilles ? (
-            <Box display="flex" justifyContent="center" py={3}>
-              <CircularProgress size={28} />
-            </Box>
+          ) : groupes.length === 0 ? (
+            <Typography color="text.secondary" align="center" py={3}>
+              Aucun groupe créé pour ce garage.
+            </Typography>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Code</TableCell>
-                  <TableCell>Nom</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {normalFamilles.map((f) => (
-                  <TableRow key={f.id} hover>
-                    <TableCell>
-                      <Chip label={f.code} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell>{f.nom}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Renommer">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setEditFamille(f);
-                            setEditNom(f.nom);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Supprimer">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => setDeleteFamille(f)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+            <Box>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Code</TableCell>
+                    <TableCell>Nom</TableCell>
+                    <TableCell align="center">Familles</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
-
-                {/* Famille "divers" — toujours en dernier, style distinct, pas supprimable */}
-                {diversFamille && (
-                  <TableRow key={diversFamille.id}>
-                    <TableCell>
-                      <Chip
-                        label={diversFamille.code}
-                        size="small"
-                        variant="outlined"
-                        sx={{ opacity: 0.6 }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        fontStyle="italic"
-                        color="text.secondary"
+                </TableHead>
+                <TableBody>
+                  {groupes.map((g) => {
+                    const isSelected = selectedGroupe?.id === g.id;
+                    return (
+                      <TableRow
+                        key={g.id}
+                        hover
+                        selected={isSelected}
+                        onClick={() => setSelectedGroupe(isSelected ? null : g)}
+                        sx={{ cursor: "pointer" }}
                       >
-                        {diversFamille.nom}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Renommer">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setEditFamille(diversFamille);
-                            setEditNom(diversFamille.nom);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Famille divers non supprimable">
-                        <span>
-                          <IconButton size="small" color="error" disabled>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                        <TableCell>
+                          <Chip label={g.code} size="small" variant="outlined" color={isSelected ? "primary" : "default"} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography fontWeight={isSelected ? 700 : 400} variant="body2">
+                            {g.nom}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="body2">
+                            {g.familleCount ?? 0} / {g.totalSlots ?? "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                          <Tooltip title="Renommer">
+                            <IconButton size="small" onClick={() => { setEditGroupe(g); setEditNom(g.nom); }}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Supprimer">
+                            <IconButton size="small" color="error" onClick={() => setDeleteGroupe(g)}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
           )}
         </CardSection>
-      )}
+
+        {/* ── Colonne FAMILLES ── */}
+        <CardSection
+          icon={CategoryIcon}
+          title={selectedGroupe ? `Familles — ${selectedGroupe.nom} (${selectedGroupe.code})` : "Familles"}
+          subtitle={
+            selectedGroupe && groupe
+              ? `Plage : ${groupe.familleCodeRange?.min} – ${groupe.familleCodeRange?.max} • ${groupe.familleCount} / ${groupe.totalSlots} utilisés`
+              : "Sélectionnez un groupe à gauche"
+          }
+        >
+          {!selectedGroupe ? (
+            <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight={200} gap={1}>
+              <FolderOpenIcon sx={{ fontSize: 48, color: "text.disabled" }} />
+              <Typography variant="body2" color="text.disabled">
+                Cliquez sur un groupe pour afficher ses familles
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              {/* Barre de progression */}
+              {groupe && (
+                <Box mb={2}>
+                  <Box display="flex" justifyContent="space-between" mb={0.5}>
+                    <Typography variant="caption" color="text.secondary">Taux de remplissage</Typography>
+                    <Typography variant="caption" color="text.secondary">{usagePercent}%</Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={usagePercent}
+                    color={usagePercent >= 90 ? "error" : usagePercent >= 70 ? "warning" : "primary"}
+                  />
+                </Box>
+              )}
+
+              <Box display="flex" justifyContent="flex-end" mb={2}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => setAddFamilleOpen(true)}
+                  disabled={groupe && groupe.familleCount >= groupe.totalSlots}
+                >
+                  Ajouter une famille
+                </Button>
+              </Box>
+
+              {loadingFamilles ? (
+                <Box display="flex" justifyContent="center" py={3}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : (
+                <Box>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Code</TableCell>
+                        <TableCell>Nom</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {normalFamilles.map((f) => (
+                        <TableRow key={f.id} hover>
+                          <TableCell>
+                            <Chip label={f.code} size="small" variant="outlined" />
+                          </TableCell>
+                          <TableCell>{f.nom}</TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Renommer">
+                              <IconButton size="small" onClick={() => { setEditFamille(f); setEditNom(f.nom); }}>
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Supprimer">
+                              <IconButton size="small" color="error" onClick={() => setDeleteFamille(f)}>
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+
+                      {diversFamille && (
+                        <TableRow key={diversFamille.id}>
+                          <TableCell>
+                            <Chip label={diversFamille.code} size="small" variant="outlined" sx={{ opacity: 0.6 }} />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontStyle="italic" color="text.secondary">
+                              {diversFamille.nom}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Renommer">
+                              <IconButton size="small" onClick={() => { setEditFamille(diversFamille); setEditNom(diversFamille.nom); }}>
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Famille divers non supprimable">
+                              <span>
+                                <IconButton size="small" color="error" disabled>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+            </>
+          )}
+        </CardSection>
+      </Box>
 
       {/* ══════════════════════════════
           MODALES
@@ -700,6 +694,25 @@ export default function Stock() {
             disabled={saving}
           >
             Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirmer suppression totale */}
+      <Dialog open={deleteAllOpen} onClose={() => setDeleteAllOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Tout supprimer</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Voulez-vous supprimer <strong>tous les groupes ({groupes.length})</strong> et toutes leurs familles ?
+          </Typography>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Action irréversible. Impossible si des articles sont associés à ces groupes.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteAllOpen(false)}>Annuler</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteAll} disabled={saving}>
+            Tout supprimer
           </Button>
         </DialogActions>
       </Dialog>
