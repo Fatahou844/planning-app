@@ -63,15 +63,18 @@ function parseExcelFile(file) {
 }
 
 function downloadTemplate() {
+  // Plage famille : groupe N → base=(N+10)*100, familles base+1 à base+98 (base+99 = divers)
+  // Groupe 0001 (N=1) → familles 1101-1198, divers 1199
+  // Groupe 0002 (N=2) → familles 1201-1298, divers 1299
   const ws = XLSX.utils.aoa_to_sheet([
     ["Code Groupe", "Nom Groupe", "Code Famille", "Nom Famille"],
     ["0001", "PNEUMATIQUES", "", ""],
-    ["0001", "PNEUMATIQUES", "0001", "Pneus tourisme"],
-    ["0001", "PNEUMATIQUES", "0002", "Pneus utilitaire"],
-    ["0001", "PNEUMATIQUES", "0003", "Pneus 4x4"],
+    ["0001", "PNEUMATIQUES", "1101", "Pneus tourisme"],
+    ["0001", "PNEUMATIQUES", "1102", "Pneus utilitaire"],
+    ["0001", "PNEUMATIQUES", "1103", "Pneus 4x4"],
     ["0002", "FREINAGE", "", ""],
-    ["0002", "FREINAGE", "0100", "Plaquettes de frein"],
-    ["0002", "FREINAGE", "0101", "Disques de frein"],
+    ["0002", "FREINAGE", "1201", "Plaquettes de frein"],
+    ["0002", "FREINAGE", "1202", "Disques de frein"],
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Groupes-Familles");
