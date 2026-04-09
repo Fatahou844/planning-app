@@ -40,10 +40,9 @@ function pad4(n) {
 }
 
 function getFamilleCodeRange(groupeCode) {
-  const n = parseInt(groupeCode, 10);
-  const min = n === 1 ? 1 : (n - 1) * 100;
-  const max = n * 100 - 1;
-  return { min: pad4(min), max: pad4(max) };
+  const n    = parseInt(groupeCode, 10);
+  const base = n * 100;
+  return { min: pad4(base + 1), max: pad4(base + 99) };
 }
 
 /* ─────────────────────────────────────────────────────────

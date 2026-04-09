@@ -36,6 +36,7 @@ import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import NotFoundPage from "./Pages/NotFoundPage/NotFoundPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
+import AdminStock from "./Pages/AdminStock";
 import Store from "./Pages/Store/Store";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import WeeklyPlanning from "./Pages/WeeklyPlanning";
@@ -54,6 +55,7 @@ const tabLabels = [
   { label: "Pilotage", path: "/pilotage" },
   { label: "Marketing", path: "/marketing" },
   { label: "Paramètres", path: "/parametres" },
+  { label: "Admin",      path: "/admin" },
 ];
 
 const DashboardTabs = () => {
@@ -459,6 +461,10 @@ const App = () => {
                 <Route
                   path="/parametres"
                   element={<PrivateRoute Component={GarageSettings} />}
+                />
+                <Route
+                  path="/admin"
+                  element={<PrivateRoute Component={AdminStock} />}
                 />
               </Routes>
             </Box>

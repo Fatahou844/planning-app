@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { useState } from "react";
 import Sidebar from "../Components/Store/Sidebar";
 import Topbar from "../Components/Store/Topbar";
+import AdminStock from "../Pages/AdminStock";
 import Articles from "../Pages/Articles";
 import Atelier from "../Pages/Atelier";
 import Inventaire from "../Pages/Inventaire";
@@ -9,11 +10,12 @@ import Reception from "../Pages/Reception";
 import Stock from "../Pages/Stock";
 
 const pages = {
-  articles: <Articles />,
-  stock: <Stock />,
-  atelier: <Atelier />,
+  articles:   <Articles />,
+  stock:      <Stock />,
+  atelier:    <Atelier />,
   inventaire: <Inventaire />,
-  reception: <Reception />,
+  reception:  <Reception />,
+  admin:      <AdminStock />,
 };
 
 export default function AppLayout() {

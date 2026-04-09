@@ -6,6 +6,7 @@ const navItems = [
   { key: "atelier", label: "Atelier", badge: "OR" },
   { key: "inventaire", label: "Inventaire", badge: "Ajust." },
   { key: "reception", label: "Réception", badge: "BR" },
+  { key: "admin",     label: "Admin",     badge: "Référentiels" },
 ];
 
 export default function Sidebar({ active, onChange }) {
