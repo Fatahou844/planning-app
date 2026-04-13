@@ -1,6 +1,9 @@
-import { Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, IconButton, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import ReferenceArticleModal from "../ReferenceArticleModal";
 import { useArticleSearch } from "../UserArticleSearch";
+import Stock from "../../Pages/Stock";
+import { TabMarques } from "../../Pages/AdminStock";
 
 export default function ModalManager({ open, onClose, modalType }) {
   const { SearchDialogs } = useArticleSearch(
@@ -104,10 +107,46 @@ export default function ModalManager({ open, onClose, modalType }) {
       case "receptionCession":
         return <Typography>Réception de cession</Typography>;
 
+      // ARTICLES REF.
+      case "groupesRef":
+        return <Stock />;
+
       default:
         return <Typography>Module non défini</Typography>;
     }
   };
+
+  if (modalType === "marquesRef") {
+    return (
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Marques
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <TabMarques />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (modalType === "groupesRef") {
+    return (
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Groupes &amp; Familles d'articles
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Stock />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">

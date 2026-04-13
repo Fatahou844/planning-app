@@ -1,7 +1,10 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import {
   Alert,
@@ -15,6 +18,8 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  MenuItem,
+  Select,
   Snackbar,
   Tab,
   Table,
@@ -27,10 +32,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ImportFournisseurs from "../Components/Store/ImportFournisseurs/ImportFournisseurs";
 import ImportMarques from "../Components/Store/ImportMarques/ImportMarques";
+import ImportArticles from "../Components/Store/ImportArticles/ImportArticles";
 import { useAxios } from "../utils/hook/useAxios";
+import { useUser } from "../utils/hook/UserContext";
 
 /* ─────────────────────────────────────────────────────────
    Snack helper
@@ -45,7 +52,7 @@ function useSnack() {
 /* ════════════════════════════════════════════════════════
    TAB MARQUES
 ════════════════════════════════════════════════════════ */
-function TabMarques() {
+export function TabMarques() {
   const axios = useAxios();
   const { snack, show, hide } = useSnack();
 
@@ -231,16 +238,24 @@ function TabMarques() {
 }
 
 /* ════════════════════════════════════════════════════════
-   TAB FOURNISSEURS
+   TAB FOURNISSEURS  — pagination serveur + recherche débouncée
 ════════════════════════════════════════════════════════ */
 function TabFournisseurs() {
   const axios = useAxios();
   const { snack, show, hide } = useSnack();
 
+  const PAGE_SIZE_OPTIONS = [25, 50, 100];
+
   const [fournisseurs, setFournisseurs] = useState([]);
   const [loading,      setLoading]      = useState(false);
   const [saving,       setSaving]       = useState(false);
   const [search,       setSearch]       = useState("");
+  const [page,         setPage]         = useState(1);
+  const [pageSize,     setPageSize]     = useState(50);
+  const [total,        setTotal]        = useState(0);
+  const [totalPages,   setTotalPages]   = useState(1);
+
+  const debounceRef = useRef(null);
 
   // Modales
   const [addOpen,    setAddOpen]    = useState(false);
@@ -250,22 +265,79 @@ function TabFournisseurs() {
   const emptyForm = { nom: "", code: "", adresse1: "", adresse2: "", adresse3: "", telephone: "", telex: "" };
   const [form, setForm] = useState(emptyForm);
 
-  const load = useCallback(async () => {
+  /* ── Chargement paginé ── */
+  const [allFournisseurs, setAllFournisseurs] = useState([]);
+
+  const load = useCallback(async (p = page, ps = pageSize, q = search) => {
     setLoading(true);
     try {
       const res = await axios.get("/stock/fournisseurs");
-      setFournisseurs(res?.data || []);
+      const raw = res?.data || [];
+
+      // L'API peut renvoyer un tableau direct ou un objet paginé
+      const all = Array.isArray(raw) ? raw : (raw.data || []);
+      setAllFournisseurs(all);
+
+      // Filtrage client
+      const filtered = q
+        ? all.filter((f) =>
+            (f.nom  || "").toLowerCase().includes(q.toLowerCase()) ||
+            (f.code || "").toLowerCase().includes(q.toLowerCase())
+          )
+        : all;
+
+      // Pagination client
+      const totalCount = filtered.length;
+      const pages = Math.max(1, Math.ceil(totalCount / ps));
+      const safeP = Math.min(p, pages);
+      const start = (safeP - 1) * ps;
+
+      setFournisseurs(filtered.slice(start, start + ps));
+      setTotal(totalCount);
+      setTotalPages(pages);
+      setPage(safeP);
     } finally {
       setLoading(false);
     }
-  }, [axios]);
+  }, [axios]); // eslint-disable-line
 
-  useEffect(() => { load(); }, [load]);
+  /* Premier chargement */
+  useEffect(() => { load(1, pageSize, ""); }, []); // eslint-disable-line
 
-  const filtered = fournisseurs.filter((f) =>
-    (f.nom  || "").toLowerCase().includes(search.toLowerCase()) ||
-    (f.code || "").toLowerCase().includes(search.toLowerCase())
-  );
+  /* Applique filtre + pagination sur les données déjà en mémoire */
+  const applyFilter = useCallback((q, p, ps) => {
+    const filtered = q
+      ? allFournisseurs.filter((f) =>
+          (f.nom  || "").toLowerCase().includes(q.toLowerCase()) ||
+          (f.code || "").toLowerCase().includes(q.toLowerCase())
+        )
+      : allFournisseurs;
+    const totalCount = filtered.length;
+    const pages = Math.max(1, Math.ceil(totalCount / ps));
+    const safeP = Math.min(p, pages);
+    const start = (safeP - 1) * ps;
+    setFournisseurs(filtered.slice(start, start + ps));
+    setTotal(totalCount);
+    setTotalPages(pages);
+    setPage(safeP);
+  }, [allFournisseurs]); // eslint-disable-line
+
+  const handleSearchChange = (e) => {
+    const q = e.target.value;
+    setSearch(q);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => applyFilter(q, 1, pageSize), 300);
+  };
+
+  const goToPage = (p) => {
+    const next = Math.max(1, Math.min(p, totalPages));
+    applyFilter(search, next, pageSize);
+  };
+
+  const handlePageSizeChange = (ps) => {
+    setPageSize(ps);
+    applyFilter(search, 1, ps);
+  };
 
   const setField = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -277,7 +349,7 @@ function TabFournisseurs() {
       await axios.post("/stock/fournisseurs", form);
       setAddOpen(false); setForm(emptyForm);
       show("Fournisseur créé");
-      load();
+      load(page, pageSize, search);
     } catch { show("Erreur création", "error"); }
     finally { setSaving(false); }
   };
@@ -289,7 +361,7 @@ function TabFournisseurs() {
       await axios.put(`/stock/fournisseurs/${editItem.id}`, form);
       setEditItem(null);
       show("Fournisseur modifié");
-      load();
+      load(page, pageSize, search);
     } catch { show("Erreur modification", "error"); }
     finally { setSaving(false); }
   };
@@ -301,7 +373,12 @@ function TabFournisseurs() {
       await axios.deleteData(`/stock/fournisseurs/${deleteItem.id}`);
       setDeleteItem(null);
       show("Fournisseur supprimé");
-      load();
+      // si la page courante est vide après suppression, reculer
+      const newTotal = total - 1;
+      const maxPage  = Math.max(1, Math.ceil(newTotal / pageSize));
+      const targetPage = Math.min(page, maxPage);
+      setPage(targetPage);
+      load(targetPage, pageSize, search);
     } catch { show("Erreur suppression", "error"); }
     finally { setSaving(false); }
   };
@@ -317,14 +394,14 @@ function TabFournisseurs() {
     <Box display="flex" flexDirection="column" gap={2} sx={{ mt: 1 }}>
       <Box display="flex" gap={2}>
         <TextField fullWidth label="Code fournisseur" value={form.code} onChange={setField("code")} />
-        <TextField fullWidth label="Libellé / Raison sociale" value={form.nom}  onChange={setField("nom")} required />
+        <TextField fullWidth label="Libellé / Raison sociale" value={form.nom} onChange={setField("nom")} required />
       </Box>
-      <TextField fullWidth label="Zone Adresse 1" value={form.adresse1}  onChange={setField("adresse1")} />
-      <TextField fullWidth label="Zone Adresse 2" value={form.adresse2}  onChange={setField("adresse2")} />
-      <TextField fullWidth label="Zone Adresse 3" value={form.adresse3}  onChange={setField("adresse3")} />
+      <TextField fullWidth label="Zone Adresse 1" value={form.adresse1} onChange={setField("adresse1")} />
+      <TextField fullWidth label="Zone Adresse 2" value={form.adresse2} onChange={setField("adresse2")} />
+      <TextField fullWidth label="Zone Adresse 3" value={form.adresse3} onChange={setField("adresse3")} />
       <Box display="flex" gap={2}>
-        <TextField fullWidth label="Téléphone"  value={form.telephone} onChange={setField("telephone")} />
-        <TextField fullWidth label="N° Telex"   value={form.telex}     onChange={setField("telex")} />
+        <TextField fullWidth label="Téléphone" value={form.telephone} onChange={setField("telephone")} />
+        <TextField fullWidth label="N° Telex"  value={form.telex}     onChange={setField("telex")} />
       </Box>
     </Box>
   );
@@ -335,10 +412,10 @@ function TabFournisseurs() {
       <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
         <TextField
           size="small" placeholder="Rechercher par nom ou code…" value={search}
-          onChange={(e) => setSearch(e.target.value)} sx={{ width: 280 }}
+          onChange={handleSearchChange} sx={{ width: 280 }}
         />
         <Box flex={1} />
-        <ImportFournisseurs onSuccess={load} />
+        <ImportFournisseurs onSuccess={() => load(1, pageSize, search)} />
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setForm(emptyForm); setAddOpen(true); }}>
           Ajouter
         </Button>
@@ -346,7 +423,7 @@ function TabFournisseurs() {
 
       {/* Table */}
       {loading ? (
-        <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+        <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
       ) : (
         <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>
           <Table size="small">
@@ -361,14 +438,14 @@ function TabFournisseurs() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filtered.length === 0 && (
+              {fournisseurs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
                     <Typography variant="body2" color="text.secondary" py={2}>Aucun fournisseur</Typography>
                   </TableCell>
                 </TableRow>
               )}
-              {filtered.map((f) => (
+              {fournisseurs.map((f) => (
                 <TableRow key={f.id} hover>
                   <TableCell>
                     {f.code
@@ -402,7 +479,36 @@ function TabFournisseurs() {
         </Box>
       )}
 
-      <Typography variant="caption" color="text.secondary">{filtered.length} fournisseur(s)</Typography>
+      {/* ── Pagination ── */}
+      <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+        <Typography variant="caption" color="text.secondary">
+          {total} fournisseur(s) au total
+        </Typography>
+
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography variant="caption" color="text.secondary">Lignes&nbsp;:</Typography>
+          <Select
+            size="small" value={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            sx={{ fontSize: "0.75rem", height: 28 }}
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <MenuItem key={n} value={n}>{n}</MenuItem>
+            ))}
+          </Select>
+
+          <IconButton size="small" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+            <NavigateBeforeIcon fontSize="small" />
+          </IconButton>
+
+          <Typography variant="body2" sx={{ minWidth: 80, textAlign: "center" }}>
+            {page} / {totalPages}
+          </Typography>
+
+          <IconButton size="small" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+            <NavigateNextIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
 
       {/* Modal Ajouter */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
@@ -453,14 +559,41 @@ function TabFournisseurs() {
 }
 
 /* ════════════════════════════════════════════════════════
+   TAB ARTICLES — Import intelligent
+════════════════════════════════════════════════════════ */
+function TabArticles({ garageId }) {
+  return (
+    <Box display="flex" flexDirection="column" gap={3}>
+      <Alert severity="info" icon={false}>
+        <Typography variant="body2">
+          <strong>Import intelligent d'articles depuis Excel.</strong><br />
+          Le fichier doit contenir les colonnes suivantes dans l'ordre :<br />
+          <em>Nom fournisseur · Marque · Référence ext · Libellé · Prix achat HT · Code groupe · Nom groupe · Code famille · Nom famille</em><br /><br />
+          • Fournisseur et Marque sont créés automatiquement s'ils n'existent pas encore.<br />
+          • Groupe et Famille sont créés automatiquement si le code n'existe pas pour ce garage.<br />
+          • <strong>Prix de vente HT = PA × 2</strong> &nbsp;|&nbsp; <strong>Prix TTC = PUVHT × 1,2</strong> (TVA 20 %)
+        </Typography>
+      </Alert>
+
+      <Box display="flex" justifyContent="flex-start">
+        <ImportArticles garageId={garageId} />
+      </Box>
+    </Box>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
    PAGE PRINCIPALE
 ════════════════════════════════════════════════════════ */
 export default function AdminStock() {
   const [tab, setTab] = useState(0);
+  const { user } = useUser();
+  const garageId = user?.garageId;
 
   const tabs = [
     { label: "Marques",      icon: <LocalOfferIcon  sx={{ fontSize: 18 }} />, component: <TabMarques      /> },
     { label: "Fournisseurs", icon: <StorefrontIcon  sx={{ fontSize: 18 }} />, component: <TabFournisseurs /> },
+    { label: "Articles",     icon: <CategoryIcon    sx={{ fontSize: 18 }} />, component: <TabArticles garageId={garageId} /> },
   ];
 
   return (
@@ -469,7 +602,7 @@ export default function AdminStock() {
       <Box>
         <Typography variant="h5" fontWeight={700}>Administration — Stock</Typography>
         <Typography variant="body2" color="text.secondary">
-          Gérez les référentiels marques et fournisseurs
+          Gérez les référentiels marques, fournisseurs et articles
         </Typography>
       </Box>
 

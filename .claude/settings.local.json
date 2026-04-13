@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/controllers/**)",
+      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/models/**)"
+    ]
+  }
+}

@@ -108,8 +108,8 @@ export default function Store() {
       icon: <LocalOfferIcon sx={{ fontSize: 15 }} />,
       actions: [
         { id: "marquesRef", label: "marques" },
-        { id: "famillesRef", label: "familles" },
-        { id: "groupesRef", label: "groupes" },
+        // { id: "famillesRef", label: "familles" },
+        { id: "groupesRef", label: "groupes & familles" },
         { id: "emplacementsRef", label: "emplacements" },
         { id: "fournisseursRef", label: "fournisseurs" },
       ],
