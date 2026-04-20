@@ -34,7 +34,7 @@ export default function Store() {
       actions: [
         { id: "searchArticle", label: "recherche article" },
         { id: "referenceArticle", label: "référencement article" },
-        { id: "etiquetage", label: "étiquetage" },
+        { id: "adressage", label: "adressage" },
       ],
     },
     {
@@ -59,7 +59,7 @@ export default function Store() {
       icon: <PriceChangeIcon sx={{ fontSize: 15 }} />,
       actions: [
         { id: "modificationPrix", label: "modification prix" },
-        { id: "etiquettesPrix", label: "étiquettes" },
+        { id: "etiquetage", label: "étiquettes" },
         { id: "promoPrix", label: "promo" },
       ],
     },
@@ -73,6 +73,7 @@ export default function Store() {
         { id: "demandeGarantie", label: "demande de garantie" },
         { id: "referencementFss", label: "référencement fss" },
         { id: "suiviGaranties", label: "suivi des garanties" },
+        { id: "fournisseursRef", label: "fournisseurs" },
       ],
     },
     {
@@ -91,7 +92,6 @@ export default function Store() {
         { id: "inventaireArticle", label: "inventaire à l'article" },
         { id: "stock", label: "stock" },
         { id: "sortieStockNonPaye", label: "sortie stock non payé" },
-        { id: "adressage", label: "adressage" },
         { id: "ruptures", label: "ruptures" },
       ],
     },
@@ -111,7 +111,6 @@ export default function Store() {
         // { id: "famillesRef", label: "familles" },
         { id: "groupesRef", label: "groupes & familles" },
         { id: "emplacementsRef", label: "emplacements" },
-        { id: "fournisseursRef", label: "fournisseurs" },
       ],
     },
   ];

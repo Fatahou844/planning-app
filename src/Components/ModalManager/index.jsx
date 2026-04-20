@@ -4,6 +4,7 @@ import ReferenceArticleModal from "../ReferenceArticleModal";
 import { useArticleSearch } from "../UserArticleSearch";
 import Stock from "../../Pages/Stock";
 import { TabMarques } from "../../Pages/AdminStock";
+import EtiquetageModal from "../Store/Etiquetage/EtiquetageModal";
 
 export default function ModalManager({ open, onClose, modalType }) {
   const { SearchDialogs } = useArticleSearch(
@@ -26,7 +27,7 @@ export default function ModalManager({ open, onClose, modalType }) {
         return <ReferenceArticleModal open={open} onClose={onClose} />;
 
       case "etiquetage":
-        return <Typography>Module d’étiquetage</Typography>;
+        return null; // handled below as a top-level dialog
 
       // RÉCEPTION
       case "entreeMarchandise":
@@ -50,7 +51,7 @@ export default function ModalManager({ open, onClose, modalType }) {
         return <Typography>Modification des prix</Typography>;
 
       case "etiquettesPrix":
-        return <Typography>Impression des étiquettes</Typography>;
+        return null; // handled above as EtiquetageModal
 
       case "promoPrix":
         return <Typography>Gestion des promotions</Typography>;
@@ -115,6 +116,10 @@ export default function ModalManager({ open, onClose, modalType }) {
         return <Typography>Module non défini</Typography>;
     }
   };
+
+  if (modalType === "etiquetage" || modalType === "etiquettesPrix") {
+    return <EtiquetageModal open={open} onClose={onClose} />;
+  }
 
   if (modalType === "marquesRef") {
     return (

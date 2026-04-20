@@ -1,14 +1,8 @@
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import LogoutIcon from "@mui/icons-material/Logout";
 import {
   Box,
   Container,
-  Drawer,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
   Tab,
   Tabs,
   Typography,
@@ -24,6 +18,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import ActivitySidebar from "./Components/ActivitySidebar";
 import FloatingSupport from "./Components/FloatingSupport";
 import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
@@ -202,196 +197,9 @@ const DashboardTabs = () => {
   );
 };
 
-const SIDEBAR_OPEN_WIDTH = 250;
+
+const SIDEBAR_OPEN_WIDTH   = 280;
 const SIDEBAR_CLOSED_WIDTH = 40;
-
-const ActivitySidebar = ({ open, onToggle }) => {
-
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(";").shift();
-    }
-
-    const authToken = getCookie("jwtToken");
-
-    const config = {
-      withCredentials: true, // TRÈS IMPORTANT
-
-      headers: {
-        Authorization: `Bearer ${authToken}`, // Utilisation de Bearer pour les jetons JWT
-        // Si vous utilisez un autre type d'autorisation, ajustez cette ligne en conséquence
-      },
-    };
-
-    const fetchAuthStatus = async () => {
-      try {
-        const res = await axios.get(
-          `${BASE_URL_API}/v1/auth/check-auth`,
-          config,
-        );
-        setIsAuthenticated(res.data.isAuthenticated);
-        const response = await axios.get(`${BASE_URL_API}/v1`, config);
-        var jsonString = JSON.stringify(response.data);
-        console.log("ENREGISTREMENT DES DONNES USERS");
-        localStorage.setItem("me", jsonString);
-
-        if (window.localStorage.getItem("me")) {
-          const retrievedObject = JSON.parse(window.localStorage.getItem("me"));
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error("Error fetching authentication status:", error);
-      }
-    };
-
-    fetchAuthStatus();
-  }, [, isAuthenticated]);
-  function handleLogout() {
-    const token = Cookies.get("jwtToken");
-    if (token) {
-      try {
-        const payloadBase64 = token.split(".")[1];
-        const payload = JSON.parse(atob(payloadBase64));
-        const userEmail = payload?.sub;
-        if (userEmail) {
-          localStorage.removeItem(`hasSeenNotification_${userEmail}`);
-        }
-      } catch (e) {
-        console.error("Erreur décodage JWT :", e);
-      }
-    }
-
-    axios
-      .get(`${BASE_URL_API}/v1/logout`, { withCredentials: true })
-      .then(() => {
-        document.cookie =
-          "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        return new Promise((r) => setTimeout(r, 300));
-      })
-      .then(() => {
-        window.location.replace("/");
-      })
-      .catch((err) => console.error("Erreur de déconnexion :", err));
-  }
-
-  return (
-    <>
-      {isAuthenticated && (
-        <Drawer
-          anchor="left"
-          open={open}
-          variant="permanent"
-          sx={{
-            position: "fixed",
-            height: "100vh",
-            width: open ? SIDEBAR_OPEN_WIDTH : SIDEBAR_CLOSED_WIDTH,
-            flexShrink: 0,
-            zIndex: 1300,
-            "& .MuiDrawer-paper": {
-              width: open ? SIDEBAR_OPEN_WIDTH : SIDEBAR_CLOSED_WIDTH,
-              height: "100vh",
-              transition: "width 0.3s",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              alignItems: "center",
-              cursor: "pointer",
-              position: "fixed",
-              zIndex: 1300,
-              px: 1,
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "space-between",
-              height: "100%",
-              width: "100%",
-              position: "relative",
-            }}
-          >
-            {/* Liste du haut */}
-            {open ? (
-              <List sx={{ flexGrow: 1, width: "100%" }}>
-                <ListItem button>
-                  <ListItemText primary="Historique 1" />
-                </ListItem>
-                <ListItem button>
-                  <ListItemText primary="Historique 2" />
-                </ListItem>
-                <ListItem button>
-                  <ListItemText primary="Historique 3" />
-                </ListItem>
-              </List>
-            ) : (
-              <Typography
-                variant="body2"
-                sx={{
-                  transform: "rotate(-90deg)",
-                  whiteSpace: "nowrap",
-                  position: "absolute",
-                  top: "50%",
-                  left: "-5px",
-                }}
-              >
-                Activité
-              </Typography>
-            )}
-
-            {/* Pied de page : déconnexion + toggle */}
-            <Box sx={{ width: "100%", mb: 1 }}>
-              {/* Bouton de déconnexion */}
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLogout();
-                }}
-                sx={{
-                  color: "red",
-                  mb: 1,
-                  display: "flex",
-                  justifyContent: open ? "flex-start" : "center",
-                  pl: open ? 1 : 0,
-                  width: "100%",
-                }}
-              >
-                <LogoutIcon fontSize="small" />
-                {open && (
-                  <Typography variant="body2" sx={{ ml: 1 }}>
-                    Déconnexion
-                  </Typography>
-                )}
-              </IconButton>
-
-              {/* Bouton toggle Drawer */}
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle();
-                }}
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  width: "100%",
-                }}
-              >
-                {open ? <ArrowBackIosIcon /> : <ArrowForwardIosIcon />}
-              </IconButton>
-            </Box>
-          </Box>
-        </Drawer>
-      )}
-    </>
-  );
-};
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
