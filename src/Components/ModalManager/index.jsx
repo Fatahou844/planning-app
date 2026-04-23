@@ -5,6 +5,7 @@ import { useArticleSearch } from "../UserArticleSearch";
 import Stock from "../../Pages/Stock";
 import { TabMarques } from "../../Pages/AdminStock";
 import EtiquetageModal from "../Store/Etiquetage/EtiquetageModal";
+import PromoModal       from "../Store/Promo/PromoModal";
 
 export default function ModalManager({ open, onClose, modalType }) {
   const { SearchDialogs } = useArticleSearch(
@@ -54,7 +55,7 @@ export default function ModalManager({ open, onClose, modalType }) {
         return null; // handled above as EtiquetageModal
 
       case "promoPrix":
-        return <Typography>Gestion des promotions</Typography>;
+        return null; // handled above as PromoModal
 
       // FOURNISSEURS
       case "historiqueCommandesFss":
@@ -119,6 +120,10 @@ export default function ModalManager({ open, onClose, modalType }) {
 
   if (modalType === "etiquetage" || modalType === "etiquettesPrix") {
     return <EtiquetageModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "promoPrix") {
+    return <PromoModal open={open} onClose={onClose} />;
   }
 
   if (modalType === "marquesRef") {
