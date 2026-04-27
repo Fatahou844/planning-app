@@ -2,9 +2,13 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import CategoryIcon from "@mui/icons-material/Category";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import {
   Alert,
@@ -583,6 +587,146 @@ function TabArticles({ garageId }) {
 }
 
 /* ════════════════════════════════════════════════════════
+   TAB APPROBATIONS — Validation des nouveaux garages
+════════════════════════════════════════════════════════ */
+function TabApprobations() {
+  const axios = useAxios();
+  const { snack, show, hide } = useSnack();
+
+  const [users,   setUsers]   = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get("/admin/pending-users");
+      setUsers(Array.isArray(res.data) ? res.data : []);
+    } catch { show("Erreur lors du chargement", "error"); }
+    finally { setLoading(false); }
+  }, [axios]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleApprove(id, name) {
+    try {
+      await axios.put(`/admin/approve/${id}`);
+      show(`Accès approuvé pour ${name}`, "success");
+      load();
+    } catch { show("Erreur lors de l'approbation", "error"); }
+  }
+
+  async function handleReject(id, name) {
+    try {
+      await axios.put(`/admin/reject/${id}`);
+      show(`Accès refusé pour ${name}`, "warning");
+      load();
+    } catch { show("Erreur lors du rejet", "error"); }
+  }
+
+  return (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Demandes d'accès en attente
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Approuvez ou refusez les nouveaux garages qui souhaitent rejoindre la plateforme.
+          </Typography>
+        </Box>
+        <Button size="small" variant="outlined" onClick={load} disabled={loading}>
+          {loading ? <CircularProgress size={14} /> : "Actualiser"}
+        </Button>
+      </Box>
+
+      {users.length === 0 && !loading && (
+        <Alert severity="info" icon={<HourglassEmptyIcon />}>
+          Aucune demande en attente pour le moment.
+        </Alert>
+      )}
+
+      {users.length > 0 && (
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ "& th": { fontWeight: 700, fontSize: 12, color: "text.secondary", bgcolor: "background.default" } }}>
+              <TableCell>Utilisateur</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Garage</TableCell>
+              <TableCell>Adresse</TableCell>
+              <TableCell>Téléphone</TableCell>
+              <TableCell>Inscription</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map(u => (
+              <TableRow key={u.id} hover>
+                <TableCell sx={{ py: 0.8 }}>
+                  <Typography variant="caption" fontWeight={700} display="block">
+                    {u.firstName} {u.name}
+                  </Typography>
+                </TableCell>
+                <TableCell sx={{ py: 0.8, fontSize: 12 }}>{u.email}</TableCell>
+                <TableCell sx={{ py: 0.8 }}>
+                  <Typography variant="caption" fontWeight={600} display="block">
+                    {u.Garage?.name || "—"}
+                  </Typography>
+                  {u.Garage?.ville && (
+                    <Typography variant="caption" color="text.secondary">
+                      {u.Garage.codePostal} {u.Garage.ville}
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell sx={{ py: 0.8, fontSize: 12 }}>{u.Garage?.address || "—"}</TableCell>
+                <TableCell sx={{ py: 0.8, fontSize: 12 }}>{u.Garage?.phone || "—"}</TableCell>
+                <TableCell sx={{ py: 0.8, fontSize: 11, color: "text.secondary" }}>
+                  {u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "—"}
+                </TableCell>
+                <TableCell align="center" sx={{ py: 0.8 }}>
+                  <Box display="flex" gap={0.5} justifyContent="center">
+                    <Tooltip title="Approuver l'accès">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        startIcon={<CheckCircleIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => handleApprove(u.id, `${u.firstName} ${u.name}`)}
+                        sx={{ fontSize: 11, py: 0.3, px: 1 }}
+                      >
+                        Approuver
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Refuser l'accès">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<CancelIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => handleReject(u.id, `${u.firstName} ${u.name}`)}
+                        sx={{ fontSize: 11, py: 0.3, px: 1 }}
+                      >
+                        Refuser
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      <Snackbar open={snack.open} autoHideDuration={3500} onClose={hide}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+        <Alert severity={snack.severity} onClose={hide} sx={{ fontSize: 13 }}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
    PAGE PRINCIPALE
 ════════════════════════════════════════════════════════ */
 export default function AdminStock() {
@@ -591,18 +735,19 @@ export default function AdminStock() {
   const garageId = user?.garageId;
 
   const tabs = [
-    { label: "Marques",      icon: <LocalOfferIcon  sx={{ fontSize: 18 }} />, component: <TabMarques      /> },
-    { label: "Fournisseurs", icon: <StorefrontIcon  sx={{ fontSize: 18 }} />, component: <TabFournisseurs /> },
-    { label: "Articles",     icon: <CategoryIcon    sx={{ fontSize: 18 }} />, component: <TabArticles garageId={garageId} /> },
+    { label: "Marques",        icon: <LocalOfferIcon      sx={{ fontSize: 18 }} />, component: <TabMarques      /> },
+    { label: "Fournisseurs",   icon: <StorefrontIcon      sx={{ fontSize: 18 }} />, component: <TabFournisseurs /> },
+    { label: "Articles",       icon: <CategoryIcon        sx={{ fontSize: 18 }} />, component: <TabArticles garageId={garageId} /> },
+    { label: "Approbations",   icon: <PeopleAltIcon       sx={{ fontSize: 18 }} />, component: <TabApprobations /> },
   ];
 
   return (
     <Box display="flex" flexDirection="column" gap={3}>
       {/* En-tête */}
       <Box>
-        <Typography variant="h5" fontWeight={700}>Administration — Stock</Typography>
+        <Typography variant="h5" fontWeight={700}>Administration</Typography>
         <Typography variant="body2" color="text.secondary">
-          Gérez les référentiels marques, fournisseurs et articles
+          Gérez les référentiels stock et validez les accès garage
         </Typography>
       </Box>
 

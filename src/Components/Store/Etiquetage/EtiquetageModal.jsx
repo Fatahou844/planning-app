@@ -327,6 +327,13 @@ export default function EtiquetageModal({ open, onClose }) {
     else { setResults(data); setResultsOpen(true); }
   }
 
+  /* ── Ajouter plusieurs articles depuis la sélection multiple ── */
+  async function addMultipleToPanier(articles) {
+    for (const article of articles) {
+      await addToPanier(article);
+    }
+  }
+
   function updateQty(idx, delta) {
     setPanier(prev => {
       const updated = [...prev];
@@ -492,6 +499,7 @@ export default function EtiquetageModal({ open, onClose }) {
         onClose={() => { setResultsOpen(false); setResults(null); }}
         results={results || []}
         onSelectArticle={addToPanier}
+        onSelectMultiple={addMultipleToPanier}
       />
     </>
   );

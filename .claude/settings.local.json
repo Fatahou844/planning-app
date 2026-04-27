@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/controllers/**)",
-      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/models/**)"
+      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/models/**)",
+      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/middlewares/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\21266\\Desktop\\Garage SaaS\\garage-api\\models",
+      "c:\\Users\\21266\\Desktop\\Garage SaaS\\garage-api\\migrations",
+      "c:\\Users\\21266\\Desktop\\Garage SaaS\\garage-api\\controllers"
     ]
   }
 }
