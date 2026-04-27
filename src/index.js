@@ -1,11 +1,5 @@
 import LogoutIcon from "@mui/icons-material/Logout";
-import {
-  Box,
-  Container,
-  IconButton,
-  Tab,
-  Tabs,
-} from "@mui/material";
+import { Box, Container, IconButton, Tab, Tabs } from "@mui/material";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
@@ -28,9 +22,9 @@ import Dashboard from "./Pages/Dashboard/Dashboard";
 import GarageSettings from "./Pages/GarageSettings/GarageSettings";
 import ManageClients from "./Pages/ManageClients/ManageClients";
 import NotFoundPage from "./Pages/NotFoundPage/NotFoundPage";
+import PlatformDashboard from "./Pages/PlatformDashboard/PlatformDashboard";
+import PlatformLogin from "./Pages/PlatformLogin/PlatformLogin";
 import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
-import PlatformLogin     from "./Pages/Platform/PlatformLogin";
-import PlatformDashboard from "./Pages/Platform/PlatformDashboard";
 import Store from "./Pages/Store/Store";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import WeeklyPlanning from "./Pages/WeeklyPlanning";
@@ -40,22 +34,24 @@ import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute";
 
 const tabLabels = [
-  { label: "Atelier",    path: "/atelier"    },
-  { label: "Planning",   path: "/"           },
-  { label: "Clients",    path: "/clients"    },
-  { label: "Store",      path: "/store"      },
-  { label: "Team",       path: "/team"       },
-  { label: "Caisses",    path: "/caisses"    },
-  { label: "Catalogue",  path: "/catalogue"  },
-  { label: "Pilotage",   path: "/pilotage"   },
-  { label: "Marketing",  path: "/marketing"  },
+  { label: "Atelier", path: "/atelier" },
+  { label: "Planning", path: "/" },
+  { label: "Clients", path: "/clients" },
+  { label: "Store", path: "/store" },
+  { label: "Team", path: "/team" },
+  { label: "Caisses", path: "/caisses" },
+  { label: "Catalogue", path: "/catalogue" },
+  { label: "Pilotage", path: "/pilotage" },
+  { label: "Marketing", path: "/marketing" },
   { label: "Paramètres", path: "/parametres" },
 ];
 
 const DashboardTabs = () => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const activeTab = tabLabels.findIndex((tab) => tab.path === location.pathname);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = tabLabels.findIndex(
+    (tab) => tab.path === location.pathname,
+  );
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -74,7 +70,10 @@ const DashboardTabs = () => {
 
     const fetchAuthStatus = async () => {
       try {
-        const res = await axios.get(`${BASE_URL_API}/v1/auth/check-auth`, config);
+        const res = await axios.get(
+          `${BASE_URL_API}/v1/auth/check-auth`,
+          config,
+        );
         setIsAuthenticated(res.data.isAuthenticated);
         const response = await axios.get(`${BASE_URL_API}/v1`, config);
         localStorage.setItem("me", JSON.stringify(response.data));
@@ -93,13 +92,15 @@ const DashboardTabs = () => {
       if (token) {
         try {
           const payload = JSON.parse(atob(token.split(".")[1]));
-          if (payload?.sub) localStorage.removeItem(`hasSeenNotification_${payload.sub}`);
+          if (payload?.sub)
+            localStorage.removeItem(`hasSeenNotification_${payload.sub}`);
         } catch (e) {
           console.error("Erreur décodage JWT :", e);
         }
       }
       await axios.get(`${BASE_URL_API}/v1/logout`);
-      document.cookie = "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie =
+        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       window.location.href = "/";
     } catch (error) {
       console.error("Erreur de déconnexion :", error);
@@ -148,7 +149,11 @@ const DashboardTabs = () => {
               ))}
 
               <IconButton
-                sx={{ position: "absolute", bottom: 60, transition: "left 0.3s, transform 0.3s" }}
+                sx={{
+                  position: "absolute",
+                  bottom: 60,
+                  transition: "left 0.3s, transform 0.3s",
+                }}
                 onClick={handleLogout}
               >
                 <LogoutIcon sx={{ fontSize: 20 }} />
@@ -175,21 +180,51 @@ const App = () => (
 
           <Box sx={{ minHeight: "100vh" }}>
             <Routes>
-              <Route path="/"                   element={<PrivateRoute Component={Dashboard} />} />
-              <Route path="/register"           element={<AccountCreationSteps />} />
-              <Route path="/reset-password"     element={<ResetPasswordPage />} />
-              <Route path="/weekly-planning"    element={<PrivateRoute Component={WeeklyPlanning} />} />
-              <Route path="/store"              element={<PrivateRoute Component={Store} />} />
-              <Route path="/atelier"            element={<PrivateRoute Component={Atelier} />} />
-              <Route path="/account-verification"  element={<PrivateRoute Component={AccountVerificationSteps} />} />
-              <Route path="/account-approbation"   element={<PrivateRoute Component={AccountApprove} />} />
-              <Route path="/clients"            element={<PrivateRoute Component={ManageClients} />} />
-              <Route path="/planning/customers" element={<PrivateRoute Component={UserDashboard} />} />
-              <Route path="/parametres"         element={<PrivateRoute Component={GarageSettings} />} />
+              <Route
+                path="/"
+                element={<PrivateRoute Component={Dashboard} />}
+              />
+              <Route path="/register" element={<AccountCreationSteps />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route
+                path="/weekly-planning"
+                element={<PrivateRoute Component={WeeklyPlanning} />}
+              />
+              <Route
+                path="/store"
+                element={<PrivateRoute Component={Store} />}
+              />
+              <Route
+                path="/atelier"
+                element={<PrivateRoute Component={Atelier} />}
+              />
+              <Route
+                path="/account-verification"
+                element={<PrivateRoute Component={AccountVerificationSteps} />}
+              />
+              <Route
+                path="/account-approbation"
+                element={<PrivateRoute Component={AccountApprove} />}
+              />
+              <Route
+                path="/clients"
+                element={<PrivateRoute Component={ManageClients} />}
+              />
+              <Route
+                path="/planning/customers"
+                element={<PrivateRoute Component={UserDashboard} />}
+              />
+              <Route
+                path="/parametres"
+                element={<PrivateRoute Component={GarageSettings} />}
+              />
 
               {/* Espace admin plateforme — auth séparée ajoutée */}
-              <Route path="/platform/login"     element={<PlatformLogin />} />
-              <Route path="/platform/dashboard" element={<PlatformDashboard />} />
+              <Route path="/platform/login" element={<PlatformLogin />} />
+              <Route
+                path="/platform/dashboard"
+                element={<PlatformDashboard />}
+              />
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
