@@ -11,6 +11,7 @@ import MenuIcon              from "@mui/icons-material/Menu";
 import PeopleIcon            from "@mui/icons-material/People";
 import ReceiptLongIcon       from "@mui/icons-material/ReceiptLong";
 import SupportAgentIcon      from "@mui/icons-material/SupportAgent";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Accordion,
   AccordionDetails,
@@ -24,8 +25,12 @@ import {
   Chip,
   Container,
   Divider,
+  Drawer,
   Grid,
   IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
   Paper,
   Toolbar,
   Typography,
@@ -212,29 +217,141 @@ function deg2rad(deg) { return (deg * Math.PI) / 180; }
 /* ─────────────────────────────────────────────────────────
    Navbar
 ───────────────────────────────────────────────────────── */
+const NAV_LINKS = [
+  { label: "Fonctionnalités", anchor: "fonctionnalites" },
+  { label: "Schéma",         anchor: "schema"           },
+  { label: "Tarifs",         anchor: "tarifs"           },
+  { label: "Témoignages",    anchor: "temoignages"      },
+  { label: "FAQ",            anchor: "faq"              },
+];
+
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function Navbar() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  function handleNavClick(anchor) {
+    setDrawerOpen(false);
+    setTimeout(() => scrollTo(anchor), 150); // laisser le drawer se fermer d'abord
+  }
+
   return (
-    <AppBar position="fixed" elevation={0} sx={{ bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
-      <Toolbar sx={{ maxWidth: 1200, mx: "auto", width: "100%", px: { xs: 2, md: 4 } }}>
-        <Box display="flex" alignItems="center" gap={1} sx={{ flexGrow: 1 }}>
-          <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <BuildIcon sx={{ fontSize: 18, color: "#fff" }} />
+    <>
+      <AppBar position="fixed" elevation={0} sx={{ bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider", color: "text.primary" }}>
+        <Toolbar sx={{ maxWidth: 1200, mx: "auto", width: "100%", px: { xs: 2, md: 4 } }}>
+
+          {/* Logo */}
+          <Box display="flex" alignItems="center" gap={1} sx={{ flexGrow: 1, cursor: "pointer" }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <BuildIcon sx={{ fontSize: 18, color: "#fff" }} />
+            </Box>
+            <Typography variant="h6" fontWeight={800} color="text.primary">
+              ZP<Typography component="span" color="primary.main" fontWeight={800}>Garage</Typography>
+            </Typography>
           </Box>
-          <Typography variant="h6" fontWeight={800} color="text.primary">
-            ZP<Typography component="span" color="primary.main" fontWeight={800}>Garage</Typography>
-          </Typography>
+
+          {/* Liens desktop */}
+          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 3, alignItems: "center" }}>
+            {NAV_LINKS.map(({ label, anchor }) => (
+              <Typography key={anchor} variant="body2" fontWeight={500} color="text.secondary"
+                onClick={() => scrollTo(anchor)}
+                sx={{ cursor: "pointer", transition: "color 0.2s", "&:hover": { color: "primary.main" } }}>
+                {label}
+              </Typography>
+            ))}
+            <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+            <Button component={Link} to="/" size="small" variant="outlined">Se connecter</Button>
+            <Button component={Link} to="/register" size="small" variant="contained">Essai gratuit</Button>
+          </Box>
+
+          {/* Hamburger mobile */}
+          <IconButton
+            sx={{ display: { md: "none" } }}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      {/* ── Drawer mobile ── */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: 280,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+      >
+        {/* En-tête drawer */}
+        <Box
+          display="flex" alignItems="center" justifyContent="space-between"
+          px={2.5} py={2}
+          sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <BuildIcon sx={{ fontSize: 16, color: "#fff" }} />
+            </Box>
+            <Typography variant="subtitle1" fontWeight={800}>
+              ZP<Typography component="span" color="primary.main" fontWeight={800}>Garage</Typography>
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setDrawerOpen(false)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
-        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 3, alignItems: "center" }}>
-          {["Fonctionnalités", "Tarifs", "Témoignages"].map(l => (
-            <Typography key={l} variant="body2" fontWeight={500} color="text.secondary" sx={{ cursor: "pointer", "&:hover": { color: "text.primary" } }}>{l}</Typography>
+
+        {/* Liens de navigation */}
+        <List sx={{ flex: 1, pt: 1 }}>
+          {NAV_LINKS.map(({ label, anchor }) => (
+            <ListItemButton
+              key={anchor}
+              onClick={() => handleNavClick(anchor)}
+              sx={{
+                mx: 1, borderRadius: 2, mb: 0.5,
+                "&:hover": { bgcolor: "primary.50", "& .MuiListItemText-primary": { color: "primary.main" } },
+              }}
+            >
+              <ListItemText
+                primary={label}
+                primaryTypographyProps={{ variant: "body1", fontWeight: 500 }}
+              />
+            </ListItemButton>
           ))}
-          <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-          <Button component={Link} to="/" size="small" variant="outlined">Se connecter</Button>
-          <Button component={Link} to="/register" size="small" variant="contained">Essai gratuit</Button>
+        </List>
+
+        {/* CTA en bas du drawer */}
+        <Box
+          px={2.5} py={2.5}
+          sx={{ borderTop: "1px solid", borderColor: "divider" }}
+          display="flex" flexDirection="column" gap={1.5}
+        >
+          <Button
+            component={Link} to="/"
+            variant="outlined" fullWidth
+            onClick={() => setDrawerOpen(false)}
+          >
+            Se connecter
+          </Button>
+          <Button
+            component={Link} to="/register"
+            variant="contained" fullWidth
+            onClick={() => setDrawerOpen(false)}
+          >
+            Démarrer gratuitement
+          </Button>
         </Box>
-        <IconButton sx={{ display: { md: "none" } }}><MenuIcon /></IconButton>
-      </Toolbar>
-    </AppBar>
+      </Drawer>
+    </>
   );
 }
 
@@ -305,7 +422,7 @@ function Stats() {
 ───────────────────────────────────────────────────────── */
 function Features() {
   return (
-    <Box py={{ xs: 10, md: 14 }} sx={{ bgcolor: "background.default" }}>
+    <Box id="fonctionnalites" py={{ xs: 10, md: 14 }} sx={{ bgcolor: "background.default" }}>
       <Container maxWidth="lg">
         <SectionTitle subtitle="Tout ce dont votre garage a besoin, sans la complexité. Une seule plateforme pour remplacer vos tableurs, carnets et logiciels éparpillés.">
           Toutes les fonctionnalités essentielles
@@ -331,205 +448,227 @@ function Features() {
 }
 
 /* ─────────────────────────────────────────────────────────
-   SCHÉMA INTERACTIF
+   SCHÉMA INTERACTIF — panneau info (commun desktop + mobile)
 ───────────────────────────────────────────────────────── */
-function InteractiveSchema() {
-  const theme     = useTheme();
-  const isMobile  = useMediaQuery(theme.breakpoints.down("md"));
-  const [active, setActive] = useState(SCHEMA_NODES[0].id);
+function SchemaInfoPanel({ activeNode, active, setActive }) {
+  return (
+    <Box width="100%">
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 3, borderRadius: 3,
+          borderColor: activeNode.color,
+          borderWidth: 2,
+          bgcolor: "background.paper",
+          transition: "border-color 0.3s",
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+          <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: activeNode.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <activeNode.icon sx={{ fontSize: 22, color: "#fff" }} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={800}>{activeNode.label}</Typography>
+            <Chip label={activeNode.badge} size="small"
+              sx={{ bgcolor: activeNode.color, color: "#fff", fontSize: "0.6rem", height: 18, fontWeight: 700 }} />
+          </Box>
+        </Box>
 
-  const activeNode = SCHEMA_NODES.find(n => n.id === active);
+        <Typography variant="body2" color="text.secondary" lineHeight={1.7} mb={2}>
+          {activeNode.description}
+        </Typography>
 
-  /* Dimensions du schéma */
-  const W = 480;
-  const H = 480;
-  const cx = W / 2;
-  const cy = H / 2;
-  const R  = 168;
+        <Divider sx={{ mb: 2 }} />
+
+        <Box display="flex" flexDirection="column" gap={1}>
+          {activeNode.details.map(d => (
+            <Box key={d} display="flex" alignItems="center" gap={1}>
+              <CheckCircleIcon sx={{ fontSize: 15, color: activeNode.color, flexShrink: 0 }} />
+              <Typography variant="body2" fontWeight={500}>{d}</Typography>
+            </Box>
+          ))}
+        </Box>
+
+        <Button
+          component={Link} to="/register" variant="contained" fullWidth
+          sx={{ mt: 2.5, bgcolor: activeNode.color, "&:hover": { bgcolor: activeNode.color, filter: "brightness(0.88)" }, fontWeight: 700, borderRadius: 2 }}
+        >
+          Essayer {activeNode.label} gratuitement
+        </Button>
+      </Paper>
+
+      {/* Dots de navigation */}
+      <Box display="flex" justifyContent="center" gap={1} mt={2}>
+        {SCHEMA_NODES.map(n => (
+          <Box key={n.id} onClick={() => setActive(n.id)}
+            sx={{ width: active === n.id ? 20 : 8, height: 8, borderRadius: 4, bgcolor: active === n.id ? n.color : "action.disabled", cursor: "pointer", transition: "all 0.3s" }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SCHÉMA INTERACTIF — version mobile (grille 3×2)
+───────────────────────────────────────────────────────── */
+function SchemaMobile({ active, setActive, activeNode }) {
+  return (
+    <Box width="100%">
+      {/* Grille 3 colonnes de boutons */}
+      <Grid container spacing={1.5} mb={3}>
+        {SCHEMA_NODES.map(node => {
+          const isActive = node.id === active;
+          const Icon = node.icon;
+          return (
+            <Grid item xs={4} key={node.id}>
+              <Box
+                onClick={() => setActive(node.id)}
+                sx={{
+                  borderRadius: 2.5,
+                  border: "2px solid",
+                  borderColor: isActive ? node.color : "divider",
+                  bgcolor: isActive ? node.color : "background.paper",
+                  p: 1.5,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "all 0.22s ease",
+                  boxShadow: isActive ? `0 4px 14px ${node.color}44` : "none",
+                  "&:active": { transform: "scale(0.96)" },
+                }}
+              >
+                <Icon sx={{ fontSize: 26, color: isActive ? "#fff" : node.color, display: "block", mx: "auto", mb: 0.5 }} />
+                <Typography variant="caption" fontWeight={700} display="block"
+                  sx={{ fontSize: "0.62rem", lineHeight: 1.2, color: isActive ? "#fff" : "text.secondary" }}>
+                  {node.label}
+                </Typography>
+              </Box>
+            </Grid>
+          );
+        })}
+      </Grid>
+
+      <SchemaInfoPanel activeNode={activeNode} active={active} setActive={setActive} />
+    </Box>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SCHÉMA INTERACTIF — version desktop (hub & spoke SVG)
+───────────────────────────────────────────────────────── */
+function SchemaDesktop({ active, setActive, activeNode }) {
+  const theme = useTheme();
+  const W = 460; const H = 460;
+  const cx = W / 2; const cy = H / 2;
+  const R  = 160;
 
   return (
-    <Box py={{ xs: 10, md: 14 }} sx={{ bgcolor: theme.palette.mode === "dark" ? "background.paper" : "#f8faff" }}>
+    <Box display="flex" gap={4} alignItems="center" width="100%">
+      {/* Hub-and-spoke */}
+      <Box sx={{ flexShrink: 0, position: "relative", width: W, height: H }}>
+        <svg width={W} height={H} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
+          {SCHEMA_NODES.map(node => {
+            const x = cx + R * Math.cos(deg2rad(node.angle));
+            const y = cy + R * Math.sin(deg2rad(node.angle));
+            const isActive = node.id === active;
+            return (
+              <g key={node.id}>
+                {isActive && (
+                  <line x1={cx} y1={cy} x2={x} y2={y}
+                    stroke={node.color} strokeWidth="3" strokeDasharray="6 4" opacity="0.25" />
+                )}
+                <line x1={cx} y1={cy} x2={x} y2={y}
+                  stroke={isActive ? node.color : theme.palette.divider}
+                  strokeWidth={isActive ? 2.5 : 1.5}
+                  opacity={isActive ? 1 : 0.5}
+                  style={{ transition: "stroke 0.3s, stroke-width 0.3s" }}
+                />
+                <circle
+                  cx={cx + R * 0.54 * Math.cos(deg2rad(node.angle))}
+                  cy={cy + R * 0.54 * Math.sin(deg2rad(node.angle))}
+                  r={isActive ? 5 : 3}
+                  fill={isActive ? node.color : theme.palette.action.disabled}
+                  style={{ transition: "r 0.3s, fill 0.3s" }}
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Centre */}
+        <Box sx={{
+          position: "absolute", left: cx, top: cy, transform: "translate(-50%,-50%)",
+          width: 88, height: 88, borderRadius: "50%", bgcolor: "primary.main",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          boxShadow: `0 0 0 10px ${theme.palette.primary.main}22`, zIndex: 2,
+        }}>
+          <BuildIcon sx={{ fontSize: 24, color: "#fff" }} />
+          <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.55rem", mt: 0.3, textAlign: "center", lineHeight: 1.2 }}>
+            ZP<br />Garage
+          </Typography>
+        </Box>
+
+        {/* Nœuds */}
+        {SCHEMA_NODES.map(node => {
+          const x = cx + R * Math.cos(deg2rad(node.angle));
+          const y = cy + R * Math.sin(deg2rad(node.angle));
+          const isActive = node.id === active;
+          const Icon = node.icon;
+          return (
+            <Box key={node.id} onClick={() => setActive(node.id)}
+              sx={{
+                position: "absolute", left: x, top: y, transform: "translate(-50%,-50%)",
+                width: isActive ? 74 : 62, height: isActive ? 74 : 62,
+                borderRadius: "50%",
+                bgcolor: isActive ? node.color : "background.paper",
+                border: "2.5px solid", borderColor: isActive ? node.color : theme.palette.divider,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", zIndex: 3, transition: "all 0.25s ease",
+                boxShadow: isActive ? `0 4px 18px ${node.color}55` : "none",
+                "&:hover": { borderColor: node.color, transform: "translate(-50%,-50%) scale(1.1)" },
+              }}
+            >
+              <Icon sx={{ fontSize: 22, color: isActive ? "#fff" : node.color, transition: "color 0.25s" }} />
+              <Typography sx={{ fontSize: "0.52rem", fontWeight: 700, mt: 0.3, lineHeight: 1, color: isActive ? "#fff" : "text.secondary", transition: "color 0.25s" }}>
+                {node.label}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+
+      {/* Panneau info */}
+      <Box flex={1} maxWidth={400}>
+        <SchemaInfoPanel activeNode={activeNode} active={active} setActive={setActive} />
+      </Box>
+    </Box>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SCHÉMA INTERACTIF — conteneur principal
+───────────────────────────────────────────────────────── */
+function InteractiveSchema() {
+  const theme    = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [active, setActive] = useState(SCHEMA_NODES[0].id);
+  const activeNode = SCHEMA_NODES.find(n => n.id === active);
+
+  return (
+    <Box
+      id="schema"
+      py={{ xs: 8, md: 14 }}
+      sx={{ bgcolor: theme.palette.mode === "dark" ? "background.paper" : "#f8faff", overflow: "hidden" }}
+    >
       <Container maxWidth="lg">
-        <SectionTitle subtitle="Cliquez sur un module pour découvrir comment il s'intègre dans votre quotidien.">
+        <SectionTitle subtitle="Appuyez sur un module pour découvrir comment il s'intègre dans votre quotidien.">
           Une plateforme, tout connecté
         </SectionTitle>
 
-        <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4} alignItems="center">
-
-          {/* ── Schéma hub-and-spoke ── */}
-          <Box sx={{ flexShrink: 0, position: "relative", width: W, height: H, maxWidth: "100%" }}>
-
-            {/* SVG pour les lignes */}
-            <svg
-              width={W} height={H}
-              style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none", overflow: "visible" }}
-            >
-              {SCHEMA_NODES.map(node => {
-                const x = cx + R * Math.cos(deg2rad(node.angle));
-                const y = cy + R * Math.sin(deg2rad(node.angle));
-                const isActive = node.id === active;
-                return (
-                  <g key={node.id}>
-                    {isActive && (
-                      <line x1={cx} y1={cy} x2={x} y2={y}
-                        stroke={node.color} strokeWidth="3" strokeDasharray="6 4" opacity="0.3" />
-                    )}
-                    <line
-                      x1={cx} y1={cy} x2={x} y2={y}
-                      stroke={isActive ? node.color : theme.palette.divider}
-                      strokeWidth={isActive ? 2.5 : 1.5}
-                      opacity={isActive ? 1 : 0.5}
-                      style={{ transition: "stroke 0.3s, stroke-width 0.3s" }}
-                    />
-                    {/* Petit cercle le long de la ligne */}
-                    <circle
-                      cx={cx + (R * 0.55) * Math.cos(deg2rad(node.angle))}
-                      cy={cy + (R * 0.55) * Math.sin(deg2rad(node.angle))}
-                      r={isActive ? 5 : 3}
-                      fill={isActive ? node.color : theme.palette.action.disabled}
-                      style={{ transition: "r 0.3s, fill 0.3s" }}
-                    />
-                  </g>
-                );
-              })}
-            </svg>
-
-            {/* Nœud central */}
-            <Box
-              sx={{
-                position: "absolute",
-                left: cx, top: cy,
-                transform: "translate(-50%, -50%)",
-                width: 92, height: 92,
-                borderRadius: "50%",
-                bgcolor: "primary.main",
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                boxShadow: `0 0 0 10px ${theme.palette.primary.main}22`,
-                zIndex: 2,
-              }}
-            >
-              <BuildIcon sx={{ fontSize: 26, color: "#fff" }} />
-              <Typography variant="caption" sx={{ color: "#fff", fontWeight: 700, fontSize: "0.58rem", mt: 0.3, textAlign: "center", lineHeight: 1.2 }}>
-                ZP<br />Garage
-              </Typography>
-            </Box>
-
-            {/* Nœuds périphériques */}
-            {SCHEMA_NODES.map(node => {
-              const x  = cx + R * Math.cos(deg2rad(node.angle));
-              const y  = cy + R * Math.sin(deg2rad(node.angle));
-              const isActive = node.id === active;
-              const Icon = node.icon;
-
-              return (
-                <Box
-                  key={node.id}
-                  onClick={() => setActive(node.id)}
-                  sx={{
-                    position: "absolute",
-                    left: x, top: y,
-                    transform: "translate(-50%, -50%)",
-                    width: isActive ? 76 : 64,
-                    height: isActive ? 76 : 64,
-                    borderRadius: "50%",
-                    bgcolor: isActive ? node.color : "background.paper",
-                    border: "2.5px solid",
-                    borderColor: isActive ? node.color : theme.palette.divider,
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center",
-                    cursor: "pointer",
-                    zIndex: 3,
-                    transition: "all 0.25s ease",
-                    boxShadow: isActive ? `0 4px 20px ${node.color}55` : "none",
-                    "&:hover": {
-                      borderColor: node.color,
-                      transform: "translate(-50%, -50%) scale(1.08)",
-                    },
-                  }}
-                >
-                  <Icon sx={{ fontSize: 24, color: isActive ? "#fff" : node.color, transition: "color 0.25s" }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontSize: "0.55rem", fontWeight: 700, mt: 0.3, lineHeight: 1,
-                      color: isActive ? "#fff" : "text.secondary",
-                      transition: "color 0.25s",
-                    }}
-                  >
-                    {node.label}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-
-          {/* ── Panneau info ── */}
-          <Box flex={1} maxWidth={420}>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 3.5, borderRadius: 3,
-                borderColor: activeNode.color,
-                borderWidth: 2,
-                bgcolor: "background.paper",
-                transition: "border-color 0.3s",
-              }}
-            >
-              {/* En-tête */}
-              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: activeNode.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <activeNode.icon sx={{ fontSize: 22, color: "#fff" }} />
-                </Box>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={800}>{activeNode.label}</Typography>
-                  <Chip label={activeNode.badge} size="small" sx={{ bgcolor: activeNode.color, color: "#fff", fontSize: "0.6rem", height: 18, fontWeight: 700 }} />
-                </Box>
-              </Box>
-
-              <Typography variant="body2" color="text.secondary" lineHeight={1.7} mb={2.5}>
-                {activeNode.description}
-              </Typography>
-
-              <Divider sx={{ mb: 2 }} />
-
-              <Box display="flex" flexDirection="column" gap={1}>
-                {activeNode.details.map(d => (
-                  <Box key={d} display="flex" alignItems="center" gap={1}>
-                    <CheckCircleIcon sx={{ fontSize: 15, color: activeNode.color, flexShrink: 0 }} />
-                    <Typography variant="body2" fontWeight={500}>{d}</Typography>
-                  </Box>
-                ))}
-              </Box>
-
-              <Button
-                component={Link} to="/register"
-                variant="contained"
-                fullWidth
-                sx={{ mt: 3, bgcolor: activeNode.color, "&:hover": { bgcolor: activeNode.color, filter: "brightness(0.88)" }, fontWeight: 700, borderRadius: 2 }}
-              >
-                Essayer {activeNode.label} gratuitement
-              </Button>
-            </Paper>
-
-            {/* Navigation dots */}
-            <Box display="flex" justifyContent="center" gap={1} mt={2}>
-              {SCHEMA_NODES.map(n => (
-                <Box
-                  key={n.id}
-                  onClick={() => setActive(n.id)}
-                  sx={{
-                    width: active === n.id ? 20 : 8,
-                    height: 8, borderRadius: 4,
-                    bgcolor: active === n.id ? n.color : "action.disabled",
-                    cursor: "pointer",
-                    transition: "all 0.3s",
-                  }}
-                />
-              ))}
-            </Box>
-          </Box>
-        </Box>
+        {isMobile
+          ? <SchemaMobile active={active} setActive={setActive} activeNode={activeNode} />
+          : <SchemaDesktop active={active} setActive={setActive} activeNode={activeNode} />
+        }
       </Container>
     </Box>
   );
@@ -567,7 +706,7 @@ function HowItWorks() {
 ───────────────────────────────────────────────────────── */
 function Pricing() {
   return (
-    <Box py={{ xs: 10, md: 14 }} sx={{ bgcolor: "background.default" }}>
+    <Box id="tarifs" py={{ xs: 10, md: 14 }} sx={{ bgcolor: "background.default" }}>
       <Container maxWidth="lg">
         <SectionTitle subtitle="Des tarifs simples et transparents. Pas de frais cachés, pas d'engagement long terme.">
           Tarifs adaptés à votre garage
@@ -623,7 +762,7 @@ function Pricing() {
 function Testimonials() {
   const theme = useTheme();
   return (
-    <Box py={{ xs: 10, md: 14 }} sx={{ bgcolor: theme.palette.mode === "dark" ? "background.paper" : "grey.50" }}>
+    <Box id="temoignages" py={{ xs: 10, md: 14 }} sx={{ bgcolor: theme.palette.mode === "dark" ? "background.paper" : "grey.50" }}>
       <Container maxWidth="lg">
         <SectionTitle subtitle="Des professionnels de l'automobile qui ont transformé leur quotidien.">
           Ils nous font confiance
@@ -658,7 +797,7 @@ function FAQ() {
   const toggle = (panel) => (_, isExpanded) => setExpanded(isExpanded ? panel : false);
 
   return (
-    <Box py={{ xs: 10, md: 14 }} sx={{ bgcolor: "background.default" }}>
+    <Box id="faq" py={{ xs: 10, md: 14 }} sx={{ bgcolor: "background.default" }}>
       <Container maxWidth="md">
         <SectionTitle subtitle="Tout ce que vous devez savoir avant de vous lancer.">
           En savoir plus sur nos offres
