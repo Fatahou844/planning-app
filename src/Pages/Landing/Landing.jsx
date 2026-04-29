@@ -44,12 +44,12 @@ import { Link } from "react-router-dom";
    Données statiques
 ───────────────────────────────────────────────────────── */
 const FEATURES = [
-  { icon: <CalendarMonthIcon sx={{ fontSize: 32 }} />, title: "Planning & Atelier",  color: "primary.main",   desc: "Gérez vos créneaux, affectez vos techniciens et suivez l'avancement des interventions en temps réel depuis un planning visuel."  },
-  { icon: <AssignmentIcon    sx={{ fontSize: 32 }} />, title: "Devis & Facturation", color: "success.main",   desc: "Créez des devis en quelques clics, convertissez-les en ordres de réparation puis en factures. Tout est traçable et archivé."    },
-  { icon: <PeopleIcon        sx={{ fontSize: 32 }} />, title: "Gestion clients",     color: "warning.main",   desc: "Historique complet par client et par véhicule. Retrouvez instantanément les antécédents, les documents et les préférences."     },
-  { icon: <DirectionsCarIcon sx={{ fontSize: 32 }} />, title: "Suivi des véhicules", color: "info.main",      desc: "Fiche véhicule complète : kilométrage, VIN, contrôle technique, historique d'interventions. Rien ne se perd."                  },
-  { icon: <InventoryIcon     sx={{ fontSize: 32 }} />, title: "Stock & Pièces",      color: "secondary.main", desc: "Gérez votre stock de pièces, importez vos catalogues fournisseurs et générez vos étiquettes prix en un clic."                 },
-  { icon: <BarChartIcon      sx={{ fontSize: 32 }} />, title: "Pilotage & Reporting", color: "error.main",    desc: "Tableaux de bord clairs pour suivre votre activité, vos marges et l'efficacité de votre équipe au quotidien."                },
+  { icon: <CalendarMonthIcon sx={{ fontSize: 32 }} />, title: "Planning & Atelier",   color: "primary.main",   mockId: "planning",    desc: "Gérez vos créneaux, affectez vos techniciens et suivez l'avancement des interventions en temps réel depuis un planning visuel."  },
+  { icon: <AssignmentIcon    sx={{ fontSize: 32 }} />, title: "Devis & Facturation",  color: "success.main",   mockId: "devis",       desc: "Créez des devis en quelques clics, convertissez-les en ordres de réparation puis en factures. Tout est traçable et archivé."    },
+  { icon: <PeopleIcon        sx={{ fontSize: 32 }} />, title: "Gestion clients",      color: "warning.main",   mockId: "clients",     desc: "Historique complet par client et par véhicule. Retrouvez instantanément les antécédents, les documents et les préférences."     },
+  { icon: <DirectionsCarIcon sx={{ fontSize: 32 }} />, title: "Suivi des véhicules",  color: "info.main",      mockId: "stock",       desc: "Fiche véhicule complète : kilométrage, VIN, contrôle technique, historique d'interventions. Rien ne se perd."                  },
+  { icon: <InventoryIcon     sx={{ fontSize: 32 }} />, title: "Stock & Pièces",       color: "secondary.main", mockId: "stock",       desc: "Gérez votre stock de pièces, importez vos catalogues fournisseurs et générez vos étiquettes prix en un clic."                 },
+  { icon: <BarChartIcon      sx={{ fontSize: 32 }} />, title: "Pilotage & Reporting", color: "error.main",     mockId: "reporting",   desc: "Tableaux de bord clairs pour suivre votre activité, vos marges et l'efficacité de votre équipe au quotidien."                },
 ];
 
 const STEPS = [
@@ -215,6 +215,249 @@ function SectionTitle({ children, subtitle, centered = true }) {
 function deg2rad(deg) { return (deg * Math.PI) / 180; }
 
 /* ─────────────────────────────────────────────────────────
+   MOCKUPS UI — reproductions miniatures de l'interface réelle
+───────────────────────────────────────────────────────── */
+
+function BrowserFrame({ children }) {
+  return (
+    <Box sx={{ borderRadius: "10px", overflow: "hidden", border: "1px solid #e0e0e0", boxShadow: "0 12px 40px rgba(0,0,0,0.13)" }}>
+      {/* Chrome bar */}
+      <Box sx={{ bgcolor: "#f0f0f0", px: 1.5, py: 0.7, display: "flex", alignItems: "center", gap: 0.8, borderBottom: "1px solid #ddd" }}>
+        <Box display="flex" gap={0.5}>
+          {["#ff5f57","#febc2e","#28c840"].map((c,i) => <Box key={i} sx={{ width:8, height:8, borderRadius:"50%", bgcolor:c }} />)}
+        </Box>
+        <Box sx={{ flex:1, bgcolor:"#fff", borderRadius:"5px", px:1, py:0.15, mx:0.5, display:"flex", alignItems:"center", gap:0.5 }}>
+          <Typography sx={{ fontSize:"0.5rem", color:"#aaa" }}>🔒 stg.zpdigital.fr</Typography>
+        </Box>
+      </Box>
+      {children}
+    </Box>
+  );
+}
+
+/* ── Planning ───────────────────────────────────────────── */
+function PlanningMock() {
+  const techs = ["K. Benali","A. Morad","S. Radi"];
+  const hours  = ["8h","9h","10h","11h","12h"];
+  const COLS   = 5;
+  const slots  = [
+    [{ col:0, span:2, label:"Vidange Golf VII", c:"#1976d2" }, { col:3, span:2, label:"CT BMW 320", c:"#388e3c" }],
+    [{ col:1, span:3, label:"Révision complète Clio", c:"#f57c00" }],
+    [{ col:0, span:1, label:"Diagnostic", c:"#7b1fa2" }, { col:2, span:2, label:"Freinage C3", c:"#c62828" }],
+  ];
+  return (
+    <Box sx={{ bgcolor:"#fff", p:1.2 }}>
+      <Box display="flex" gap={0.5} mb={0.8} sx={{ borderBottom:"1px solid #e0e0e0", pb:0.5 }}>
+        {["Planning","Atelier","Clients","Store"].map((t,i) => (
+          <Box key={t} sx={{ px:1, py:0.2, borderRadius:"3px 3px 0 0", bgcolor: i===0?"#1976d2":"transparent" }}>
+            <Typography sx={{ fontSize:"0.48rem", color: i===0?"#fff":"#bbb", fontWeight: i===0?700:400 }}>{t}</Typography>
+          </Box>
+        ))}
+      </Box>
+      <Box display="flex" pl="50px" mb={0.3}>
+        {hours.map(h => <Box key={h} sx={{ flex:1, textAlign:"center" }}><Typography sx={{ fontSize:"0.42rem", color:"#ccc" }}>{h}</Typography></Box>)}
+      </Box>
+      {techs.map((tech,ri) => (
+        <Box key={tech} display="flex" alignItems="center" mb={0.5}>
+          <Box sx={{ width:50, flexShrink:0 }}>
+            <Typography sx={{ fontSize:"0.45rem", color:"#888", pr:0.5, textAlign:"right" }}>{tech}</Typography>
+          </Box>
+          <Box sx={{ flex:1, position:"relative", height:18, bgcolor:"#f5f5f5", borderRadius:"3px" }}>
+            {slots[ri].map((ev,ei) => (
+              <Box key={ei} sx={{
+                position:"absolute", left:`${(ev.col/COLS)*100}%`, width:`${(ev.span/COLS)*100}%`,
+                top:1, bottom:1, bgcolor:ev.c, borderRadius:"3px", px:0.5,
+                display:"flex", alignItems:"center", overflow:"hidden",
+              }}>
+                <Typography sx={{ fontSize:"0.42rem", color:"#fff", fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{ev.label}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+/* ── Devis / Facture ────────────────────────────────────── */
+function DeuisMock({ label = "DEVIS #2026-089" }) {
+  const lines = [
+    { label:"Vidange moteur + filtre", qty:1, pu:"55.00", total:"55.00" },
+    { label:"Filtres habitacle", qty:2, pu:"18.50", total:"37.00" },
+    { label:"Main d'œuvre (1h)", qty:1, pu:"45.00", total:"45.00" },
+  ];
+  return (
+    <Box sx={{ bgcolor:"#fff", p:1.5 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+        <Box>
+          <Box sx={{ width:36, height:7, bgcolor:"#1976d2", borderRadius:1, mb:0.4 }} />
+          <Typography sx={{ fontSize:"0.45rem", color:"#bbb" }}>Garage Auto Pro</Typography>
+        </Box>
+        <Box textAlign="right">
+          <Typography sx={{ fontSize:"0.52rem", fontWeight:700, color:"#1976d2" }}>{label}</Typography>
+          <Typography sx={{ fontSize:"0.42rem", color:"#ccc" }}>29/04/2026</Typography>
+        </Box>
+      </Box>
+      <Box sx={{ bgcolor:"#1976d2", borderRadius:"3px 3px 0 0", px:0.8, py:0.3, display:"flex", gap:1 }}>
+        {["Désignation","Qté","P.U","Total"].map(h => (
+          <Typography key={h} sx={{ fontSize:"0.42rem", color:"#fff", fontWeight:600, flex: h==="Désignation"?3:1, textAlign: h==="Désignation"?"left":"right" }}>{h}</Typography>
+        ))}
+      </Box>
+      {lines.map((l,i) => (
+        <Box key={i} sx={{ display:"flex", gap:1, px:0.8, py:0.35, bgcolor: i%2===0?"#f9f9f9":"#fff", borderBottom:"1px solid #f0f0f0" }}>
+          <Typography sx={{ fontSize:"0.42rem", flex:3, color:"#444" }}>{l.label}</Typography>
+          <Typography sx={{ fontSize:"0.42rem", flex:1, textAlign:"right", color:"#888" }}>{l.qty}</Typography>
+          <Typography sx={{ fontSize:"0.42rem", flex:1, textAlign:"right", color:"#888" }}>{l.pu}</Typography>
+          <Typography sx={{ fontSize:"0.42rem", flex:1, textAlign:"right", fontWeight:600, color:"#333" }}>{l.total}</Typography>
+        </Box>
+      ))}
+      <Box display="flex" justifyContent="flex-end" mt={0.8}>
+        <Box sx={{ border:"1.5px solid #1976d2", borderRadius:1, px:1, py:0.3 }}>
+          <Typography sx={{ fontSize:"0.48rem", fontWeight:800, color:"#1976d2" }}>TOTAL TTC : 165.72 €</Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* ── Clients CRM ────────────────────────────────────────── */
+function ClientsMock() {
+  const clients = [
+    { name:"Karim Benali",     plate:"AB-234-CD", last:"Vidange",  status:"Actif",  c:"#388e3c" },
+    { name:"Fatima Laaroussi", plate:"XY-891-ZA", last:"Freinage", status:"RDV",    c:"#1976d2" },
+    { name:"Youssef Merini",   plate:"TC-045-BK", last:"CT requis",status:"Alerte", c:"#f57c00" },
+  ];
+  return (
+    <Box sx={{ bgcolor:"#fff", p:1.2 }}>
+      <Box sx={{ border:"1px solid #e0e0e0", borderRadius:1, px:1, py:0.4, mb:0.8, display:"flex", alignItems:"center", gap:0.5 }}>
+        <Box sx={{ width:7, height:7, borderRadius:"50%", border:"1.5px solid #bbb" }} />
+        <Typography sx={{ fontSize:"0.42rem", color:"#ccc" }}>Rechercher un client…</Typography>
+      </Box>
+      {clients.map((c,i) => (
+        <Box key={i} sx={{ display:"flex", alignItems:"center", gap:0.8, py:0.5, borderBottom:"1px solid #f5f5f5" }}>
+          <Box sx={{ width:20, height:20, borderRadius:"50%", bgcolor:c.c, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+            <Typography sx={{ fontSize:"0.45rem", color:"#fff", fontWeight:700 }}>{c.name[0]}</Typography>
+          </Box>
+          <Box flex={1} minWidth={0}>
+            <Typography sx={{ fontSize:"0.46rem", fontWeight:600, color:"#333", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{c.name}</Typography>
+            <Typography sx={{ fontSize:"0.4rem", color:"#bbb" }}>{c.plate} · {c.last}</Typography>
+          </Box>
+          <Box sx={{ px:0.5, py:0.15, bgcolor:c.c+"22", borderRadius:0.5, flexShrink:0 }}>
+            <Typography sx={{ fontSize:"0.4rem", color:c.c, fontWeight:700 }}>{c.status}</Typography>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+/* ── Véhicules ──────────────────────────────────────────── */
+function VehicleMock() {
+  return (
+    <Box sx={{ bgcolor:"#fff", p:1.2 }}>
+      <Box sx={{ border:"1px solid #e0e0e0", borderRadius:1.5, p:1, mb:0.8 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+          <Box>
+            <Typography sx={{ fontSize:"0.52rem", fontWeight:800, color:"#333" }}>AB-234-CD</Typography>
+            <Typography sx={{ fontSize:"0.42rem", color:"#bbb" }}>Renault Clio IV · 2019 · Blanc</Typography>
+          </Box>
+          <Box sx={{ px:0.6, py:0.2, bgcolor:"#e3f2fd", borderRadius:0.5 }}>
+            <Typography sx={{ fontSize:"0.42rem", color:"#1976d2", fontWeight:700 }}>85 400 km</Typography>
+          </Box>
+        </Box>
+        {[{ label:"CT", val:"02/2026", c:"#f57c00" }, { label:"Dernière visite", val:"14/01/2026", c:"#388e3c" }, { label:"VIN", val:"VF1KS000...", c:"#999" }].map(r => (
+          <Box key={r.label} display="flex" justifyContent="space-between" mb={0.25}>
+            <Typography sx={{ fontSize:"0.4rem", color:"#ccc" }}>{r.label}</Typography>
+            <Typography sx={{ fontSize:"0.4rem", color:r.c, fontWeight:600 }}>{r.val}</Typography>
+          </Box>
+        ))}
+      </Box>
+      <Typography sx={{ fontSize:"0.45rem", fontWeight:700, color:"#333", mb:0.4 }}>Historique</Typography>
+      {[{ date:"14/01", label:"Vidange + filtres" }, { date:"08/09", label:"Remplacement courroie" }].map((h,i) => (
+        <Box key={i} display="flex" gap={0.5} alignItems="center" mb={0.3}>
+          <Box sx={{ width:5, height:5, borderRadius:"50%", bgcolor:"#1976d2", flexShrink:0 }} />
+          <Typography sx={{ fontSize:"0.4rem", color:"#bbb" }}>{h.date}</Typography>
+          <Typography sx={{ fontSize:"0.4rem", color:"#555" }}>{h.label}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+/* ── Stock ──────────────────────────────────────────────── */
+function StockMock() {
+  const items = [
+    { label:"Filtre huile BOSCH",    ref:"0986AF154", stock:12, max:20, c:"#388e3c" },
+    { label:"Plaquettes AV BREMBO",  ref:"P85020",    stock:3,  max:10, c:"#f57c00" },
+    { label:"Courroie distrib GATES",ref:"K015653XS", stock:0,  max:5,  c:"#c62828" },
+  ];
+  return (
+    <Box sx={{ bgcolor:"#fff", p:1.2 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.8}>
+        <Typography sx={{ fontSize:"0.48rem", fontWeight:700, color:"#333" }}>Stock articles</Typography>
+        <Box sx={{ px:0.6, py:0.15, bgcolor:"#1976d2", borderRadius:0.5 }}>
+          <Typography sx={{ fontSize:"0.4rem", color:"#fff", fontWeight:600 }}>+ Ajouter</Typography>
+        </Box>
+      </Box>
+      {items.map((it,i) => (
+        <Box key={i} sx={{ py:0.5, borderBottom:"1px solid #f5f5f5" }}>
+          <Box display="flex" justifyContent="space-between" mb={0.15}>
+            <Typography sx={{ fontSize:"0.45rem", fontWeight:600, color:"#333" }}>{it.label}</Typography>
+            <Typography sx={{ fontSize:"0.42rem", color: it.stock===0?"#c62828": it.stock<5?"#f57c00":"#388e3c", fontWeight:700 }}>
+              {it.stock===0 ? "Rupture" : `${it.stock} en stock`}
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize:"0.38rem", color:"#ccc", mb:0.3 }}>Réf: {it.ref}</Typography>
+          <Box sx={{ height:4, bgcolor:"#f0f0f0", borderRadius:2 }}>
+            <Box sx={{ height:"100%", width:`${Math.min((it.stock/it.max)*100,100)}%`, bgcolor:it.c, borderRadius:2 }} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+/* ── Reporting ──────────────────────────────────────────── */
+function ReportingMock() {
+  const months = ["Jan","Fév","Mar","Avr","Mai","Jun"];
+  const vals   = [62, 78, 55, 90, 85, 95];
+  const maxV   = Math.max(...vals);
+  return (
+    <Box sx={{ bgcolor:"#fff", p:1.2 }}>
+      <Box display="flex" gap={0.8} mb={1}>
+        {[{ label:"CA mois", val:"12 840 €", c:"#1976d2" }, { label:"Interventions", val:"47", c:"#388e3c" }, { label:"Marge", val:"38%", c:"#f57c00" }].map(k => (
+          <Box key={k.label} sx={{ flex:1, border:"1px solid", borderColor:k.c+"33", borderRadius:1, p:0.5, textAlign:"center" }}>
+            <Typography sx={{ fontSize:"0.5rem", fontWeight:800, color:k.c }}>{k.val}</Typography>
+            <Typography sx={{ fontSize:"0.38rem", color:"#bbb" }}>{k.label}</Typography>
+          </Box>
+        ))}
+      </Box>
+      <Box display="flex" alignItems="flex-end" gap={0.5} sx={{ height:48, mt:1 }}>
+        {months.map((m,i) => (
+          <Box key={m} sx={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:0.3 }}>
+            <Box sx={{ width:"100%", height:`${(vals[i]/maxV)*42}px`, bgcolor: i===5?"#1976d2":"#bbdefb", borderRadius:"2px 2px 0 0" }} />
+            <Typography sx={{ fontSize:"0.38rem", color:"#ccc" }}>{m}</Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+/* ── Sélecteur de mockup par ID de fonctionnalité ───────── */
+function FeatureMockup({ id }) {
+  switch (id) {
+    case "planning":    return <PlanningMock />;
+    case "devis":       return <DeuisMock label="DEVIS #2026-089" />;
+    case "facturation": return <DeuisMock label="FACTURE #2026-042" />;
+    case "clients":     return <ClientsMock />;
+    case "stock":       return <StockMock />;
+    case "reporting":   return <ReportingMock />;
+    default:            return <PlanningMock />;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
    Navbar
 ───────────────────────────────────────────────────────── */
 const NAV_LINKS = [
@@ -359,39 +602,74 @@ function Navbar() {
    Hero
 ───────────────────────────────────────────────────────── */
 function Hero() {
-  const theme = useTheme();
+  const theme   = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const textBlock = (
+    <Box>
+      <Chip label="⚡ Nouvelle version disponible" size="small" color="primary" variant="outlined" sx={{ mb: 3, fontWeight: 600 }} />
+      <Typography variant="h2" fontWeight={900} lineHeight={1.15} gutterBottom sx={{ fontSize: { xs: "2.2rem", md: "2.8rem" } }}>
+        Gérez votre garage.{" "}
+        <Typography component="span" variant="inherit" sx={{ color: "primary.main", position: "relative",
+          "&::after": { content: '""', position: "absolute", bottom: 2, left: 0, right: 0, height: 4, bgcolor: "primary.main", opacity: 0.2, borderRadius: 2 } }}>
+          On s'occupe du reste.
+        </Typography>
+      </Typography>
+      <Typography variant="h6" color="text.secondary" fontWeight={400} mb={4} lineHeight={1.6} sx={{ fontSize: { xs: "1rem", md: "1.1rem" } }}>
+        La plateforme tout-en-un pour les garages modernes. Planning, devis, facturation, stock et gestion clients — dans un seul outil.
+      </Typography>
+      <Box display="flex" gap={2} flexWrap="wrap" mb={4}>
+        <Button component={Link} to="/register" variant="contained" size="large"
+          sx={{ px: 4, py: 1.5, fontWeight: 700, fontSize: "1rem", borderRadius: 2 }}>
+          Démarrer gratuitement
+        </Button>
+        <Button variant="outlined" size="large"
+          sx={{ px: 4, py: 1.5, fontWeight: 600, fontSize: "1rem", borderRadius: 2 }}>
+          Voir une démo
+        </Button>
+      </Box>
+      <Box display="flex" gap={2.5} flexWrap="wrap">
+        {["✓ Sans carte bancaire", "✓ 1 mois gratuit", "✓ Support inclus"].map(t => (
+          <Typography key={t} variant="body2" color="text.secondary" fontWeight={500}>{t}</Typography>
+        ))}
+      </Box>
+    </Box>
+  );
+
   return (
-    <Box
-      sx={{
-        pt: { xs: 14, md: 18 }, pb: { xs: 10, md: 14 },
-        background: theme.palette.mode === "dark"
-          ? `linear-gradient(160deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`
-          : "linear-gradient(160deg, #f0f7ff 0%, #ffffff 60%, #fff8f0 100%)",
-        textAlign: "center", position: "relative", overflow: "hidden",
-      }}
-    >
-      <Box sx={{ position: "absolute", top: -120, right: -120, width: 400, height: 400, borderRadius: "50%", bgcolor: "primary.main", opacity: 0.05, pointerEvents: "none" }} />
-      <Box sx={{ position: "absolute", bottom: -80, left: -80, width: 300, height: 300, borderRadius: "50%", bgcolor: "warning.main", opacity: 0.06, pointerEvents: "none" }} />
-      <Container maxWidth="md">
-        <Chip label="⚡ Nouvelle version disponible" size="small" color="primary" variant="outlined" sx={{ mb: 3, fontWeight: 600 }} />
-        <Typography variant="h2" fontWeight={900} lineHeight={1.15} gutterBottom sx={{ fontSize: { xs: "2.2rem", md: "3.2rem" } }}>
-          Gérez votre garage.{" "}
-          <Typography component="span" variant="inherit" sx={{ color: "primary.main", position: "relative", "&::after": { content: '""', position: "absolute", bottom: 2, left: 0, right: 0, height: 4, bgcolor: "primary.main", opacity: 0.2, borderRadius: 2 } }}>
-            On s'occupe du reste.
-          </Typography>
-        </Typography>
-        <Typography variant="h6" color="text.secondary" fontWeight={400} maxWidth={560} mx="auto" mb={5} lineHeight={1.6}>
-          La plateforme tout-en-un pour les garages modernes. Planning, devis, facturation, stock et gestion clients — dans un seul outil.
-        </Typography>
-        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap" mb={6}>
-          <Button component={Link} to="/register" variant="contained" size="large" sx={{ px: 4, py: 1.5, fontWeight: 700, fontSize: "1rem", borderRadius: 2 }}>Démarrer gratuitement</Button>
-          <Button variant="outlined" size="large" sx={{ px: 4, py: 1.5, fontWeight: 600, fontSize: "1rem", borderRadius: 2 }}>Voir une démo</Button>
-        </Box>
-        <Box display="flex" gap={3} justifyContent="center" flexWrap="wrap">
-          {["✓ Sans carte bancaire", "✓ 1 mois d'essai gratuit", "✓ Support inclus"].map(t => (
-            <Typography key={t} variant="body2" color="text.secondary" fontWeight={500}>{t}</Typography>
-          ))}
-        </Box>
+    <Box sx={{
+      pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 10 },
+      background: theme.palette.mode === "dark"
+        ? `linear-gradient(160deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`
+        : "linear-gradient(160deg, #f0f7ff 0%, #ffffff 60%, #fff8f0 100%)",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Déco */}
+      <Box sx={{ position:"absolute", top:-100, right:-100, width:360, height:360, borderRadius:"50%", bgcolor:"primary.main", opacity:0.04, pointerEvents:"none" }} />
+      <Box sx={{ position:"absolute", bottom:-60, left:-60, width:260, height:260, borderRadius:"50%", bgcolor:"warning.main", opacity:0.05, pointerEvents:"none" }} />
+
+      <Container maxWidth="lg">
+        {isMobile ? (
+          /* ── Mobile : centré, sans mockup ── */
+          <Box textAlign="center">
+            {textBlock}
+          </Box>
+        ) : (
+          /* ── Desktop : split — texte gauche, mockup droite ── */
+          <Grid container spacing={6} alignItems="center">
+            <Grid item md={5}>
+              {textBlock}
+            </Grid>
+            <Grid item md={7}>
+              {/* Légère inclinaison pour l'effet "screenshot flottant" */}
+              <Box sx={{ transform: "perspective(1000px) rotateY(-4deg) rotateX(2deg)", transformOrigin: "left center", transition: "transform 0.3s", "&:hover": { transform: "perspective(1000px) rotateY(-1deg) rotateX(0.5deg)" } }}>
+                <BrowserFrame>
+                  <PlanningMock />
+                </BrowserFrame>
+              </Box>
+            </Grid>
+          </Grid>
+        )}
       </Container>
     </Box>
   );
@@ -430,12 +708,22 @@ function Features() {
         <Grid container spacing={3}>
           {FEATURES.map((f) => (
             <Grid item xs={12} sm={6} md={4} key={f.title}>
-              <Card variant="outlined" sx={{ height: "100%", transition: "box-shadow 0.2s, transform 0.2s", "&:hover": { boxShadow: 4, transform: "translateY(-3px)" }, bgcolor: "background.paper" }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ width: 52, height: 52, borderRadius: 2, bgcolor: f.color, display: "flex", alignItems: "center", justifyContent: "center", mb: 2, "& svg": { color: "#fff" } }}>
-                    {f.icon}
+              <Card variant="outlined" sx={{ height: "100%", transition: "box-shadow 0.2s, transform 0.2s", "&:hover": { boxShadow: 6, transform: "translateY(-4px)" }, bgcolor: "background.paper", overflow: "hidden" }}>
+                {/* Mini mockup en haut de la carte */}
+                <Box sx={{ borderBottom: "1px solid", borderColor: "divider", overflow: "hidden", maxHeight: 130, position: "relative" }}>
+                  <Box sx={{ transform: "scale(0.72)", transformOrigin: "top left", width: "139%" }}>
+                    <FeatureMockup id={f.mockId} />
                   </Box>
-                  <Typography variant="subtitle1" fontWeight={700} gutterBottom>{f.title}</Typography>
+                  {/* Dégradé de fondu vers le bas */}
+                  <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, background: `linear-gradient(transparent, var(--mui-palette-background-paper, #fff))` }} />
+                </Box>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Box display="flex" alignItems="center" gap={1.5} mb={1}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: f.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, "& svg": { color: "#fff", fontSize: 20 } }}>
+                      {f.icon}
+                    </Box>
+                    <Typography variant="subtitle1" fontWeight={700}>{f.title}</Typography>
+                  </Box>
                   <Typography variant="body2" color="text.secondary" lineHeight={1.6}>{f.desc}</Typography>
                 </CardContent>
               </Card>
@@ -495,6 +783,14 @@ function SchemaInfoPanel({ activeNode, active, setActive }) {
         >
           Essayer {activeNode.label} gratuitement
         </Button>
+
+        {/* Mini aperçu de l'interface du module */}
+        <Box mt={2} sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid", borderColor: "divider", maxHeight: 140, position: "relative" }}>
+          <Box sx={{ transform: "scale(0.75)", transformOrigin: "top left", width: "133%" }}>
+            <FeatureMockup id={activeNode.id} />
+          </Box>
+          <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 36, background: "linear-gradient(transparent, var(--mui-palette-background-paper, #fff))" }} />
+        </Box>
       </Paper>
 
       {/* Dots de navigation */}
