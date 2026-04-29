@@ -43,7 +43,7 @@ export default function PlatformLogin() {
       // Stocker le token plateforme séparément du token garage
       localStorage.setItem("platformAdminToken", data.token);
       localStorage.setItem("platformAdminInfo",  JSON.stringify(data.admin));
-      navigate("/platform/dashboard");
+      navigate("/platform-dashboard");
     } catch {
       setError("Impossible de joindre le serveur.");
     } finally {

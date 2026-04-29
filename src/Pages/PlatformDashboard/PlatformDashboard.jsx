@@ -533,7 +533,7 @@ export default function PlatformDashboard() {
 
   /* ── Vérification du token au montage ── */
   useEffect(() => {
-    if (!token) { navigate("/platform/login"); return; }
+    if (!token) { navigate("/platform-login"); return; }
     const stored = localStorage.getItem("platformAdminInfo");
     if (stored) setAdminInfo(JSON.parse(stored));
 
@@ -541,7 +541,7 @@ export default function PlatformDashboard() {
     fetch(`${API}/me`, { headers: authHeaders(token) })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(a => { setAdminInfo(a); localStorage.setItem("platformAdminInfo", JSON.stringify(a)); })
-      .catch(() => { localStorage.removeItem("platformAdminToken"); navigate("/platform/login"); });
+      .catch(() => { localStorage.removeItem("platformAdminToken"); navigate("/platform-login"); });
   }, [token, navigate]);
 
   /* ── Compter les demandes en attente ── */
@@ -556,7 +556,7 @@ export default function PlatformDashboard() {
   function handleLogout() {
     localStorage.removeItem("platformAdminToken");
     localStorage.removeItem("platformAdminInfo");
-    navigate("/platform/login");
+    navigate("/platform-login");
   }
 
   const tabs = [

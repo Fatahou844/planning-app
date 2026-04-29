@@ -219,12 +219,9 @@ const App = () => (
                 element={<PrivateRoute Component={GarageSettings} />}
               />
 
-              {/* Espace admin plateforme — auth séparée ajoutée */}
-              <Route path="/platform/login" element={<PlatformLogin />} />
-              <Route
-                path="/platform/dashboard"
-                element={<PlatformDashboard />}
-              />
+              {/* Espace admin plateforme — auth séparée */}
+              <Route path="/platform-login"     element={<PlatformLogin />} />
+              <Route path="/platform-dashboard" element={<PlatformDashboard />} />
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
