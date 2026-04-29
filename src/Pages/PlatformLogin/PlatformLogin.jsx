@@ -39,8 +39,6 @@ export default function PlatformLogin() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || "Identifiants incorrects."); return; }
-
-      // Stocker le token plateforme séparément du token garage
       localStorage.setItem("platformAdminToken", data.token);
       localStorage.setItem("platformAdminInfo",  JSON.stringify(data.admin));
       navigate("/platform-dashboard");
@@ -57,7 +55,7 @@ export default function PlatformLogin() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      sx={{ bgcolor: "#0f172a" }}
+      sx={{ bgcolor: "background.default" }}
     >
       <Box width="100%" maxWidth={420} px={2}>
         {/* Logo / titre */}
@@ -65,16 +63,19 @@ export default function PlatformLogin() {
           <Box
             sx={{
               width: 56, height: 56, borderRadius: 2,
-              bgcolor: "primary.main", display: "inline-flex",
-              alignItems: "center", justifyContent: "center", mb: 2,
+              bgcolor: "primary.main",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
             }}
           >
             <LockPersonIcon sx={{ fontSize: 30, color: "#fff" }} />
           </Box>
-          <Typography variant="h5" fontWeight={800} color="#fff">
+          <Typography variant="h5" fontWeight={800} color="text.primary">
             Admin Plateforme
           </Typography>
-          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)", mt: 0.5 }}>
+          <Typography variant="body2" color="text.secondary" mt={0.5}>
             Espace réservé aux équipes ZP Digital
           </Typography>
         </Box>
@@ -82,8 +83,8 @@ export default function PlatformLogin() {
         <Paper
           component="form"
           onSubmit={handleLogin}
-          elevation={0}
-          sx={{ p: 4, borderRadius: 3, bgcolor: "#1e293b" }}
+          elevation={2}
+          sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper" }}
         >
           <Box display="flex" flexDirection="column" gap={2.5}>
             <TextField
@@ -94,12 +95,6 @@ export default function PlatformLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="username"
-              sx={{ input: { color: "#e2e8f0" }, label: { color: "rgba(255,255,255,0.5)" },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "rgba(255,255,255,0.15)" },
-                  "&:hover fieldset": { borderColor: "rgba(255,255,255,0.3)" },
-                },
-              }}
             />
 
             <TextField
@@ -113,17 +108,11 @@ export default function PlatformLogin() {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setShowPwd(v => !v)} sx={{ color: "rgba(255,255,255,0.4)" }}>
+                    <IconButton size="small" onClick={() => setShowPwd(v => !v)}>
                       {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                     </IconButton>
                   </InputAdornment>
                 ),
-              }}
-              sx={{ input: { color: "#e2e8f0" }, label: { color: "rgba(255,255,255,0.5)" },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "rgba(255,255,255,0.15)" },
-                  "&:hover fieldset": { borderColor: "rgba(255,255,255,0.3)" },
-                },
               }}
             />
 
@@ -143,8 +132,13 @@ export default function PlatformLogin() {
           </Box>
         </Paper>
 
-        <Typography variant="caption" display="block" textAlign="center" mt={3}
-          sx={{ color: "rgba(255,255,255,0.25)" }}>
+        <Typography
+          variant="caption"
+          display="block"
+          textAlign="center"
+          mt={3}
+          color="text.disabled"
+        >
           Accès strictement réservé aux employés ZP Digital.<br />
           Si vous êtes un garage, connectez-vous depuis l'accueil principal.
         </Typography>

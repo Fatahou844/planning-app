@@ -209,18 +209,20 @@ function GarageRow({ g }) {
         </TableCell>
 
         {/* Localisation */}
-        <TableCell sx={{ fontSize: 11 }}>
-          {g.address
-            ? <><span style={{ display: "block" }}>{g.address}</span>
-               <span style={{ color: "#888" }}>{[g.codePostal, g.ville].filter(Boolean).join(" ")}</span></>
-            : [g.codePostal, g.ville].filter(Boolean).join(" ") || "—"}
+        <TableCell>
+          {g.address && (
+            <Typography variant="caption" display="block">{g.address}</Typography>
+          )}
+          <Typography variant="caption" color="text.secondary">
+            {[g.codePostal, g.ville].filter(Boolean).join(" ") || "—"}
+          </Typography>
         </TableCell>
 
         {/* Contact */}
-        <TableCell sx={{ fontSize: 11 }}>
-          {g.email && <span style={{ display: "block" }}>{g.email}</span>}
-          {g.phone && <span style={{ color: "#888" }}>{g.phone}</span>}
-          {!g.email && !g.phone && "—"}
+        <TableCell>
+          {g.email && <Typography variant="caption" display="block">{g.email}</Typography>}
+          {g.phone && <Typography variant="caption" color="text.secondary" display="block">{g.phone}</Typography>}
+          {!g.email && !g.phone && <Typography variant="caption">—</Typography>}
         </TableCell>
 
         {/* Utilisateurs résumé */}
@@ -600,7 +602,7 @@ export default function PlatformDashboard() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          bgcolor: "#0f172a",
+          bgcolor: "background.paper",
         }}
       >
         <Box display="flex" alignItems="center" gap={1.5}>
@@ -608,21 +610,26 @@ export default function PlatformDashboard() {
             display: "flex", alignItems: "center", justifyContent: "center" }}>
             <SupervisorAccountIcon sx={{ fontSize: 16, color: "#fff" }} />
           </Box>
-          <Typography variant="subtitle1" fontWeight={800} color="#fff">
+          <Typography variant="subtitle1" fontWeight={800} color="text.primary">
             Admin Plateforme
           </Typography>
-          <Chip label="ZP Digital" size="small" color="primary" variant="outlined"
-            sx={{ fontSize: "0.6rem", height: 18, borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.6)" }} />
+          <Chip
+            label="ZP Digital"
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={{ fontSize: "0.6rem", height: 18 }}
+          />
         </Box>
 
         <Box display="flex" alignItems="center" gap={2}>
           {adminInfo && (
-            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>
+            <Typography variant="caption" color="text.secondary">
               {adminInfo.firstName} {adminInfo.name}
             </Typography>
           )}
           <Tooltip title="Déconnexion">
-            <IconButton size="small" onClick={handleLogout} sx={{ color: "rgba(255,255,255,0.6)" }}>
+            <IconButton size="small" onClick={handleLogout} color="default">
               <LogoutIcon fontSize="small" />
             </IconButton>
           </Tooltip>

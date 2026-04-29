@@ -25,6 +25,7 @@ import ManageClients from "./Pages/ManageClients/ManageClients";
 import NotFoundPage from "./Pages/NotFoundPage/NotFoundPage";
 import PlatformDashboard from "./Pages/PlatformDashboard/PlatformDashboard";
 import PlatformLogin from "./Pages/PlatformLogin/PlatformLogin";
+import Landing from "./Pages/Landing/Landing";
 import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
 import Store from "./Pages/Store/Store";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
@@ -44,6 +45,7 @@ const NO_CHROME_ROUTES = [
   "/reset-password",
   "/account-verification",
   "/account-approbation",
+  "/landing",
 ];
 
 const SIDEBAR_OPEN_WIDTH   = 280;
@@ -236,6 +238,9 @@ const App = () => (
               <Route path="/reset-password"        element={<ResetPasswordPage />} />
               <Route path="/account-verification"  element={<PrivateRoute Component={AccountVerificationSteps} />} />
               <Route path="/account-approbation"   element={<PrivateRoute Component={AccountApprove} />} />
+
+              {/* ── Page commerciale ── */}
+              <Route path="/landing" element={<Landing />} />
 
               {/* ── Espace admin plateforme — sans chrome garage ── */}
               <Route path="/platform-login"     element={<PlatformLogin />} />
