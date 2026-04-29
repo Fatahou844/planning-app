@@ -11,6 +11,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import ActivitySidebar from "./Components/ActivitySidebar";
 import FloatingSupport from "./Components/FloatingSupport";
 import { ThemeToggle } from "./Components/ThemeToggle/ThemeToggle";
 import { BASE_URL_API } from "./config";
@@ -33,25 +34,41 @@ import { ProvideAxios } from "./utils/hook/useAxios";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute";
 
+/* ─────────────────────────────────────────────────────────
+   Routes sans chrome garage (pas de sidebar, pas de tabs)
+───────────────────────────────────────────────────────── */
+const NO_CHROME_ROUTES = [
+  "/platform-login",
+  "/platform-dashboard",
+  "/register",
+  "/reset-password",
+  "/account-verification",
+  "/account-approbation",
+];
+
+const SIDEBAR_OPEN_WIDTH   = 280;
+const SIDEBAR_CLOSED_WIDTH = 40;
+
+/* ─────────────────────────────────────────────────────────
+   Barre de navigation garage
+───────────────────────────────────────────────────────── */
 const tabLabels = [
-  { label: "Atelier", path: "/atelier" },
-  { label: "Planning", path: "/" },
-  { label: "Clients", path: "/clients" },
-  { label: "Store", path: "/store" },
-  { label: "Team", path: "/team" },
-  { label: "Caisses", path: "/caisses" },
-  { label: "Catalogue", path: "/catalogue" },
-  { label: "Pilotage", path: "/pilotage" },
-  { label: "Marketing", path: "/marketing" },
+  { label: "Atelier",    path: "/atelier"    },
+  { label: "Planning",   path: "/"           },
+  { label: "Clients",    path: "/clients"    },
+  { label: "Store",      path: "/store"      },
+  { label: "Team",       path: "/team"       },
+  { label: "Caisses",    path: "/caisses"    },
+  { label: "Catalogue",  path: "/catalogue"  },
+  { label: "Pilotage",   path: "/pilotage"   },
+  { label: "Marketing",  path: "/marketing"  },
   { label: "Paramètres", path: "/parametres" },
 ];
 
 const DashboardTabs = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const activeTab = tabLabels.findIndex(
-    (tab) => tab.path === location.pathname,
-  );
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const activeTab = tabLabels.findIndex((tab) => tab.path === location.pathname);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -70,10 +87,7 @@ const DashboardTabs = () => {
 
     const fetchAuthStatus = async () => {
       try {
-        const res = await axios.get(
-          `${BASE_URL_API}/v1/auth/check-auth`,
-          config,
-        );
+        const res = await axios.get(`${BASE_URL_API}/v1/auth/check-auth`, config);
         setIsAuthenticated(res.data.isAuthenticated);
         const response = await axios.get(`${BASE_URL_API}/v1`, config);
         localStorage.setItem("me", JSON.stringify(response.data));
@@ -99,8 +113,7 @@ const DashboardTabs = () => {
         }
       }
       await axios.get(`${BASE_URL_API}/v1/logout`);
-      document.cookie =
-        "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       window.location.href = "/";
     } catch (error) {
       console.error("Erreur de déconnexion :", error);
@@ -147,13 +160,8 @@ const DashboardTabs = () => {
                   }}
                 />
               ))}
-
               <IconButton
-                sx={{
-                  position: "absolute",
-                  bottom: 60,
-                  transition: "left 0.3s, transform 0.3s",
-                }}
+                sx={{ position: "absolute", bottom: 60, transition: "left 0.3s, transform 0.3s" }}
                 onClick={handleLogout}
               >
                 <LogoutIcon sx={{ fontSize: 20 }} />
@@ -166,6 +174,43 @@ const DashboardTabs = () => {
   );
 };
 
+/* ─────────────────────────────────────────────────────────
+   Shell garage : ActivitySidebar + DashboardTabs + contenu
+   Invisible sur les routes plateforme et les pages publiques
+───────────────────────────────────────────────────────── */
+const GarageShell = ({ children }) => {
+  const location   = useLocation();
+  const isNoChrome = NO_CHROME_ROUTES.includes(location.pathname);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  if (isNoChrome) {
+    return <>{children}</>;
+  }
+
+  return (
+    <>
+      <ActivitySidebar
+        open={sidebarOpen}
+        onToggle={() => setSidebarOpen((prev) => !prev)}
+      />
+      <FloatingSupport phone="212665947911" />
+      <DashboardTabs />
+      <Box
+        sx={{
+          marginLeft: `${sidebarOpen ? SIDEBAR_OPEN_WIDTH : SIDEBAR_CLOSED_WIDTH}px`,
+          transition: "margin-left 0.3s ease",
+          minHeight: "100vh",
+        }}
+      >
+        {children}
+      </Box>
+    </>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────
+   App
+───────────────────────────────────────────────────────── */
 const App = () => (
   <ProvideAxios>
     <UserProvider>
@@ -175,57 +220,30 @@ const App = () => (
             <ThemeToggle />
           </header>
 
-          <FloatingSupport phone="212665947911" />
-          <DashboardTabs />
-
-          <Box sx={{ minHeight: "100vh" }}>
+          <GarageShell>
             <Routes>
-              <Route
-                path="/"
-                element={<PrivateRoute Component={Dashboard} />}
-              />
-              <Route path="/register" element={<AccountCreationSteps />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route
-                path="/weekly-planning"
-                element={<PrivateRoute Component={WeeklyPlanning} />}
-              />
-              <Route
-                path="/store"
-                element={<PrivateRoute Component={Store} />}
-              />
-              <Route
-                path="/atelier"
-                element={<PrivateRoute Component={Atelier} />}
-              />
-              <Route
-                path="/account-verification"
-                element={<PrivateRoute Component={AccountVerificationSteps} />}
-              />
-              <Route
-                path="/account-approbation"
-                element={<PrivateRoute Component={AccountApprove} />}
-              />
-              <Route
-                path="/clients"
-                element={<PrivateRoute Component={ManageClients} />}
-              />
-              <Route
-                path="/planning/customers"
-                element={<PrivateRoute Component={UserDashboard} />}
-              />
-              <Route
-                path="/parametres"
-                element={<PrivateRoute Component={GarageSettings} />}
-              />
+              {/* ── Pages garage authentifiées ── */}
+              <Route path="/"                   element={<PrivateRoute Component={Dashboard} />} />
+              <Route path="/weekly-planning"    element={<PrivateRoute Component={WeeklyPlanning} />} />
+              <Route path="/store"              element={<PrivateRoute Component={Store} />} />
+              <Route path="/atelier"            element={<PrivateRoute Component={Atelier} />} />
+              <Route path="/clients"            element={<PrivateRoute Component={ManageClients} />} />
+              <Route path="/planning/customers" element={<PrivateRoute Component={UserDashboard} />} />
+              <Route path="/parametres"         element={<PrivateRoute Component={GarageSettings} />} />
 
-              {/* Espace admin plateforme — auth séparée */}
+              {/* ── Pages publiques garage ── */}
+              <Route path="/register"              element={<AccountCreationSteps />} />
+              <Route path="/reset-password"        element={<ResetPasswordPage />} />
+              <Route path="/account-verification"  element={<PrivateRoute Component={AccountVerificationSteps} />} />
+              <Route path="/account-approbation"   element={<PrivateRoute Component={AccountApprove} />} />
+
+              {/* ── Espace admin plateforme — sans chrome garage ── */}
               <Route path="/platform-login"     element={<PlatformLogin />} />
               <Route path="/platform-dashboard" element={<PlatformDashboard />} />
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-          </Box>
+          </GarageShell>
         </CustomThemeProvider>
       </Router>
     </UserProvider>
