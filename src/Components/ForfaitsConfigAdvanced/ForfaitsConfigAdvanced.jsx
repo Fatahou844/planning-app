@@ -5,6 +5,8 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +17,12 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
@@ -46,6 +54,16 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
 
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editForfait, setEditForfait] = useState(null);
+
+  // Import Excel
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState(null);
+  const [importSuccess, setImportSuccess] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [categoryFilter, setCategoryFilter] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -201,6 +219,64 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
   const hasFilteredResults = filteredForfaits.length > 0;
   const isFiltering = Boolean(categoryFilter) || Boolean(normalizedSearch);
 
+  // --- Import Excel helpers
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+    });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportFile(file);
+    setImportPreview(null);
+    setImportError(null);
+    setImportSuccess(null);
+    e.target.value = "";
+  };
+
+  const handlePreview = async () => {
+    if (!importFile) return;
+    setImportLoading(true);
+    setImportError(null);
+    try {
+      const fileBase64 = await fileToBase64(importFile);
+      const response = await axios.post("/forfaits/import/preview", {
+        fileBase64,
+      });
+      setImportPreview(response.data);
+      setIsPreviewOpen(true);
+    } catch {
+      setImportError("Erreur lors de la prévisualisation du fichier.");
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importFile) return;
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const fileBase64 = await fileToBase64(importFile);
+      const response = await axios.post(`/forfaits/import/${garageId}`, {
+        fileBase64,
+      });
+      setImportSuccess(response.data.stats);
+      setIsPreviewOpen(false);
+      setImportFile(null);
+      loadCategories();
+      loadForfaits();
+    } catch {
+      setImportError("Erreur lors de l'import.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const scrollToRef = (ref) => {
     if (!ref?.current) return;
     ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -265,6 +341,60 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
             Aucun forfait ne correspond au filtre / à la recherche.
           </Alert>
         )}
+
+        {/* -------- IMPORT EXCEL -------- */}
+        <Box sx={{ mb: 3, p: 2, border: "1px dashed", borderColor: "divider", borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Importer depuis un fichier Excel
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+            <Button
+              variant="outlined"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Choisir un fichier
+            </Button>
+            {importFile && (
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                {importFile.name}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              disabled={!importFile || importLoading}
+              onClick={handlePreview}
+              startIcon={importLoading ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              {importLoading ? "Analyse..." : "Prévisualiser"}
+            </Button>
+          </Stack>
+
+          {importSuccess && (
+            <Alert
+              severity="success"
+              sx={{ mt: 2 }}
+              onClose={() => setImportSuccess(null)}
+            >
+              Import réussi — {importSuccess.categories_created} catégorie(s) et{" "}
+              {importSuccess.forfaits_created} forfait(s) créé(s).
+              {(importSuccess.forfaits_found > 0 || importSuccess.categories_found > 0) && (
+                <> ({importSuccess.categories_found + importSuccess.forfaits_found} déjà existant(s) ignoré(s))</>
+              )}
+            </Alert>
+          )}
+          {importError && (
+            <Alert severity="error" sx={{ mt: 2 }} onClose={() => setImportError(null)}>
+              {importError}
+            </Alert>
+          )}
+        </Box>
 
         {/* -------- CREATE CATEGORY -------- */}
         <Grid container spacing={4}>
@@ -519,6 +649,109 @@ export default function ForfaitsConfigAdvanced({ garageId }) {
           );
         })}
       </Paper>
+
+      {/* -------- PREVIEW IMPORT DIALOG -------- */}
+      <Dialog
+        open={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Prévisualisation de l'import</DialogTitle>
+        <DialogContent>
+          {importPreview && (
+            <>
+              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                <Chip
+                  label={`${importPreview.stats.categories} catégorie(s)`}
+                  color="primary"
+                />
+                <Chip
+                  label={`${importPreview.stats.forfaits} forfait(s)`}
+                  color="secondary"
+                />
+              </Stack>
+
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Catégories
+              </Typography>
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={{ mb: 3, maxHeight: 180 }}
+              >
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Code 1</TableCell>
+                      <TableCell>Code 2</TableCell>
+                      <TableCell>Nom</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {importPreview.categories.map((cat, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{cat.code1}</TableCell>
+                        <TableCell>{cat.code2}</TableCell>
+                        <TableCell>{cat.name}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Forfaits ({importPreview.forfaits.length})
+              </Typography>
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={{ maxHeight: 300 }}
+              >
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Code 1</TableCell>
+                      <TableCell>Code 2</TableCell>
+                      <TableCell>Code 3</TableCell>
+                      <TableCell>Libellé</TableCell>
+                      <TableCell>Prix</TableCell>
+                      <TableCell>Temps</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {importPreview.forfaits.map((f, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{f.code1}</TableCell>
+                        <TableCell>{f.code2}</TableCell>
+                        <TableCell>{f.code3}</TableCell>
+                        <TableCell>{f.libelle}</TableCell>
+                        <TableCell>{f.prix}€</TableCell>
+                        <TableCell>{f.temps}h</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsPreviewOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmImport}
+            disabled={isImporting}
+            startIcon={
+              isImporting ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : null
+            }
+          >
+            {isImporting ? "Import en cours..." : "Confirmer l'import"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* -------- EDIT MODAL -------- */}
       <Dialog open={openEditModal} onClose={() => setOpenEditModal(false)}>

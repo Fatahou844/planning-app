@@ -3,7 +3,8 @@
     "allow": [
       "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/controllers/**)",
       "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/models/**)",
-      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/middlewares/**)"
+      "Read(//c/Users/21266/Desktop/Garage SaaS/garage-api/middlewares/**)",
+      "Bash(xargs grep *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\21266\\Desktop\\Garage SaaS\\garage-api\\models",

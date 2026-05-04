@@ -1,3 +1,5 @@
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SearchIcon from "@mui/icons-material/Search";
@@ -10,22 +12,189 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  Grid,
   IconButton,
+  InputAdornment,
+  List,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  Popover,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
   useTheme,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BASE_URL_API } from "../../config";
-import { ApiAutocompleteField } from "../ReferenceArticleModal";
 
-const API_BASE = BASE_URL_API + "/v1";
+const API_BASE    = BASE_URL_API + "/v1";
+const STOCK_BASE  = API_BASE + "/stock";
 
 const TYPES = ["Pneus", "Pièces", "Accessoires", "Consommable"];
 
 const ROW_LABEL_WIDTH = 160;
+
+/* ─────────────────────────────────────────────────────────
+   SelectWithSearch — dropdown avec recherche intégrée
+   Clic sur le champ → Popover avec filtre + liste
+───────────────────────────────────────────────────────── */
+function SelectWithSearch({ label, resource, value, onChange }) {
+  const anchorRef              = useRef(null);
+  const searchRef              = useRef(null);
+  const [open,    setOpen]     = useState(false);
+  const [query,   setQuery]    = useState("");
+  const [items,   setItems]    = useState([]);
+  const [loading, setLoading]  = useState(true);
+
+  useEffect(() => {
+    fetch(`${STOCK_BASE}/${resource}?limit=500`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data
+          : Array.isArray(data?.data)  ? data.data
+          : [];
+        setItems(list);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [resource]);
+
+  const filtered = items.filter(item =>
+    (item.nom || item.name || "").toLowerCase().includes(query.toLowerCase())
+  );
+
+  const handleOpen = () => {
+    setOpen(true);
+    // autofocus la recherche après ouverture
+    setTimeout(() => searchRef.current?.focus(), 50);
+  };
+
+  const handleSelect = (item) => {
+    onChange(item);
+    setOpen(false);
+    setQuery("");
+  };
+
+  const displayLabel = value ? (value.nom || value.name) : "Tous";
+
+  return (
+    <Box>
+      <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
+        {label}
+      </Typography>
+
+      {/* Champ déclencheur */}
+      <Button
+        ref={anchorRef}
+        fullWidth
+        variant="outlined"
+        onClick={handleOpen}
+        endIcon={<ArrowDropDownIcon />}
+        sx={{
+          justifyContent: "space-between",
+          textTransform: "none",
+          fontWeight: value ? 600 : 400,
+          color: value ? "text.primary" : "text.secondary",
+          borderColor: open ? "primary.main" : "divider",
+          bgcolor: "background.paper",
+          px: 1.5,
+          "&:hover": { borderColor: "primary.main" },
+        }}
+      >
+        <Typography variant="body2" noWrap sx={{ flex: 1, textAlign: "left" }}>
+          {displayLabel}
+        </Typography>
+      </Button>
+
+      {/* Popover liste */}
+      <Popover
+        open={open}
+        anchorEl={anchorRef.current}
+        onClose={() => { setOpen(false); setQuery(""); }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top",    horizontal: "left" }}
+        PaperProps={{
+          sx: {
+            width: anchorRef.current?.offsetWidth ?? 240,
+            mt: 0.5,
+            boxShadow: 4,
+            borderRadius: 1.5,
+            overflow: "hidden",
+          },
+        }}
+      >
+        {/* Barre de recherche */}
+        <Box sx={{ p: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+          <TextField
+            inputRef={searchRef}
+            size="small"
+            fullWidth
+            placeholder="Rechercher…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+
+        {/* Liste */}
+        <Box sx={{ maxHeight: 220, overflowY: "auto" }}>
+          {loading ? (
+            <Box display="flex" justifyContent="center" p={2}>
+              <CircularProgress size={20} />
+            </Box>
+          ) : (
+            <List dense disablePadding>
+              {/* Option Tous */}
+              <ListItemButton
+                selected={!value}
+                onClick={() => handleSelect(null)}
+                sx={{ py: 0.6, px: 1.5 }}
+              >
+                <ListItemText
+                  primary="Tous"
+                  primaryTypographyProps={{ variant: "body2", fontStyle: "italic", color: "text.secondary" }}
+                />
+                {!value && <CheckIcon sx={{ fontSize: 15, color: "primary.main" }} />}
+              </ListItemButton>
+              <Divider />
+
+              {filtered.length === 0 ? (
+                <Box px={2} py={1.5}>
+                  <Typography variant="caption" color="text.disabled">Aucun résultat</Typography>
+                </Box>
+              ) : (
+                filtered.map(item => (
+                  <ListItemButton
+                    key={item.id}
+                    selected={value?.id === item.id}
+                    onClick={() => handleSelect(item)}
+                    sx={{ py: 0.6, px: 1.5 }}
+                  >
+                    <ListItemText
+                      primary={item.nom || item.name}
+                      primaryTypographyProps={{ variant: "body2" }}
+                    />
+                    {value?.id === item.id && (
+                      <CheckIcon sx={{ fontSize: 15, color: "primary.main" }} />
+                    )}
+                  </ListItemButton>
+                ))
+              )}
+            </List>
+          )}
+        </Box>
+      </Popover>
+    </Box>
+  );
+}
 
 function SearchRow({ label, children }) {
   return (
@@ -199,30 +368,24 @@ export default function ArticleSearchDialog({ open, onClose, onResults }) {
 
         <Divider sx={{ my: 2 }} />
 
-        {[
-          { label: "Marque", field: "marque", resource: "marques" },
-          { label: "Famille articles", field: "famille", resource: "familles" },
-          { label: "Groupe articles", field: "groupe", resource: "groupes" },
-          {
-            label: "Emplacement",
-            field: "emplacement",
-            resource: "emplacements",
-          },
-          {
-            label: "Fournisseur",
-            field: "fournisseur",
-            resource: "fournisseurs",
-          },
-        ].map(({ label, field, resource }) => (
-          <SearchRow key={field} label={label}>
-            <ApiAutocompleteField
-              resource={resource}
-              value={filters[field]}
-              onChange={setField(field)}
-              readOnly
-            />
-          </SearchRow>
-        ))}
+        <Grid container spacing={2}>
+          {[
+            { label: "Marque",          field: "marque",      resource: "marques" },
+            { label: "Fournisseur",     field: "fournisseur", resource: "fournisseurs" },
+            { label: "Groupe articles", field: "groupe",      resource: "groupes" },
+            { label: "Famille articles",field: "famille",     resource: "familles" },
+            { label: "Emplacement",     field: "emplacement", resource: "emplacements" },
+          ].map(({ label, field, resource }) => (
+            <Grid item xs={12} sm={6} key={field}>
+              <SelectWithSearch
+                label={label}
+                resource={resource}
+                value={filters[field]}
+                onChange={setField(field)}
+              />
+            </Grid>
+          ))}
+        </Grid>
       </DialogContent>
 
       <DialogActions

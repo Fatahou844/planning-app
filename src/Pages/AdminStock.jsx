@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -21,9 +22,12 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  Grid,
   IconButton,
   MenuItem,
+  Paper,
   Select,
+  Skeleton,
   Snackbar,
   Tab,
   Table,
@@ -40,6 +44,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ImportFournisseurs from "../Components/Store/ImportFournisseurs/ImportFournisseurs";
 import ImportMarques from "../Components/Store/ImportMarques/ImportMarques";
 import ImportArticles from "../Components/Store/ImportArticles/ImportArticles";
+import ImportPneus from "../Components/Store/ImportPneus/ImportPneus";
 import { useAxios } from "../utils/hook/useAxios";
 import { useUser } from "../utils/hook/UserContext";
 
@@ -568,20 +573,224 @@ function TabFournisseurs() {
 function TabArticles({ garageId }) {
   return (
     <Box display="flex" flexDirection="column" gap={3}>
-      <Alert severity="info" icon={false}>
-        <Typography variant="body2">
-          <strong>Import intelligent d'articles depuis Excel.</strong><br />
-          Le fichier doit contenir les colonnes suivantes dans l'ordre :<br />
-          <em>Nom fournisseur · Marque · Référence ext · Libellé · Prix achat HT · Code groupe · Nom groupe · Code famille · Nom famille</em><br /><br />
-          • Fournisseur et Marque sont créés automatiquement s'ils n'existent pas encore.<br />
-          • Groupe et Famille sont créés automatiquement si le code n'existe pas pour ce garage.<br />
-          • <strong>Prix de vente HT = PA × 2</strong> &nbsp;|&nbsp; <strong>Prix TTC = PUVHT × 1,2</strong> (TVA 20 %)
-        </Typography>
-      </Alert>
+      <Grid container spacing={3}>
 
-      <Box display="flex" justifyContent="flex-start">
-        <ImportArticles garageId={garageId} />
-      </Box>
+        {/* ── Articles généraux ── */}
+        <Grid item xs={12} md={6}>
+          <Paper variant="outlined" sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Chip label="Articles" color="primary" size="small" />
+              <Typography variant="subtitle1" fontWeight={700}>
+                Import articles généraux
+              </Typography>
+            </Box>
+            <Divider />
+            <Typography variant="body2" color="text.secondary" flex={1}>
+              Pièces, consommables, accessoires…<br /><br />
+              Colonnes attendues :<br />
+              <em>Type · Désignation · Codebarre · Réf. ext · Fournisseur · Marque · Num groupe · Nom groupe · Num famille · Nom famille · Emplacement · Composant lot · PV HT · PV TTC · PA HT · Frais port · OEM · SAV</em>
+              <br /><br />
+              Fournisseur, Marque, Groupe, Famille et Emplacement sont créés automatiquement s'ils n'existent pas. Num groupe et famille forcés en 4 chiffres.
+            </Typography>
+            <Box>
+              <ImportArticles garageId={garageId} />
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* ── Pneus ── */}
+        <Grid item xs={12} md={6}>
+          <Paper variant="outlined" sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Chip label="Pneus" color="secondary" size="small" />
+              <Typography variant="subtitle1" fontWeight={700}>
+                Import spécifique pneus
+              </Typography>
+            </Box>
+            <Divider />
+            <Typography variant="body2" color="text.secondary" flex={1}>
+              Articles de type Pneus avec specs techniques enregistrées dans PneuSpec.<br /><br />
+              Colonnes supplémentaires en tête de fichier :<br />
+              <em>Type · Long · Hauteur · Diametre · Charge · Vitesse · Carburant · SolMouille · Indice Bruit · DB</em>
+              <br />puis les mêmes colonnes que les articles généraux (Désignation → SAV).
+              <br /><br />
+              Le type est forcé à <strong>Pneus</strong> pour toutes les lignes.
+            </Typography>
+            <Box>
+              <ImportPneus garageId={garageId} />
+            </Box>
+          </Paper>
+        </Grid>
+
+      </Grid>
+    </Box>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
+   TAB STATISTIQUES
+════════════════════════════════════════════════════════ */
+const TYPE_COLORS = {
+  "Pièces":       "#1976d2",
+  "Pneus":        "#2e7d32",
+  "Accessoires":  "#f57c00",
+  "Consommables": "#7b1fa2",
+};
+const DEFAULT_COLOR = "#90a4ae";
+
+function StatCard({ label, value, color }) {
+  return (
+    <Paper variant="outlined" sx={{ p: 2.5, textAlign: "center", borderTop: `4px solid ${color || "#1976d2"}` }}>
+      {value === undefined ? (
+        <Skeleton variant="text" width="60%" sx={{ mx: "auto" }} height={48} />
+      ) : (
+        <Typography variant="h4" fontWeight={700} color={color || "primary.main"}>
+          {Number(value).toLocaleString("fr-FR")}
+        </Typography>
+      )}
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{label}</Typography>
+    </Paper>
+  );
+}
+
+function HBarChart({ rows, colorFn, loading }) {
+  const max = Math.max(...rows.map(r => Number(r.count)), 1);
+  return (
+    <Box display="flex" flexDirection="column" gap={0.8}>
+      {loading
+        ? Array.from({ length: 6 }).map((_, i) => (
+            <Box key={i} display="flex" alignItems="center" gap={1}>
+              <Skeleton width={120} height={20} />
+              <Skeleton variant="rounded" width="60%" height={20} />
+              <Skeleton width={30} height={20} />
+            </Box>
+          ))
+        : rows.map((row, i) => {
+            const pct   = Math.round((Number(row.count) / max) * 100);
+            const color = colorFn ? colorFn(row) : "#1976d2";
+            const label = row.nom || row.type || `—`;
+            return (
+              <Box key={i} display="flex" alignItems="center" gap={1}>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{ minWidth: 130, maxWidth: 130, color: "text.secondary" }}
+                  title={label}
+                >
+                  {label}
+                </Typography>
+                <Box flex={1} sx={{ bgcolor: "action.hover", borderRadius: 1, overflow: "hidden" }}>
+                  <Box
+                    sx={{
+                      width: `${pct}%`,
+                      minWidth: pct > 0 ? 4 : 0,
+                      height: 22,
+                      bgcolor: color,
+                      borderRadius: 1,
+                      transition: "width 0.6s ease",
+                    }}
+                  />
+                </Box>
+                <Typography variant="caption" sx={{ minWidth: 36, textAlign: "right", fontWeight: 600 }}>
+                  {Number(row.count).toLocaleString("fr-FR")}
+                </Typography>
+              </Box>
+            );
+          })
+      }
+    </Box>
+  );
+}
+
+function TabStatistiques() {
+  const axios = useAxios();
+  const [stats,   setStats]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
+
+  useEffect(() => {
+    axios.get("/stock/articles/stats")
+      .then(res => setStats(res.data))
+      .catch(() => setError("Impossible de charger les statistiques."))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (error) return <Alert severity="error">{error}</Alert>;
+
+  return (
+    <Box display="flex" flexDirection="column" gap={4}>
+
+      {/* ── Cartes résumé ── */}
+      <Grid container spacing={2}>
+        <Grid item xs={6} sm={3}>
+          <StatCard label="Articles total"  value={stats?.total}     color="#1976d2" />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard label="Marques"          value={stats?.nbMarques} color="#7b1fa2" />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard label="Groupes"          value={stats?.nbGroupes} color="#2e7d32" />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard label="Types distincts"  value={stats ? stats.byType.length : undefined} color="#f57c00" />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3}>
+
+        {/* ── Répartition par type ── */}
+        <Grid item xs={12} md={5}>
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+              Répartition par type
+            </Typography>
+            <HBarChart
+              rows={stats?.byType ?? []}
+              loading={loading}
+              colorFn={row => TYPE_COLORS[row.type] || DEFAULT_COLOR}
+            />
+            {!loading && stats?.byType?.length === 0 && (
+              <Typography variant="caption" color="text.disabled">Aucune donnée</Typography>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* ── Top marques ── */}
+        <Grid item xs={12} md={7}>
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+              Top marques
+            </Typography>
+            <HBarChart
+              rows={stats?.byMarque ?? []}
+              loading={loading}
+              colorFn={(_, i) => `hsl(${210 + (i ?? 0) * 18}, 65%, 48%)`}
+            />
+            {!loading && stats?.byMarque?.length === 0 && (
+              <Typography variant="caption" color="text.disabled">Aucune donnée</Typography>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* ── Répartition par groupe ── */}
+        <Grid item xs={12}>
+          <Paper variant="outlined" sx={{ p: 2.5 }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+              Répartition par groupe
+            </Typography>
+            <HBarChart
+              rows={stats?.byGroupe ?? []}
+              loading={loading}
+              colorFn={row => `hsl(${(parseInt(row.code, 10) || 0) * 37 % 360}, 55%, 45%)`}
+            />
+            {!loading && stats?.byGroupe?.length === 0 && (
+              <Typography variant="caption" color="text.disabled">Aucune donnée</Typography>
+            )}
+          </Paper>
+        </Grid>
+
+      </Grid>
     </Box>
   );
 }
@@ -603,7 +812,7 @@ function TabApprobations() {
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch { show("Erreur lors du chargement", "error"); }
     finally { setLoading(false); }
-  }, [axios]);
+  }, [axios, show]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -735,6 +944,7 @@ export default function AdminStock() {
   const garageId = user?.garageId;
 
   const tabs = [
+    { label: "Statistiques",   icon: <BarChartIcon        sx={{ fontSize: 18 }} />, component: <TabStatistiques /> },
     { label: "Marques",        icon: <LocalOfferIcon      sx={{ fontSize: 18 }} />, component: <TabMarques      /> },
     { label: "Fournisseurs",   icon: <StorefrontIcon      sx={{ fontSize: 18 }} />, component: <TabFournisseurs /> },
     { label: "Articles",       icon: <CategoryIcon        sx={{ fontSize: 18 }} />, component: <TabArticles garageId={garageId} /> },

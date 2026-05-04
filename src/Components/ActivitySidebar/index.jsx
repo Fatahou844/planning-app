@@ -187,6 +187,8 @@ export default function ActivitySidebar({ open, onToggle }) {
     return () => clearInterval(pollRef.current);
   }, [open, load]);
 
+  if (!user) return null;
+
   /* ── Déconnexion ── */
   function handleLogout() {
     const token = Cookies.get("jwtToken");

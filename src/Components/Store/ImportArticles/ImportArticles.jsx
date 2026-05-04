@@ -16,6 +16,7 @@ import {
   Divider,
   FormControl,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Select,
   Table,
@@ -30,59 +31,92 @@ import * as XLSX from "xlsx";
 import { useAxios } from "../../../utils/hook/useAxios";
 
 /* ─────────────────────────────────────────────────────────
-   Colonnes Excel attendues
-   A: Nom fournisseur | B: Marque | C: Réf. ext | D: Libellé
-   E: Prix achat HT   | F: Code groupe | G: Nom groupe
-   H: Code famille    | I: Nom famille
+   Colonnes Excel attendues (nouveau format)
+   A: Type           | B: Designation (libellé) | C: Codebarre
+   D: Ref externe    | E: Fournisseur            | F: Marque
+   G: Num groupe     | H: Nom groupe             | I: Num famille
+   J: Nom famille    | K: Composant d'un lot     | L: Prix vente HT
+   M: Prix vente TTC | N: Prix d'achat HT        | O: Frais port
+   P: OEM            | Q: SAV
 ───────────────────────────────────────────────────────── */
-function parseExcelFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data  = new Uint8Array(e.target.result);
-        const wb    = XLSX.read(data, { type: "array" });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const raw   = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+function parseFloat2(val) {
+  return parseFloat(String(val ?? "").replace(",", ".")) || 0;
+}
 
-        const rows = raw
-          .slice(1)
-          .map((row, idx) => ({
-            ligne:           idx + 2,
-            nomFournisseur:  String(row[0] ?? "").trim(),
-            marque:          String(row[1] ?? "").trim(),
-            refExt:          String(row[2] ?? "").trim(),
-            libelle:         String(row[3] ?? "").trim(),
-            prixAchat:       parseFloat(String(row[4] ?? "").replace(",", ".")) || 0,
-            codeGroupe:      String(row[5] ?? "").trim(),
-            nomGroupe:       String(row[6] ?? "").trim(),
-            codeFamille:     String(row[7] ?? "").trim(),
-            nomFamille:      String(row[8] ?? "").trim(),
-          }))
-          .filter((r) => r.refExt || r.libelle);
+const CHUNK_SIZE = 150;
+const yield_ = () => new Promise(r => setTimeout(r, 0));
+const padCode  = (val) => { const s = String(val ?? "").trim(); return s ? s.padStart(4, "0") : ""; };
 
-        resolve(rows);
-      } catch (err) {
-        reject(err);
-      }
-    };
-    reader.onerror = () => reject(new Error("Impossible de lire le fichier"));
-    reader.readAsArrayBuffer(file);
-  });
+async function parseExcelFile(file, onProgress) {
+  // Lecture native async — ne bloque pas le thread
+  const buffer = await file.arrayBuffer();
+
+  // Laisser React rendre le spinner avant que XLSX.read() prenne la main
+  await yield_();
+
+  const wb    = XLSX.read(new Uint8Array(buffer), { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const raw   = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+  const rows  = [];
+  const total = raw.length; // ligne 0 = header
+
+  for (let i = 1; i < total; i += CHUNK_SIZE) {
+    const end = Math.min(i + CHUNK_SIZE, total);
+    for (let k = i; k < end; k++) {
+      const row = raw[k];
+      const parsed = {
+        ligne:          k + 1,
+        type:           String(row[0]  ?? "").trim(),
+        libelle:        String(row[1]  ?? "").trim(),
+        codeBarre:      String(row[2]  ?? "").trim(),
+        refExt:         String(row[3]  ?? "").trim(),
+        nomFournisseur: String(row[4]  ?? "").trim(),
+        marque:         String(row[5]  ?? "").trim(),
+        codeGroupe:     padCode(row[6]),
+        nomGroupe:      String(row[7]  ?? "").trim(),
+        codeFamille:    padCode(row[8]),
+        nomFamille:     String(row[9]  ?? "").trim(),
+        emplacement:    String(row[10] ?? "").trim(),
+        composantLot:   String(row[11] ?? "").trim().toLowerCase() === "oui",
+        prixVenteHT:    parseFloat2(row[12]),
+        prixVenteTTC:   parseFloat2(row[13]),
+        prixAchat:      parseFloat2(row[14]),
+        fraisPort:      parseFloat2(row[15]),
+        oem:            String(row[16] ?? "").trim(),
+        sav:            String(row[17] ?? "").trim(),
+      };
+      if (parsed.refExt || parsed.libelle) rows.push(parsed);
+    }
+    // Mise à jour progression + yield entre chaque lot
+    onProgress?.(Math.round((end / total) * 100));
+    await yield_();
+  }
+
+  return rows;
 }
 
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
     [
-      "Nom fournisseur", "Marque", "Référence ext", "Libellé",
-      "Prix achat HT", "Code groupe", "Nom groupe", "Code famille", "Nom famille",
+      "Type", "Designation", "Codebarre", "Ref externe", "Fournisseur", "Marque",
+      "Num groupe", "Nom groupe", "Num famille", "Nom famille", "Emplacement",
+      "Composant d'un lot", "Prix vente HT", "Prix vente TTC",
+      "Prix d'achat HT", "Frais port", "OEM", "SAV",
     ],
-    ["BOSCH FRANCE", "BOSCH", "F026402062", "Filtre à huile", 4.5, "1", "Filtration", "101", "Filtres huile"],
-    ["VALEO", "VALEO", "MD6481", "Disque de frein av.", 18.9, "2", "Freinage", "201", "Disques frein"],
+    [
+      "Pièces", "Filtre à huile", "3322120067867", "F026402062", "BOSCH FRANCE", "BOSCH",
+      "1", "Filtration", "101", "Filtres huile", "Rayon A1",
+      "Non", 9.00, 10.80, 4.50, 0.50, "F026402062", "",
+    ],
+    [
+      "Pièces", "Disque de frein av.", "", "MD6481", "VALEO", "VALEO",
+      "2", "Freinage", "201", "Disques frein", "Rayon B3",
+      "Non", 37.80, 45.36, 18.90, 1.00, "MD6481", "",
+    ],
   ]);
 
-  // Largeurs colonnes
-  ws["!cols"] = [22, 12, 16, 30, 14, 12, 16, 14, 20].map((w) => ({ wch: w }));
+  ws["!cols"] = [12, 28, 16, 16, 20, 10, 10, 14, 10, 14, 14, 18, 13, 13, 13, 10, 14, 10].map((w) => ({ wch: w }));
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Articles");
@@ -93,28 +127,35 @@ function downloadTemplate() {
    Aperçu
 ───────────────────────────────────────────────────────── */
 function PreviewTable({ rows }) {
-  const COLS = [
-    { key: "ligne",          label: "Ligne",       width: 55 },
-    { key: "nomFournisseur", label: "Fournisseur",  width: 140 },
-    { key: "marque",         label: "Marque",       width: 100 },
-    { key: "refExt",         label: "Réf. ext",     width: 120 },
-    { key: "libelle",        label: "Libellé",      width: 200 },
-    { key: "prixAchat",      label: "PA HT (€)",    width: 90 },
-    { key: "codeGroupe",     label: "Code grp",     width: 80 },
-    { key: "nomGroupe",      label: "Nom groupe",   width: 120 },
-    { key: "codeFamille",    label: "Code fam",     width: 80 },
-    { key: "nomFamille",     label: "Nom famille",  width: 130 },
-  ];
+  const dash = <Typography variant="caption" color="text.disabled">—</Typography>;
+  const euro = (v) => v > 0 ? `${v.toFixed(2)} €` : dash;
 
   return (
-    <Box sx={{ maxHeight: 300, overflowY: "auto", overflowX: "auto", border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
-      <Table size="small" stickyHeader sx={{ minWidth: 900 }}>
+    <Box sx={{ maxHeight: 320, overflowY: "auto", overflowX: "auto", border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+      <Table size="small" stickyHeader sx={{ minWidth: 1300 }}>
         <TableHead>
           <TableRow>
-            {COLS.map((c) => (
-              <TableCell key={c.key} sx={{ fontWeight: 700, width: c.width, whiteSpace: "nowrap" }}>
-                {c.label}
-              </TableCell>
+            {[
+              ["ligne",         "Ligne",      50],
+              ["type",          "Type",       90],
+              ["libelle",       "Désignation",200],
+              ["codeBarre",     "Codebarre",  120],
+              ["refExt",        "Réf. ext",   110],
+              ["nomFournisseur","Fournisseur", 130],
+              ["marque",        "Marque",     90],
+              ["codeGroupe",    "Grp",        55],
+              ["nomGroupe",     "Nom groupe", 110],
+              ["codeFamille",   "Fam",        55],
+              ["nomFamille",    "Nom famille",110],
+              ["emplacement",   "Emplacement",110],
+              ["prixVenteHT",   "PV HT",      80],
+              ["prixVenteTTC",  "PV TTC",     80],
+              ["prixAchat",     "PA HT",      80],
+              ["fraisPort",     "F. port",    70],
+              ["oem",           "OEM",        110],
+              ["sav",           "SAV",         90],
+            ].map(([key, label, width]) => (
+              <TableCell key={key} sx={{ fontWeight: 700, width, whiteSpace: "nowrap" }}>{label}</TableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -122,15 +163,23 @@ function PreviewTable({ rows }) {
           {rows.map((row) => (
             <TableRow key={row.ligne} hover>
               <TableCell><Typography variant="caption" color="text.secondary">{row.ligne}</Typography></TableCell>
-              <TableCell>{row.nomFournisseur || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
-              <TableCell>{row.marque        || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
-              <TableCell><strong>{row.refExt}</strong></TableCell>
-              <TableCell>{row.libelle}</TableCell>
-              <TableCell align="right">{row.prixAchat > 0 ? `${row.prixAchat.toFixed(2)} €` : <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
-              <TableCell><Chip label={row.codeGroupe || "—"} size="small" variant="outlined" /></TableCell>
-              <TableCell>{row.nomGroupe}</TableCell>
+              <TableCell><Chip label={row.type || "—"} size="small" variant="outlined" /></TableCell>
+              <TableCell>{row.libelle || dash}</TableCell>
+              <TableCell><Typography variant="caption">{row.codeBarre || dash}</Typography></TableCell>
+              <TableCell><strong>{row.refExt || dash}</strong></TableCell>
+              <TableCell>{row.nomFournisseur || dash}</TableCell>
+              <TableCell>{row.marque        || dash}</TableCell>
+              <TableCell><Chip label={row.codeGroupe  || "—"} size="small" variant="outlined" /></TableCell>
+              <TableCell>{row.nomGroupe  || dash}</TableCell>
               <TableCell><Chip label={row.codeFamille || "—"} size="small" variant="outlined" /></TableCell>
-              <TableCell>{row.nomFamille}</TableCell>
+              <TableCell>{row.nomFamille  || dash}</TableCell>
+              <TableCell>{row.emplacement || dash}</TableCell>
+              <TableCell align="right">{euro(row.prixVenteHT)}</TableCell>
+              <TableCell align="right">{euro(row.prixVenteTTC)}</TableCell>
+              <TableCell align="right">{euro(row.prixAchat)}</TableCell>
+              <TableCell align="right">{euro(row.fraisPort)}</TableCell>
+              <TableCell><Typography variant="caption">{row.oem || dash}</Typography></TableCell>
+              <TableCell><Typography variant="caption">{row.sav || dash}</Typography></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -144,8 +193,6 @@ function PreviewTable({ rows }) {
 ───────────────────────────────────────────────────────── */
 function ImportReport({ report }) {
   const hasErrors = report.errors.length > 0;
-  const prixVenteHT = (pa) => (pa * 2).toFixed(2);
-  const prixTTC     = (pa) => (pa * 2 * 1.2).toFixed(2);
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
@@ -153,16 +200,6 @@ function ImportReport({ report }) {
         <Chip icon={<CheckCircleOutlineIcon />} label={`${report.created} article(s) créé(s)`} color="success" variant="outlined" />
         <Chip label={`${report.skipped} ignoré(s)`} color="default" variant="outlined" />
         {hasErrors && <Chip icon={<ErrorOutlineIcon />} label={`${report.errors.length} erreur(s)`} color="error" variant="outlined" />}
-      </Box>
-
-      <Box sx={{ bgcolor: "action.hover", borderRadius: 1, p: 1.5 }}>
-        <Typography variant="caption" color="text.secondary">
-          Règles appliquées : <strong>PUVHT = PA × 2</strong> — <strong>TTC = PUVHT × 1.2</strong> (TVA 20 %)
-        </Typography>
-        <br />
-        <Typography variant="caption" color="text.secondary">
-          Exemple : PA 10 € → PV HT {prixVenteHT(10)} € → PV TTC {prixTTC(10)} €
-        </Typography>
       </Box>
 
       {hasErrors && (
@@ -188,34 +225,44 @@ export default function ImportArticles({ garageId, onSuccess }) {
 
   const TYPES = ["Pièces", "Consommables", "Accessoires", "Pneus"];
 
-  const [open,        setOpen]        = useState(false);
-  const [dragging,    setDragging]    = useState(false);
-  const [parsedRows,  setParsedRows]  = useState(null);
-  const [fileName,    setFileName]    = useState("");
-  const [parseError,  setParseError]  = useState("");
-  const [importing,   setImporting]   = useState(false);
-  const [report,      setReport]      = useState(null);
-  const [articleType, setArticleType] = useState("Pièces");
+  const [open,          setOpen]          = useState(false);
+  const [dragging,      setDragging]      = useState(false);
+  const [parsedRows,    setParsedRows]    = useState(null);
+  const [fileName,      setFileName]      = useState("");
+  const [parseError,    setParseError]    = useState("");
+  const [parsing,       setParsing]       = useState(false);
+  const [parseProgress, setParseProgress] = useState(0);
+  const [importing,     setImporting]     = useState(false);
+  const [report,        setReport]        = useState(null);
+  const [articleType,   setArticleType]   = useState("Pièces");
 
-  const reset       = () => { setParsedRows(null); setFileName(""); setParseError(""); setReport(null); setArticleType("Pièces"); };
+  const reset = () => {
+    setParsedRows(null); setFileName(""); setParseError("");
+    setReport(null); setArticleType("Pièces");
+    setParsing(false); setParseProgress(0);
+  };
   const handleClose = () => { setOpen(false); reset(); };
 
   const handleFile = async (file) => {
     if (!file) return;
     if (!file.name.match(/\.xlsx?$/i)) { setParseError("Format invalide (.xlsx requis)"); return; }
-    setParseError(""); setReport(null);
+    setParseError(""); setReport(null); setParsedRows(null); setFileName("");
+    setParsing(true); setParseProgress(0);
     try {
-      const rows = await parseExcelFile(file);
+      const rows = await parseExcelFile(file, setParseProgress);
       if (rows.length === 0) { setParseError("Aucune donnée détectée (colonnes C ou D vides ?)."); return; }
       setParsedRows(rows);
       setFileName(file.name);
     } catch {
       setParseError("Impossible de lire le fichier Excel.");
+    } finally {
+      setParsing(false);
+      setParseProgress(0);
     }
   };
 
   const handleImport = async () => {
-    if (!parsedRows || !garageId) return;
+    if (!parsedRows) return;
     setImporting(true);
     try {
       const res = await axios.post("/stock/import/articles", { rows: parsedRows, garageId, articleType });
@@ -273,30 +320,53 @@ export default function ImportArticles({ garageId, onSuccess }) {
 
                 {/* Zone drop */}
                 <Box
-                  onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                  onDragOver={(e) => { e.preventDefault(); if (!parsing) setDragging(true); }}
                   onDragLeave={() => setDragging(false)}
-                  onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files?.[0]); }}
-                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={(e) => { e.preventDefault(); setDragging(false); if (!parsing) handleFile(e.dataTransfer.files?.[0]); }}
+                  onClick={() => { if (!parsing) fileInputRef.current?.click(); }}
                   sx={{
                     border: "2px dashed",
-                    borderColor: dragging ? "primary.main" : "divider",
-                    borderRadius: 2, p: 4, textAlign: "center", cursor: "pointer",
+                    borderColor: parsing ? "primary.main" : dragging ? "primary.main" : "divider",
+                    borderRadius: 2, p: 4, textAlign: "center",
+                    cursor: parsing ? "default" : "pointer",
                     bgcolor: dragging ? "action.hover" : "background.paper",
                     transition: "all 0.2s",
-                    "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
+                    "&:hover": { borderColor: parsing ? "primary.main" : "primary.main", bgcolor: parsing ? "background.paper" : "action.hover" },
                   }}
                 >
                   <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{ display: "none" }}
                     onChange={(e) => handleFile(e.target.files?.[0])} />
-                  <CloudUploadIcon sx={{ fontSize: 48, color: "text.secondary", mb: 1 }} />
-                  <Typography variant="body1" gutterBottom>
-                    {fileName
-                      ? <><strong>{fileName}</strong> — {parsedRows?.length} article(s) détecté(s)</>
-                      : "Glissez-déposez un fichier .xlsx ou cliquez pour sélectionner"}
-                  </Typography>
+
+                  {parsing ? (
+                    <>
+                      <CircularProgress
+                        variant="determinate"
+                        value={parseProgress}
+                        size={52}
+                        sx={{ mb: 1 }}
+                      />
+                      <Typography variant="body1" color="text.secondary" gutterBottom>
+                        Analyse du fichier… {parseProgress} %
+                      </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={parseProgress}
+                        sx={{ width: "70%", mx: "auto", borderRadius: 1 }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <CloudUploadIcon sx={{ fontSize: 48, color: "text.secondary", mb: 1 }} />
+                      <Typography variant="body1" gutterBottom>
+                        {fileName
+                          ? <><strong>{fileName}</strong> — {parsedRows?.length} article(s) détecté(s)</>
+                          : "Glissez-déposez un fichier .xlsx ou cliquez pour sélectionner"}
+                      </Typography>
+                    </>
+                  )}
                   {!fileName && (
                     <Typography variant="caption" color="text.secondary">
-                      Colonnes : Fournisseur · Marque · Réf. ext · Libellé · PA HT · Code groupe · Nom groupe · Code famille · Nom famille
+                      Colonnes : Type · Désignation · Codebarre · Réf. ext · Fournisseur · Marque · Num groupe · Nom groupe · Num famille · Nom famille · Emplacement · Composant lot · PV HT · PV TTC · PA HT · Frais port · OEM · SAV
                     </Typography>
                   )}
                 </Box>
@@ -307,11 +377,12 @@ export default function ImportArticles({ garageId, onSuccess }) {
                 {!parsedRows && (
                   <Alert severity="info" icon={false}>
                     <Typography variant="body2">
-                      <strong>Règles appliquées automatiquement :</strong><br />
-                      • Prix de vente HT = Prix d'achat × 2<br />
-                      • Prix TTC = PUVHT × 1,2 (TVA 20 %)<br />
+                      <strong>Ce qui est appliqué automatiquement :</strong><br />
+                      • Les prix de vente HT et TTC sont lus directement depuis le fichier<br />
+                      • L'OEM est enregistré dans la table ArticleOEM si renseigné<br />
                       • Fournisseur et Marque créés automatiquement s'ils n'existent pas<br />
-                      • Groupe et Famille créés automatiquement si le code n'existe pas pour ce garage
+                      • Groupe et Famille créés automatiquement si le code n'existe pas pour ce garage<br />
+                      • Le type par ligne est prioritaire sur le type sélectionné ci-dessus
                     </Typography>
                   </Alert>
                 )}
@@ -319,8 +390,17 @@ export default function ImportArticles({ garageId, onSuccess }) {
                 {parsedRows && (
                   <>
                     <Divider />
-                    <Typography variant="subtitle2">Aperçu — {parsedRows.length} ligne(s)</Typography>
-                    <PreviewTable rows={parsedRows} />
+                    <Box display="flex" alignItems="center" justifyContent="space-between">
+                      <Typography variant="subtitle2">
+                        Aperçu — {parsedRows.length} ligne(s) détectée(s)
+                      </Typography>
+                      {parsedRows.length > 100 && (
+                        <Typography variant="caption" color="text.secondary">
+                          Affichage limité aux 100 premières lignes
+                        </Typography>
+                      )}
+                    </Box>
+                    <PreviewTable rows={parsedRows.slice(0, 100)} />
                   </>
                 )}
               </>
@@ -345,7 +425,7 @@ export default function ImportArticles({ garageId, onSuccess }) {
             <Button
               variant="contained"
               onClick={handleImport}
-              disabled={!parsedRows || importing || !garageId}
+              disabled={!parsedRows || importing}
               startIcon={importing ? <CircularProgress size={16} /> : null}
             >
               {importing ? "Import en cours…" : `Valider l'import (${parsedRows?.length ?? 0} articles)`}

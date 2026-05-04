@@ -2228,6 +2228,7 @@ const Planning = () => {
   };
 
   const [showPopup, setShowPopup] = useState(false);
+  const [fabVisible, setFabVisible] = useState(false);
 
   const handleShowPopup = () => {
     setShowPopup(true);
@@ -2948,29 +2949,47 @@ const Planning = () => {
                   );
                 })}
 
-              {/* Floating Action Button */}
-              <Fab
-                color="primary"
-                aria-label="add"
+              {/* Floating Action Button — apparaît au survol */}
+              <Box
                 sx={{
                   position: "fixed",
-                  bottom: 16,
+                  bottom: 0,
                   left: "50%",
                   transform: "translateX(-50%)",
+                  width: 180,
+                  height: 72,
                   display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  width: 120, // Ajuste la largeur pour s'assurer que le texte est visible
-                  padding: "8px 16px", // Ajuste le remplissage pour le rendre plus spacieux
-                  borderRadius: "8px", // Optionnel : ajoute un bord arrondi
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  pb: 2,
+                  zIndex: 1200,
                 }}
-                onClick={() => {
-                  setIsModalOpen(true);
-                  setDetails([]);
-                }}
+                onMouseEnter={() => setFabVisible(true)}
+                onMouseLeave={() => setFabVisible(false)}
               >
-                <AddIcon />
-              </Fab>
+                <Fab
+                  color="primary"
+                  aria-label="add"
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    width: 120,
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    opacity: fabVisible ? 1 : 0,
+                    transform: fabVisible ? "translateY(0)" : "translateY(10px)",
+                    transition: "opacity 0.2s ease, transform 0.2s ease",
+                    pointerEvents: fabVisible ? "auto" : "none",
+                  }}
+                  onClick={() => {
+                    setIsModalOpen(true);
+                    setDetails([]);
+                  }}
+                >
+                  <AddIcon />
+                </Fab>
+              </Box>
               {/* <Fab
                 color="seconday"
                 aria-label="add"
