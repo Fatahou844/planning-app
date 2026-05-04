@@ -29,6 +29,7 @@ import {
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { useAxios } from "../../../utils/hook/useAxios";
+import { sendInBatches, BATCH_SIZE } from "../batchImport";
 
 /* ─────────────────────────────────────────────────────────
    Colonnes Excel attendues (nouveau format)
@@ -232,8 +233,10 @@ export default function ImportArticles({ garageId, onSuccess }) {
   const [parseError,    setParseError]    = useState("");
   const [parsing,       setParsing]       = useState(false);
   const [parseProgress, setParseProgress] = useState(0);
-  const [importing,     setImporting]     = useState(false);
-  const [report,        setReport]        = useState(null);
+  const [importing,      setImporting]      = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importBatch,    setImportBatch]    = useState({ cur: 0, total: 0, done: 0 });
+  const [report,         setReport]         = useState(null);
   const [articleType,   setArticleType]   = useState("Pièces");
 
   const reset = () => {
@@ -264,16 +267,26 @@ export default function ImportArticles({ garageId, onSuccess }) {
   const handleImport = async () => {
     if (!parsedRows) return;
     setImporting(true);
+    setImportProgress(0);
+    setImportBatch({ cur: 0, total: Math.ceil(parsedRows.length / BATCH_SIZE), done: 0 });
     try {
-      const res = await axios.post("/stock/import/articles", { rows: parsedRows, garageId, articleType });
-      if (res?.data?.report) {
-        setReport(res.data.report);
-        if (res.data.report.created > 0) onSuccess?.();
-      }
+      const report = await sendInBatches(
+        axios,
+        "/stock/import/articles",
+        parsedRows,
+        { garageId, articleType },
+        (pct, cur, total, done) => {
+          setImportProgress(pct);
+          setImportBatch({ cur, total, done });
+        },
+      );
+      setReport(report);
+      if (report.created > 0) onSuccess?.();
     } catch (err) {
       setParseError(err?.response?.data?.message || "Erreur lors de l'import.");
     } finally {
       setImporting(false);
+      setImportProgress(0);
     }
   };
 
@@ -417,6 +430,19 @@ export default function ImportArticles({ garageId, onSuccess }) {
           </Box>
         </DialogContent>
 
+        {/* Barre de progression import par lots */}
+        {importing && (
+          <Box sx={{ px: 3, pb: 1 }}>
+            <Box display="flex" justifyContent="space-between" mb={0.5}>
+              <Typography variant="caption" color="text.secondary">
+                Lot {importBatch.cur} / {importBatch.total} — {importBatch.done.toLocaleString("fr-FR")} / {parsedRows?.length.toLocaleString("fr-FR")} articles envoyés
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{importProgress} %</Typography>
+            </Box>
+            <LinearProgress variant="determinate" value={importProgress} sx={{ borderRadius: 1 }} />
+          </Box>
+        )}
+
         <DialogActions>
           <Button onClick={handleClose}>{report ? "Fermer" : "Annuler"}</Button>
           {report ? (
@@ -426,9 +452,11 @@ export default function ImportArticles({ garageId, onSuccess }) {
               variant="contained"
               onClick={handleImport}
               disabled={!parsedRows || importing}
-              startIcon={importing ? <CircularProgress size={16} /> : null}
+              startIcon={importing ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              {importing ? "Import en cours…" : `Valider l'import (${parsedRows?.length ?? 0} articles)`}
+              {importing
+                ? `Lot ${importBatch.cur}/${importBatch.total}…`
+                : `Valider l'import (${parsedRows?.length.toLocaleString("fr-FR") ?? 0} articles)`}
             </Button>
           )}
         </DialogActions>

@@ -25,6 +25,7 @@ import {
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { useAxios } from "../../../utils/hook/useAxios";
+import { sendInBatches, BATCH_SIZE } from "../batchImport";
 
 /* ─────────────────────────────────────────────────────────
    Colonnes Excel pneus
@@ -234,12 +235,15 @@ export default function ImportPneus({ garageId, onSuccess }) {
   const [parseError,    setParseError]    = useState("");
   const [parsing,       setParsing]       = useState(false);
   const [parseProgress, setParseProgress] = useState(0);
-  const [importing,     setImporting]     = useState(false);
-  const [report,        setReport]        = useState(null);
+  const [importing,      setImporting]      = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importBatch,    setImportBatch]    = useState({ cur: 0, total: 0, done: 0 });
+  const [report,         setReport]         = useState(null);
 
   const reset = () => {
     setParsedRows(null); setFileName(""); setParseError("");
     setReport(null); setParsing(false); setParseProgress(0);
+    setImportProgress(0); setImportBatch({ cur: 0, total: 0, done: 0 });
   };
   const handleClose = () => { setOpen(false); reset(); };
 
@@ -264,16 +268,26 @@ export default function ImportPneus({ garageId, onSuccess }) {
   const handleImport = async () => {
     if (!parsedRows) return;
     setImporting(true);
+    setImportProgress(0);
+    setImportBatch({ cur: 0, total: Math.ceil(parsedRows.length / BATCH_SIZE), done: 0 });
     try {
-      const res = await axios.post("/stock/import/pneus", { rows: parsedRows, garageId });
-      if (res?.data?.report) {
-        setReport(res.data.report);
-        if (res.data.report.created > 0) onSuccess?.();
-      }
+      const report = await sendInBatches(
+        axios,
+        "/stock/import/pneus",
+        parsedRows,
+        { garageId },
+        (pct, cur, total, done) => {
+          setImportProgress(pct);
+          setImportBatch({ cur, total, done });
+        },
+      );
+      setReport(report);
+      if (report.created > 0) onSuccess?.();
     } catch (err) {
       setParseError(err?.response?.data?.message || "Erreur lors de l'import.");
     } finally {
       setImporting(false);
+      setImportProgress(0);
     }
   };
 
@@ -398,10 +412,23 @@ export default function ImportPneus({ garageId, onSuccess }) {
               disabled={!parsedRows || importing}
               startIcon={importing ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              {importing ? "Import en cours…" : `Valider l'import (${parsedRows?.length ?? 0} pneus)`}
+              {importing
+                ? `Lot ${importBatch.cur}/${importBatch.total}…`
+                : `Valider l'import (${parsedRows?.length.toLocaleString("fr-FR") ?? 0} pneus)`}
             </Button>
           )}
         </DialogActions>
+        {importing && (
+          <Box sx={{ px: 3, pb: 1.5 }}>
+            <Box display="flex" justifyContent="space-between" mb={0.5}>
+              <Typography variant="caption" color="text.secondary">
+                Lot {importBatch.cur} / {importBatch.total} — {importBatch.done.toLocaleString("fr-FR")} / {parsedRows?.length.toLocaleString("fr-FR")} pneus envoyés
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{importProgress} %</Typography>
+            </Box>
+            <LinearProgress variant="determinate" value={importProgress} sx={{ borderRadius: 1 }} />
+          </Box>
+        )}
       </Dialog>
     </>
   );

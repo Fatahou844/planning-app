@@ -5,6 +5,8 @@ import { useAxios } from "../../utils/hook/useAxios";
 import {
   Box,
   Button,
+  Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -64,6 +66,13 @@ export default function ForfaitSearch({
 
   const [details, setDetails] = useState(initialDetails);
 
+  // États article
+  const [modalArticlesOpen,        setModalArticlesOpen]        = useState(false);
+  const [articleSearchResult,      setArticleSearchResult]      = useState(null); // { type, entity, articles }
+  const [selectedArticles,         setSelectedArticles]         = useState([]);
+  const [modalArticlesForLineIndex,setModalArticlesForLineIndex]= useState(null);
+  const [articleSearchQuery,       setArticleSearchQuery]       = useState("");
+
   const axios = useAxios();
 
   function getCurrentUser() {
@@ -101,9 +110,83 @@ export default function ForfaitSearch({
     setNoDataModalOpen(true);
   };
 
+  // ── Recherche article par code famille / groupe (4 chiffres) ──
+  const handleArticleSearch = async (code, lineIndex) => {
+    const garageId = getCurrentUser()?.garageId;
+    const params = garageId ? `?code=${code}&garageId=${garageId}` : `?code=${code}`;
+    try {
+      const { data } = await axios.get(`/stock/articles/by-code${params}`);
+      if (!data.articles?.length) return;
+
+      // Famille → un seul article → ajout direct sans modal
+      if (data.type === "famille" && data.articles.length === 1) {
+        const a = data.articles[0];
+        addDetailFromForfait({
+          label:     a.libelle1 || a.libelle2 || "Article",
+          code:      a.refExt   || a.codeBarre || "---",
+          quantity:  1,
+          unitPrice: a.ArticlePricing?.prixHT || 0,
+        }, lineIndex);
+        return;
+      }
+
+      // Groupe (ou famille avec plusieurs articles) → modal multi-sélection
+      setArticleSearchResult(data);
+      setSelectedArticles([]);
+      setArticleSearchQuery("");
+      setModalArticlesForLineIndex(lineIndex);
+      setModalArticlesOpen(true);
+    } catch {
+      // Code introuvable (404) → pas d'action, le champ reste tel quel
+    }
+  };
+
+  const toggleSelectArticle = (a) => {
+    setSelectedArticles(prev =>
+      prev.some(p => p.id === a.id) ? prev.filter(p => p.id !== a.id) : [...prev, a]
+    );
+  };
+
+  const confirmArticleSelection = () => {
+    if (!selectedArticles.length) { setModalArticlesOpen(false); return; }
+    const lineIndex = modalArticlesForLineIndex;
+    let firstUsed = false;
+
+    if (lineIndex !== null) {
+      const a = selectedArticles[0];
+      addDetailFromForfait({
+        label:     a.libelle1 || a.libelle2 || "Article",
+        code:      a.refExt   || a.codeBarre || "---",
+        quantity:  1,
+        unitPrice: a.ArticlePricing?.prixHT || 0,
+      }, lineIndex);
+      firstUsed = true;
+    }
+
+    selectedArticles.forEach((a, idx) => {
+      if (firstUsed && idx === 0) return;
+      addDetailFromForfait({
+        label:     a.libelle1 || a.libelle2 || "Article",
+        code:      a.refExt   || a.codeBarre || "---",
+        quantity:  1,
+        unitPrice: a.ArticlePricing?.prixHT || 0,
+      }, null);
+    });
+
+    setSelectedArticles([]);
+    setModalArticlesOpen(false);
+    setModalArticlesForLineIndex(null);
+  };
+
   const handleSearchFromLine = async (index) => {
     const value = (details[index]?.label || "").trim();
     if (!value) return;
+
+    // ── Si 4 chiffres → recherche article (famille ou groupe) ──
+    if (/^\d{4}$/.test(value)) {
+      handleArticleSearch(value, index);
+      return;
+    }
 
     const [code1, code2, code3] = parseCodes(value);
 
@@ -429,7 +512,7 @@ export default function ForfaitSearch({
                     }}
                     size="small"
                     fullWidth
-                    placeholder='Tape "W" ou "W 01" ou "W 01 02" puis ENTER'
+                    placeholder='Forfait : W · W01 · W0102 | Article : 0101 (famille) · 0003 (groupe) → ENTER'
                   />
                 </TableCell>
                 <TableCell sx={{ ...cellStyle }}>
@@ -603,6 +686,73 @@ export default function ForfaitSearch({
           </Box>
         </DialogContent>
       </Dialog>
+      {/* ── MODALE ARTICLES ── */}
+      <Dialog
+        open={modalArticlesOpen}
+        onClose={() => { setModalArticlesOpen(false); setModalArticlesForLineIndex(null); setSelectedArticles([]); }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <span>Articles</span>
+            {articleSearchResult && (
+              <Chip
+                size="small"
+                label={`${articleSearchResult.type === "famille" ? "Famille" : "Groupe"} ${articleSearchResult.entity.code} — ${articleSearchResult.entity.nom}`}
+                color={articleSearchResult.type === "famille" ? "primary" : "secondary"}
+              />
+            )}
+            <Chip size="small" label={`${articleSearchResult?.articles?.length ?? 0} résultat(s)`} variant="outlined" />
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Filtrer par libellé ou référence…"
+            value={articleSearchQuery}
+            onChange={e => setArticleSearchQuery(e.target.value)}
+            sx={{ mb: 1 }}
+          />
+          <List dense sx={{ maxHeight: 380, overflowY: "auto" }}>
+            {(articleSearchResult?.articles ?? [])
+              .filter(a => {
+                const q = articleSearchQuery.toLowerCase();
+                return !q
+                  || (a.libelle1 || "").toLowerCase().includes(q)
+                  || (a.refExt   || "").toLowerCase().includes(q);
+              })
+              .map(a => {
+                const selected = selectedArticles.some(p => p.id === a.id);
+                return (
+                  <ListItemButton key={a.id} selected={selected} onClick={() => toggleSelectArticle(a)} dense>
+                    <Checkbox checked={selected} size="small" sx={{ mr: 1 }} disableRipple />
+                    <ListItemText
+                      primary={`${a.refExt ? a.refExt + " — " : ""}${a.libelle1 || "—"}`}
+                      secondary={
+                        <>
+                          {a.Marque?.nom && <span>{a.Marque.nom} · </span>}
+                          <span>PV HT : {a.ArticlePricing?.prixHT?.toFixed(2) ?? "—"} €</span>
+                        </>
+                      }
+                    />
+                  </ListItemButton>
+                );
+              })}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Typography variant="caption" color="text.secondary" sx={{ flex: 1, pl: 1 }}>
+            {selectedArticles.length} article(s) sélectionné(s)
+          </Typography>
+          <Button onClick={() => { setModalArticlesOpen(false); setSelectedArticles([]); }}>Annuler</Button>
+          <Button variant="contained" onClick={confirmArticleSelection} disabled={!selectedArticles.length}>
+            Ajouter la sélection
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog
         open={noDataModalOpen}
         onClose={() => setNoDataModalOpen(false)}
