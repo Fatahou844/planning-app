@@ -14,11 +14,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  FormControl,
-  InputLabel,
   LinearProgress,
-  MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -42,6 +38,36 @@ import { sendInBatches, BATCH_SIZE } from "../batchImport";
 ───────────────────────────────────────────────────────── */
 function parseFloat2(val) {
   return parseFloat(String(val ?? "").replace(",", ".")) || 0;
+}
+
+const TYPE_MAP = {
+  "pieces":       "Pièces",
+  "pièces":       "Pièces",
+  "piece":        "Pièces",
+  "pièce":        "Pièces",
+  "accessoires":  "Accessoires",
+  "accessoire":   "Accessoires",
+  "pneus":        "Pneus",
+  "pneu":         "Pneus",
+  "consommables": "Consommables",
+  "consommable":  "Consommables",
+};
+
+function normalizeType(raw) {
+  const key = String(raw ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")               // décompose les accents…
+    .replace(/[̀-ͯ]/g, "") // …puis les supprime pour la clé
+    .replace(/\s+/g, " ");
+
+  // Chercher dans TYPE_MAP sans accents
+  const normalized = TYPE_MAP[key];
+  if (normalized) return normalized;
+
+  // Fallback : chercher avec accents (cas "pièces" déjà correct)
+  const keyWithAccents = String(raw ?? "").trim().toLowerCase();
+  return TYPE_MAP[keyWithAccents] ?? "Pièces";
 }
 
 const CHUNK_SIZE = 150;
@@ -68,7 +94,7 @@ async function parseExcelFile(file, onProgress) {
       const row = raw[k];
       const parsed = {
         ligne:          k + 1,
-        type:           String(row[0]  ?? "").trim(),
+        type:           normalizeType(row[0]),
         libelle:        String(row[1]  ?? "").trim(),
         codeBarre:      String(row[2]  ?? "").trim(),
         refExt:         String(row[3]  ?? "").trim(),
@@ -224,8 +250,6 @@ export default function ImportArticles({ garageId, onSuccess }) {
   const axios        = useAxios();
   const fileInputRef = useRef(null);
 
-  const TYPES = ["Pièces", "Consommables", "Accessoires", "Pneus"];
-
   const [open,          setOpen]          = useState(false);
   const [dragging,      setDragging]      = useState(false);
   const [parsedRows,    setParsedRows]    = useState(null);
@@ -237,11 +261,10 @@ export default function ImportArticles({ garageId, onSuccess }) {
   const [importProgress, setImportProgress] = useState(0);
   const [importBatch,    setImportBatch]    = useState({ cur: 0, total: 0, done: 0 });
   const [report,         setReport]         = useState(null);
-  const [articleType,   setArticleType]   = useState("Pièces");
 
   const reset = () => {
     setParsedRows(null); setFileName(""); setParseError("");
-    setReport(null); setArticleType("Pièces");
+    setReport(null);
     setParsing(false); setParseProgress(0);
   };
   const handleClose = () => { setOpen(false); reset(); };
@@ -274,7 +297,7 @@ export default function ImportArticles({ garageId, onSuccess }) {
         axios,
         "/stock/import/articles",
         parsedRows,
-        { garageId, articleType },
+        { garageId },
         (pct, cur, total, done) => {
           setImportProgress(pct);
           setImportBatch({ cur, total, done });
@@ -310,27 +333,6 @@ export default function ImportArticles({ garageId, onSuccess }) {
           <Box display="flex" flexDirection="column" gap={3}>
             {!report && (
               <>
-                {/* Sélecteur type d'article */}
-                <Box display="flex" alignItems="center" gap={2}>
-                  <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel>Type d'article</InputLabel>
-                    <Select
-                      value={articleType}
-                      label="Type d'article"
-                      onChange={(e) => setArticleType(e.target.value)}
-                    >
-                      {TYPES.map((t) => (
-                        <MenuItem key={t} value={t}>{t}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <Typography variant="caption" color="text.secondary">
-                    Tous les articles importés auront ce type
-                  </Typography>
-                </Box>
-
-                <Divider />
-
                 {/* Zone drop */}
                 <Box
                   onDragOver={(e) => { e.preventDefault(); if (!parsing) setDragging(true); }}
@@ -391,11 +393,11 @@ export default function ImportArticles({ garageId, onSuccess }) {
                   <Alert severity="info" icon={false}>
                     <Typography variant="body2">
                       <strong>Ce qui est appliqué automatiquement :</strong><br />
+                      • Le type est lu depuis la colonne A de chaque ligne (Pièces, Pneus, Accessoires, Consommable)<br />
                       • Les prix de vente HT et TTC sont lus directement depuis le fichier<br />
                       • L'OEM est enregistré dans la table ArticleOEM si renseigné<br />
                       • Fournisseur et Marque créés automatiquement s'ils n'existent pas<br />
-                      • Groupe et Famille créés automatiquement si le code n'existe pas pour ce garage<br />
-                      • Le type par ligne est prioritaire sur le type sélectionné ci-dessus
+                      • Groupe et Famille créés automatiquement si le code n'existe pas pour ce garage
                     </Typography>
                   </Alert>
                 )}

@@ -70,7 +70,7 @@ export function TabMarques() {
   const [saving,   setSaving]   = useState(false);
   const [search,   setSearch]   = useState("");
 
-  // Modales
+  // Modaux
   const [addOpen,    setAddOpen]    = useState(false);
   const [editItem,   setEditItem]   = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);

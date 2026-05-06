@@ -1,8 +1,9 @@
 import { useTheme } from "@mui/material";
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAxios } from "../../utils/hook/useAxios";
 
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -11,10 +12,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  InputAdornment,
   List,
   ListItemButton,
   ListItemText,
   Paper,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -22,8 +25,12 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+
+import ArticleSearchDialog from "../ArticleSearchDialog";
 
 /**
  * ForfaitSearch
@@ -41,6 +48,55 @@ import {
  * - Pour savoir quelle ligne a déclenché la recherche on utilise modalCategoriesForLineIndex
  *   et modalForfaitsForLineIndex (null = contexte global).
  */
+
+// ─────────────────────────────────────────────────────────────────────────
+// ArticleResultRow — mémoïsé : ne re-rend QUE si `selected` change pour
+// cette ligne précise. Sans ça, toutes les lignes re-rendent à chaque clic.
+// ─────────────────────────────────────────────────────────────────────────
+const ArticleResultRow = memo(({ article: a, selected, onToggle }) => (
+  <TableRow
+    hover
+    selected={selected}
+    onClick={() => onToggle(a)}
+    sx={{ cursor: "pointer" }}
+  >
+    <TableCell padding="checkbox">
+      <Checkbox
+        checked={selected}
+        size="small"
+        disableRipple
+        onClick={(e) => e.stopPropagation()}
+        onChange={() => onToggle(a)}
+      />
+    </TableCell>
+    <TableCell sx={{ fontFamily: "monospace", fontSize: "0.78rem", color: "text.secondary" }}>
+      {a.refExt || a.refInt || a.codeBarre || "—"}
+    </TableCell>
+    <TableCell>
+      <Typography variant="body2" fontWeight={selected ? 700 : 400}>
+        {a.libelle1 || "—"}
+      </Typography>
+      {a.libelle2 && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          {a.libelle2}
+        </Typography>
+      )}
+    </TableCell>
+    <TableCell>
+      <Typography variant="body2">{a.Marque?.nom || "—"}</Typography>
+    </TableCell>
+    <TableCell>
+      {a.type && (
+        <Chip label={a.type} size="small" variant="outlined" sx={{ fontSize: "0.7rem" }} />
+      )}
+    </TableCell>
+    <TableCell sx={{ textAlign: "right", fontWeight: 600 }}>
+      {a.ArticlePricing?.prixHT != null
+        ? `${Number(a.ArticlePricing.prixHT).toFixed(2)} €`
+        : "—"}
+    </TableCell>
+  </TableRow>
+));
 
 export default function ForfaitSearch({
   onChange,
@@ -66,12 +122,19 @@ export default function ForfaitSearch({
 
   const [details, setDetails] = useState(initialDetails);
 
-  // États article
-  const [modalArticlesOpen,        setModalArticlesOpen]        = useState(false);
-  const [articleSearchResult,      setArticleSearchResult]      = useState(null); // { type, entity, articles }
-  const [selectedArticles,         setSelectedArticles]         = useState([]);
-  const [modalArticlesForLineIndex,setModalArticlesForLineIndex]= useState(null);
-  const [articleSearchQuery,       setArticleSearchQuery]       = useState("");
+  // ── ArticleSearchDialog (ouvert par le code "a" / "A") ──────────────
+  const [articleSearchDialogOpen,      setArticleSearchDialogOpen]      = useState(false);
+  const [articleSearchDialogLineIndex, setArticleSearchDialogLineIndex] = useState(null);
+
+  // ── Modale résultats (multi-sélection après retour ArticleSearchDialog) ──
+  const [resultsDialogOpen,      setResultsDialogOpen]      = useState(false);
+  const [resultArticles,         setResultArticles]         = useState([]);
+  // Map<id, article> — O(1) lookup/insert/delete, zéro .some() dans le rendu
+  const [selectedMap,            setSelectedMap]            = useState(new Map());
+  const [resultsDialogLineIndex, setResultsDialogLineIndex] = useState(null);
+
+  // ── Snackbar de confirmation ─────────────────────────────────────────
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
   const axios = useAxios();
 
@@ -110,129 +173,138 @@ export default function ForfaitSearch({
     setNoDataModalOpen(true);
   };
 
-  // ── Recherche article par code famille / groupe (4 chiffres) ──
-  const handleArticleSearch = async (code, lineIndex) => {
-    const garageId = getCurrentUser()?.garageId;
-    const params = garageId ? `?code=${code}&garageId=${garageId}` : `?code=${code}`;
-    try {
-      const { data } = await axios.get(`/stock/articles/by-code${params}`);
-      if (!data.articles?.length) return;
-
-      // Famille → un seul article → ajout direct sans modal
-      if (data.type === "famille" && data.articles.length === 1) {
-        const a = data.articles[0];
-        addDetailFromForfait({
-          label:     a.libelle1 || a.libelle2 || "Article",
-          code:      a.refExt   || a.codeBarre || "---",
-          quantity:  1,
-          unitPrice: a.ArticlePricing?.prixHT || 0,
-        }, lineIndex);
-        return;
-      }
-
-      // Groupe (ou famille avec plusieurs articles) → modal multi-sélection
-      setArticleSearchResult(data);
-      setSelectedArticles([]);
-      setArticleSearchQuery("");
-      setModalArticlesForLineIndex(lineIndex);
-      setModalArticlesOpen(true);
-    } catch {
-      // Code introuvable (404) → pas d'action, le champ reste tel quel
-    }
-  };
-
-  const toggleSelectArticle = (a) => {
-    setSelectedArticles(prev =>
-      prev.some(p => p.id === a.id) ? prev.filter(p => p.id !== a.id) : [...prev, a]
+  // ─────────────────────────────────────────────────────────────────────
+  // Détection code forfait : W / W01 / W0102
+  // ─────────────────────────────────────────────────────────────────────
+  const isForfaitCode = (val) => {
+    const c = val.replace(/\s+/g, "");
+    return (
+      /^[A-Za-z]$/.test(c) ||      // W
+      /^[A-Za-z]\d{2}$/.test(c) || // W01
+      /^[A-Za-z]\d{4}$/.test(c)    // W0102
     );
   };
 
-  const confirmArticleSelection = () => {
-    if (!selectedArticles.length) { setModalArticlesOpen(false); return; }
-    const lineIndex = modalArticlesForLineIndex;
-    let firstUsed = false;
-
-    if (lineIndex !== null) {
-      const a = selectedArticles[0];
-      addDetailFromForfait({
-        label:     a.libelle1 || a.libelle2 || "Article",
-        code:      a.refExt   || a.codeBarre || "---",
-        quantity:  1,
-        unitPrice: a.ArticlePricing?.prixHT || 0,
-      }, lineIndex);
-      firstUsed = true;
-    }
-
-    selectedArticles.forEach((a, idx) => {
-      if (firstUsed && idx === 0) return;
-      addDetailFromForfait({
-        label:     a.libelle1 || a.libelle2 || "Article",
-        code:      a.refExt   || a.codeBarre || "---",
-        quantity:  1,
-        unitPrice: a.ArticlePricing?.prixHT || 0,
-      }, null);
-    });
-
-    setSelectedArticles([]);
-    setModalArticlesOpen(false);
-    setModalArticlesForLineIndex(null);
+  // ─────────────────────────────────────────────────────────────────────
+  // Callback reçu depuis ArticleSearchDialog quand l'utilisateur
+  // clique "Rechercher". On affiche les résultats dans la modale
+  // de sélection multiple.
+  // ─────────────────────────────────────────────────────────────────────
+  const handleArticleSearchResults = (data) => {
+    const articles = Array.isArray(data) ? data : (data?.articles ?? []);
+    setResultArticles(articles);
+    setSelectedMap(new Map());
+    setResultsDialogLineIndex(articleSearchDialogLineIndex);
+    setResultsDialogOpen(true);
+    // ArticleSearchDialog se ferme lui-même via onClose
   };
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Sélection / désélection — O(1) grâce à la Map
+  // useCallback : référence stable → les lignes mémoïsées ne re-rendent pas
+  // ─────────────────────────────────────────────────────────────────────
+  const toggleSelectArticle = useCallback((a) => {
+    setSelectedMap((prev) => {
+      const next = new Map(prev);
+      next.has(a.id) ? next.delete(a.id) : next.set(a.id, a);
+      return next;
+    });
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Ajoute les articles sélectionnés dans les lignes du document
+  // ─────────────────────────────────────────────────────────────────────
+  const confirmArticleSelection = () => {
+    if (!selectedMap.size) { setResultsDialogOpen(false); return; }
+
+    let firstUsed = false;
+
+    selectedMap.forEach((a) => {
+      const entry = {
+        label:     a.libelle1 || a.libelle2 || a.libelle3 || "Article",
+        code:      a.refExt   || a.codeBarre || a.refInt  || "---",
+        quantity:  1,
+        unitPrice: a.ArticlePricing?.prixHT ?? 0,
+      };
+      if (!firstUsed && resultsDialogLineIndex !== null) {
+        addDetailFromForfait(entry, resultsDialogLineIndex);
+        firstUsed = true;
+      } else {
+        addDetailFromForfait(entry, null);
+      }
+    });
+
+    setSnackbar({
+      open: true,
+      message: `${selectedMap.size} article(s) ajouté(s)`,
+      severity: "success",
+    });
+    setSelectedMap(new Map());
+    setResultsDialogOpen(false);
+    setResultsDialogLineIndex(null);
+  };
+
+  // ─────────────────────────────────────────────────────────────────────
+  // ENTER sur le champ libellé d'une ligne
+  //
+  //  "a" / "A"              → ouvre ArticleSearchDialog (déclencheur)
+  //  W / W01 / W0102        → codes forfait (inchangé)
+  // ─────────────────────────────────────────────────────────────────────
   const handleSearchFromLine = async (index) => {
     const value = (details[index]?.label || "").trim();
     if (!value) return;
 
-    // ── Si 4 chiffres → recherche article (famille ou groupe) ──
-    if (/^\d{4}$/.test(value)) {
-      handleArticleSearch(value, index);
+    // ── Déclencheur article : "a" ou "A" ──────────────────────────────
+    if (value.toLowerCase() === "a") {
+      // Effacer le "a" — c'est un déclencheur, pas un libellé
+      updateDetails((prev) =>
+        prev.map((d, i) => (i === index ? { ...d, label: "" } : d))
+      );
+      setArticleSearchDialogLineIndex(index);
+      setArticleSearchDialogOpen(true);
       return;
     }
 
-    const [code1, code2, code3] = parseCodes(value);
-
-    try {
-      if (code1 && !code2) {
-        const { data } = await axios.get(
-          `/forfaits/codes-principaux/${code1}/categories?garageId=${getCurrentUser().garageId}`,
-        );
-
-        setCategories(data);
-        setModalCategoriesForLineIndex(index);
-        setModalCategoriesOpen(true);
-        return;
+    // ── Codes forfait → comportement inchangé ──────────────────────────
+    if (isForfaitCode(value)) {
+      const [code1, code2, code3] = parseCodes(value);
+      try {
+        if (code1 && !code2) {
+          const { data } = await axios.get(
+            `/forfaits/codes-principaux/${code1}/categories?garageId=${getCurrentUser().garageId}`,
+          );
+          setCategories(data);
+          setModalCategoriesForLineIndex(index);
+          setModalCategoriesOpen(true);
+          return;
+        }
+        if (code1 && code2 && !code3) {
+          const { data } = await axios.get(
+            `/forfaits/code1/${code1}/code2/${code2}/forfaits?garageId=${getCurrentUser().garageId}`,
+          );
+          setForfaits(data);
+          setModalForfaitsForLineIndex(index);
+          setModalForfaitsOpen(true);
+          return;
+        }
+        if (code1 && code2 && code3) {
+          const { data } = await axios.get(
+            `/forfaits/libelle/${code1}/${code2}/${code3}?garageId=${getCurrentUser().garageId}`,
+          );
+          addDetailFromForfait(
+            {
+              label:     data.libelle,
+              code:      `${data.CategoryForfait.codes_principaux.code1}${data.CategoryForfait.code2}${data.code3}`,
+              quantity:  1,
+              unitPrice: data.prix,
+            },
+            index,
+          );
+          return;
+        }
+      } catch {
+        // Code forfait sans résultat → rien (le champ reste tel quel)
       }
-
-      if (code1 && code2 && !code3) {
-        const { data } = await axios.get(
-          `/forfaits/code1/${code1}/code2/${code2}/forfaits?garageId=${getCurrentUser().garageId}`,
-        );
-
-        setForfaits(data);
-        setModalForfaitsForLineIndex(index);
-        setModalForfaitsOpen(true);
-        return;
-      }
-
-      if (code1 && code2 && code3) {
-        const { data } = await axios.get(
-          `/forfaits/libelle/${code1}/${code2}/${code3}?garageId=${getCurrentUser().garageId}`,
-        );
-
-        addDetailFromForfait(
-          {
-            label: data.libelle,
-            // quantity: data.temps,
-            code: `${data.CategoryForfait.codes_principaux.code1}${data.CategoryForfait.code2}${data.code3}`,
-            quantity: 1,
-            unitPrice: data.prix,
-          },
-          index,
-        );
-        return;
-      }
-    } catch (error) {
-      openNoDataModal(index);
-      return;
     }
   };
 
@@ -504,7 +576,7 @@ export default function ForfaitSearch({
                     name="label"
                     value={detail.label}
                     onChange={(e) => handleDetailChange(e, index)}
-                    onKeyUp={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         handleSearchFromLine(index);
@@ -512,7 +584,24 @@ export default function ForfaitSearch({
                     }}
                     size="small"
                     fullWidth
-                    placeholder='Forfait : W · W01 · W0102 | Article : 0101 (famille) · 0003 (groupe) → ENTER'
+                    placeholder="Saisir ou taper un mot-clé + ENTER → recherche article"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip title="Rechercher un article" arrow>
+                            <SearchIcon
+                              fontSize="small"
+                              sx={{
+                                color: "text.disabled",
+                                cursor: "pointer",
+                                "&:hover": { color: "primary.main" },
+                              }}
+                              onClick={() => handleSearchFromLine(index)}
+                            />
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </TableCell>
                 <TableCell sx={{ ...cellStyle }}>
@@ -686,69 +775,128 @@ export default function ForfaitSearch({
           </Box>
         </DialogContent>
       </Dialog>
-      {/* ── MODALE ARTICLES ── */}
+      {/* ══════════════════════════════════════════════════
+           1. ArticleSearchDialog — ouvert par "a" + ENTER
+           Gère sa propre recherche, appelle onResults avec
+           le tableau d'articles trouvés.
+      ══════════════════════════════════════════════════ */}
+      <ArticleSearchDialog
+        open={articleSearchDialogOpen}
+        onClose={() => setArticleSearchDialogOpen(false)}
+        onResults={(data) => {
+          setArticleSearchDialogOpen(false);
+          handleArticleSearchResults(data);
+        }}
+      />
+
+      {/* ══════════════════════════════════════════════════
+           2. Modale résultats — sélection multiple
+           Apparaît après que ArticleSearchDialog renvoie
+           ses résultats via onResults.
+      ══════════════════════════════════════════════════ */}
       <Dialog
-        open={modalArticlesOpen}
-        onClose={() => { setModalArticlesOpen(false); setModalArticlesForLineIndex(null); setSelectedArticles([]); }}
-        maxWidth="md"
+        open={resultsDialogOpen}
+        onClose={() => { setResultsDialogOpen(false); setSelectedMap(new Map()); }}
+        maxWidth="lg"
         fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-            <span>Articles</span>
-            {articleSearchResult && (
+        <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", pb: 1.5 }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <SearchIcon color="primary" />
+            <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>
+              Articles trouvés
+            </Typography>
+            <Chip
+              size="small"
+              label={`${resultArticles.length} résultat(s)`}
+              color={resultArticles.length ? "primary" : "default"}
+              variant="outlined"
+            />
+            {selectedMap.size > 0 && (
               <Chip
                 size="small"
-                label={`${articleSearchResult.type === "famille" ? "Famille" : "Groupe"} ${articleSearchResult.entity.code} — ${articleSearchResult.entity.nom}`}
-                color={articleSearchResult.type === "famille" ? "primary" : "secondary"}
+                label={`${selectedMap.size} sélectionné(s)`}
+                color="success"
               />
             )}
-            <Chip size="small" label={`${articleSearchResult?.articles?.length ?? 0} résultat(s)`} variant="outlined" />
           </Box>
         </DialogTitle>
-        <DialogContent>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder="Filtrer par libellé ou référence…"
-            value={articleSearchQuery}
-            onChange={e => setArticleSearchQuery(e.target.value)}
-            sx={{ mb: 1 }}
-          />
-          <List dense sx={{ maxHeight: 380, overflowY: "auto" }}>
-            {(articleSearchResult?.articles ?? [])
-              .filter(a => {
-                const q = articleSearchQuery.toLowerCase();
-                return !q
-                  || (a.libelle1 || "").toLowerCase().includes(q)
-                  || (a.refExt   || "").toLowerCase().includes(q);
-              })
-              .map(a => {
-                const selected = selectedArticles.some(p => p.id === a.id);
-                return (
-                  <ListItemButton key={a.id} selected={selected} onClick={() => toggleSelectArticle(a)} dense>
-                    <Checkbox checked={selected} size="small" sx={{ mr: 1 }} disableRipple />
-                    <ListItemText
-                      primary={`${a.refExt ? a.refExt + " — " : ""}${a.libelle1 || "—"}`}
-                      secondary={
-                        <>
-                          {a.Marque?.nom && <span>{a.Marque.nom} · </span>}
-                          <span>PV HT : {a.ArticlePricing?.prixHT?.toFixed(2) ?? "—"} €</span>
-                        </>
-                      }
-                    />
-                  </ListItemButton>
-                );
-              })}
-          </List>
+
+        <DialogContent sx={{ p: 0 }}>
+          {resultArticles.length === 0 ? (
+            <Box display="flex" flexDirection="column" alignItems="center" py={6} gap={1} color="text.secondary">
+              <SearchIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+              <Typography variant="body2">Aucun article trouvé.</Typography>
+            </Box>
+          ) : (
+            <>
+              {/* Barre d'actions groupées */}
+              <Box px={2} py={1} display="flex" alignItems="center" gap={2} borderBottom={1} borderColor="divider">
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => {
+                    const allSel = resultArticles.every((a) => selectedMap.has(a.id));
+                    if (allSel) {
+                      setSelectedMap(new Map());
+                    } else {
+                      setSelectedMap(new Map(resultArticles.map((a) => [a.id, a])));
+                    }
+                  }}
+                >
+                  Tout sélectionner / désélectionner
+                </Button>
+                <Typography variant="caption" color="text.secondary">
+                  {selectedMap.size > 0
+                    ? `${selectedMap.size} / ${resultArticles.length} sélectionné(s)`
+                    : `${resultArticles.length} article(s)`}
+                </Typography>
+              </Box>
+
+              <Paper variant="outlined" sx={{ m: 0, border: 0 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox" />
+                      <TableCell sx={{ fontWeight: 700 }}>Référence</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Désignation</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Marque</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                      <TableCell sx={{ fontWeight: 700, textAlign: "right" }}>PV HT (€)</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {resultArticles.map((a) => (
+                      <ArticleResultRow
+                        key={a.id}
+                        article={a}
+                        selected={selectedMap.has(a.id)}
+                        onToggle={toggleSelectArticle}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            </>
+          )}
         </DialogContent>
-        <DialogActions>
-          <Typography variant="caption" color="text.secondary" sx={{ flex: 1, pl: 1 }}>
-            {selectedArticles.length} article(s) sélectionné(s)
+
+        <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: "divider" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+            {selectedMap.size > 0
+              ? `${selectedMap.size} article(s) à ajouter dans le document`
+              : "Cochez les articles puis confirmez"}
           </Typography>
-          <Button onClick={() => { setModalArticlesOpen(false); setSelectedArticles([]); }}>Annuler</Button>
-          <Button variant="contained" onClick={confirmArticleSelection} disabled={!selectedArticles.length}>
-            Ajouter la sélection
+          <Button onClick={() => { setResultsDialogOpen(false); setSelectedMap(new Map()); }}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmArticleSelection}
+            disabled={!selectedMap.size}
+          >
+            Ajouter {selectedMap.size > 0 ? `(${selectedMap.size})` : ""}
           </Button>
         </DialogActions>
       </Dialog>
@@ -760,29 +908,39 @@ export default function ForfaitSearch({
         fullWidth
       >
         <DialogTitle>Aucune donnée trouvée</DialogTitle>
-
         <DialogContent>
           <Typography variant="body1">
             Aucun forfait ou catégorie ne correspond au code saisi.
           </Typography>
-
           {noDataLineIndex !== null && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Ligne concernée : {noDataLineIndex + 1}
             </Typography>
           )}
         </DialogContent>
-
         <DialogActions>
-          <Button
-            onClick={() => setNoDataModalOpen(false)}
-            variant="contained"
-            color="primary"
-          >
+          <Button onClick={() => setNoDataModalOpen(false)} variant="contained" color="primary">
             Compris
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* ── Snackbar de feedback (ajout direct, aucun résultat, erreur) ── */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
