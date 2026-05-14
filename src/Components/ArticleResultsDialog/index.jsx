@@ -21,7 +21,7 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /*
   Props :
@@ -38,19 +38,29 @@ export default function ArticleResultsDialog({
 }) {
   const theme      = useTheme();
   const isMulti    = typeof onSelectMultiple === "function";
-  const [checked, setChecked] = useState(new Set());
+  const [checked,      setChecked]      = useState(new Set());
+  const [visibleCount, setVisibleCount] = useState(200);
+
+  // Reset à chaque ouverture / nouveau résultat
+  useEffect(() => {
+    setVisibleCount(200);
+    setChecked(new Set());
+  }, [results]);
 
   if (!results) return null;
 
-  /* ── Gestion des cases à cocher ── */
-  const allChecked  = checked.size > 0 && checked.size === results.length;
+  const visible     = results.slice(0, visibleCount);
+  const hasMore     = results.length > visibleCount;
+
+  /* ── Gestion des cases à cocher (sur items visibles) ── */
+  const allChecked  = checked.size > 0 && visible.every(a => checked.has(a.id));
   const someChecked = checked.size > 0 && !allChecked;
 
   function toggleAll() {
     if (allChecked || someChecked) {
       setChecked(new Set());
     } else {
-      setChecked(new Set(results.map((a) => a.id)));
+      setChecked(new Set(visible.map((a) => a.id)));
     }
   }
 
@@ -99,6 +109,11 @@ export default function ArticleResultsDialog({
             {results.length}
           </Typography>{" "}
           article{results.length > 1 ? "s" : ""} trouvé{results.length > 1 ? "s" : ""}
+          {results.length > visibleCount && (
+            <Typography component="span" color="text.secondary" fontWeight={400} sx={{ ml: 1, fontSize: 13 }}>
+              (affichage limité à {visibleCount})
+            </Typography>
+          )}
           {isMulti && checked.size > 0 && (
             <Typography component="span" color="warning.main" fontWeight={700} sx={{ ml: 1 }}>
               · {checked.size} sélectionné{checked.size > 1 ? "s" : ""}
@@ -150,7 +165,7 @@ export default function ArticleResultsDialog({
           </TableHead>
 
           <TableBody>
-            {results.map((article) => {
+            {visible.map((article) => {
               const isChecked = checked.has(article.id);
               return (
                 <TableRow
@@ -235,6 +250,23 @@ export default function ArticleResultsDialog({
           </TableBody>
         </Table>
       </DialogContent>
+
+      {/* Bouton Voir plus */}
+      {hasMore && (
+        <Box
+          onClick={() => setVisibleCount(c => c + 200)}
+          sx={{
+            py: 1.5, textAlign: "center", cursor: "pointer",
+            borderTop: "1px solid", borderColor: "divider",
+            bgcolor: "background.default",
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        >
+          <Typography variant="body2" color="primary.main" fontWeight={600}>
+            Voir plus — {results.length - visibleCount} article{results.length - visibleCount > 1 ? "s" : ""} restant{results.length - visibleCount > 1 ? "s" : ""}
+          </Typography>
+        </Box>
+      )}
 
       <DialogActions
         sx={{

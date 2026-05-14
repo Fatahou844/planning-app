@@ -40,13 +40,16 @@ const ROW_LABEL_WIDTH = 160;
    SelectWithSearch — dropdown avec recherche intégrée
    Clic sur le champ → Popover avec filtre + liste
 ───────────────────────────────────────────────────────── */
+const PAGE = 100;
+
 function SelectWithSearch({ label, resource, value, onChange }) {
-  const anchorRef              = useRef(null);
-  const searchRef              = useRef(null);
-  const [open,    setOpen]     = useState(false);
-  const [query,   setQuery]    = useState("");
-  const [items,   setItems]    = useState([]);
-  const [loading, setLoading]  = useState(true);
+  const anchorRef                    = useRef(null);
+  const searchRef                    = useRef(null);
+  const [open,         setOpen]      = useState(false);
+  const [query,        setQuery]     = useState("");
+  const [items,        setItems]     = useState([]);
+  const [loading,      setLoading]   = useState(true);
+  const [visibleCount, setVisibleCount] = useState(PAGE);
 
   useEffect(() => {
     fetch(`${STOCK_BASE}/${resource}?limit=500`, { credentials: "include" })
@@ -67,7 +70,7 @@ function SelectWithSearch({ label, resource, value, onChange }) {
 
   const handleOpen = () => {
     setOpen(true);
-    // autofocus la recherche après ouverture
+    setVisibleCount(PAGE);
     setTimeout(() => searchRef.current?.focus(), 50);
   };
 
@@ -75,6 +78,7 @@ function SelectWithSearch({ label, resource, value, onChange }) {
     onChange(item);
     setOpen(false);
     setQuery("");
+    setVisibleCount(PAGE);
   };
 
   const displayLabel = value ? (value.nom || value.name) : "Tous";
@@ -133,7 +137,7 @@ function SelectWithSearch({ label, resource, value, onChange }) {
             fullWidth
             placeholder="Rechercher…"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => { setQuery(e.target.value); setVisibleCount(PAGE); }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -171,22 +175,38 @@ function SelectWithSearch({ label, resource, value, onChange }) {
                   <Typography variant="caption" color="text.disabled">Aucun résultat</Typography>
                 </Box>
               ) : (
-                filtered.map(item => (
-                  <ListItemButton
-                    key={item.id}
-                    selected={value?.id === item.id}
-                    onClick={() => handleSelect(item)}
-                    sx={{ py: 0.6, px: 1.5 }}
-                  >
-                    <ListItemText
-                      primary={item.nom || item.name}
-                      primaryTypographyProps={{ variant: "body2" }}
-                    />
-                    {value?.id === item.id && (
-                      <CheckIcon sx={{ fontSize: 15, color: "primary.main" }} />
-                    )}
-                  </ListItemButton>
-                ))
+                <>
+                  {filtered.slice(0, visibleCount).map(item => (
+                    <ListItemButton
+                      key={item.id}
+                      selected={value?.id === item.id}
+                      onClick={() => handleSelect(item)}
+                      sx={{ py: 0.6, px: 1.5 }}
+                    >
+                      <ListItemText
+                        primary={item.nom || item.name}
+                        primaryTypographyProps={{ variant: "body2" }}
+                      />
+                      {value?.id === item.id && (
+                        <CheckIcon sx={{ fontSize: 15, color: "primary.main" }} />
+                      )}
+                    </ListItemButton>
+                  ))}
+                  {filtered.length > visibleCount && (
+                    <Box
+                      onClick={() => setVisibleCount(c => c + PAGE)}
+                      sx={{
+                        py: 1, textAlign: "center", cursor: "pointer",
+                        borderTop: "1px solid", borderColor: "divider",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <Typography variant="caption" color="primary.main" fontWeight={600}>
+                        Afficher plus ({filtered.length - visibleCount} restants)
+                      </Typography>
+                    </Box>
+                  )}
+                </>
               )}
             </List>
           )}
