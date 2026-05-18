@@ -256,6 +256,8 @@ function AddOrdreReparationModal({
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
           discountValue: detail.discountValue || 0,
+          forfaitId: detail.forfaitId || null,
+          articleId: detail.articleId || null,
           orderId: eventId,
           documentType: "Order",
         });

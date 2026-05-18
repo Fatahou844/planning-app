@@ -1,628 +1,108 @@
+import PrintIcon from "@mui/icons-material/Print";
 import { Button } from "@mui/material";
-
-import { Box, Modal, Typography } from "@mui/material";
+import { createCanvas } from "canvas";
+import JsBarcode from "jsbarcode";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
-import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
+import pdfMake from "./pdfMake";
 
-import { createCanvas } from "canvas";
-import JsBarcode from "jsbarcode";
-const OrdreReparationTemplate2 = ({
-  editedEvent,
-  details,
-  onInvoiceExecuted,
-}) => {
+const C = {
+  primary: "#4F46E5", primaryLight: "#EEF2FF", primaryMid: "#C7D2FE",
+  textDark: "#0F172A", textMid: "#475569", textLight: "#94A3B8",
+  border: "#E2E8F0", rowAlt: "#F8FAFC", white: "#FFFFFF",
+};
+
+const infoBlock = (title, rows) => ({
+  table: { widths: ["*"], body: [
+    [{ text: title, fontSize: 7.5, bold: true, color: C.primary, fillColor: C.primaryLight, margin: [6,5,6,5] }],
+    [{ stack: rows.map(({ label, value, bold: b }) => label ? { columns: [{ text: label, fontSize: 7.5, color: C.textLight, width: 42 },{ text: value||"—", fontSize: 7.5, bold: !!b, color: C.textDark }], margin:[0,1.5,0,1.5] } : { text: value||"—", fontSize: b?8.5:7.5, bold:!!b, color:C.textDark, margin:[0,1.5,0,1.5] }), margin:[6,7,6,7] }],
+  ]},
+  layout: { hLineWidth:(i)=>(i===0||i===2)?0.5:1.5, hLineColor:(i)=>i===1?C.primary:C.primaryMid, vLineWidth:(i,node)=>(i===0||i===node.table.widths.length)?0.5:0, vLineColor:()=>C.primaryMid },
+});
+
+const td  = (t, alt, e={}) => ({ text:t, fontSize:8, color:C.textDark, margin:[4,4,4,4], fillColor:alt?C.rowAlt:null, ...e });
+const tdR = (t, alt, e={}) => td(t, alt, { alignment:"right",  ...e });
+const tdC = (t, alt, e={}) => td(t, alt, { alignment:"center", ...e });
+
+const OrdreReparationTemplate2 = ({ editedEvent, details, onInvoiceExecuted }) => {
   const { Client, Vehicle, date, deposit } = editedEvent;
-  const [openOr, setOpenOr] = useState(false);
-
   const [user] = useAuthState(auth);
-  const axios = useAxios();
+  const axios  = useAxios();
+  const [info, setInfo] = useState({ name:"Garage", address:"", phone:"", email:"", codePostal:"", ville:"", noteLegal:"" });
 
-  const [companyInfo, setCompanyInfo] = useState({
-    name: "Fatah Garage",
-    address: "78 Rue Freetown France",
-    phone: "06 09 08 77 88",
-    email: "contactgaragefatahou.com",
-    website: "www.garagefatahou.com",
-    userId: user?.uid,
-  });
-
-  function getCurrentUser() {
-    const storedUser = localStorage.getItem("me");
-    if (storedUser) {
-      return JSON.parse(storedUser);
-    }
-    return null;
-  }
+  function getCurrentUser() { const s = localStorage.getItem("me"); return s ? JSON.parse(s) : null; }
 
   useEffect(() => {
-    const fetchGarageInfo = async () => {
-      const response = await axios.get(
-        "/garages/userid/" + getCurrentUser().garageId
-      );
-      setCompanyInfo(response.data.data);
-    };
+    axios.get("/garages/userid/" + getCurrentUser()?.garageId).then(r => setInfo(r.data.data)).catch(()=>{});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-    fetchGarageInfo();
-  }, [, user]);
-  const invoiceData = {
-    orderNumber: editedEvent ? editedEvent.id : "",
-    deposit: deposit,
-    companyInfo: {
-      name: companyInfo?.name,
-      address: companyInfo?.address,
-      phone: companyInfo?.phone,
-      email: companyInfo?.email,
-      codePostal: companyInfo?.codePostal,
-      ville: companyInfo?.ville,
-    },
-    vehicle: {
-      model: Vehicle?.model ? Vehicle.model : "",
-      motor: "", // Si ce champ est nécessaire, il peut être rempli avec des données supplémentaires
-      vin: Vehicle?.vin ? Vehicle.vin : "",
-      km: Vehicle?.mileage ? Vehicle.mileage : 0,
-      color: Vehicle?.color ? Vehicle.color : "",
-      licensePlate: Vehicle?.plateNumber ? Vehicle.plateNumber : "",
-      lastCheck: Vehicle?.lastCheck ? Vehicle?.lastCheck : "",
-    },
-    client: {
-      name: `${Client?.name ? Client.name : ""} ${
-        Client?.firstName ? Client.firstName : ""
-      }`,
-      adresse: `${Client?.address ? Client?.address : ""}`, // Si une adresse client est disponible, l'ajouter ici
-      phone: Client?.phone ? Client.phone : "",
-      email: Client?.email ? Client.email : "",
-      ville: Client?.city ? Client.city : "",
-      rdv: date ? date : "", // Date de l'événement (le RDV)
-      postalVille: `${Client?.postalCode ? Client?.postalCode : ""} ${
-        Client?.city ? Client.city : ""
-      }`,
-    },
-    items: details.map((item) => ({
-      description: item.label,
-      code: item.code,
-      unitPriceHT: item.unitPrice / 1.2, // Calculer le prix HT à partir du TTC
-      unitPriceTTC: parseFloat(item.unitPrice), // Prix TTC (déjà fourni)
-      quantity: item.quantity,
-      discount:
-        item.discountPercent && item.discountPercent !== ""
-          ? `${item.discountPercent}%`
-          : item.discountValue && item.discountValue !== ""
-          ? String(item.discountValue)
-          : "0",
-      discountValue: item.discountValue || 0,
-      unitPriceTTCafterDiscount:
-        item.unitPrice -
-        item.discountValue -
-        (item.unitPrice * item.discountPercent) / 100,
-      unitPriceHTafterDiscount:
-        item.unitPrice / 1.2 -
-        item.discountValue -
-        (item.unitPrice * item.discountPercent) / 120,
-    })),
-
-    totals: {
-      totalHT: details.reduce((acc, item) => {
-        const unitPrice = parseFloat(item.unitPrice) || 0;
-        const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountValue = parseFloat(item.discountValue) || 0;
-        const quantity = parseFloat(item.quantity) || 1;
-
-        const unitPriceHT = unitPrice / 1.2;
-        const discountedPriceHT = Math.max(
-          0,
-          unitPriceHT * (1 - discountPercent / 100) -
-            (discountValue / quantity || 0)
-        );
-
-        return acc + discountedPriceHT * quantity;
-      }, 0),
-
-      tva: details.reduce((acc, item) => {
-        const unitPrice = parseFloat(item.unitPrice) || 0;
-        const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountValue = parseFloat(item.discountValue) || 0;
-        const quantity = parseFloat(item.quantity) || 1;
-
-        const unitPriceHT = unitPrice / 1.2;
-        const discountedPriceHT = Math.max(
-          0,
-          unitPriceHT * (1 - discountPercent / 100) -
-            (discountValue / quantity || 0)
-        );
-
-        return acc + discountedPriceHT * quantity * 0.2;
-      }, 0),
-
-      totalTTC: details.reduce((acc, item) => {
-        const unitPrice = parseFloat(item.unitPrice) || 0;
-        const discountPercent = parseFloat(item.discountPercent) || 0;
-        const discountValue = parseFloat(item.discountValue) || 0;
-        const quantity = parseFloat(item.quantity) || 1;
-
-        const discountedPriceTTC = Math.max(
-          0,
-          unitPrice * (1 - discountPercent / 100) -
-            (discountValue / quantity || 0)
-        );
-
-        return acc + discountedPriceTTC * quantity;
-      }, 0),
-    },
-
-    observations: `${editedEvent?.notes ? editedEvent?.notes : ""}`,
-    rdvDate: `${
-      editedEvent?.date
-        ? new Date(editedEvent?.date).toLocaleDateString("fr-FR")
-        : ""
-    } à ${
-      editedEvent?.startHour
-        ? editedEvent?.startHour.toString().padStart(2, "0")
-        : ""
-    }h${
-      editedEvent?.startMinute
-        ? editedEvent?.startMinute.toString().padStart(2, "0")
-        : ""
-    }`,
-    endDate: `${
-      editedEvent?.endDate
-        ? new Date(editedEvent.endDate).toLocaleDateString("fr-FR")
-        : ""
-    } à ${
-      editedEvent?.endHour
-        ? editedEvent?.endHour.toString().padStart(2, "0")
-        : ""
-    }h${
-      editedEvent?.endMinute
-        ? editedEvent?.endMinute.toString().padStart(2, "0")
-        : ""
-    }`,
+  const d = {
+    num: editedEvent?.id || "",
+    co: { name:info?.name||"", address:info?.address||"", phone:info?.phone||"", email:info?.email||"", cp:info?.codePostal||"", ville:info?.ville||"", noteLegal:info?.noteLegal||"" },
+    v:  { model:Vehicle?.model||"", immat:Vehicle?.plateNumber||"", vin:Vehicle?.vin||"", km:Vehicle?.mileage||"", color:Vehicle?.color||"" },
+    cl: { name:`${Client?.name||""} ${Client?.firstName||""}`.trim(), address:Client?.address||"", cpVille:`${Client?.postalCode||""} ${Client?.city||""}`.trim(), phone:Client?.phone||"", email:Client?.email||"" },
+    deposit: Number(deposit||0),
+    notes: editedEvent?.notes||"",
+    endDate: editedEvent?.endDate ? `${new Date(editedEvent.endDate).toLocaleDateString("fr-FR")} ${String(editedEvent.endHour||0).padStart(2,"0")}h${String(editedEvent.endMinute||0).padStart(2,"0")}` : "",
+    items: details.map(item => {
+      const ht=((parseFloat(item.unitPrice)||0)/1.2), ttc=parseFloat(item.unitPrice)||0, qty=parseFloat(item.quantity)||1, dp=parseFloat(item.discountPercent)||0, dv=parseFloat(item.discountValue)||0;
+      return { code:item.code||"—", label:item.label||"", ht:ht.toFixed(2), ttc:ttc.toFixed(2), qty, totalHT:(ht*qty*(1-dp/100)-dv).toFixed(2), totalTTC:(ttc*qty*(1-dp/100)-dv).toFixed(2), remise:dp>0?`${dp}%`:dv>0?`${dv} €`:"—" };
+    }),
+    totals: (()=>{ let ht=0,ttc=0; details.forEach(item=>{ const p=parseFloat(item.unitPrice)||0,qty=parseFloat(item.quantity)||1,dp=parseFloat(item.discountPercent)||0,dv=parseFloat(item.discountValue)||0; ttc+=Math.max(0,p*qty*(1-dp/100)-dv); ht+=Math.max(0,(p/1.2)*qty*(1-dp/100)-dv); }); return {ht:ht.toFixed(2),tva:(ttc-ht).toFixed(2),ttc:ttc.toFixed(2)}; })(),
   };
 
-  console.log("INCOICE DATA*********************", invoiceData);
+  const cv = createCanvas();
+  JsBarcode(cv, `OR-${d.num}`, { format:"CODE128", displayValue:false, width:1.4, height:28, margin:0 });
+  const bc = cv.toDataURL("image/png");
 
-  // Génération du code-barres en base64
-  const canvas = createCanvas();
-  JsBarcode(canvas, `OR:${invoiceData?.orderNumber || "0000"}`, {
-    format: "CODE128",
-    displayValue: true,
-  });
-  const barcodeBase64 = canvas.toDataURL("image/png");
-
-  const documentDefinition = {
-    content: [
-      // HEADER avec OR + zone SCAN
-      {
-        table: {
-          widths: ["50%", "50%"],
-          body: [
-            [
-              {
-                stack: [
-                  {
-                    image: barcodeBase64,
-                    fit: [300, 50], // taille du code-barres
-                    alignment: "center",
-                  },
-                  {
-                    text: `ORDRE DE REPARATION N° ${invoiceData?.orderNumber}`,
-                    style: "headerTitle",
-                    bold: true,
-
-                    alignment: "center",
-                    marginTop: -70, // remonte le texte pour le superposer au code-barres
-                  },
-                ],
-                fillColor: "#F8FAFC",
-                border: [true, true, true, true],
-              },
-              {
-                text: `Fin des travaux : ${invoiceData?.endDate || ""}`,
-                style: "headerSub",
-                alignment: "right",
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
-        marginBottom: 55,
-      },
-      // BLOCS ENTREPRISE / VEHICULE / CLIENT
-      {
-        columns: [
-          // ENTREPRISE
-          {
-            stack: [
-              {
-                canvas: [
-                  {
-                    type: "rect",
-                    x: 0,
-                    y: 0,
-                    w: 160,
-                    h: 80,
-                    r: 8,
-                    color: "#F8FAFC",
-                    lineColor: "#E2E8F0",
-                  },
-                ],
-                margin: [0, 0, 0, -80],
-              },
-              {
-                stack: [
-                  { text: invoiceData.companyInfo.name, style: "infoBlock" },
-                  { text: invoiceData.companyInfo.address, style: "infoBlock" },
-                  { text: invoiceData.companyInfo.phone, style: "infoBlock" },
-                  { text: invoiceData.companyInfo.email, style: "infoBlock" },
-                  {
-                    text:
-                      invoiceData.companyInfo.codePostal +
-                      " " +
-                      invoiceData.companyInfo.ville,
-                    style: "infoBlock",
-                  },
-                ],
-                margin: [5, 8, 5, 0],
-              },
-            ],
-          },
-
-          // VEHICULE
-          {
-            stack: [
-              {
-                canvas: [
-                  {
-                    type: "rect",
-                    x: 0,
-                    y: 0,
-                    w: 160,
-                    h: 80,
-                    r: 8,
-                    color: "#F8FAFC",
-                    lineColor: "#E2E8F0",
-                  },
-                ],
-                margin: [0, 0, 0, -80],
-              },
-              {
-                stack: [
-                  {
-                    text: `${invoiceData.vehicle.model} - ${
-                      invoiceData.vehicle.engine || ""
-                    }`,
-                    style: "infoBlock",
-                  },
-                  {
-                    text: `VIN : ${invoiceData.vehicle.vin}`,
-                    style: "infoBlock",
-                  },
-                  {
-                    text: `Km : ${invoiceData.vehicle.km} km`,
-                    style: "infoBlock",
-                  },
-                  {
-                    text: `Immat : ${invoiceData.vehicle.licensePlate || ""}`,
-                    style: "infoBlock",
-                  },
-                  {
-                    text: `Couleur : ${invoiceData.vehicle.color}`,
-                    style: "infoBlock",
-                  },
-                ],
-                margin: [5, 8, 5, 0],
-              },
-            ],
-          },
-
-          // CLIENT
-          {
-            stack: [
-              {
-                canvas: [
-                  {
-                    type: "rect",
-                    x: 0,
-                    y: 0,
-                    w: 160,
-                    h: 80,
-                    r: 8,
-                    color: "#F8FAFC",
-                    lineColor: "#E2E8F0",
-                  },
-                ],
-                margin: [0, 0, 0, -80],
-              },
-              {
-                stack: [
-                  { text: invoiceData.client.name, style: "infoBlock" },
-                  {
-                    text: `${invoiceData.client?.adresse || ""}`,
-                    style: "infoBlock",
-                  },
-                  {
-                    text: `${invoiceData.client?.postalVille || ""}`,
-                    style: "infoBlock",
-                  },
-                  { text: `${invoiceData.client.phone}`, style: "infoBlock" },
-                  { text: `${invoiceData.client.email}`, style: "infoBlock" },
-                ],
-                margin: [5, 8, 5, 0],
-              },
-            ],
-          },
-        ],
-        columnGap: 8,
-        marginBottom: 30,
-      },
-
-      // TABLEAU ITEMS
-      {
-        table: {
-          widths: ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"],
-          body: [
-            [
-              { text: "Code", style: "tableHeader" },
-              { text: "Libellé / Travaux", style: "tableHeader" },
-              { text: "P.U. HT", style: "tableHeader" },
-              { text: "P.U. TTC", style: "tableHeader" },
-              { text: "Qté", style: "tableHeader" },
-              { text: "Total HT", style: "tableHeader" },
-              { text: "Total TTC", style: "tableHeader" },
-              { text: "Remise", style: "tableHeader" },
-            ],
-            ...invoiceData.items.map((item) => [
-              { text: item.code || "---", style: "tableCell" },
-              { text: item.description, style: "tableCell" },
-              { text: `${item.unitPriceHT?.toFixed(2)} €`, style: "smallCell" },
-              {
-                text: `${item.unitPriceTTC?.toFixed(2)} €`,
-                style: "smallCell",
-              },
-              { text: item.quantity, style: "smallCell" },
-              {
-                text: `${(item.unitPriceHT * item.quantity).toFixed(2)} €`,
-                alignment: "right",
-                style: "tableCell",
-              },
-              {
-                text: `${(item.unitPriceTTC * item.quantity).toFixed(2)} €`,
-                alignment: "right",
-                style: "tableCell",
-              },
-              {
-                text: `${item.discount}`,
-                alignment: "right",
-                style: "tableCell",
-              },
-            ]),
-          ],
-        },
-        layout: "lightHorizontalLines",
-        marginBottom: 20,
-      },
-
-      // TOTAUX
-      {
-        table: {
-          widths: ["50%", "50%"],
-          body: [
-            [
-              {
-                stack: [
-                  {
-                    text: `Total HT : ${invoiceData.totals.totalHT.toFixed(
-                      2
-                    )} €`,
-                    style: "totalSub", // 👈 style plus léger
-                  },
-                  {
-                    text: `TVA (20%) : ${invoiceData.totals.tva.toFixed(2)} €`,
-                    style: "totalSub", // 👈 idem
-                  },
-                ],
-                fillColor: "#F8FAFC", // 👈 même fond que les blocs info
-                margin: [2, 4, 2, 4],
-              },
-              {
-                text: `Total Net TTC : ${invoiceData.totals.totalTTC.toFixed(
-                  2
-                )} €`,
-                style: "totalLabel", // 👈 celui-là garde violet + blanc
-              },
-            ],
-            [
-              {
-                text: "",
-                border: [false, false, false, false],
-                fillColor: "#F8FAFC",
-              },
-              {
-                text: `Acompte versé : ${
-                  invoiceData.deposit?.toFixed(2) || "0.00"
-                } €`,
-                style: "totalSub", // 👈 on garde le style plus lisible
-              },
-            ],
-          ],
-        },
-        layout: "lightHorizontalLines",
-        marginBottom: 20,
-      },
-
-      // OBSERVATIONS
-      { text: "Observations et conseils :", style: "sectionHeader" },
-      {
-        text: invoiceData.observations || "",
-        style: "subheader",
-        marginBottom: 10,
-      },
-
-      // NOTES EXPLICATIVES
-      {
-        text: companyInfo.noteLegal,
-        style: "paragraph",
-        alignment: "justify",
-        marginBottom: 15,
-      },
-
-      {
-        text: `Le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString(
-          [],
-          { hour: "2-digit", minute: "2-digit" }
-        )}`,
-        style: "footer",
-        alignment: "right",
-      },
-
-      // SIGNATURES
-      {
-        table: {
-          widths: ["50%", "50%"],
-          body: [
-            [
-              {
-                text: "Signature du Réceptionnaire",
-                style: "signature",
-                alignment: "left",
-              },
-              {
-                text: "Signature du Client",
-                style: "signature",
-                alignment: "right",
-              },
-            ],
-          ],
-        },
-        layout: "noBorders",
-        marginBottom: 20,
-      },
+  const doc = {
+    pageMargins:[28,20,28,40], defaultStyle:{font:"Roboto"},
+    content:[
+      { table:{widths:["*","auto"],body:[[
+        { stack:[{text:"ORDRE DE RÉPARATION",fontSize:15,bold:true,color:C.white},{text:`N° ${d.num}  ·  ${new Date().toLocaleDateString("fr-FR")}`,fontSize:8.5,color:C.primaryMid,marginTop:3}], fillColor:C.primary,border:[false,false,false,false],margin:[14,11,0,11] },
+        { stack:[{text:d.co.name,bold:true,fontSize:9,color:C.white,alignment:"right"},{text:d.co.phone,fontSize:8,color:C.primaryMid,alignment:"right",marginTop:2},{text:d.endDate?`Fin : ${d.endDate}`:"",fontSize:7.5,color:"#A5B4FC",alignment:"right",marginTop:3}], fillColor:C.primary,border:[false,false,false,false],margin:[0,11,14,11] },
+      ]]}, layout:"noBorders", marginBottom:3 },
+      { table:{widths:["*"],body:[[{image:bc,fit:[180,28],alignment:"center",fillColor:C.primaryLight,border:[false,false,false,false],margin:[0,5,0,5]}]]}, layout:"noBorders", marginBottom:14 },
+      { columns:[
+        infoBlock("GARAGE",  [{value:d.co.name,bold:true},{label:"Adresse :",value:d.co.address},{label:"",value:`${d.co.cp} ${d.co.ville}`},{label:"Tél :",value:d.co.phone},{label:"Email :",value:d.co.email}]),
+        infoBlock("VÉHICULE",[{value:d.v.model,bold:true},{label:"Immat :",value:d.v.immat,bold:true},{label:"VIN :",value:d.v.vin},{label:"Km :",value:d.v.km?`${d.v.km} km`:"—"},{label:"Couleur :",value:d.v.color}]),
+        infoBlock("CLIENT",  [{value:d.cl.name,bold:true},{label:"Adresse :",value:d.cl.address},{label:"",value:d.cl.cpVille},{label:"Tél :",value:d.cl.phone},{label:"Email :",value:d.cl.email}]),
+      ], columnGap:10, marginBottom:16 },
+      { table:{widths:[52,"*",44,44,28,50,50,38],body:[
+        [{text:"Code",style:"th"},{text:"Désignation / Travaux",style:"th"},{text:"P.U. HT",style:"th"},{text:"P.U. TTC",style:"th"},{text:"Qté",style:"th"},{text:"Total HT",style:"th"},{text:"Total TTC",style:"th"},{text:"Remise",style:"th"}],
+        ...d.items.map((item,i)=>[td(item.code,i%2!==0),td(item.label,i%2!==0),tdR(`${item.ht} €`,i%2!==0),tdR(`${item.ttc} €`,i%2!==0),tdC(`${item.qty}`,i%2!==0),tdR(`${item.totalHT} €`,i%2!==0),tdR(`${item.totalTTC} €`,i%2!==0),tdC(item.remise,i%2!==0)]),
+      ]}, layout:{hLineWidth:(i)=>i===0||i===1?0:0.4,hLineColor:()=>C.border,vLineWidth:()=>0,fillColor:(r)=>r===0?C.primary:null}, marginBottom:16 },
+      { columns:[{text:"",width:"*"},{width:190,table:{widths:["*","auto"],body:[
+        [{text:"Total HT",fontSize:8.5,color:C.textMid,margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]},{text:`${d.totals.ht} €`,fontSize:8.5,bold:true,color:C.textDark,alignment:"right",margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]}],
+        [{text:"TVA 20%",fontSize:8.5,color:C.textMid,margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]},{text:`${d.totals.tva} €`,fontSize:8.5,bold:true,color:C.textDark,alignment:"right",margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]}],
+        [{text:"TOTAL TTC",fontSize:10,bold:true,color:C.white,fillColor:C.primary,margin:[8,7,8,7],border:[false,false,false,false]},{text:`${d.totals.ttc} €`,fontSize:10,bold:true,color:C.white,fillColor:C.primary,alignment:"right",margin:[8,7,8,7],border:[false,false,false,false]}],
+        [{text:"Acompte",fontSize:8,color:C.textMid,margin:[8,4,8,4],border:[false,false,false,false]},{text:`${d.deposit.toFixed(2)} €`,fontSize:8,color:C.textDark,alignment:"right",margin:[8,4,8,4],border:[false,false,false,false]}],
+      ]},layout:{hLineWidth:(i)=>(i===0||i===4)?0.5:0,hLineColor:()=>C.border,vLineWidth:(i)=>(i===0||i===2)?0.5:0,vLineColor:()=>C.border}}], marginBottom:16 },
+      ...(d.notes?[{text:"Observations",fontSize:8.5,bold:true,color:C.primary,marginBottom:4},{text:d.notes,fontSize:8,color:C.textMid,marginBottom:14}]:[]),
+      {text:d.co.noteLegal,fontSize:7,color:C.textLight,italics:true,marginBottom:20},
+      { table:{widths:["44%","12%","44%"],body:[[
+        {stack:[{text:"Signature du réceptionnaire",fontSize:8,color:C.textMid,marginBottom:28},{canvas:[{type:"line",x1:0,y1:0,x2:175,y2:0,lineWidth:0.5,lineColor:C.border}]}],border:[false,false,false,false]},
+        {text:"",border:[false,false,false,false]},
+        {stack:[{text:"Signature du client",fontSize:8,color:C.textMid,alignment:"right",marginBottom:28},{canvas:[{type:"line",x1:0,y1:0,x2:175,y2:0,lineWidth:0.5,lineColor:C.border}]}],border:[false,false,false,false]},
+      ]]}, layout:"noBorders" },
     ],
-
-    styles: {
-      headerTitle: { fontSize: 14, bold: true, color: "#4F46E5" },
-      headerSub: { fontSize: 9, italics: true, color: "#64748B" },
-      infoBlock: { fontSize: 9, color: "#1E293B", alignment: "center" },
-
-      tableHeader: {
-        bold: true,
-        alignment: "center",
-        fontSize: 9,
-        fillColor: "#4F46E5",
-        color: "white",
-        margin: [2, 4, 2, 4],
-      },
-
-      tableCell: { fontSize: 8, color: "#1E293B" },
-      smallCell: { fontSize: 8, color: "#1E293B", alignment: "right" },
-
-      totalLabel: {
-        fontSize: 9,
-        bold: true,
-        color: "white",
-        fillColor: "#4F46E5", // 👈 reste violet uniquement pour TTC
-        alignment: "right",
-        margin: [2, 4, 2, 4],
-      },
-
-      totalSub: {
-        fontSize: 9,
-        bold: true,
-        color: "#1E293B", // 👈 texte sombre
-        alignment: "right",
-      },
-
-      sectionHeader: {
-        fontSize: 10,
-        bold: true,
-        color: "#3B82F6",
-        marginTop: 8,
-        marginBottom: 6,
-      },
-      subheader: { fontSize: 8, color: "#64748B", marginBottom: 4 },
-      signature: { fontSize: 8, marginTop: 12, color: "#1E293B" },
-      footer: { fontSize: 8, italics: true, marginTop: 8, color: "#64748B" },
-      paragraph: { fontSize: 7, lineHeight: 1.2, color: "#64748B" },
-    },
+    footer:(p,pc)=>({table:{widths:["*","auto"],body:[[{text:`${d.co.name}  ·  ${d.co.address}  ·  ${d.co.phone}`,fontSize:7,color:C.textLight,border:[false,true,false,false],borderColor:["",C.border,"",""],margin:[28,5,0,0]},{text:`${p} / ${pc}`,fontSize:7,color:C.textLight,alignment:"right",border:[false,true,false,false],borderColor:["",C.border,"",""],margin:[0,5,28,0]}]]},layout:"noBorders"}),
+    styles:{th:{bold:true,fontSize:8,color:C.white,margin:[4,5,4,5],alignment:"center"}},
   };
 
-  function generatePdf() {
-    const fileName = `OrdreReparation_${invoiceData.orderNumber}_${
-      new Date().toISOString().split("T")[0]
-    }.pdf`;
-    pdfMake.createPdf(documentDefinition).download(fileName);
-    if (onInvoiceExecuted) {
-      onInvoiceExecuted(); // Déclenche la fonction du parent
-    }
-  }
-  // Générer le PDF
-
-  const handleOpenOr = () => setOpenOr(true);
-
-  const handleCloseOr = () => setOpenOr(false);
-
-  // Fonction pour confirmer l'action
   const handleConfirmOr = () => {
-    generatePdf(); // Appel de la fonction addEvent
-    handleCloseOr(); // Fermer le modal
+    pdfMake.createPdf(doc).download(`OR_${d.num}_${new Date().toISOString().split("T")[0]}.pdf`);
+    onInvoiceExecuted?.();
   };
 
   return (
-    <div>
-      <Button onClick={handleOpenOr} color="primary" variant="contained">
-        Imprimer OR
-      </Button>
-      <Modal
-        open={openOr}
-        onClose={handleCloseOr}
-        aria-labelledby="confirmation-modal-title"
-        aria-describedby="confirmation-modal-description"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
-            border: "2px solid #000",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-          }}
-        >
-          <Typography id="confirmation-modal-title" variant="h6" component="h2">
-            Confirmation
-          </Typography>
-          <Typography id="confirmation-modal-description" sx={{ mt: 2, mb: 4 }}>
-            Voulez vous imprimer cet OR?
-          </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={handleCloseOr}
-            >
-              Non
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleConfirmOr}
-            >
-              Oui
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
-    </div>
+    <Button variant="contained" startIcon={<PrintIcon />} onClick={handleConfirmOr} disableElevation
+      sx={{ bgcolor:C.primary, color:C.white, textTransform:"none", "&:hover":{bgcolor:"#4338CA"} }}>
+      Imprimer
+    </Button>
   );
 };
 

@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../../hooks/firebaseConfig";
 import { useAxios } from "../../utils/hook/useAxios";
+import { useStockAlertGlobal } from "../../contexts/StockAlertContext";
 import AddOrdreReparationModal from "../AddOrdreReparationModal";
 import DevisTemplate2 from "../DevisTemplate2";
 import ForfaitSearch from "../ForfaitSearch";
@@ -45,6 +46,7 @@ function DocumentModal({
   const [selectedDate, setSelectedDate] = useState("");
   const [dataEvents, setDataEvents] = useState([]);
   const axios = useAxios();
+  const { notify: notifyStock } = useStockAlertGlobal();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
@@ -252,11 +254,12 @@ function DocumentModal({
         } else if (detail.id) {
           await axios.put(`/details/${detail.id}`, detail);
         } else {
-          await axios.post("/details", {
+          const r = await axios.post("/details", {
             ...detail,
             documentType: config.documentType,
-            [config.foreignKey]: editedEvent.id, // Ajoute dynamiquement orderId/invoiceId/etc.
+            [config.foreignKey]: editedEvent.id,
           });
+          notifyStock(r?.data);
         }
       }
 
@@ -305,11 +308,12 @@ function DocumentModal({
       });
 
       for (const detail of validDetails) {
-        await axios.post("/details", {
+        const r = await axios.post("/details", {
           ...detail,
           documentType: "Reservation",
           reservationId,
         });
+        notifyStock(r?.data);
       }
 
       // 3. Mettre à jour le devis pour le fermer (isClosed: true)
@@ -462,8 +466,8 @@ function DocumentModal({
   );
   const totalHT = totalTTC / 1.2 || 0.0; // Ajouter 20% de TVA
 
-  // let collectName = "Ordre de réparation";
   const [collectName, setCollectName] = useState("Ordre de réparation");
+  const [notifCollection, setNotifCollection] = useState(collectionName);
 
   useEffect(() => {
     console.log(
@@ -500,14 +504,11 @@ function DocumentModal({
     displayNotification();
   };
 
-  const handleConfirmCreerResa = () => {
-    handleCreerCollection(); // Appel de la fonction addEvent
-    handleCloseCreerResa(); // Fermer le modal
-    setNotification({
-      open: true,
-      message: "Votre réservation crée",
-      severity: "success", // Peut être "error", "warning", "info"
-    });
+  const handleConfirmCreerResa = async () => {
+    handleCloseCreerResa();
+    await handleCreerCollection();
+    setNotifCollection("reservations");
+    setNotification({ open: true, message: "Votre réservation a été créée", severity: "success" });
     handleShowPopup();
   };
 
@@ -612,7 +613,7 @@ function DocumentModal({
           message={notification.message}
           handleClose={handleClosePopup}
           dataEvent={editedEvent}
-          collectionName={collectionName}
+          collectionName={notifCollection}
           dataDetails={details}
         />
       )}

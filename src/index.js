@@ -27,11 +27,15 @@ import PlatformDashboard from "./Pages/PlatformDashboard/PlatformDashboard";
 import PlatformLogin from "./Pages/PlatformLogin/PlatformLogin";
 import Landing from "./Pages/Landing/Landing";
 import ResetPasswordPage from "./Pages/ResetPasswordPage/ResetPasswordPage";
-import Store from "./Pages/Store/Store";
+import Store      from "./Pages/Store/Store";
+import Reception       from "./Pages/Reception";
+import StockDashboard  from "./Pages/StockDashboard";
+import Commandes       from "./Pages/Commandes";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import WeeklyPlanning from "./Pages/WeeklyPlanning";
 import { CustomThemeProvider } from "./theme/ThemeProvider";
 import { ProvideAxios } from "./utils/hook/useAxios";
+import { StockAlertProvider } from "./contexts/StockAlertContext";
 import { UserProvider } from "./utils/hook/UserContext";
 import PrivateRoute from "./utils/PrivateRoute";
 
@@ -59,6 +63,9 @@ const tabLabels = [
   { label: "Planning",   path: "/"           },
   { label: "Clients",    path: "/clients"    },
   { label: "Store",      path: "/store"      },
+  { label: "Réception",  path: "/reception"  },
+  { label: "Commandes",  path: "/commandes"  },
+  { label: "Stock",      path: "/stock"      },
   { label: "Team",       path: "/team"       },
   { label: "Caisses",    path: "/caisses"    },
   { label: "Catalogue",  path: "/catalogue"  },
@@ -216,6 +223,7 @@ const GarageShell = ({ children }) => {
 const App = () => (
   <ProvideAxios>
     <UserProvider>
+    <StockAlertProvider>
       <Router>
         <CustomThemeProvider>
           <header style={{ padding: "1rem" }}>
@@ -228,6 +236,9 @@ const App = () => (
               <Route path="/"                   element={<PrivateRoute Component={Dashboard} />} />
               <Route path="/weekly-planning"    element={<PrivateRoute Component={WeeklyPlanning} />} />
               <Route path="/store"              element={<PrivateRoute Component={Store} />} />
+              <Route path="/reception"         element={<PrivateRoute Component={Reception} />} />
+              <Route path="/commandes"         element={<PrivateRoute Component={Commandes} />} />
+              <Route path="/stock"             element={<PrivateRoute Component={StockDashboard} />} />
               <Route path="/atelier"            element={<PrivateRoute Component={Atelier} />} />
               <Route path="/clients"            element={<PrivateRoute Component={ManageClients} />} />
               <Route path="/planning/customers" element={<PrivateRoute Component={UserDashboard} />} />
@@ -251,6 +262,7 @@ const App = () => (
           </GarageShell>
         </CustomThemeProvider>
       </Router>
+    </StockAlertProvider>
     </UserProvider>
   </ProvideAxios>
 );

@@ -74,7 +74,7 @@ export default function AuthPages() {
 
     // Simulation d'envoi de formulaire
     setAlertMessage(
-      isSignUp ? "Inscription réussie 🎉" : "Connexion réussie ✅"
+      isSignUp ? "Inscription réussie 🎉" : "Connexion réussie ✅",
     );
   };
   const inputRef = React.useRef();
@@ -94,10 +94,8 @@ export default function AuthPages() {
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, p: 4, border: "1px solid #ccc", borderRadius: 2 }}>
         <Typography variant="h5" mb={3} textAlign="center">
-          {isSignUp ? "Créer un compte" : "Connexion à l'espace garage"}
+          {isSignUp ? "Créer un compte" : "Connexion à l'espace de travail"}
         </Typography>
-
-  
 
         {alertMessage && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -147,7 +145,6 @@ export default function AuthPages() {
             </>
           )}
 
-         
           <Box sx={{ position: "relative", width: "100%" }}>
             {showUsername ? (
               <TextField
@@ -243,7 +240,7 @@ export default function AuthPages() {
           <Button variant="contained" onClick={handleSubmit}>
             Se connecter
           </Button>
-          <Link to={"/reset-password"}>Mot de passe oublier</Link>
+          <Link to={"/reset-password"}>Mot de passe oublié</Link>
         </Stack>
       </Box>
     </Container>

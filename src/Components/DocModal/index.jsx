@@ -23,6 +23,7 @@ import ForfaitSearch from "../ForfaitSearch";
 import InvoiceTemplate from "../InvoiceTemplate";
 import InvoiceTemplateWithoutOR2 from "../InvoiceTemplateWithoutOR2";
 import Notification from "../Notification";
+import { useStockAlertGlobal } from "../../contexts/StockAlertContext";
 import ReservationTemplate2 from "../ReservationTemplate2";
 
 function DocModal({
@@ -69,6 +70,7 @@ function DocModal({
     setVehicleUpdated(true);
   };
   const axios = useAxios();
+  const { notify } = useStockAlertGlobal();
 
   const handleOpenOrSup = () => setOpenOrSup(true);
   const handleCloseOrSup = () => setOpenOrSup(false);
@@ -326,11 +328,12 @@ function DocModal({
         } else if (detail.id) {
           await axios.put(`/details/${detail.id}`, detail);
         } else {
-          await axios.post("/details", {
+          const res = await axios.post("/details", {
             ...detail,
             documentType: config.documentType,
-            [config.foreignKey]: editedEvent.id, // Ajoute dynamiquement orderId/invoiceId/etc.
+            [config.foreignKey]: editedEvent.id,
           });
+          notify(res?.data);
         }
       }
 
@@ -407,11 +410,12 @@ function DocModal({
       });
 
       for (const detail of validDetails) {
-        await axios.post("/details", {
+        const r = await axios.post("/details", {
           ...detail,
           documentType: "Reservation",
           reservationId,
         });
+        notify(r?.data);
       }
 
       // 3. Mettre à jour le devis pour le fermer (isClosed: true)
@@ -450,8 +454,9 @@ function DocModal({
   );
   const totalHT = totalTTC / 1.2 || 0.0; // Ajouter 20% de TVA
 
-  // let collectName = "Ordre de réparation";
   const [collectName, setCollectName] = useState("Ordre de réparation");
+  // collectionName pour le popup — contrôlé localement pour éviter la stale prop
+  const [notifCollection, setNotifCollection] = useState(collectionName);
 
   useEffect(() => {
     console.log(
@@ -488,14 +493,11 @@ function DocModal({
     displayNotification();
   };
 
-  const handleConfirmCreerResa = () => {
-    handleCreerCollection(); // Appel de la fonction addEvent
-    handleCloseCreerResa(); // Fermer le modal
-    setNotification({
-      open: true,
-      message: "Votre réservation crée",
-      severity: "success", // Peut être "error", "warning", "info"
-    });
+  const handleConfirmCreerResa = async () => {
+    handleCloseCreerResa();
+    await handleCreerCollection();
+    setNotifCollection("reservations"); // forcer le bon type avant le popup
+    setNotification({ open: true, message: "Votre réservation a été créée", severity: "success" });
     handleShowPopup();
   };
 
@@ -682,7 +684,7 @@ function DocModal({
             ...editedEvent,
             id: newOrder.id ? newOrder.id : editedEvent.id,
           }}
-          collectionName={collectionName}
+          collectionName={notifCollection}
           dataDetails={details}
         />
       )}
@@ -1538,6 +1540,8 @@ function DocModal({
           onNotificationSuccess={handleORCReated}
         />
       )}
+
+      {/* Alertes stock gérées globalement par StockAlertProvider */}
     </>
   );
 }

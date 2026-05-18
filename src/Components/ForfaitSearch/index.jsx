@@ -225,6 +225,8 @@ export default function ForfaitSearch({
         code:      a.refExt   || a.codeBarre || a.refInt  || "---",
         quantity:  1,
         unitPrice: a.ArticlePricing?.prixHT ?? 0,
+        articleId: a.id,
+        forfaitId: null,
       };
       if (!firstUsed && resultsDialogLineIndex !== null) {
         addDetailFromForfait(entry, resultsDialogLineIndex);
@@ -297,6 +299,8 @@ export default function ForfaitSearch({
               code:      `${data.CategoryForfait.codes_principaux.code1}${data.CategoryForfait.code2}${data.code3}`,
               quantity:  1,
               unitPrice: data.prix,
+              forfaitId: data.id,
+              articleId: null,
             },
             index,
           );
@@ -375,10 +379,12 @@ export default function ForfaitSearch({
 
       addDetailFromForfait(
         {
-          label: f.libelle,
-          quantity: 1,
-          code: `${f.CategoryForfait.codes_principaux.code1}${f.CategoryForfait.code2}${f.code3}`,
+          label:     f.libelle,
+          quantity:  1,
+          code:      `${f.CategoryForfait.codes_principaux.code1}${f.CategoryForfait.code2}${f.code3}`,
           unitPrice: f.prix,
+          forfaitId: f.id,
+          articleId: null,
         },
         lineIndex,
       );
@@ -438,14 +444,15 @@ export default function ForfaitSearch({
 
       // 2️⃣ Ajouter la nouvelle ligne avec le forfait
       const entry = {
-        label: forfait.label ?? "",
-        code: forfait.code ?? "xxx",
-
-        quantity: forfait.quantity ?? 1,
-        unitPrice: forfait.unitPrice ?? forfait.prix ?? 0,
-        inputValue: "",
-        discountValue: "",
-        discountPercent: "",
+        label:          forfait.label     ?? "",
+        code:           forfait.code      ?? "xxx",
+        quantity:       forfait.quantity  ?? 1,
+        unitPrice:      forfait.unitPrice ?? forfait.prix ?? 0,
+        inputValue:     "",
+        discountValue:  "",
+        discountPercent:"",
+        forfaitId:      forfait.forfaitId ?? null,
+        articleId:      forfait.articleId ?? null,
       };
 
       copy.push(entry);

@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import ClientSearch from "../../Components/ClientSearch/ClientSearch";
 import { useAxios } from "../../utils/hook/useAxios";
+import { useStockAlertGlobal } from "../../contexts/StockAlertContext";
 import Notification from "../Notification";
 // import jumelles from "../../assets/images/jumelles.png";
 import { useEffect, useState } from "react";
@@ -28,6 +29,7 @@ import UserSearch from "../UserSearch/UserSearch";
 export default function AddDocumentComponent({ onDocumentCreated }) {
   const axios = useAxios();
   const theme = useTheme();
+  const { notify: notifyStock } = useStockAlertGlobal();
   const isDark = theme.palette.mode === "dark";
   const [selectedDate, setSelectedDate] = useState("");
   const [categories, setCategories] = useState([]);
@@ -717,15 +719,19 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
 
       // Envoyer chaque détail individuellement via une requête POST à l'API
       for (const detail of validDetails) {
-        await axios.post("/details", {
-          label: detail.label || "",
-          quantity: detail.quantity || 0,
-          unitPrice: detail.unitPrice || 0,
+        const r = await axios.post("/details", {
+          label:           detail.label    || "",
+          code:            detail.code     || "",
+          quantity:        detail.quantity || 0,
+          unitPrice:       detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
-          discountValue: detail.discountValue || 0,
+          discountValue:   detail.discountValue || 0,
+          forfaitId:       detail.forfaitId || null,
+          articleId:       detail.articleId || null,
           orderId: eventId,
           documentType: "Order",
         });
+        notifyStock(r?.data);
       }
 
       console.log("Détails ajoutés avec succès à l'événement");
@@ -760,35 +766,45 @@ export default function AddDocumentComponent({ onDocumentCreated }) {
         // Envoyer chaque détail individuellement via une requête POST à l'API
         for (const detail of validDetails) {
           await axios.post("/details", {
-            label: detail.label || "",
-            quantity: detail.quantity || 0,
-            unitPrice: detail.unitPrice || 0,
+            label:          detail.label    || "",
+            code:           detail.code     || "",
+            quantity:       detail.quantity || 0,
+            unitPrice:      detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountValue: detail.discountValue || 0,
+            discountValue:  detail.discountValue || 0,
+            forfaitId:      detail.forfaitId || null,
+            articleId:      detail.articleId || null,
             documentType: "Quote",
             quoteId: eventId,
           });
         }
       else if (collectionName === "reservation")
         for (const detail of validDetails) {
-          await axios.post("/details", {
-            label: detail.label || "",
-            quantity: detail.quantity || 0,
-            unitPrice: detail.unitPrice || 0,
+          const r = await axios.post("/details", {
+            label:          detail.label    || "",
+            code:           detail.code     || "",
+            quantity:       detail.quantity || 0,
+            unitPrice:      detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountValue: detail.discountValue || 0,
+            discountValue:  detail.discountValue || 0,
+            forfaitId:      detail.forfaitId || null,
+            articleId:      detail.articleId || null,
             documentType: "Reservation",
             reservationId: eventId,
           });
+          notifyStock(r?.data);
         }
       else if (collectionName === "facture")
         for (const detail of validDetails) {
           await axios.post("/details", {
-            label: detail.label || "",
-            quantity: detail.quantity || 0,
-            unitPrice: detail.unitPrice || 0,
+            label:          detail.label    || "",
+            code:           detail.code     || "",
+            quantity:       detail.quantity || 0,
+            unitPrice:      detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
-            discountValue: detail.discountValue || 0,
+            discountValue:  detail.discountValue || 0,
+            forfaitId:      detail.forfaitId || null,
+            articleId:      detail.articleId || null,
             documentType: "Invoice",
             invoiceId: eventId,
           });

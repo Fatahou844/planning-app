@@ -1,9 +1,8 @@
 import { Button } from "@mui/material";
 import { useEffect, useState } from "react";
-
 import { Box, Modal, Typography } from "@mui/material";
 import { useAxios } from "../../utils/hook/useAxios";
-import pdfMake from "./pdfMake"; // Assurez-vous de bien importer votre pdfMake configuré
+import pdfMake from "./pdfMake";
 
 const InvoiceTemplate = ({
   editedEvent,
@@ -14,8 +13,16 @@ const InvoiceTemplate = ({
   onFactureGenerated,
 }) => {
   const { Client, Vehicle, date, id } = editedEvent;
-  const user = { id: 1 };
+  const user  = { id: 1 };
   const axios = useAxios();
+
+  const C = { primary:"#4F46E5",primaryLight:"#EEF2FF",primaryMid:"#C7D2FE",textDark:"#0F172A",textMid:"#475569",textLight:"#94A3B8",border:"#E2E8F0",rowAlt:"#F8FAFC",white:"#FFFFFF" };
+
+  const [garageInfo, setGarageInfo] = useState({ name:"Garage",address:"",phone:"",email:"",codePostal:"",ville:"",noteLegal:"" });
+
+  function getCurrentUser() { const s=localStorage.getItem("me"); return s?JSON.parse(s):null; }
+
+  useEffect(()=>{ axios.get("/garages/userid/"+getCurrentUser()?.garageId).then(r=>setGarageInfo(r.data.data)).catch(()=>{}); },[]);// eslint-disable-line
 
   const calculateLineTotal = (detail) => {
     let discount = 0;
@@ -90,12 +97,52 @@ const InvoiceTemplate = ({
     observations: `${editedEvent.notes}`,
   };
 
+  const infoBlock = (title, rows) => ({
+    table:{widths:["*"],body:[
+      [{text:title,fontSize:7.5,bold:true,color:C.primary,fillColor:C.primaryLight,margin:[6,5,6,5]}],
+      [{stack:rows.map(({label,value,bold:b})=>label?{columns:[{text:label,fontSize:7.5,color:C.textLight,width:42},{text:value||"—",fontSize:7.5,bold:!!b,color:C.textDark}],margin:[0,1.5,0,1.5]}:{text:value||"—",fontSize:b?8.5:7.5,bold:!!b,color:C.textDark,margin:[0,1.5,0,1.5]}),margin:[6,7,6,7]}],
+    ]},
+    layout:{hLineWidth:(i)=>(i===0||i===2)?0.5:1.5,hLineColor:(i)=>i===1?C.primary:C.primaryMid,vLineWidth:(i,node)=>(i===0||i===node.table.widths.length)?0.5:0,vLineColor:()=>C.primaryMid},
+  });
+  const tdx  = (t,alt,e={}) => ({text:t,fontSize:8,color:C.textDark,margin:[4,4,4,4],fillColor:alt?C.rowAlt:null,...e});
+  const tdRx = (t,alt,e={}) => tdx(t,alt,{alignment:"right",...e});
+  const tdCx = (t,alt,e={}) => tdx(t,alt,{alignment:"center",...e});
+  const co = { name:garageInfo?.name||"",address:garageInfo?.address||"",phone:garageInfo?.phone||"",email:garageInfo?.email||"",cp:garageInfo?.codePostal||"",ville:garageInfo?.ville||"",noteLegal:garageInfo?.noteLegal||"" };
+  const vv = { model:Vehicle?.model||"",immat:Vehicle?.licensePlate||Vehicle?.plateNumber||"",vin:Vehicle?.vin||"",km:Vehicle?.kms||Vehicle?.mileage||"",color:Vehicle?.color||"" };
+  const cl = { name:`${Client?.firstName||""} ${Client?.name||""}`.trim(),address:`${Client?.adresse||Client?.address||""} ${Client?.postale||Client?.postalCode||""}`.trim(),phone:Client?.phone||"",email:Client?.email||"",ville:Client?.ville||Client?.city||"" };
+
   const documentDefinition = {
-    content: [
-      // Header avec numéro de facture et date
-      {
-        table: {
-          widths: ["50%", "50%"],
+    pageMargins:[28,20,28,40],defaultStyle:{font:"Roboto"},
+    content:[
+      {table:{widths:["*","auto"],body:[[
+        {stack:[{text:"FACTURE",fontSize:15,bold:true,color:C.white},{text:`N° ${invoiceData.orderNumber}  ·  ${new Date().toLocaleDateString("fr-FR")}`,fontSize:8.5,color:C.primaryMid,marginTop:3}],fillColor:C.primary,border:[false,false,false,false],margin:[14,11,0,11]},
+        {stack:[{text:co.name,bold:true,fontSize:9,color:C.white,alignment:"right"},{text:co.phone,fontSize:8,color:C.primaryMid,alignment:"right",marginTop:2}],fillColor:C.primary,border:[false,false,false,false],margin:[0,11,14,11]},
+      ]]},layout:"noBorders",marginBottom:14},
+      {columns:[
+        infoBlock("GARAGE",  [{value:co.name,bold:true},{label:"Adresse :",value:co.address},{label:"",value:`${co.cp} ${co.ville}`},{label:"Tél :",value:co.phone},{label:"Email :",value:co.email}]),
+        infoBlock("VÉHICULE",[{value:vv.model,bold:true},{label:"Immat :",value:vv.immat,bold:true},{label:"VIN :",value:vv.vin},{label:"Km :",value:vv.km?`${vv.km} km`:"—"},{label:"Couleur :",value:vv.color}]),
+        infoBlock("CLIENT",  [{value:cl.name,bold:true},{label:"Adresse :",value:cl.address},{label:"Ville :",value:cl.ville},{label:"Tél :",value:cl.phone},{label:"Email :",value:cl.email}]),
+      ],columnGap:10,marginBottom:16},
+      {table:{widths:[52,"*",44,44,28,50,50,38],body:[
+        [{text:"Code",style:"th"},{text:"Désignation / Travaux",style:"th"},{text:"P.U. HT",style:"th"},{text:"P.U. TTC",style:"th"},{text:"Qté",style:"th"},{text:"Total HT",style:"th"},{text:"Total TTC",style:"th"},{text:"Remise",style:"th"}],
+        ...invoiceData.items.map((item,i)=>[tdx(item.code||"—",i%2!==0),tdx(item.description,i%2!==0),tdRx(`${item.unitPriceHT?.toFixed(2)} €`,i%2!==0),tdRx(`${item.unitPriceTTC?.toFixed(2)} €`,i%2!==0),tdCx(`${item.quantity}`,i%2!==0),tdRx(`${(item.unitPriceHT*item.quantity).toFixed(2)} €`,i%2!==0),tdRx(`${(item.unitPriceTTC*item.quantity).toFixed(2)} €`,i%2!==0),tdCx(item.discount>0?`${item.discount}%`:item.discountValue>0?`${item.discountValue} €`:"—",i%2!==0)]),
+      ]},layout:{hLineWidth:(i)=>i===0||i===1?0:0.4,hLineColor:()=>C.border,vLineWidth:()=>0,fillColor:(r)=>r===0?C.primary:null},marginBottom:16},
+      {columns:[{text:"",width:"*"},{width:190,table:{widths:["*","auto"],body:[
+        [{text:"Total HT",fontSize:8.5,color:C.textMid,margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]},{text:`${invoiceData.totals.totalHT.toFixed(2)} €`,fontSize:8.5,bold:true,color:C.textDark,alignment:"right",margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]}],
+        [{text:"TVA 20%",fontSize:8.5,color:C.textMid,margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]},{text:`${invoiceData.totals.tva.toFixed(2)} €`,fontSize:8.5,bold:true,color:C.textDark,alignment:"right",margin:[8,5,8,5],border:[false,false,false,true],borderColor:["","","",C.border]}],
+        [{text:"TOTAL TTC",fontSize:10,bold:true,color:C.white,fillColor:C.primary,margin:[8,7,8,7],border:[false,false,false,false]},{text:`${invoiceData.totals.totalTTC.toFixed(2)} €`,fontSize:10,bold:true,color:C.white,fillColor:C.primary,alignment:"right",margin:[8,7,8,7],border:[false,false,false,false]}],
+      ]},layout:{hLineWidth:(i)=>(i===0||i===3)?0.5:0,hLineColor:()=>C.border,vLineWidth:(i)=>(i===0||i===2)?0.5:0,vLineColor:()=>C.border}}],marginBottom:16},
+      ...(invoiceData.observations?[{text:"Observations",fontSize:8.5,bold:true,color:C.primary,marginBottom:4},{text:invoiceData.observations,fontSize:8,color:C.textMid,marginBottom:14}]:[]),
+      {text:co.noteLegal,fontSize:7,color:C.textLight,italics:true,marginBottom:20},
+      {table:{widths:["44%","12%","44%"],body:[[
+        {stack:[{text:"Signature du réceptionnaire",fontSize:8,color:C.textMid,marginBottom:28},{canvas:[{type:"line",x1:0,y1:0,x2:175,y2:0,lineWidth:0.5,lineColor:C.border}]}],border:[false,false,false,false]},
+        {text:"",border:[false,false,false,false]},
+        {stack:[{text:"Signature du client",fontSize:8,color:C.textMid,alignment:"right",marginBottom:28},{canvas:[{type:"line",x1:0,y1:0,x2:175,y2:0,lineWidth:0.5,lineColor:C.border}]}],border:[false,false,false,false]},
+      ]]},layout:"noBorders"},
+    ],
+    footer:(p,pc)=>({table:{widths:["*","auto"],body:[[{text:`${co.name}  ·  ${co.address}  ·  ${co.phone}  —  MERCI DE VOTRE CONFIANCE`,fontSize:7,color:C.textLight,border:[false,true,false,false],borderColor:["",C.border,"",""],margin:[28,5,0,0]},{text:`${p} / ${pc}`,fontSize:7,color:C.textLight,alignment:"right",border:[false,true,false,false],borderColor:["",C.border,"",""],margin:[0,5,28,0]}]]},layout:"noBorders"}),
+    styles:{th:{bold:true,fontSize:8,color:C.white,margin:[4,5,4,5],alignment:"center"}},
+  /* DEPRECATED_PLACEHOLDER_START
           body: [
             [
               {
@@ -481,13 +528,7 @@ const InvoiceTemplate = ({
         padding: 10,
         height: 50,
       },
-      paragraph: {
-        fontSize: 9,
-        color: "#555",
-        marginTop: 10,
-        lineHeight: 1.3,
-      },
-    },
+  DEPRECATED_PLACEHOLDER_END */
   };
 
   function generatePdf() {
@@ -603,6 +644,8 @@ const InvoiceTemplate = ({
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
             discountValue: detail.discountValue || 0,
+            forfaitId: detail.forfaitId || null,
+            articleId: detail.articleId || null,
             documentType: "Quote",
             quoteId: eventId,
           });
@@ -616,6 +659,8 @@ const InvoiceTemplate = ({
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
             discountValue: detail.discountValue || 0,
+            forfaitId: detail.forfaitId || null,
+            articleId: detail.articleId || null,
             documentType: "Reservation",
             reservationId: eventId,
           });
@@ -629,6 +674,8 @@ const InvoiceTemplate = ({
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
             discountValue: detail.discountValue || 0,
+            forfaitId: detail.forfaitId || null,
+            articleId: detail.articleId || null,
             documentType: "Invoice",
             invoiceId: eventId,
           });

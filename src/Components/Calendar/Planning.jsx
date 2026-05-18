@@ -1169,6 +1169,8 @@ const Planning = () => {
           unitPrice: detail.unitPrice || 0,
           discountPercent: detail.discountPercent || 0,
           discountValue: detail.discountValue || 0,
+          forfaitId: detail.forfaitId || null,
+          articleId: detail.articleId || null,
           orderId: eventId,
           documentType: "Order",
         });
@@ -1213,6 +1215,8 @@ const Planning = () => {
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
             discountValue: detail.discountValue || 0,
+          forfaitId: detail.forfaitId || null,
+          articleId: detail.articleId || null,
             documentType: "Quote",
             quoteId: eventId,
           });
@@ -1227,6 +1231,8 @@ const Planning = () => {
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
             discountValue: detail.discountValue || 0,
+          forfaitId: detail.forfaitId || null,
+          articleId: detail.articleId || null,
             documentType: "Reservation",
             reservationId: eventId,
           });
@@ -1241,6 +1247,8 @@ const Planning = () => {
             unitPrice: detail.unitPrice || 0,
             discountPercent: detail.discountPercent || 0,
             discountValue: detail.discountValue || 0,
+          forfaitId: detail.forfaitId || null,
+          articleId: detail.articleId || null,
             documentType: "Invoice",
             invoiceId: eventId,
           });
