@@ -26,8 +26,9 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BASE_URL_API } from "../../config";
+import { useAxios } from "../../utils/hook/useAxios";
 
 const API_BASE = `${BASE_URL_API}/v1`;
 
@@ -180,15 +181,99 @@ function AddRefRow({ placeholder, onAdd, loading }) {
   );
 }
 
+/* ── helpers stock ───────────────────────────────────────────────────── */
+
+function getCurrentUser() {
+  const s = localStorage.getItem("me");
+  return s ? JSON.parse(s) : null;
+}
+
+/** Formate la référence du document source */
+function fmtDoc(type, id) {
+  if (!type || !id) return "—";
+  const prefix = {
+    Invoice:      "f",
+    GoodsReceipt: "bl",
+    Order:        "or",
+    Inventory:    "inv",
+  }[type] || type.toLowerCase();
+  return `${prefix}-${id}`;
+}
+
+/** Cartes résumé stock (reproduit le style de l'image) */
+function StockCard({ label, value, highlight }) {
+  return (
+    <Box
+      sx={{
+        display: "flex", alignItems: "center", gap: 1,
+        border: "1px solid", borderColor: "divider",
+        borderRadius: 1, px: 1.5, py: 0.75, minWidth: 180,
+      }}
+    >
+      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", flex: 1 }}>
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          minWidth: 42, textAlign: "center", px: 1, py: 0.25,
+          borderRadius: 0.5, fontWeight: 700, fontSize: 13,
+          bgcolor: highlight ? "success.main" : "action.hover",
+          color:   highlight ? "#fff" : "text.primary",
+        }}
+      >
+        {value ?? "—"}
+      </Box>
+    </Box>
+  );
+}
+
 /* ── main component ──────────────────────────────────────────────────── */
 
 export default function ArticleDetailDialog({ open, onClose, article, onBack, showBack }) {
-  const [oems, setOems] = useState(null);          // null = use article prop
-  const [refs, setRefs] = useState([]);             // refs équivalentes (local state)
+  const axios = useAxios();
+
+  const [oems, setOems] = useState(null);
+  const [refs, setRefs] = useState([]);
   const [addingOem, setAddingOem] = useState(false);
   const [addingRef, setAddingRef] = useState(false);
   const [oemError, setOemError] = useState(null);
   const [refError, setRefError] = useState(null);
+
+  /* ── Stock & historique ── */
+  const [stockData,   setStockData]   = useState(null);
+  const [mouvements,  setMouvements]  = useState([]);
+  const [stockResas,  setStockResas]  = useState([]);
+  const [stockORs,    setStockORs]    = useState([]);
+  const [stockLoading,setStockLoading]= useState(false);
+  const [stockError,  setStockError]  = useState(null);
+
+  const fetchStock = async () => {
+    if (!article?.id) return;
+    const gId = getCurrentUser()?.garageId;
+    if (!gId) return;
+    setStockLoading(true);
+    setStockError(null);
+    try {
+      // Un seul appel qui retourne tout : stock + mouvements + StockOR + StockResa
+      const res = await axios.get(
+        `/stock-garage/${gId}/article/${article.id}/historique-complet`
+      );
+      setStockData(res.data?.stock  || null);
+      setMouvements(res.data?.mouvements || []);
+      setStockResas(res.data?.stockResas || []);
+      setStockORs(res.data?.stockORs     || []);
+    } catch (err) {
+      setStockError(err?.response?.data?.message || "Impossible de charger le stock");
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && article?.id) fetchStock();
+    else { setStockData(null); setMouvements([]); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, article?.id]);
 
   if (!article) return null;
 
@@ -298,27 +383,209 @@ export default function ArticleDetailDialog({ open, onClose, article, onBack, sh
         <Panel
           title="Stock / historique"
           icon={
-            <IconButton size="small" sx={{ p: 0.25 }}>
-              <RefreshIcon sx={{ fontSize: 15, color: "primary.main" }} />
+            <IconButton size="small" sx={{ p: 0.25 }} onClick={fetchStock} disabled={stockLoading}>
+              <RefreshIcon sx={{ fontSize: 15, color: "primary.main", animation: stockLoading ? "spin 1s linear infinite" : "none" }} />
             </IconButton>
           }
         >
-          <Box display="flex" gap={4} flexWrap="wrap" mb={1}>
-            <Box>
-              <Row label="Stock disponible" value="—" />
-              <Row label="Stock OR" value="—" />
-              <Row label="Stock Total" value="—" />
+          {/* ── Erreur ── */}
+          {stockError && (
+            <Box sx={{ mb: 1.5, px: 1, py: 0.75, bgcolor: "error.light", borderRadius: 1 }}>
+              <Typography variant="caption" color="error.dark">{stockError}</Typography>
             </Box>
-            <Box>
-              <Row label="Stock Résa" value="—" />
-              <Row label="Stock Facturé" value="—" />
-            </Box>
+          )}
+
+          {/* ── Cartes résumé ── */}
+          <Box display="flex" gap={1.5} flexWrap="wrap" mb={2}>
+            <StockCard
+              label="Stock disponible"
+              value={stockLoading ? "…" : (stockData?.disponible ?? 0)}
+              highlight={!stockLoading && (stockData?.disponible ?? 0) > 0}
+            />
+            <StockCard label="Stock Total (physique)" value={stockLoading ? "…" : (stockData?.physique ?? 0)} />
+            <StockCard label="Stock OR"   value={stockLoading ? "…" : (stockData?.blockedOR ?? 0)} />
+            <StockCard label="Stock Résa" value={stockLoading ? "…" : (stockData?.blockedRS ?? 0)} />
+            <StockCard
+              label="Stock Facturé"
+              value={stockLoading ? "…" : mouvements
+                .filter(m => m.type === "SORTIE" && m.sourceDocumentType === "Invoice")
+                .reduce((s, m) => s + (m.quantite || 0), 0)}
+            />
           </Box>
-          <HistoryTable columns={["Stock", "Achat", "Vente", "Date", "Auteur", "Document"]} />
+
+          {/* ── Tableau historique ── */}
+          {stockLoading ? (
+            <Box display="flex" justifyContent="center" py={2}>
+              <CircularProgress size={20} />
+            </Box>
+          ) : (() => {
+            // ── Fusion de tous les événements en une timeline ──────────────
+            const ENTREE_TYPES = ["ENTREE","RETOUR_CLIENT","TRANSFERT_ENTREE","INITIAL"];
+
+            const allEvents = [
+              ...mouvements.map(m => ({
+                _key:   `m-${m.id}`,
+                _kind:  "mouvement",
+                _date:  new Date(m.createdAt),
+                _data:  m,
+              })),
+              ...stockORs.map(o => ({
+                _key:   `or-${o.id}`,
+                _kind:  "or",
+                _date:  new Date(o.createdAt),
+                _data:  o,
+              })),
+              ...stockResas.map(r => ({
+                _key:   `resa-${r.id}`,
+                _kind:  "resa",
+                _date:  new Date(r.createdAt),
+                _data:  r,
+              })),
+            ].sort((a, b) => a._date - b._date); // Ancien → récent
+
+            // Propagation du stock physique sur chaque ligne
+            let runningStock = 0;
+            const enriched = allEvents.map(ev => {
+              if (ev._kind === "mouvement") {
+                runningStock = ev._data.quantiteApres;
+              }
+              // OR et Résa ne changent pas le physique → on répercute le dernier connu
+              return { ...ev, _stockPhysique: runningStock };
+            });
+
+            // Affichage du plus récent en haut
+            const rows = [...enriched].reverse();
+
+            if (rows.length === 0) {
+              return (
+                <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, p: 2, textAlign: "center" }}>
+                  <Typography variant="caption" color="text.disabled">Aucun mouvement enregistré</Typography>
+                </Box>
+              );
+            }
+
+            return (
+              <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "background.default" }}>
+                      {["Stock physique", "Achat", "Vente", "Résa / OR", "Date", "Auteur", "Document"].map(col => (
+                        <TableCell key={col} sx={{ fontWeight: 600, fontSize: 11, color: "text.secondary", py: 0.75 }}>
+                          {col}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.map(ev => {
+                      const stock = ev._stockPhysique;
+
+                      if (ev._kind === "mouvement") {
+                        const m        = ev._data;
+                        const isEntree = ENTREE_TYPES.includes(m.type);
+                        const isSortie = !isEntree && m.type !== "AJUSTEMENT";
+                        const auteur   = m.User
+                          ? `${m.User.firstName || ""} ${m.User.name || ""}`.trim() || "—"
+                          : "—";
+                        return (
+                          <TableRow key={ev._key} hover>
+                            {/* Stock physique après ce mouvement */}
+                            <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>{stock}</TableCell>
+                            {/* Achat (entrée) */}
+                            <TableCell sx={{ fontSize: 12, color: "success.main", fontWeight: isEntree ? 700 : 400 }}>
+                              {isEntree ? m.quantite : ""}
+                            </TableCell>
+                            {/* Vente (sortie) */}
+                            <TableCell sx={{ fontSize: 12, color: "error.main", fontWeight: isSortie ? 700 : 400 }}>
+                              {isSortie ? m.quantite : ""}
+                            </TableCell>
+                            <TableCell />
+                            <TableCell sx={{ fontSize: 11, whiteSpace: "nowrap" }}>
+                              {ev._date.toLocaleDateString("fr-FR")}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: 11 }}>{auteur}</TableCell>
+                            <TableCell sx={{ fontSize: 11, fontFamily: "monospace" }}>
+                              {fmtDoc(m.sourceDocumentType, m.sourceDocumentId)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (ev._kind === "or") {
+                        const o = ev._data;
+                        return (
+                          <TableRow key={ev._key} hover sx={{ bgcolor: "rgba(237,108,2,0.05)" }}>
+                            {/* Stock physique inchangé — on l'affiche quand même */}
+                            <TableCell sx={{ fontWeight: 700, fontSize: 12, color: "text.secondary" }}>{stock}</TableCell>
+                            <TableCell />
+                            <TableCell />
+                            <TableCell sx={{ fontSize: 12, color: "warning.main", fontWeight: 700 }}>
+                              OR {o.quantite}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: 11 }}>{ev._date.toLocaleDateString("fr-FR")}</TableCell>
+                            <TableCell sx={{ fontSize: 11 }}>—</TableCell>
+                            <TableCell sx={{ fontSize: 11, fontFamily: "monospace" }}>
+                              {fmtDoc("Order", o.orderId)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      if (ev._kind === "resa") {
+                        const r = ev._data;
+                        return (
+                          <TableRow key={ev._key} hover sx={{ bgcolor: "rgba(25,118,210,0.05)" }}>
+                            {/* Stock physique inchangé */}
+                            <TableCell sx={{ fontWeight: 700, fontSize: 12, color: "text.secondary" }}>{stock}</TableCell>
+                            <TableCell />
+                            <TableCell />
+                            <TableCell sx={{ fontSize: 12, color: "info.main", fontWeight: 700 }}>
+                              Résa {r.quantite}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: 11 }}>{ev._date.toLocaleDateString("fr-FR")}</TableCell>
+                            <TableCell sx={{ fontSize: 11 }}>—</TableCell>
+                            <TableCell sx={{ fontSize: 11, fontFamily: "monospace" }}>
+                              {fmtDoc("Reservation", r.reservationId)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      return null;
+                    })}
+                  </TableBody>
+                </Table>
+              </Box>
+            );
+          })()}
         </Panel>
 
         {/* 3 · Prix / historique */}
         <Panel title="Prix / historique">
+          {(() => {
+            const prixHT    = parseFloat(pricing.prixHT)    || 0;
+            const prixAchat = parseFloat(pricing.prixAchat) || 0;
+            const margeBrute = prixHT - prixAchat;
+            const tauxMarge  = prixHT > 0 ? (margeBrute / prixHT) * 100 : 0;
+
+            // Calcul du CUMP (PAMP) depuis l'historique des mouvements
+            // CUMP = (qté_avant × CUMP_avant + qté_entrée × prix_unitaire) / qté_après
+            const ENTREE_TYPES = ["ENTREE", "RETOUR_CLIENT", "TRANSFERT_ENTREE", "INITIAL"];
+            const mouvementsTri = [...mouvements]
+              .filter(m => m.prixUnitaire != null || ENTREE_TYPES.includes(m.type))
+              .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+            let cump = 0;
+            for (const m of mouvementsTri) {
+              if (ENTREE_TYPES.includes(m.type) && m.prixUnitaire != null) {
+                const valeurAvant   = (m.quantiteAvant || 0) * cump;
+                const valeurEntree  = (m.quantite      || 0) * parseFloat(m.prixUnitaire);
+                const qteTotale     = (m.quantiteApres || 0);
+                cump = qteTotale > 0 ? (valeurAvant + valeurEntree) / qteTotale : cump;
+              }
+            }
+
+            return (
           <Box display="flex" gap={4} flexWrap="wrap" mb={1}>
             <Box>
               <Row label="PRIX TTC" value={fmt(pricing.prixTTC, " €")} highlight />
@@ -326,12 +593,18 @@ export default function ArticleDetailDialog({ open, onClose, article, onBack, sh
               <Row label="Frais port HT" value={fmt(pricing.fraisPort, " €")} />
             </Box>
             <Box>
-              <Row label="PAMP" value="—" />
+              <Row label="PAMP (CUMP)" value={cump > 0 ? fmt(cump, " €") : "—"} highlight={cump > 0} />
               <Row label="Dernier PA" value={fmt(pricing.prixAchat, " €")} />
               <Row label="Marge €" value={fmt(pricing.marge, " €")} />
               <Row label="Marge %" value={fmt(pricing.margePct, " %")} />
             </Box>
+            <Box>
+              <Row label="Marge brute" value={fmt(margeBrute, " €")} highlight={margeBrute > 0} />
+              <Row label="Taux marge brute" value={fmt(tauxMarge, " %")} highlight={tauxMarge > 0} />
+            </Box>
           </Box>
+            );
+          })()}
           <HistoryTable columns={["Date", "Prix TTC", "Prix HT", "Prix achat", "Marge €", "Marge %"]} />
         </Panel>
 
