@@ -6,6 +6,11 @@ import Stock from "../../Pages/Stock";
 import { TabMarques } from "../../Pages/AdminStock";
 import EtiquetageModal from "../Store/Etiquetage/EtiquetageModal";
 import PromoModal       from "../Store/Promo/PromoModal";
+import HistoriqueCommandesFssModal from "../Store/HistoriqueCommandesFss";
+import ConsultationFssModal        from "../Store/ConsultationFss";
+import AdressageModal              from "../Store/AdressageModal";
+import ReferencementFssModal       from "../Store/ReferencementFssModal";
+import FournisseursModal           from "../Store/FournisseursModal";
 
 export default function ModalManager({ open, onClose, modalType }) {
   const { SearchDialogs } = useArticleSearch(
@@ -124,6 +129,26 @@ export default function ModalManager({ open, onClose, modalType }) {
 
   if (modalType === "promoPrix") {
     return <PromoModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "historiqueCommandesFss") {
+    return <HistoriqueCommandesFssModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "consultationFss") {
+    return <ConsultationFssModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "adressage") {
+    return <AdressageModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "referencementFss") {
+    return <ReferencementFssModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "fournisseursRef") {
+    return <FournisseursModal open={open} onClose={onClose} />;
   }
 
   if (modalType === "marquesRef") {
