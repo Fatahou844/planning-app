@@ -1,6 +1,8 @@
 import CheckCircleIcon  from "@mui/icons-material/CheckCircle";
 import CloseIcon        from "@mui/icons-material/Close";
+import LayersIcon       from "@mui/icons-material/Layers";
 import LocationOnIcon   from "@mui/icons-material/LocationOn";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import SearchIcon       from "@mui/icons-material/Search";
 import WarehouseIcon    from "@mui/icons-material/Warehouse";
@@ -21,6 +23,8 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -29,14 +33,22 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useAxios } from "../../../utils/hook/useAxios";
+import { useUser }  from "../../../utils/hook/UserContext";
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
+function getCurrentUser() {
+  const s = localStorage.getItem("me");
+  return s ? JSON.parse(s) : null;
+}
+
 function adresseLabel(article) {
+  const emp = article.StockEmplacement || article.Emplacement;
+  if (!emp) return null;
   const parts = [
-    article.Emplacement?.nom,
-    article.rangee       && `All. ${article.rangee}`,
-    article.etagere      && `Ét. ${article.etagere}`,
-    article.casePosition && `Case ${article.casePosition}`,
+    emp.nom,
+    emp.rangee       && `All. ${emp.rangee}`,
+    emp.etagere      && `Ét. ${emp.etagere}`,
+    emp.casePosition && `Case ${emp.casePosition}`,
   ].filter(Boolean);
   return parts.length ? parts.join(" · ") : null;
 }
@@ -70,59 +82,52 @@ function AdresseActuelle({ article }) {
   );
 }
 
+/* ── label affiché dans l'autocomplete emplacement ──────────────────── */
+function emplacementLabel(e) {
+  if (!e) return "";
+  const parts = [
+    e.nom,
+    e.rangee       && `All. ${e.rangee}`,
+    e.etagere      && `Ét. ${e.etagere}`,
+    e.casePosition && `Case ${e.casePosition}`,
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
 /* ── panneau de saisie adressage ─────────────────────────────────────── */
-function FormAdressage({ article, emplacements, onSaved }) {
+function FormAdressage({ article, garageId, emplacements, onSaved }) {
   const axios = useAxios();
 
-  const [form, setForm] = useState({
-    emplacementId:         article.emplacementId          || null,
-    rangee:                article.rangee                 || "",
-    etagere:               article.etagere                || "",
-    casePosition:          article.casePosition           || "",
-    commentaireAdressage:  article.commentaireAdressage   || "",
-  });
+  // L'emplacement courant vient de StockGarage (stocké dans article._stockEmplacementId)
+  const [emplacementId, setEmplacementId] = useState(article._stockEmplacementId || null);
+  const [commentaire,   setCommentaire]   = useState(article._stockCommentaire   || "");
   const [saving,  setSaving]  = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState(null);
 
-  /* reset si l'article change */
   useEffect(() => {
-    setForm({
-      emplacementId:        article.emplacementId         || null,
-      rangee:               article.rangee                || "",
-      etagere:              article.etagere               || "",
-      casePosition:         article.casePosition          || "",
-      commentaireAdressage: article.commentaireAdressage  || "",
-    });
+    setEmplacementId(article._stockEmplacementId || null);
+    setCommentaire(article._stockCommentaire     || "");
     setSuccess(false); setError(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [article.id]);
 
-  const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); setSuccess(false); };
-
-  const zoneValue = emplacements.find(e => e.id === form.emplacementId) || null;
+  const zoneValue = emplacements.find(e => e.id === emplacementId) || null;
 
   const handleSave = async () => {
-    if (!form.emplacementId) { setError("La zone est obligatoire"); return; }
+    if (!emplacementId) { setError("L'emplacement est obligatoire"); return; }
     setSaving(true); setError(null); setSuccess(false);
     try {
-      await axios.put(`/stock/articles/${article.id}`, {
-        article: {
-          emplacementId:        form.emplacementId,
-          rangee:               form.rangee               || null,
-          etagere:              form.etagere              || null,
-          casePosition:         form.casePosition         || null,
-          commentaireAdressage: form.commentaireAdressage || null,
-        },
-      });
+      await axios.put(
+        `/stock-garage/${garageId}/article/${article.id}/emplacement`,
+        { emplacementId, commentaireAdressage: commentaire || null }
+      );
       setSuccess(true);
       onSaved({
         ...article,
-        emplacementId:        form.emplacementId,
-        Emplacement:          emplacements.find(e => e.id === form.emplacementId) || article.Emplacement,
-        rangee:               form.rangee               || null,
-        etagere:              form.etagere              || null,
-        casePosition:         form.casePosition         || null,
-        commentaireAdressage: form.commentaireAdressage || null,
+        _stockEmplacementId: emplacementId,
+        _stockCommentaire:   commentaire || null,
+        StockEmplacement:    emplacements.find(e => e.id === emplacementId) || null,
       });
     } catch (err) {
       setError(err?.response?.data?.message || "Erreur lors de la sauvegarde");
@@ -150,48 +155,36 @@ function FormAdressage({ article, emplacements, onSaved }) {
         <Typography variant="caption" color="text.secondary">Nouvel emplacement</Typography>
       </Divider>
 
-      {/* Zone */}
-      <FieldRow label="Zone (emplacement)" required>
+      {/* Emplacement */}
+      <FieldRow label="Emplacement" required>
         <Autocomplete
           size="small"
           options={emplacements}
-          getOptionLabel={e => e.nom || ""}
+          getOptionLabel={emplacementLabel}
           value={zoneValue}
-          onChange={(_, v) => set("emplacementId", v?.id || null)}
-          renderInput={params => <TextField {...params} placeholder="Sélectionner une zone…" />}
-        />
-      </FieldRow>
-
-      {/* Rangée / Allée */}
-      <FieldRow label="Rangée / Allée">
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Ex : B, 3, C2…"
-          value={form.rangee}
-          onChange={e => set("rangee", e.target.value)}
-        />
-      </FieldRow>
-
-      {/* Étagère */}
-      <FieldRow label="Étagère">
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Ex : 2, H, supérieure…"
-          value={form.etagere}
-          onChange={e => set("etagere", e.target.value)}
-        />
-      </FieldRow>
-
-      {/* Case / Position */}
-      <FieldRow label="Case / Position">
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Ex : 7, A3, droite…"
-          value={form.casePosition}
-          onChange={e => set("casePosition", e.target.value)}
+          onChange={(_, v) => { setEmplacementId(v?.id || null); setSuccess(false); }}
+          renderOption={(props, option) => (
+            <li {...props} key={option.id}>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>{option.nom}</Typography>
+                {(option.rangee || option.etagere || option.casePosition) && (
+                  <Typography variant="caption" color="text.secondary">
+                    {[
+                      option.rangee       && `All. ${option.rangee}`,
+                      option.etagere      && `Ét. ${option.etagere}`,
+                      option.casePosition && `Case ${option.casePosition}`,
+                    ].filter(Boolean).join("  ·  ")}
+                  </Typography>
+                )}
+                {option.nbArticles != null && (
+                  <Typography variant="caption" color="primary.main" display="block">
+                    {option.nbArticles} article{option.nbArticles > 1 ? "s" : ""}
+                  </Typography>
+                )}
+              </Box>
+            </li>
+          )}
+          renderInput={params => <TextField {...params} placeholder="Choisir un emplacement…" />}
         />
       </FieldRow>
 
@@ -203,8 +196,8 @@ function FormAdressage({ article, emplacements, onSaved }) {
           multiline
           minRows={2}
           placeholder="Indication complémentaire…"
-          value={form.commentaireAdressage}
-          onChange={e => set("commentaireAdressage", e.target.value)}
+          value={commentaire}
+          onChange={e => { setCommentaire(e.target.value); setSuccess(false); }}
         />
       </FieldRow>
 
@@ -220,7 +213,7 @@ function FormAdressage({ article, emplacements, onSaved }) {
         variant="contained"
         fullWidth
         onClick={handleSave}
-        disabled={saving || !form.emplacementId}
+        disabled={saving || !emplacementId}
         startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <LocationOnIcon />}
         sx={{ textTransform:"none", fontWeight:600 }}
       >
@@ -230,11 +223,389 @@ function FormAdressage({ article, emplacements, onSaved }) {
   );
 }
 
+/* ── champ autocomplete avec label au-dessus (version légère) ────────── */
+function AutoField({ label, options, value, onChange, getLabel, placeholder }) {
+  return (
+    <Box>
+      <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.5}>
+        {label}
+      </Typography>
+      <Autocomplete
+        size="small"
+        options={options}
+        getOptionLabel={getLabel}
+        value={value}
+        onChange={(_, v) => onChange(v)}
+        renderInput={params => <TextField {...params} placeholder={placeholder || "Tous"} />}
+      />
+    </Box>
+  );
+}
+
+/* ── numéro d'étape ──────────────────────────────────────────────────── */
+function StepBadge({ n, done, active }) {
+  const theme = useTheme();
+  const bg = done ? theme.palette.success.main
+           : active ? theme.palette.primary.main
+           : theme.palette.action.disabledBackground;
+  const color = (done || active) ? "#fff" : theme.palette.text.disabled;
+  return (
+    <Box sx={{
+      width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+      bgcolor: bg, color, display: "flex", alignItems: "center",
+      justifyContent: "center", fontWeight: 700, fontSize: 12,
+    }}>
+      {done ? "✓" : n}
+    </Box>
+  );
+}
+
+/* ── adressage en masse ──────────────────────────────────────────────── */
+function AdressageEnMasse({ emplacements, garageId }) {
+  const axios = useAxios();
+  const theme = useTheme();
+
+  /* référentiels */
+  const [familles, setFamilles] = useState([]);
+  const [groupes,  setGroupes]  = useState([]);
+  const [marques,  setMarques]  = useState([]);
+
+  useEffect(() => {
+    axios.get("/stock/familles?limit=500").then(r => setFamilles(Array.isArray(r?.data) ? r.data : r?.data?.data || [])).catch(() => {});
+    axios.get("/stock/groupes?limit=500").then(r  => setGroupes(Array.isArray(r?.data)  ? r.data : r?.data?.data || [])).catch(() => {});
+    axios.get("/stock/marques?limit=500").then(r   => setMarques(Array.isArray(r?.data)  ? r.data : r?.data?.data || [])).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* critères */
+  const [famille,           setFamille]          = useState(null);
+  const [groupe,            setGroupe]            = useState(null);
+  const [marque,            setMarque]            = useState(null);
+  const [emplacementActuel, setEmplacementActuel] = useState(null);
+  /* cible */
+  const [emplacementCible,  setEmplacementCible]  = useState(null);
+
+  /* états */
+  const [preview,    setPreview]    = useState(null);
+  const [previewing, setPreviewing] = useState(false);
+  const [applying,   setApplying]   = useState(false);
+  const [result,     setResult]     = useState(null);
+  const [error,      setError]      = useState(null);
+
+  const hasCritere = !!(famille || groupe || marque || emplacementActuel);
+  const hasCible   = !!emplacementCible;
+  const canPreview = hasCritere && hasCible && !result;
+
+  const invalidate = () => { setPreview(null); setResult(null); setError(null); };
+
+  /* Prévisualisation : GET search avec les mêmes filtres → liste réelle */
+  const handlePreview = async () => {
+    setPreview(null); setResult(null); setError(null); setPreviewing(true);
+    try {
+      const params = new URLSearchParams({ limit: 200 });
+      if (famille?.id)          params.set("familleId",    famille.id);
+      if (groupe?.id)           params.set("groupeId",     groupe.id);
+      if (marque?.id)           params.set("marqueId",     marque.id);
+      if (emplacementActuel?.id)params.set("emplacementId",emplacementActuel.id);
+      const res = await axios.get(`/stock/articles/search?${params}`);
+      const articles = Array.isArray(res?.data) ? res.data : res?.data?.articles || [];
+      setPreview(articles);
+    } catch (err) { setError(err?.response?.data?.message || "Erreur aperçu"); }
+    finally { setPreviewing(false); }
+  };
+
+  /* Application : PUT bulk avec les critères */
+  const handleApply = async () => {
+    setResult(null); setError(null); setApplying(true);
+    try {
+      const res = await axios.put("/stock/articles/bulk-adressage", {
+        garageId,
+        familleId:            famille?.id           || undefined,
+        groupeId:             groupe?.id            || undefined,
+        marqueId:             marque?.id            || undefined,
+        emplacementId_actuel: emplacementActuel?.id || undefined,
+        emplacementId:        emplacementCible?.id,
+      });
+      setResult(res.data); setPreview(null);
+    } catch (err) { setError(err?.response?.data?.message || "Erreur application"); }
+    finally { setApplying(false); }
+  };
+
+  const reset = () => {
+    setFamille(null); setGroupe(null); setMarque(null); setEmplacementActuel(null);
+    setEmplacementCible(null); setPreview(null); setResult(null); setError(null);
+  };
+
+  /* ── render ── */
+  return (
+    <Box sx={{ display: "flex", height: "100%", overflow: "hidden" }}>
+
+      {/* ──────── Colonne gauche : QUOI ──────── */}
+      <Box
+        sx={{
+          flex: 1, overflow: "auto", p: 2.5,
+          borderRight: "1px solid", borderColor: "divider",
+        }}
+      >
+        {/* Étape 1 header */}
+        <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+          <StepBadge n={1} done={hasCritere} active={!hasCritere} />
+          <Box>
+            <Typography variant="body2" fontWeight={700}>
+              Quels articles ?
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Sélectionnez un ou plusieurs critères (combinés en ET)
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box display="flex" flexDirection="column" gap={1.5}>
+          <AutoField
+            label="Famille d'articles"
+            options={familles}
+            value={famille}
+            onChange={v => { setFamille(v); invalidate(); }}
+            getLabel={o => o.nom || ""}
+            placeholder="Toutes les familles"
+          />
+          <AutoField
+            label="Groupe d'articles"
+            options={groupes}
+            value={groupe}
+            onChange={v => { setGroupe(v); invalidate(); }}
+            getLabel={o => o.nom || ""}
+            placeholder="Tous les groupes"
+          />
+          <AutoField
+            label="Marque"
+            options={marques}
+            value={marque}
+            onChange={v => { setMarque(v); invalidate(); }}
+            getLabel={o => o.nom || ""}
+            placeholder="Toutes les marques"
+          />
+          <AutoField
+            label="Emplacement actuel (pour réassigner)"
+            options={emplacements}
+            value={emplacementActuel}
+            onChange={v => { setEmplacementActuel(v); invalidate(); }}
+            getLabel={emplacementLabel}
+            placeholder="Peu importe"
+          />
+        </Box>
+
+        {!hasCritere && (
+          <Typography variant="caption" color="text.disabled" display="block" mt={1.5}>
+            Choisissez au moins un filtre ci-dessus.
+          </Typography>
+        )}
+        {hasCritere && !preview && (
+          <Box sx={{ mt: 1.5, px: 1.5, py: 1, bgcolor: alpha(theme.palette.success.main, 0.08), borderRadius: 1 }}>
+            <Typography variant="caption" color="success.dark" fontWeight={600}>
+              Critères :{" "}
+              {[
+                famille          && `Famille "${famille.nom}"`,
+                groupe           && `Groupe "${groupe.nom}"`,
+                marque           && `Marque "${marque.nom}"`,
+                emplacementActuel&& `Actuellement dans "${emplacementActuel.nom}"`,
+              ].filter(Boolean).join(", ")}
+            </Typography>
+          </Box>
+        )}
+
+        {/* ── Liste des articles prévisualisés ── */}
+        {preview && !result && (
+          <Box sx={{ mt: 1.5 }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75}>
+              <Typography variant="caption" fontWeight={700} color={preview.length > 0 ? "warning.dark" : "text.disabled"}>
+                {preview.length} article{preview.length > 1 ? "s" : ""} concerné{preview.length > 1 ? "s" : ""}
+              </Typography>
+              <Button size="small" variant="text" onClick={invalidate} sx={{ fontSize: 11, textTransform: "none", p: 0 }}>
+                Modifier les critères
+              </Button>
+            </Box>
+            {preview.length > 0 && (
+              <Box sx={{ border: "1px solid", borderColor: "warning.main", borderRadius: 1, overflow: "hidden", maxHeight: 300, overflowY: "auto" }}>
+                <Box sx={{ bgcolor: alpha(theme.palette.warning.main, 0.06), px: 1.5, py: 0.5, borderBottom: "1px solid", borderColor: "warning.light" }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Ces articles vont être déplacés vers <strong>{emplacementLabel(emplacementCible)}</strong>
+                  </Typography>
+                </Box>
+                {preview.map((a, i) => (
+                  <Box
+                    key={a.id}
+                    sx={{
+                      px: 1.5, py: 0.9,
+                      borderBottom: i < preview.length - 1 ? "1px solid" : "none",
+                      borderColor: "divider",
+                      display: "flex", alignItems: "center", gap: 1,
+                    }}
+                  >
+                    <Box flex={1} minWidth={0}>
+                      <Typography variant="body2" fontWeight={600} noWrap>{a.libelle1}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                        {a.refExt || a.codeBarre || `#${a.id}`}
+                        {a.Emplacement?.nom && (
+                          <> · <span style={{ color: "#888" }}>actuellement : {a.Emplacement.nom}</span></>
+                        )}
+                      </Typography>
+                    </Box>
+                    {a.Marque?.nom && (
+                      <Chip label={a.Marque.nom} size="small" variant="outlined" sx={{ fontSize: 10, flexShrink: 0 }} />
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+
+      {/* ──────── Colonne droite : OÙ + ACTIONS ──────── */}
+      <Box
+        sx={{
+          width: 300, flexShrink: 0, overflow: "auto", p: 2.5,
+          display: "flex", flexDirection: "column", gap: 2,
+        }}
+      >
+        {/* Étape 2 */}
+        <Box>
+          <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+            <StepBadge n={2} done={hasCible} active={hasCritere && !hasCible} />
+            <Box>
+              <Typography variant="body2" fontWeight={700}>Vers quel emplacement ?</Typography>
+              <Typography variant="caption" color="text.secondary">La destination</Typography>
+            </Box>
+          </Box>
+
+          <Autocomplete
+            size="small"
+            options={emplacements}
+            getOptionLabel={emplacementLabel}
+            value={emplacementCible}
+            onChange={(_, v) => { setEmplacementCible(v); invalidate(); }}
+            renderOption={(props, option) => (
+              <li {...props} key={option.id}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>{option.nom}</Typography>
+                  {(option.rangee || option.etagere || option.casePosition) && (
+                    <Typography variant="caption" color="text.secondary">
+                      {[
+                        option.rangee       && `All. ${option.rangee}`,
+                        option.etagere      && `Ét. ${option.etagere}`,
+                        option.casePosition && `Case ${option.casePosition}`,
+                      ].filter(Boolean).join("  ·  ")}
+                    </Typography>
+                  )}
+                  {option.nbArticles != null && (
+                    <Typography variant="caption" color="text.disabled" display="block">
+                      {option.nbArticles} article{option.nbArticles > 1 ? "s" : ""} actuellement
+                    </Typography>
+                  )}
+                </Box>
+              </li>
+            )}
+            renderInput={params => (
+              <TextField
+                {...params}
+                placeholder="Choisir la destination…"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderColor: hasCritere && !hasCible ? theme.palette.warning.main : undefined,
+                  },
+                }}
+              />
+            )}
+          />
+
+          {hasCritere && !hasCible && (
+            <Typography variant="caption" color="warning.main" fontWeight={600} display="block" mt={0.75}>
+              ← Choisissez la destination pour continuer
+            </Typography>
+          )}
+        </Box>
+
+        <Divider />
+
+        {/* Étape 3 */}
+        <Box>
+          <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+            <StepBadge n={3} done={!!result} active={hasCritere && hasCible} />
+            <Box>
+              <Typography variant="body2" fontWeight={700}>Confirmer</Typography>
+              <Typography variant="caption" color="text.secondary">Aperçu puis application</Typography>
+            </Box>
+          </Box>
+
+          {/* Bouton Prévisualiser */}
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={handlePreview}
+            disabled={!canPreview || previewing}
+            startIcon={previewing ? <CircularProgress size={14} /> : <PersonSearchIcon />}
+            sx={{ textTransform: "none", mb: 1 }}
+          >
+            {previewing ? "Chargement…" : "Voir les articles concernés"}
+          </Button>
+
+          {/* Bouton Appliquer — visible dès qu'on a une liste */}
+          {preview && preview.length > 0 && !result && (
+            <Button
+              variant="contained"
+              color="warning"
+              fullWidth
+              onClick={handleApply}
+              disabled={applying}
+              startIcon={applying ? <CircularProgress size={14} color="inherit" /> : <LocationOnIcon />}
+              sx={{ textTransform: "none", fontWeight: 700 }}
+            >
+              {applying
+                ? "Application en cours…"
+                : `Déplacer ces ${preview.length} article${preview.length > 1 ? "s" : ""}`}
+            </Button>
+          )}
+
+          {preview && preview.length === 0 && !result && (
+            <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={0.5}>
+              Aucun article ne correspond aux critères.
+            </Typography>
+          )}
+
+          {result && (
+            <Alert
+              severity="success"
+              icon={<CheckCircleIcon />}
+              action={<Button size="small" color="inherit" onClick={reset}>Nouveau</Button>}
+            >
+              <strong>{result.updated}</strong> article{result.updated > 1 ? "s" : ""} déplacé{result.updated > 1 ? "s" : ""}.
+            </Alert>
+          )}
+
+          {error && (
+            <Alert severity="error" onClose={() => setError(null)} sx={{ mt: 1 }}>{error}</Alert>
+          )}
+        </Box>
+
+        <Box flex={1} />
+        <Button size="small" variant="text" color="inherit" onClick={reset} sx={{ textTransform: "none", opacity: 0.5 }}>
+          Tout réinitialiser
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
 /* ── composant principal ──────────────────────────────────────────────── */
 export default function AdressageModal({ open, onClose }) {
   const axios = useAxios();
   const theme = useTheme();
   const searchRef = useRef(null);
+  const [mode, setMode] = useState(0); // 0 = article par article, 1 = en masse
+
+  const { user }       = useUser();
+  const garageId       = user?.garageId;
 
   const [search,       setSearch]       = useState("");
   const [results,      setResults]      = useState([]);
@@ -245,10 +616,10 @@ export default function AdressageModal({ open, onClose }) {
   /* Chargement des zones */
   useEffect(() => {
     if (!open) return;
-    axios.get("/stock/emplacements").then(r => {
+    axios.get(`/stock/emplacements${garageId ? `?garageId=${garageId}` : ""}`).then(r => {
       setEmplacements(Array.isArray(r?.data) ? r.data : r?.data?.data || []);
     }).catch(() => {});
-    setSearch(""); setResults([]); setSelected(null);
+    setSearch(""); setResults([]); setSelected(null); setMode(0);
     setTimeout(() => searchRef.current?.focus(), 150);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -270,6 +641,22 @@ export default function AdressageModal({ open, onClose }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  /* Quand on sélectionne un article, charger son StockGarage pour l'emplacement du garage */
+  const handleSelect = async (a) => {
+    try {
+      const res = await axios.get(`/stock-garage/${garageId}/article/${a.id}`);
+      const sg  = res?.data;
+      setSelected({
+        ...a,
+        _stockEmplacementId: sg?.emplacementId        || null,
+        _stockCommentaire:   sg?.commentaireAdressage || null,
+        StockEmplacement:    sg?.Emplacement          || null,
+      });
+    } catch {
+      setSelected(a);
+    }
+  };
+
   const handleSaved = (updated) => {
     setSelected(updated);
     setResults(prev => prev.map(a => a.id === updated.id ? updated : a));
@@ -289,7 +676,38 @@ export default function AdressageModal({ open, onClose }) {
         <IconButton size="small" onClick={onClose}><CloseIcon fontSize="small" /></IconButton>
       </DialogTitle>
 
+      {/* ── Onglets ── */}
+      <Tabs
+        value={mode}
+        onChange={(_, v) => setMode(v)}
+        sx={{ px: 2.5, borderBottom: "1px solid", borderColor: "divider", minHeight: 40 }}
+        TabIndicatorProps={{ style: { height: 2 } }}
+      >
+        <Tab
+          icon={<SearchIcon sx={{ fontSize: 14 }} />}
+          iconPosition="start"
+          label="Article par article"
+          sx={{ fontSize: 12, minHeight: 40, textTransform: "none", gap: 0.5 }}
+        />
+        <Tab
+          icon={<LayersIcon sx={{ fontSize: 14 }} />}
+          iconPosition="start"
+          label="Traitement en masse"
+          sx={{ fontSize: 12, minHeight: 40, textTransform: "none", gap: 0.5 }}
+        />
+      </Tabs>
+
       <DialogContent sx={{ p:0, display:"flex", overflow:"hidden" }}>
+
+        {/* ── Mode en masse ── */}
+        {mode === 1 && (
+          <Box sx={{ flex: 1, overflow: "auto" }}>
+            <AdressageEnMasse emplacements={emplacements} garageId={garageId} />
+          </Box>
+        )}
+
+        {/* ── Mode article par article ── */}
+        {mode === 0 && <>
 
         {/* ── Panneau gauche : recherche ── */}
         <Box
@@ -353,7 +771,7 @@ export default function AdressageModal({ open, onClose }) {
                     <ListItem key={a.id} disablePadding divider>
                       <ListItemButton
                         selected={selected?.id === a.id}
-                        onClick={() => setSelected(a)}
+                        onClick={() => handleSelect(a)}
                         sx={{
                           px:1.5, py:1,
                           "&.Mui-selected": { bgcolor: alpha(theme.palette.primary.main, 0.1) },
@@ -392,6 +810,7 @@ export default function AdressageModal({ open, onClose }) {
             <FormAdressage
               key={selected.id}
               article={selected}
+              garageId={garageId}
               emplacements={emplacements}
               onSaved={handleSaved}
             />
@@ -409,6 +828,8 @@ export default function AdressageModal({ open, onClose }) {
             </Box>
           )}
         </Box>
+
+        </>}
 
       </DialogContent>
     </Dialog>

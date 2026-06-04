@@ -1,7 +1,6 @@
 import BusinessIcon from "@mui/icons-material/Business";
 import CategoryIcon from "@mui/icons-material/Category";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import MoveToInboxIcon from "@mui/icons-material/MoveToInbox";
 import PersonIcon from "@mui/icons-material/Person";
 import PriceChangeIcon from "@mui/icons-material/PriceChange";
@@ -35,6 +34,9 @@ export default function Store() {
         { id: "searchArticle", label: "recherche article" },
         { id: "referenceArticle", label: "référencement article" },
         { id: "adressage", label: "adressage" },
+        { id: "marquesRef", label: "marques" },
+        { id: "groupesRef", label: "groupes & familles" },
+        { id: "emplacementsRef", label: "emplacements" },
       ],
     },
     {
@@ -101,16 +103,6 @@ export default function Store() {
       actions: [
         { id: "expeditionCession", label: "expédition cession" },
         { id: "receptionCession", label: "réception cession" },
-      ],
-    },
-    {
-      title: "Articles ref.",
-      icon: <LocalOfferIcon sx={{ fontSize: 15 }} />,
-      actions: [
-        { id: "marquesRef", label: "marques" },
-        // { id: "famillesRef", label: "familles" },
-        { id: "groupesRef", label: "groupes & familles" },
-        { id: "emplacementsRef", label: "emplacements" },
       ],
     },
   ];

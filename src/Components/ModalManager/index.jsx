@@ -11,6 +11,7 @@ import ConsultationFssModal        from "../Store/ConsultationFss";
 import AdressageModal              from "../Store/AdressageModal";
 import ReferencementFssModal       from "../Store/ReferencementFssModal";
 import FournisseursModal           from "../Store/FournisseursModal";
+import EmplacementsModal           from "../Store/EmplacementsModal";
 
 export default function ModalManager({ open, onClose, modalType }) {
   const { SearchDialogs } = useArticleSearch(
@@ -149,6 +150,10 @@ export default function ModalManager({ open, onClose, modalType }) {
 
   if (modalType === "fournisseursRef") {
     return <FournisseursModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "emplacementsRef") {
+    return <EmplacementsModal open={open} onClose={onClose} />;
   }
 
   if (modalType === "marquesRef") {
