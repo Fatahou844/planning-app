@@ -12,6 +12,9 @@ import AdressageModal              from "../Store/AdressageModal";
 import ReferencementFssModal       from "../Store/ReferencementFssModal";
 import FournisseursModal           from "../Store/FournisseursModal";
 import EmplacementsModal           from "../Store/EmplacementsModal";
+import EntreeMarchandiseModal      from "../Store/EntreeMarchandise";
+import ReliquatsModal              from "../Store/ReliquatsModal";
+import ConsultationCommandesModal  from "../Store/ConsultationCommandesModal";
 
 export default function ModalManager({ open, onClose, modalType }) {
   const { SearchDialogs } = useArticleSearch(
@@ -154,6 +157,18 @@ export default function ModalManager({ open, onClose, modalType }) {
 
   if (modalType === "emplacementsRef") {
     return <EmplacementsModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "entreeMarchandise") {
+    return <EntreeMarchandiseModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "reliquats") {
+    return <ReliquatsModal open={open} onClose={onClose} />;
+  }
+
+  if (modalType === "tableauCommandes") {
+    return <ConsultationCommandesModal open={open} onClose={onClose} />;
   }
 
   if (modalType === "marquesRef") {
