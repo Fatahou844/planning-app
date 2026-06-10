@@ -18,6 +18,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useAxios } from "../../../utils/hook/useAxios";
 import { useUser }  from "../../../utils/hook/UserContext";
+import FournisseurAutocomplete from "../shared/FournisseurAutocomplete";
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
 const STATUS_LABEL = { DRAFT: "Brouillon", VALIDATED: "Validé", CANCELLED: "Annulé" };
@@ -187,7 +188,6 @@ function BRForm({ garageId, initial, onSaved, onBack }) {
 
   /* en-tête */
   const [fournisseur,    setFournisseur]    = useState(initial?.Fournisseur || null);
-  const [fournisseurs,   setFournisseurs]   = useState([]);
   const [reference,      setReference]      = useState(initial?.reference || "");
   const [date,           setDate]           = useState(initial?.date || new Date().toISOString().split("T")[0]);
   const [notes,          setNotes]          = useState(initial?.notes || "");
@@ -220,9 +220,6 @@ function BRForm({ garageId, initial, onSaved, onBack }) {
 
   /* ── chargement initial ── */
   useEffect(() => {
-    axios.get("/stock/fournisseurs?pageSize=200")
-      .then(r => setFournisseurs(r?.data?.data || []))
-      .catch(() => {});
     /* BDC au statut SENT ou PARTIAL (livraisons partielles) */
     axios.get(`/purchase-orders/${garageId}`)
       .then(r => {
@@ -440,15 +437,11 @@ function BRForm({ garageId, initial, onSaved, onBack }) {
           {/* Fournisseur */}
           <Box flex="2 1 200px">
             <FL label="Fournisseur" required>
-              <Autocomplete
-                size="small"
-                options={fournisseurs}
-                getOptionLabel={o => o.nom || ""}
+              <FournisseurAutocomplete
                 value={fournisseur}
-                onChange={(_, v) => setFournisseur(v)}
+                onChange={setFournisseur}
                 disabled={!isDraft}
-                isOptionEqualToValue={(o, v) => o.id === v?.id}
-                renderInput={params => <TextField {...params} placeholder="Sélectionner…" />}
+                placeholder="Rechercher un fournisseur…"
               />
             </FL>
           </Box>

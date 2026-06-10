@@ -13,6 +13,7 @@ import WarningAmberIcon   from "@mui/icons-material/WarningAmber";
 import {
   Alert,
   Box,
+  Button,
   Chip,
   CircularProgress,
   Dialog,
@@ -424,17 +425,36 @@ export default function ConsultationFssModal({ open, onClose, initialFournisseur
 
   const [fournisseurs, setFournisseurs] = useState([]);
   const [loading,      setLoading]      = useState(false);
+  const [loadingMore,  setLoadingMore]  = useState(false);
+  const [page,         setPage]         = useState(1);
+  const [total,        setTotal]        = useState(0);
   const [search,       setSearch]       = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [selected,     setSelected]     = useState(null);
+  const PAGE_SIZE = 100;
 
-  const load = async () => {
+  const load = async (q = "") => {
     setLoading(true);
     try {
-      const res = await axios.get("/stock/fournisseurs?limit=500");
-      setFournisseurs(Array.isArray(res?.data) ? res.data : res?.data?.data || []);
+      const qs = `pageSize=${PAGE_SIZE}&page=1${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+      const res = await axios.get(`/stock/fournisseurs?${qs}`);
+      setFournisseurs(res?.data?.data || []);
+      setTotal(res?.data?.total || 0);
+      setPage(1);
     } catch {}
     finally { setLoading(false); }
+  };
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const qs = `pageSize=${PAGE_SIZE}&page=${nextPage}${search ? `&q=${encodeURIComponent(search)}` : ""}`;
+      const res = await axios.get(`/stock/fournisseurs?${qs}`);
+      setFournisseurs(prev => [...prev, ...(res?.data?.data || [])]);
+      setPage(nextPage);
+    } catch {}
+    finally { setLoadingMore(false); }
   };
 
   useEffect(() => {
@@ -446,18 +466,18 @@ export default function ConsultationFssModal({ open, onClose, initialFournisseur
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  /* filtrage local */
+  /* recherche serveur (debounce) */
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => { load(search); }, 300);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, open]);
+
+  /* filtrage local (statut — la recherche texte est déjà appliquée côté serveur) */
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return fournisseurs.filter(f => {
-      const matchSearch = !q
-        || (f.nom  || "").toLowerCase().includes(q)
-        || (f.code || "").toLowerCase().includes(q)
-        || (f.ville|| "").toLowerCase().includes(q);
-      const matchStatut = !filterStatut || f.statut === filterStatut;
-      return matchSearch && matchStatut;
-    });
-  }, [fournisseurs, search, filterStatut]);
+    return fournisseurs.filter(f => !filterStatut || f.statut === filterStatut);
+  }, [fournisseurs, filterStatut]);
 
   const handleUpdated = (updated) => {
     setFournisseurs(prev => prev.map(f => f.id === updated.id ? updated : f));
@@ -522,7 +542,7 @@ export default function ConsultationFssModal({ open, onClose, initialFournisseur
           {/* Compteur */}
           <Box sx={{ px:1.5, py:0.75, borderBottom:"1px solid", borderColor:"divider" }}>
             <Typography variant="caption" color="text.secondary">
-              {loading ? "Chargement…" : `${filtered.length} fournisseur${filtered.length > 1 ? "s" : ""}`}
+              {loading ? "Chargement…" : `${filtered.length} / ${total} fournisseur${total > 1 ? "s" : ""}`}
             </Typography>
           </Box>
 
@@ -565,6 +585,19 @@ export default function ConsultationFssModal({ open, onClose, initialFournisseur
                   </Typography>
                 </Box>
               ))
+            )}
+            {!loading && fournisseurs.length < total && (
+              <Box display="flex" justifyContent="center" py={1.5}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  startIcon={loadingMore ? <CircularProgress size={14} /> : null}
+                >
+                  Charger plus ({fournisseurs.length} / {total})
+                </Button>
+              </Box>
             )}
           </Box>
         </Box>

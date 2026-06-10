@@ -21,6 +21,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAxios } from "../../../utils/hook/useAxios";
 import { useUser }  from "../../../utils/hook/UserContext";
 import { generateBdcPdf } from "../../../utils/pdf/generateBdcPdf";
+import FournisseurAutocomplete from "../shared/FournisseurAutocomplete";
 
 /* ── constantes ──────────────────────────────────────────────────────── */
 const STATUS_LABEL = { DRAFT:"Brouillon", SENT:"Envoyée", PARTIAL:"Partielle", RECEIVED:"Livrée", CANCELLED:"Annulée" };
@@ -186,7 +187,6 @@ function BdcRow({ bdc, expanded, onToggle, onEdit }) {
 function BdcList({ garageId, onNew, onEdit, refreshKey }) {
   const axios = useAxios();
   const [bdcs,         setBdcs]         = useState([]);
-  const [fournisseurs, setFournisseurs] = useState([]);
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState(null);
   const [expandedId,   setExpandedId]   = useState(null);
@@ -197,13 +197,6 @@ function BdcList({ garageId, onNew, onEdit, refreshKey }) {
   const [refFilter,    setRefFilter]    = useState("");
   const [artFilter,    setArtFilter]    = useState("");
   const timer = useRef(null);
-
-  useEffect(() => {
-    axios.get("/stock/fournisseurs?pageSize=200")
-      .then(r => setFournisseurs(r?.data?.data || []))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const load = () => {
     setLoading(true); setError(null);
@@ -250,10 +243,7 @@ function BdcList({ garageId, onNew, onEdit, refreshKey }) {
       <Box display="flex" gap={1.5} flexWrap="wrap" alignItems="flex-end">
         <Box flex="2 1 150px">
           <FL label="Fournisseur">
-            <Autocomplete size="small" options={fournisseurs} getOptionLabel={o=>o.nom||""}
-              value={fssFilter} onChange={(_,v)=>setFssFilter(v)}
-              isOptionEqualToValue={(o,v)=>o.id===v?.id}
-              renderInput={p=><TextField {...p} placeholder="Tous"/>}/>
+            <FournisseurAutocomplete value={fssFilter} onChange={setFssFilter} placeholder="Tous" />
           </FL>
         </Box>
         <Box flex="1 1 120px">
@@ -345,7 +335,6 @@ function BdcForm({ garageId, initial, onBack, onSaved }) {
   const isEditable = ["DRAFT", "SENT", "PARTIAL"].includes(status);
 
   /* en-tête */
-  const [fournisseurs,   setFournisseurs]   = useState([]);
   const [fournisseur,    setFournisseur]    = useState(initial?.Fournisseur || null);
   const [reference,      setReference]      = useState(initial?.reference   || "");
   const [date,           setDate]           = useState(initial?.date        || new Date().toISOString().split("T")[0]);
@@ -367,13 +356,6 @@ function BdcForm({ garageId, initial, onBack, onSaved }) {
   const [artLoading,     setArtLoading]     = useState(false);
   const [addingLine,     setAddingLine]     = useState(false);
   const artTimer = useRef(null);
-
-  useEffect(() => {
-    axios.get("/stock/fournisseurs?pageSize=200")
-      .then(r => setFournisseurs(r?.data?.data || []))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (artTimer.current) clearTimeout(artTimer.current);
@@ -523,10 +505,7 @@ function BdcForm({ garageId, initial, onBack, onSaved }) {
         <Box display="flex" gap={1.5} flexWrap="wrap">
           <Box flex="2 1 200px">
             <FL label="Fournisseur" required>
-              <Autocomplete size="small" options={fournisseurs} getOptionLabel={o=>o.nom||""}
-                value={fournisseur} onChange={(_,v)=>setFournisseur(v)}
-                disabled={!isDraft} isOptionEqualToValue={(o,v)=>o.id===v?.id}
-                renderInput={p=><TextField {...p} placeholder="Sélectionner…"/>}/>
+              <FournisseurAutocomplete value={fournisseur} onChange={setFournisseur} disabled={!isDraft} placeholder="Sélectionner…" />
             </FL>
           </Box>
           <Box flex="1 1 150px">

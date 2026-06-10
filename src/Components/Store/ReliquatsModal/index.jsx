@@ -6,7 +6,7 @@ import SearchIcon       from "@mui/icons-material/Search";
 import SendIcon         from "@mui/icons-material/Send";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
-  Alert, Autocomplete, Box, Button, Chip, CircularProgress,
+  Alert, Box, Button, Chip, CircularProgress,
   Dialog, DialogActions, DialogContent, DialogTitle, Divider,
   IconButton, InputAdornment, Table, TableBody, TableCell,
   TableHead, TableRow, TextField, Tooltip, Typography,
@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useAxios } from "../../../utils/hook/useAxios";
 import { useUser }  from "../../../utils/hook/UserContext";
+import FournisseurAutocomplete from "../shared/FournisseurAutocomplete";
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
 function fmtDate(d) {
@@ -121,7 +122,6 @@ export default function ReliquatsModal({ open, onClose }) {
 
   /* données */
   const [reliquats,    setReliquats]    = useState([]);
-  const [fournisseurs, setFournisseurs] = useState([]);
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState(null);
 
@@ -136,15 +136,6 @@ export default function ReliquatsModal({ open, onClose }) {
   const [closingId,    setClosingId]    = useState(null);
 
   const articleTimer = useRef(null);
-
-  /* chargement fournisseurs (une seule fois) */
-  useEffect(() => {
-    if (!open || !garageId) return;
-    axios.get("/stock/fournisseurs?pageSize=200")
-      .then(r => setFournisseurs(r?.data?.data || []))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, garageId]);
 
   /* chargement reliquats */
   const load = () => {
@@ -218,14 +209,7 @@ export default function ReliquatsModal({ open, onClose }) {
         <Box display="flex" gap={1.5} flexWrap="wrap" alignItems="flex-end">
           <Box flex="2 1 180px">
             <FL label="Fournisseur">
-              <Autocomplete size="small" options={fournisseurs}
-                getOptionLabel={o => o.nom || ""}
-                value={fssFilter} onChange={(_, v) => setFssFilter(v)}
-                isOptionEqualToValue={(o, v) => o.id === v?.id}
-                renderInput={params => (
-                  <TextField {...params} placeholder="Tous les fournisseurs" />
-                )}
-              />
+              <FournisseurAutocomplete value={fssFilter} onChange={setFssFilter} placeholder="Tous les fournisseurs" />
             </FL>
           </Box>
 
